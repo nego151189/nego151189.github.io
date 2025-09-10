@@ -20,9 +20,10 @@ let currentLocation = null;
 
 // Configuración mejorada del mapa con fallback
 const mapConfig = {
-    center: [-90.5069, 14.6349], // [lng, lat] para Mapbox
+    center: [-90.5069, 14.6349],
     zoom: 15,
-    accessToken: 'pk.eyJ1IjoibWFwYm94IiwiYSI6ImNpejY4NXVycTA2emYycXBndHRqcmZ3N3gifQ.rJcFIG214AriISLbB6B5aw',
+    // ✅ USAR TOKEN PÚBLICO VÁLIDO O REMOVER
+    accessToken: null, // ❌ Token actual inválido
     fallbackEnabled: true
 };
 
@@ -356,6 +357,53 @@ function createSectorsManagementContent() {
         </style>
     `;
 }
+
+// ACTUALIZAR handleTreeFormSubmit (línea ~350)
+function handleTreeFormSubmit(event, treeId = '') {
+    event.preventDefault();
+    
+    const formData = new FormData(event.target);
+    const lat = parseFloat(formData.get('latitude'));
+    const lng = parseFloat(formData.get('longitude'));
+    
+    // ✅ VALIDAR COORDENADAS ANTES DE GUARDAR
+    if (!validateGPSCoordinates(lat, lng)) {
+        showNotification('Las coordenadas GPS no son válidas', 'error');
+        return;
+    }
+    
+    const treeData = {
+        variety: formData.get('variety'),
+        blockId: formData.get('blockId'),
+        plantingDate: formData.get('plantingDate'),
+        latitude: lat,
+        longitude: lng,
+        height: parseFloat(formData.get('height')) || 0,
+        diameter: parseFloat(formData.get('diameter')) || 0,
+        notes: formData.get('notes'),
+        health: {
+            overall: parseInt(formData.get('health')) || 100
+        }
+    };
+
+    try {
+        if (treeId) {
+            updateTreeData(treeId, treeData);
+        } else {
+            createNewTree(treeData);
+        }
+        
+        showNotification(`Árbol ${treeId ? 'actualizado' : 'creado'} correctamente`, 'success');
+        hideModal();
+        renderTrees();
+        updateEstadisticas();
+        
+    } catch (error) {
+        console.error('Error guardando árbol:', error);
+        showNotification('Error guardando árbol: ' + error.message, 'error');
+    }
+}
+
 
 function showNewSectorModal() {
     const sectorForm = createSectorForm();
@@ -908,6 +956,29 @@ function createTreeForm(tree = null) {
     `;
 }
 
+function validateGPSCoordinates(lat, lng) {
+    // Validar que son números válidos
+    if (isNaN(lat) || isNaN(lng)) {
+        return false;
+    }
+    
+    // Validar rangos válidos
+    if (lat < -90 || lat > 90) {
+        return false;
+    }
+    
+    if (lng < -180 || lng > 180) {
+        return false;
+    }
+    
+    // Validar que no sean coordenadas por defecto (0,0)
+    if (lat === 0 && lng === 0) {
+        return false;
+    }
+    
+    return true;
+}
+
 function createTreeDetails(tree) {
     const location = tree.location || {};
     const measurements = tree.measurements || {};
@@ -1095,13 +1166,26 @@ function getCurrentLocationForTree() {
     if (navigator.geolocation) {
         navigator.geolocation.getCurrentPosition(
             (position) => {
-                document.querySelector('input[name="latitude"]').value = position.coords.latitude.toFixed(6);
-                document.querySelector('input[name="longitude"]').value = position.coords.longitude.toFixed(6);
-                showNotification('Ubicación GPS obtenida', 'success');
+                const lat = position.coords.latitude;
+                const lng = position.coords.longitude;
+                
+                // ✅ VALIDAR COORDENADAS
+                if (validateGPSCoordinates(lat, lng)) {
+                    document.querySelector('input[name="latitude"]').value = lat.toFixed(6);
+                    document.querySelector('input[name="longitude"]').value = lng.toFixed(6);
+                    showNotification('Ubicación GPS obtenida', 'success');
+                } else {
+                    showNotification('Coordenadas GPS inválidas obtenidas', 'error');
+                }
             },
             (error) => {
                 console.error('Error obteniendo ubicación:', error);
-                showNotification('Error obteniendo ubicación GPS', 'error');
+                showNotification('Error obteniendo ubicación GPS: ' + error.message, 'error');
+            },
+            {
+                enableHighAccuracy: true,
+                timeout: 10000, // ✅ REDUCIR TIMEOUT
+                maximumAge: 60000 // ✅ CACHE POR 1 MINUTO
             }
         );
     } else {
@@ -1255,9 +1339,13 @@ function generateSampleStats() {
 
 function initializeMap() {
     try {
-        if (!window.mapboxgl || mapInitialized) return;
+        // ✅ VERIFICAR TOKEN ANTES DE USAR MAPBOX
+        if (!mapConfig.accessToken || !window.mapboxgl) {
+            console.log('🗺️ Usando mapa alternativo (sin token Mapbox válido)');
+            initializeFallbackMap();
+            return;
+        }
 
-        // Verificar si Mapbox está disponible y funcionando
         mapboxgl.accessToken = mapConfig.accessToken;
         
         map = new mapboxgl.Map({
@@ -1267,29 +1355,19 @@ function initializeMap() {
             zoom: mapConfig.zoom
         });
 
-        // Manejo de eventos exitosos
         map.on('load', () => {
             console.log('🗺️ Mapa Mapbox inicializado correctamente');
             mapInitialized = true;
             updateMapMarkers();
         });
 
-        // Manejo de errores de Mapbox
         map.on('error', (e) => {
-            console.warn('⚠️ Error de Mapbox - usando mapa alternativo:', e);
+            console.warn('⚠️ Error de Mapbox - usando mapa alternativo');
             initializeFallbackMap();
         });
 
-        // Timeout para detectar problemas de carga
-        setTimeout(() => {
-            if (!mapInitialized) {
-                console.log('⏰ Timeout de Mapbox - usando mapa alternativo');
-                initializeFallbackMap();
-            }
-        }, 5000);
-
     } catch (error) {
-        console.error('❌ Error inicializando Mapbox:', error);
+        console.log('🗺️ Iniciando mapa alternativo');
         initializeFallbackMap();
     }
 }
@@ -1903,3 +1981,25 @@ window.showModal = showModal;
 window.exportData = exportData;
 
 console.log('🌳 Sistema de árboles con funciones JavaScript cargado - Versión sin errores');
+
+// AGREGAR al final de arboles.js
+window.addEventListener('error', (event) => {
+    console.error('Error global capturado:', event.error);
+    
+    // No mostrar errores de red de Mapbox al usuario
+    if (event.error && event.error.message && 
+        (event.error.message.includes('mapbox') || 
+         event.error.message.includes('403'))) {
+        return;
+    }
+    
+    showNotification('Error en la aplicación. Revisa la consola.', 'error');
+});
+
+// Manejo de promesas rechazadas
+window.addEventListener('unhandledrejection', (event) => {
+    console.error('Promesa rechazada:', event.reason);
+    
+    // Evitar que el error crash la aplicación
+    event.preventDefault();
+});
