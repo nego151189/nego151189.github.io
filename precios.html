@@ -1,0 +1,1869 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestión de Precios - Finca La Herradura</title>
+    
+    <!-- Meta tags -->
+    <meta name="description" content="Monitoreo de precios de mercado, análisis de tendencias y predicciones inteligentes para optimizar ventas">
+    <meta name="keywords" content="precios, mercado, limones, tendencias, análisis, predicción, optimización">
+    
+    <!-- Favicon y PWA -->
+    <link rel="icon" type="image/x-icon" href="/icons/favicon.ico">
+    <link rel="manifest" href="/manifest.json">
+    
+    <!-- CSS -->
+    <link rel="stylesheet" href="/css/main.css">
+    <link rel="stylesheet" href="/css/style.css">
+    
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Chart.js para gráficos -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+    
+    <style>
+        .precios-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+
+        .page-title {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .title-icon {
+            width: 60px;
+            height: 60px;
+            background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+            border-radius: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 1.5rem;
+        }
+
+        .actualizacion-precios {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.75rem 1.5rem;
+            border-radius: 20px;
+            font-weight: 600;
+            background: rgba(34, 197, 94, 0.2);
+            color: #16a34a;
+            border: 1px solid rgba(34, 197, 94, 0.3);
+        }
+
+        .precio-actual-card {
+            background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+            color: white;
+            border-radius: 24px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .precio-actual-card::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            right: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(255, 255, 255, 0.1) 0%, transparent 70%);
+            animation: float 8s ease-in-out infinite;
+        }
+
+        .precio-principal {
+            display: grid;
+            grid-template-columns: auto 1fr auto;
+            align-items: center;
+            gap: 2rem;
+            margin-bottom: 2rem;
+            position: relative;
+            z-index: 1;
+        }
+
+        .precio-valor {
+            font-size: 4rem;
+            font-weight: 300;
+            margin: 0;
+            display: flex;
+            align-items: flex-start;
+        }
+
+        .precio-moneda {
+            font-size: 2rem;
+            margin-top: 0.5rem;
+            margin-right: 0.5rem;
+        }
+
+        .precio-info {
+            text-align: center;
+        }
+
+        .precio-descripcion {
+            font-size: 1.25rem;
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+        }
+
+        .precio-fecha {
+            opacity: 0.9;
+            font-size: 0.875rem;
+        }
+
+        .precio-tendencia {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            font-size: 2rem;
+        }
+
+        .tendencia-positiva {
+            color: #22c55e;
+        }
+
+        .tendencia-negativa {
+            color: #ef4444;
+        }
+
+        .tendencia-neutral {
+            color: #64748b;
+        }
+
+        .comparacion-precios {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            gap: 1.5rem;
+            position: relative;
+            z-index: 1;
+        }
+
+        .comparacion-item {
+            text-align: center;
+            padding: 1rem;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 16px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .comp-icon {
+            font-size: 1.5rem;
+            margin-bottom: 0.5rem;
+            opacity: 0.9;
+        }
+
+        .comp-valor {
+            font-size: 1.25rem;
+            font-weight: 600;
+            margin-bottom: 0.25rem;
+        }
+
+        .comp-label {
+            font-size: 0.75rem;
+            opacity: 0.8;
+        }
+
+        .mercados-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .mercado-card {
+            background: var(--bg-card);
+            border-radius: 16px;
+            padding: 1.5rem;
+            position: relative;
+            overflow: hidden;
+            transition: transform 0.3s ease;
+        }
+
+        .mercado-card:hover {
+            transform: translateY(-4px);
+        }
+
+        .mercado-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+        }
+
+        .mercado-card.mayorista::before {
+            background: linear-gradient(90deg, #ef4444, #dc2626);
+        }
+
+        .mercado-card.minorista::before {
+            background: linear-gradient(90deg, #3b82f6, #1d4ed8);
+        }
+
+        .mercado-card.exportacion::before {
+            background: linear-gradient(90deg, #8b5cf6, #7c3aed);
+        }
+
+        .mercado-card.finca::before {
+            background: linear-gradient(90deg, #22c55e, #16a34a);
+        }
+
+        .mercado-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+
+        .mercado-nombre {
+            font-size: 1.125rem;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .mercado-estado {
+            padding: 0.25rem 0.75rem;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .mercado-estado.activo {
+            background: rgba(34, 197, 94, 0.2);
+            color: #16a34a;
+        }
+
+        .mercado-estado.inactivo {
+            background: rgba(107, 114, 128, 0.2);
+            color: #6b7280;
+        }
+
+        .mercado-precio {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-bottom: 0.5rem;
+        }
+
+        .mercado-cambio {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.875rem;
+            font-weight: 600;
+        }
+
+        .mercado-cambio.positiva {
+            color: #22c55e;
+        }
+
+        .mercado-cambio.negativa {
+            color: #ef4444;
+        }
+
+        .mercado-cambio.neutral {
+            color: #64748b;
+        }
+
+        .mercado-fecha {
+            color: var(--text-secondary);
+            font-size: 0.75rem;
+            margin-top: 0.5rem;
+        }
+
+        .filtros-precios {
+            background: var(--bg-card);
+            border-radius: 16px;
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .filtros-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 1rem;
+            align-items: end;
+        }
+
+        .acciones-precios {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 2rem;
+            flex-wrap: wrap;
+        }
+
+        .accion-precio {
+            background: var(--bg-card);
+            border-radius: 12px;
+            padding: 1rem 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border: 2px solid transparent;
+            min-width: 200px;
+        }
+
+        .accion-precio:hover {
+            border-color: var(--primary);
+            transform: translateY(-2px);
+        }
+
+        .accion-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 1rem;
+        }
+
+        .contenido-principal {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 2rem;
+            margin-bottom: 2rem;
+        }
+
+        .graficos-precios {
+            display: grid;
+            gap: 2rem;
+        }
+
+        .grafico-card {
+            background: var(--bg-card);
+            border-radius: 16px;
+            padding: 1.5rem;
+        }
+
+        .grafico-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+        }
+
+        .grafico-titulo {
+            font-size: 1.125rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .alertas-precio {
+            background: var(--bg-card);
+            border-radius: 16px;
+            padding: 1.5rem;
+        }
+
+        .alerta-item {
+            display: flex;
+            align-items: flex-start;
+            gap: 1rem;
+            padding: 1rem;
+            margin-bottom: 1rem;
+            border-radius: 12px;
+            border-left: 4px solid;
+        }
+
+        .alerta-item.oportunidad {
+            background: rgba(34, 197, 94, 0.1);
+            border-left-color: #22c55e;
+        }
+
+        .alerta-item.advertencia {
+            background: rgba(245, 158, 11, 0.1);
+            border-left-color: #f59e0b;
+        }
+
+        .alerta-item.critica {
+            background: rgba(239, 68, 68, 0.1);
+            border-left-color: #ef4444;
+        }
+
+        .alerta-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 1rem;
+            flex-shrink: 0;
+        }
+
+        .alerta-item.oportunidad .alerta-icon {
+            background: #22c55e;
+        }
+
+        .alerta-item.advertencia .alerta-icon {
+            background: #f59e0b;
+        }
+
+        .alerta-item.critica .alerta-icon {
+            background: #ef4444;
+        }
+
+        .alerta-info {
+            flex: 1;
+        }
+
+        .alerta-info h4 {
+            margin: 0 0 0.5rem 0;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .alerta-info p {
+            margin: 0 0 0.5rem 0;
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+        }
+
+        .predicciones-precio {
+            background: linear-gradient(135deg, rgba(139, 92, 246, 0.1), rgba(167, 139, 250, 0.1));
+            border: 1px solid rgba(139, 92, 246, 0.2);
+            border-radius: 16px;
+            padding: 1.5rem;
+            margin-top: 1.5rem;
+        }
+
+        .ia-header {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .ia-icon {
+            width: 50px;
+            height: 50px;
+            background: linear-gradient(135deg, #8b5cf6, #a855f7);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 1.25rem;
+        }
+
+        .prediccion-item {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 12px;
+            padding: 1rem;
+            margin-bottom: 1rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .prediccion-info h4 {
+            margin: 0 0 0.5rem 0;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .prediccion-fecha {
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+        }
+
+        .prediccion-valor {
+            text-align: right;
+        }
+
+        .pred-precio {
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin-bottom: 0.25rem;
+        }
+
+        .pred-confianza {
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+        }
+
+        .registro-precio {
+            background: var(--bg-card);
+            border-radius: 16px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+        }
+
+        .form-precio {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 1rem;
+            align-items: end;
+        }
+
+        .tabla-precios {
+            background: var(--bg-card);
+            border-radius: 16px;
+            padding: 1.5rem;
+            margin-top: 2rem;
+        }
+
+        .tabla-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+        }
+
+        .tipo-precio-badge {
+            padding: 0.25rem 0.75rem;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .tipo-precio-badge.mayorista {
+            background: rgba(239, 68, 68, 0.2);
+            color: #dc2626;
+        }
+
+        .tipo-precio-badge.minorista {
+            background: rgba(59, 130, 246, 0.2);
+            color: #2563eb;
+        }
+
+        .tipo-precio-badge.exportacion {
+            background: rgba(139, 92, 246, 0.2);
+            color: #8b5cf6;
+        }
+
+        .tipo-precio-badge.finca {
+            background: rgba(34, 197, 94, 0.2);
+            color: #16a34a;
+        }
+
+        .comparador-precios {
+            background: var(--bg-card);
+            border-radius: 16px;
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .comp-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .comp-resultado {
+            background: rgba(245, 158, 11, 0.1);
+            border: 1px solid rgba(245, 158, 11, 0.3);
+            border-radius: 12px;
+            padding: 1rem;
+            text-align: center;
+        }
+
+        .comp-diferencia {
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+        }
+
+        .comp-porcentaje {
+            font-size: 0.875rem;
+            opacity: 0.8;
+        }
+
+        .initialization-loader {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.8);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 9999;
+            color: white;
+            font-size: 1.2rem;
+        }
+
+        .initialization-loader.hidden {
+            display: none;
+        }
+
+        @media (max-width: 1024px) {
+            .contenido-principal {
+                grid-template-columns: 1fr;
+            }
+            
+            .precio-principal {
+                grid-template-columns: 1fr;
+                text-align: center;
+                gap: 1rem;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .precios-header {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            
+            .mercados-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .acciones-precios {
+                justify-content: center;
+            }
+            
+            .filtros-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .form-precio {
+                grid-template-columns: 1fr;
+            }
+            
+            .comparacion-precios {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        /* Ajustes para contenido con sidebar */
+        .main-content-wrapper {
+            margin-left: 280px;
+            padding: 2rem;
+            transition: margin-left 0.3s ease;
+        }
+
+        @media (max-width: 768px) {
+            .main-content-wrapper {
+                margin-left: 0;
+                padding: 1rem;
+                padding-top: 5rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Loader de inicialización -->
+    <div class="initialization-loader" id="initLoader">
+        <div style="text-align: center;">
+            <div style="font-size: 3rem; margin-bottom: 1rem;">
+                <i class="fas fa-chart-line fa-spin"></i>
+            </div>
+            <div>Inicializando sistema de precios...</div>
+            <div style="font-size: 0.9rem; opacity: 0.7; margin-top: 0.5rem;">
+                Cargando datos de mercado
+            </div>
+        </div>
+    </div>
+
+    <!-- La navegación se cargará automáticamente desde nav.js -->
+
+    <!-- Contenido principal -->
+    <main class="main-content-wrapper">
+        <!-- Header de la página -->
+        <header class="precios-header">
+            <div class="page-title">
+                <div class="title-icon">
+                    <i class="fas fa-chart-line"></i>
+                </div>
+                <div>
+                    <h1>Gestión de Precios</h1>
+                    <p>Monitoreo de mercado y análisis de tendencias</p>
+                </div>
+            </div>
+            
+            <div class="header-actions">
+                <div class="actualizacion-precios" id="estadoActualizacion">
+                    <i class="fas fa-sync-alt"></i>
+                    <span>Actualizado hace 5 min</span>
+                </div>
+                
+                <button class="btn btn-primary" id="btnActualizarPrecios">
+                    <i class="fas fa-refresh"></i> Actualizar
+                </button>
+                
+                <button class="btn btn-success" id="btnNuevoPrecio">
+                    <i class="fas fa-plus"></i> Nuevo Precio
+                </button>
+                
+                <button class="btn btn-secondary" id="btnExportarAnalisis">
+                    <i class="fas fa-download"></i> Exportar
+                </button>
+            </div>
+        </header>
+
+        <!-- Precio actual destacado -->
+        <section class="precio-actual-card">
+            <div class="precio-principal">
+                <div class="precio-valor">
+                    <span class="precio-moneda">Q</span>
+                    <span id="precioActual">12.50</span>
+                </div>
+                
+                <div class="precio-info">
+                    <div class="precio-descripcion">Precio Promedio Actual</div>
+                    <div class="precio-fecha">Limón por kilogramo</div>
+                    <div class="precio-fecha">Último update: <span id="ultimaActualizacion">Hoy 14:30</span></div>
+                </div>
+                
+                <div class="precio-tendencia">
+                    <div id="tendenciaIcon" class="tendencia-positiva">
+                        <i class="fas fa-arrow-up"></i>
+                    </div>
+                    <div>
+                        <div style="font-size: 1.5rem; font-weight: 600;" id="cambioAbsoluto">+Q 0.75</div>
+                        <div style="font-size: 1rem; opacity: 0.9;" id="cambioRelativo">+6.4%</div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="comparacion-precios">
+                <div class="comparacion-item">
+                    <div class="comp-icon">
+                        <i class="fas fa-calendar-day"></i>
+                    </div>
+                    <div class="comp-valor" id="precioHoy">Q 12.50</div>
+                    <div class="comp-label">Hoy</div>
+                </div>
+                
+                <div class="comparacion-item">
+                    <div class="comp-icon">
+                        <i class="fas fa-calendar-week"></i>
+                    </div>
+                    <div class="comp-valor" id="precioSemana">Q 11.80</div>
+                    <div class="comp-label">Promedio Semanal</div>
+                </div>
+                
+                <div class="comparacion-item">
+                    <div class="comp-icon">
+                        <i class="fas fa-calendar-alt"></i>
+                    </div>
+                    <div class="comp-valor" id="precioMes">Q 11.25</div>
+                    <div class="comp-label">Promedio Mensual</div>
+                </div>
+                
+                <div class="comparacion-item">
+                    <div class="comp-icon">
+                        <i class="fas fa-chart-bar"></i>
+                    </div>
+                    <div class="comp-valor" id="precioMaximo">Q 15.00</div>
+                    <div class="comp-label">Máximo Mensual</div>
+                </div>
+                
+                <div class="comparacion-item">
+                    <div class="comp-icon">
+                        <i class="fas fa-chart-bar"></i>
+                    </div>
+                    <div class="comp-valor" id="precioMinimo">Q 9.50</div>
+                    <div class="comp-label">Mínimo Mensual</div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Precios por mercado -->
+        <section class="mercados-grid">
+            <div class="mercado-card mayorista">
+                <div class="mercado-header">
+                    <div class="mercado-nombre">
+                        <i class="fas fa-warehouse"></i> Mercado Mayorista
+                    </div>
+                    <div class="mercado-estado activo">Activo</div>
+                </div>
+                <div class="mercado-precio" id="precioMayorista">Q 11.80</div>
+                <div class="mercado-cambio positiva">
+                    <i class="fas fa-arrow-up"></i>
+                    <span>+Q 0.50 (4.4%)</span>
+                </div>
+                <div class="mercado-fecha">Actualizado: Hoy 13:45</div>
+            </div>
+            
+            <div class="mercado-card minorista">
+                <div class="mercado-header">
+                    <div class="mercado-nombre">
+                        <i class="fas fa-store"></i> Mercado Minorista
+                    </div>
+                    <div class="mercado-estado activo">Activo</div>
+                </div>
+                <div class="mercado-precio" id="precioMinorista">Q 15.00</div>
+                <div class="mercado-cambio positiva">
+                    <i class="fas fa-arrow-up"></i>
+                    <span>+Q 0.25 (1.7%)</span>
+                </div>
+                <div class="mercado-fecha">Actualizado: Hoy 14:20</div>
+            </div>
+            
+            <div class="mercado-card exportacion">
+                <div class="mercado-header">
+                    <div class="mercado-nombre">
+                        <i class="fas fa-shipping-fast"></i> Exportación
+                    </div>
+                    <div class="mercado-estado inactivo">Consulta</div>
+                </div>
+                <div class="mercado-precio" id="precioExportacion">Q 18.50</div>
+                <div class="mercado-cambio neutral">
+                    <i class="fas fa-minus"></i>
+                    <span>Sin cambios</span>
+                </div>
+                <div class="mercado-fecha">Actualizado: Ayer 16:00</div>
+            </div>
+            
+            <div class="mercado-card finca">
+                <div class="mercado-header">
+                    <div class="mercado-nombre">
+                        <i class="fas fa-seedling"></i> Precio Finca
+                    </div>
+                    <div class="mercado-estado activo">Nuestro</div>
+                </div>
+                <div class="mercado-precio" id="precioFinca">Q 12.75</div>
+                <div class="mercado-cambio positiva">
+                    <i class="fas fa-arrow-up"></i>
+                    <span>+Q 0.25 (2.0%)</span>
+                </div>
+                <div class="mercado-fecha">Actualizado: Hoy 15:00</div>
+            </div>
+        </section>
+
+        <!-- Filtros -->
+        <section class="filtros-precios">
+            <h3 style="margin-bottom: 1rem;">
+                <i class="fas fa-filter"></i> Filtros de Análisis
+            </h3>
+            
+            <div class="filtros-grid">
+                <div class="filtro-grupo">
+                    <label class="form-label">Período</label>
+                    <select class="form-input" id="filtroPeriodo">
+                        <option value="semana">Última Semana</option>
+                        <option value="mes" selected>Último Mes</option>
+                        <option value="trimestre">Último Trimestre</option>
+                        <option value="ano">Último Año</option>
+                    </select>
+                </div>
+                
+                <div class="filtro-grupo">
+                    <label class="form-label">Mercado</label>
+                    <select class="form-input" id="filtroMercado">
+                        <option value="">Todos los mercados</option>
+                        <option value="mayorista">Mayorista</option>
+                        <option value="minorista">Minorista</option>
+                        <option value="exportacion">Exportación</option>
+                        <option value="finca">Precio Finca</option>
+                    </select>
+                </div>
+                
+                <div class="filtro-grupo">
+                    <label class="form-label">Tipo de Análisis</label>
+                    <select class="form-input" id="filtroAnalisis">
+                        <option value="tendencia">Tendencias</option>
+                        <option value="volatilidad">Volatilidad</option>
+                        <option value="correlacion">Correlaciones</option>
+                        <option value="estacional">Estacionalidad</option>
+                    </select>
+                </div>
+                
+                <div class="filtro-grupo">
+                    <button class="btn btn-primary" id="aplicarFiltros">
+                        <i class="fas fa-search"></i> Analizar
+                    </button>
+                    <button class="btn btn-secondary" id="limpiarFiltros">
+                        <i class="fas fa-times"></i> Limpiar
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <!-- Acciones rápidas -->
+        <section class="acciones-precios">
+            <div class="accion-precio" onclick="accionPrecio('actualizar')">
+                <div class="accion-icon" style="background: #f59e0b;">
+                    <i class="fas fa-sync-alt"></i>
+                </div>
+                <div>
+                    <div style="font-weight: 600;">Actualizar Precios</div>
+                    <div style="font-size: 0.75rem; color: var(--text-secondary);">Obtener últimos datos</div>
+                </div>
+            </div>
+            
+            <div class="accion-precio" onclick="accionPrecio('comparar')">
+                <div class="accion-icon" style="background: #3b82f6;">
+                    <i class="fas fa-balance-scale"></i>
+                </div>
+                <div>
+                    <div style="font-weight: 600;">Comparar Mercados</div>
+                    <div style="font-size: 0.75rem; color: var(--text-secondary);">Análisis comparativo</div>
+                </div>
+            </div>
+            
+            <div class="accion-precio" onclick="accionPrecio('prediccion')">
+                <div class="accion-icon" style="background: #8b5cf6;">
+                    <i class="fas fa-crystal-ball"></i>
+                </div>
+                <div>
+                    <div style="font-weight: 600;">Predicción IA</div>
+                    <div style="font-size: 0.75rem; color: var(--text-secondary);">Proyección de precios</div>
+                </div>
+            </div>
+            
+            <div class="accion-precio" onclick="accionPrecio('optimizar')">
+                <div class="accion-icon" style="background: #22c55e;">
+                    <i class="fas fa-bullseye"></i>
+                </div>
+                <div>
+                    <div style="font-weight: 600;">Optimizar Ventas</div>
+                    <div style="font-size: 0.75rem; color: var(--text-secondary);">Mejor momento</div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Comparador de precios -->
+        <section class="comparador-precios">
+            <h3 style="margin-bottom: 1.5rem;">
+                <i class="fas fa-calculator"></i> Comparador de Precios
+            </h3>
+            
+            <div class="comp-grid">
+                <div class="form-group">
+                    <label class="form-label">Precio Base (Q)</label>
+                    <input type="number" class="form-input" id="precioBase" step="0.01" placeholder="12.50">
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">Precio Comparar (Q)</label>
+                    <input type="number" class="form-input" id="precioComparar" step="0.01" placeholder="15.00">
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">Cantidad (kg)</label>
+                    <input type="number" class="form-input" id="cantidadComparar" step="0.1" placeholder="1000">
+                </div>
+            </div>
+            
+            <div class="comp-resultado">
+                <div style="font-size: 0.875rem; margin-bottom: 0.5rem;">Diferencia de Ingresos</div>
+                <div class="comp-diferencia" id="diferenciaPrecio">Q 0.00</div>
+                <div class="comp-porcentaje" id="porcentajeDiferencia">0%</div>
+            </div>
+        </section>
+
+        <!-- Registro rápido de precio -->
+        <section class="registro-precio">
+            <h3 style="margin-bottom: 1.5rem;">
+                <i class="fas fa-plus"></i> Registro Manual de Precio
+            </h3>
+            
+            <form class="form-precio" id="formPrecio">
+                <div class="form-group">
+                    <label class="form-label">Fecha</label>
+                    <input type="date" class="form-input" id="fechaPrecio" required>
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">Mercado</label>
+                    <select class="form-input" id="mercadoPrecio" required>
+                        <option value="">Seleccionar...</option>
+                        <option value="mayorista">Mayorista</option>
+                        <option value="minorista">Minorista</option>
+                        <option value="exportacion">Exportación</option>
+                        <option value="finca">Precio Finca</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">Precio (Q/kg)</label>
+                    <input type="number" class="form-input" id="valorPrecio" step="0.01" min="0" required>
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">Fuente</label>
+                    <input type="text" class="form-input" id="fuentePrecio" placeholder="Ej: Mercado La Terminal">
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">Observaciones</label>
+                    <input type="text" class="form-input" id="observacionesPrecio" placeholder="Observaciones opcionales">
+                </div>
+                
+                <div class="form-group">
+                    <button type="submit" class="btn btn-success">
+                        <i class="fas fa-save"></i> Registrar
+                    </button>
+                </div>
+            </form>
+        </section>
+
+        <!-- Contenido principal -->
+        <div class="contenido-principal">
+            <!-- Gráficos -->
+            <div class="graficos-precios">
+                <!-- Gráfico de evolución de precios -->
+                <div class="grafico-card">
+                    <div class="grafico-header">
+                        <h3 class="grafico-titulo">
+                            <i class="fas fa-chart-line"></i>
+                            Evolución de Precios
+                        </h3>
+                        <div class="periodo-selector">
+                            <button class="periodo-btn active" data-periodo="mes">Mes</button>
+                            <button class="periodo-btn" data-periodo="trimestre">Trimestre</button>
+                            <button class="periodo-btn" data-periodo="ano">Año</button>
+                        </div>
+                    </div>
+                    <canvas id="graficoEvolucion" height="300"></canvas>
+                </div>
+                
+                <!-- Gráfico comparativo de mercados -->
+                <div class="grafico-card">
+                    <div class="grafico-header">
+                        <h3 class="grafico-titulo">
+                            <i class="fas fa-chart-bar"></i>
+                            Comparación de Mercados
+                        </h3>
+                    </div>
+                    <canvas id="graficoComparativo" height="250"></canvas>
+                </div>
+            </div>
+
+            <!-- Panel lateral -->
+            <div>
+                <!-- Alertas de precios -->
+                <div class="alertas-precio">
+                    <h3 style="margin-bottom: 1.5rem;">
+                        <i class="fas fa-bell"></i>
+                        Alertas de Precios
+                    </h3>
+                    
+                    <div id="listaAlertasPrecios">
+                        <!-- Se cargarán dinámicamente -->
+                    </div>
+                </div>
+
+                <!-- Predicciones IA -->
+                <div class="predicciones-precio">
+                    <div class="ia-header">
+                        <div class="ia-icon">
+                            <i class="fas fa-robot"></i>
+                        </div>
+                        <h3>Predicciones de Precios</h3>
+                    </div>
+                    
+                    <div id="prediccionesPrecios">
+                        <!-- Se cargarán dinámicamente -->
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tabla de historial de precios -->
+        <section class="tabla-precios">
+            <div class="tabla-header">
+                <h3>
+                    <i class="fas fa-table"></i>
+                    Historial de Precios
+                </h3>
+                <div>
+                    <button class="btn btn-sm btn-secondary" id="btnVistaDetallada">
+                        <i class="fas fa-expand"></i> Vista Detallada
+                    </button>
+                </div>
+            </div>
+            
+            <div class="table-container">
+                <table class="table" id="tablaPrecios">
+                    <thead>
+                        <tr>
+                            <th>Fecha</th>
+                            <th>Mercado</th>
+                            <th>Precio (Q/kg)</th>
+                            <th>Cambio</th>
+                            <th>Fuente</th>
+                            <th>Observaciones</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tablaPreciosBody">
+                        <!-- Los datos se cargarán dinámicamente -->
+                    </tbody>
+                </table>
+            </div>
+        </section>
+    </main>
+
+    <!-- Scripts Firebase (deben cargarse primero) -->
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-storage-compat.js"></script>
+
+    <!-- Scripts de aplicación -->
+    <script type="module" src="/js/firebase-config.js"></script>
+    <script type="module" src="/js/auth.js"></script>
+    <script type="module" src="/js/nav.js"></script>
+    <script type="module" src="/js/offline.js"></script>
+    <script type="module" src="/js/precios.js"></script>
+    
+    <script>
+        // Variables globales
+        let graficoEvolucion, graficoComparativo;
+        let sistemaInicializado = false;
+
+        // ==========================================
+        // FUNCIONES DE ESPERA Y INICIALIZACIÓN
+        // ==========================================
+
+        function esperarFirebase() {
+            return new Promise((resolve) => {
+                const maxWait = 10000;
+                const checkInterval = 100;
+                let elapsed = 0;
+
+                const check = () => {
+                    if (window.firebase && window.auth && window.db) {
+                        console.log('✅ Firebase disponible para precios.html');
+                        resolve(true);
+                    } else if (elapsed < maxWait) {
+                        elapsed += checkInterval;
+                        setTimeout(check, checkInterval);
+                    } else {
+                        console.warn('⚠️ Timeout esperando Firebase en precios.html');
+                        resolve(false);
+                    }
+                };
+
+                window.addEventListener('firebaseReady', () => {
+                    console.log('🔥 Evento firebaseReady recibido');
+                    resolve(true);
+                }, { once: true });
+
+                check();
+            });
+        }
+
+        function esperarAuthManager() {
+            return new Promise((resolve) => {
+                const maxWait = 10000;
+                const checkInterval = 100;
+                let elapsed = 0;
+
+                const check = () => {
+                    if (window.authManager && window.authManager.isInitialized) {
+                        console.log('✅ AuthManager disponible para precios.html');
+                        resolve(true);
+                    } else if (elapsed < maxWait) {
+                        elapsed += checkInterval;
+                        setTimeout(check, checkInterval);
+                    } else {
+                        console.warn('⚠️ Timeout esperando AuthManager en precios.html');
+                        resolve(false);
+                    }
+                };
+
+                check();
+            });
+        }
+
+        function esperarPreciosManager() {
+            return new Promise((resolve) => {
+                const maxWait = 15000;
+                const checkInterval = 200;
+                let elapsed = 0;
+
+                const check = () => {
+                    if (window.preciosManager) {
+                        console.log('✅ PreciosManager disponible para precios.html');
+                        resolve(true);
+                    } else if (elapsed < maxWait) {
+                        elapsed += checkInterval;
+                        setTimeout(check, checkInterval);
+                    } else {
+                        console.warn('⚠️ Timeout esperando PreciosManager en precios.html');
+                        resolve(false);
+                    }
+                };
+
+                check();
+            });
+        }
+
+        async function verificarAutenticacion() {
+            try {
+                // Esperar a que Firebase esté disponible
+                await esperarFirebase();
+                await esperarAuthManager();
+
+                return new Promise((resolve) => {
+                    if (window.authManager && window.authManager.currentUser) {
+                        resolve(true);
+                    } else if (window.firebase && window.firebase.auth) {
+                        window.firebase.auth().onAuthStateChanged((user) => {
+                            resolve(!!user);
+                        });
+                    } else {
+                        console.error('❌ Firebase Auth no disponible');
+                        resolve(false);
+                    }
+                });
+            } catch (error) {
+                console.error('❌ Error en verificación de autenticación:', error);
+                return false;
+            }
+        }
+
+        // ==========================================
+        // INICIALIZACIÓN PRINCIPAL
+        // ==========================================
+
+        document.addEventListener('DOMContentLoaded', async () => {
+            try {
+                console.log('💲 Iniciando aplicación de precios...');
+                
+                document.getElementById('initLoader').classList.remove('hidden');
+
+                const autenticado = await verificarAutenticacion();
+                if (!autenticado) {
+                    console.log('❌ Usuario no autenticado, redirigiendo...');
+                    window.location.href = '/login.html';
+                    return;
+                }
+                console.log('✅ Usuario autenticado');
+
+                await esperarPreciosManager();
+                await inicializarPagina();
+
+                sistemaInicializado = true;
+                console.log('🎉 Sistema de precios completamente inicializado');
+
+            } catch (error) {
+                console.error('❌ Error fatal en inicialización:', error);
+                mostrarError('Error crítico iniciando la aplicación');
+            } finally {
+                document.getElementById('initLoader').classList.add('hidden');
+            }
+        });
+
+        async function inicializarPagina() {
+            try {
+                console.log('⚙️ Inicializando componentes de la página...');
+                
+                configurarEventListeners();
+                await cargarDatosIniciales();
+                inicializarGraficos();
+                configurarComparador();
+                
+                // Configurar fecha actual
+                document.getElementById('fechaPrecio').value = new Date().toISOString().split('T')[0];
+                
+                console.log('✅ Página de precios inicializada correctamente');
+                
+            } catch (error) {
+                console.error('❌ Error inicializando página:', error);
+                mostrarError('Error cargando la página de precios');
+            }
+        }
+
+        function configurarEventListeners() {
+            // Botones principales
+            document.getElementById('btnActualizarPrecios')?.addEventListener('click', actualizarPrecios);
+            document.getElementById('btnNuevoPrecio')?.addEventListener('click', mostrarRegistroPrecio);
+            document.getElementById('btnExportarAnalisis')?.addEventListener('click', exportarAnalisis);
+            
+            // Formularios
+            document.getElementById('formPrecio')?.addEventListener('submit', guardarPrecio);
+            
+            // Filtros
+            document.getElementById('aplicarFiltros')?.addEventListener('click', aplicarFiltros);
+            document.getElementById('limpiarFiltros')?.addEventListener('click', limpiarFiltros);
+            
+            // Selectores de período
+            document.querySelectorAll('.periodo-btn').forEach(btn => {
+                btn.addEventListener('click', (e) => cambiarPeriodoGrafico(e.target.dataset.periodo));
+            });
+
+            window.addEventListener('online', () => {
+                if (sistemaInicializado) {
+                    cargarDatosIniciales();
+                }
+            });
+
+            console.log('✅ Event listeners configurados');
+        }
+
+        async function cargarDatosIniciales() {
+            try {
+                if (window.preciosManager) {
+                    // Actualizar precios destacados
+                    actualizarPreciosDestacados();
+                    
+                    // Cargar alertas
+                    await cargarAlertasPrecios();
+                    
+                    // Cargar predicciones
+                    await generarPrediccionesPrecios();
+                    
+                    // Cargar tabla
+                    actualizarTablaPrecios();
+                } else {
+                    console.warn('⚠️ PreciosManager no disponible, usando datos por defecto');
+                    cargarDatosPorDefecto();
+                }
+            } catch (error) {
+                console.error('❌ Error cargando datos:', error);
+                cargarDatosPorDefecto();
+            }
+        }
+
+        function cargarDatosPorDefecto() {
+            // Cargar datos estáticos si el manager no está disponible
+            const resumen = {
+                actual: 12.50,
+                cambio: 0.75,
+                porcentaje: 6.4,
+                hoy: 12.50,
+                promedioSemanal: 11.80,
+                promedioMensual: 11.25,
+                maximo: 15.00,
+                minimo: 9.50,
+                mercados: {
+                    mayorista: 11.80,
+                    minorista: 15.00,
+                    exportacion: 18.50,
+                    finca: 12.75
+                }
+            };
+            
+            actualizarPreciosConDatos(resumen);
+        }
+
+        function actualizarPreciosDestacados() {
+            if (!window.preciosManager) return;
+            
+            const datos = window.preciosManager.obtenerResumenPrecios();
+            actualizarPreciosConDatos(datos);
+        }
+
+        function actualizarPreciosConDatos(datos) {
+            // Precio actual
+            document.getElementById('precioActual').textContent = datos.actual.toFixed(2);
+            document.getElementById('cambioAbsoluto').textContent = `${datos.cambio >= 0 ? '+' : ''}Q ${datos.cambio.toFixed(2)}`;
+            document.getElementById('cambioRelativo').textContent = `${datos.cambio >= 0 ? '+' : ''}${datos.porcentaje.toFixed(1)}%`;
+            
+            // Actualizar tendencia
+            const tendenciaIcon = document.getElementById('tendenciaIcon');
+            const tendenciaClass = datos.cambio > 0 ? 'tendencia-positiva' : datos.cambio < 0 ? 'tendencia-negativa' : 'tendencia-neutral';
+            const icono = datos.cambio > 0 ? 'fa-arrow-up' : datos.cambio < 0 ? 'fa-arrow-down' : 'fa-minus';
+            
+            tendenciaIcon.className = tendenciaClass;
+            tendenciaIcon.innerHTML = `<i class="fas ${icono}"></i>`;
+            
+            // Comparaciones
+            document.getElementById('precioHoy').textContent = `Q ${datos.hoy.toFixed(2)}`;
+            document.getElementById('precioSemana').textContent = `Q ${datos.promedioSemanal.toFixed(2)}`;
+            document.getElementById('precioMes').textContent = `Q ${datos.promedioMensual.toFixed(2)}`;
+            document.getElementById('precioMaximo').textContent = `Q ${datos.maximo.toFixed(2)}`;
+            document.getElementById('precioMinimo').textContent = `Q ${datos.minimo.toFixed(2)}`;
+            
+            // Precios por mercado
+            document.getElementById('precioMayorista').textContent = `Q ${datos.mercados.mayorista.toFixed(2)}`;
+            document.getElementById('precioMinorista').textContent = `Q ${datos.mercados.minorista.toFixed(2)}`;
+            document.getElementById('precioExportacion').textContent = `Q ${datos.mercados.exportacion.toFixed(2)}`;
+            document.getElementById('precioFinca').textContent = `Q ${datos.mercados.finca.toFixed(2)}`;
+        }
+
+        async function cargarAlertasPrecios() {
+            try {
+                const container = document.getElementById('listaAlertasPrecios');
+                
+                const alertas = window.preciosManager ? 
+                    await window.preciosManager.generarAlertas() :
+                    [
+                        {
+                            tipo: 'oportunidad',
+                            titulo: 'Oportunidad de Venta',
+                            mensaje: 'Los precios han subido 6.4% esta semana.',
+                            icono: 'fa-arrow-up',
+                            accion: 'Ver Análisis'
+                        },
+                        {
+                            tipo: 'advertencia',
+                            titulo: 'Volatilidad Alta',
+                            mensaje: 'El mercado mayorista muestra alta volatilidad.',
+                            icono: 'fa-exclamation-triangle'
+                        }
+                    ];
+                
+                container.innerHTML = alertas.map(alerta => `
+                    <div class="alerta-item ${alerta.tipo}">
+                        <div class="alerta-icon">
+                            <i class="fas ${alerta.icono}"></i>
+                        </div>
+                        <div class="alerta-info">
+                            <h4>${alerta.titulo}</h4>
+                            <p>${alerta.mensaje}</p>
+                            ${alerta.accion ? `<button class="btn btn-sm btn-primary">${alerta.accion}</button>` : ''}
+                        </div>
+                    </div>
+                `).join('');
+            } catch (error) {
+                console.error('Error cargando alertas:', error);
+            }
+        }
+
+        async function generarPrediccionesPrecios() {
+            try {
+                const container = document.getElementById('prediccionesPrecios');
+                container.innerHTML = '<div class="loading-spinner"><i class="fas fa-spinner fa-spin"></i></div>';
+                
+                const predicciones = window.preciosManager ? 
+                    await window.preciosManager.generarPrediccionesIA() :
+                    [
+                        {
+                            periodo: 'Próxima Semana',
+                            fecha: '15 - 22 Enero',
+                            precio: 13.25,
+                            confianza: 85,
+                            color: '#22c55e'
+                        },
+                        {
+                            periodo: 'Próximo Mes',
+                            fecha: 'Febrero 2025',
+                            precio: 14.50,
+                            confianza: 72,
+                            color: '#f59e0b'
+                        }
+                    ];
+                
+                container.innerHTML = predicciones.map(pred => `
+                    <div class="prediccion-item">
+                        <div class="prediccion-info">
+                            <h4>${pred.periodo}</h4>
+                            <div class="prediccion-fecha">${pred.fecha}</div>
+                        </div>
+                        <div class="prediccion-valor">
+                            <div class="pred-precio" style="color: ${pred.color};">
+                                Q ${pred.precio.toFixed(2)}
+                            </div>
+                            <div class="pred-confianza">
+                                Confianza: ${pred.confianza}%
+                            </div>
+                        </div>
+                    </div>
+                `).join('');
+            } catch (error) {
+                console.error('Error generando predicciones:', error);
+                document.getElementById('prediccionesPrecios').innerHTML = 
+                    '<div class="error-message">Error generando predicciones</div>';
+            }
+        }
+
+        function actualizarTablaPrecios() {
+            const precios = window.preciosManager ? 
+                window.preciosManager.obtenerHistorialFiltrado() :
+                [
+                    {
+                        id: 'PRECIO_001',
+                        fecha: '2025-01-08',
+                        mercado: 'mayorista',
+                        valor: 11.80,
+                        fuente: 'Mercado La Terminal',
+                        observaciones: 'Precio estable',
+                        cambio: 4.4
+                    },
+                    {
+                        id: 'PRECIO_002',
+                        fecha: '2025-01-08',
+                        mercado: 'minorista',
+                        valor: 15.00,
+                        fuente: 'Supermercados',
+                        observaciones: 'Demanda alta',
+                        cambio: 1.7
+                    }
+                ];
+            
+            const tbody = document.getElementById('tablaPreciosBody');
+            
+            tbody.innerHTML = precios.map(precio => `
+                <tr onclick="verDetallePrecio('${precio.id}')" style="cursor: pointer;">
+                    <td>${formatearFecha(precio.fecha)}</td>
+                    <td>
+                        <span class="tipo-precio-badge ${precio.mercado}">
+                            ${precio.mercado}
+                        </span>
+                    </td>
+                    <td>Q ${precio.valor.toFixed(2)}</td>
+                    <td style="color: ${precio.cambio >= 0 ? '#22c55e' : '#ef4444'};">
+                        ${precio.cambio >= 0 ? '+' : ''}${precio.cambio.toFixed(2)}%
+                    </td>
+                    <td>${precio.fuente}</td>
+                    <td>${precio.observaciones || '-'}</td>
+                    <td>
+                        <button class="btn btn-sm btn-primary" onclick="event.stopPropagation(); editarPrecio('${precio.id}')">
+                            <i class="fas fa-edit"></i>
+                        </button>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        function inicializarGraficos() {
+            // Gráfico de evolución de precios
+            const ctxEvol = document.getElementById('graficoEvolucion');
+            if (ctxEvol) {
+                graficoEvolucion = new Chart(ctxEvol, {
+                    type: 'line',
+                    data: {
+                        labels: ['Sem 1', 'Sem 2', 'Sem 3', 'Sem 4'],
+                        datasets: [{
+                            label: 'Precio Promedio (Q)',
+                            data: [10.80, 11.25, 11.80, 12.50],
+                            borderColor: '#f59e0b',
+                            backgroundColor: 'rgba(245, 158, 11, 0.1)',
+                            tension: 0.4,
+                            fill: true
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                labels: { 
+                                    color: getComputedStyle(document.documentElement).getPropertyValue('--text-primary') || '#333'
+                                }
+                            }
+                        },
+                        scales: {
+                            x: {
+                                ticks: { 
+                                    color: getComputedStyle(document.documentElement).getPropertyValue('--text-secondary') || '#666'
+                                },
+                                grid: { 
+                                    color: 'rgba(0, 0, 0, 0.1)'
+                                }
+                            },
+                            y: {
+                                ticks: { 
+                                    color: getComputedStyle(document.documentElement).getPropertyValue('--text-secondary') || '#666'
+                                },
+                                grid: { 
+                                    color: 'rgba(0, 0, 0, 0.1)'
+                                }
+                            }
+                        }
+                    }
+                });
+            }
+
+            // Gráfico comparativo de mercados
+            const ctxComp = document.getElementById('graficoComparativo');
+            if (ctxComp) {
+                graficoComparativo = new Chart(ctxComp, {
+                    type: 'bar',
+                    data: {
+                        labels: ['Mayorista', 'Minorista', 'Exportación', 'Finca'],
+                        datasets: [{
+                            label: 'Precio Actual (Q)',
+                            data: [11.80, 15.00, 18.50, 12.75],
+                            backgroundColor: [
+                                'rgba(239, 68, 68, 0.6)',
+                                'rgba(59, 130, 246, 0.6)',
+                                'rgba(139, 92, 246, 0.6)',
+                                'rgba(34, 197, 94, 0.6)'
+                            ],
+                            borderColor: [
+                                '#ef4444',
+                                '#3b82f6',
+                                '#8b5cf6',
+                                '#22c55e'
+                            ],
+                            borderWidth: 1
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                labels: { 
+                                    color: getComputedStyle(document.documentElement).getPropertyValue('--text-primary') || '#333'
+                                }
+                            }
+                        },
+                        scales: {
+                            x: {
+                                ticks: { 
+                                    color: getComputedStyle(document.documentElement).getPropertyValue('--text-secondary') || '#666'
+                                },
+                                grid: { 
+                                    color: 'rgba(0, 0, 0, 0.1)'
+                                }
+                            },
+                            y: {
+                                ticks: { 
+                                    color: getComputedStyle(document.documentElement).getPropertyValue('--text-secondary') || '#666'
+                                },
+                                grid: { 
+                                    color: 'rgba(0, 0, 0, 0.1)'
+                                }
+                            }
+                        }
+                    }
+                });
+            }
+
+            console.log('✅ Gráficos inicializados');
+        }
+
+        async function cargarDatosGraficos(periodo) {
+            try {
+                if (window.preciosManager) {
+                    const datos = await window.preciosManager.obtenerDatosGraficos(periodo);
+                    
+                    if (graficoEvolucion && datos.evolucion) {
+                        graficoEvolucion.data.labels = datos.evolucion.labels;
+                        graficoEvolucion.data.datasets[0].data = datos.evolucion.data;
+                        graficoEvolucion.update();
+                    }
+                    
+                    if (graficoComparativo && datos.mercados) {
+                        graficoComparativo.data.datasets[0].data = datos.mercados;
+                        graficoComparativo.update();
+                    }
+                }
+            } catch (error) {
+                console.error('Error cargando datos de gráficos:', error);
+            }
+        }
+
+        function cambiarPeriodoGrafico(periodo) {
+            document.querySelectorAll('.periodo-btn').forEach(btn => btn.classList.remove('active'));
+            document.querySelector(`[data-periodo="${periodo}"]`).classList.add('active');
+            cargarDatosGraficos(periodo);
+        }
+
+        function configurarComparador() {
+            ['precioBase', 'precioComparar', 'cantidadComparar'].forEach(id => {
+                document.getElementById(id)?.addEventListener('input', calcularComparacion);
+            });
+        }
+
+        function calcularComparacion() {
+            const precioBase = parseFloat(document.getElementById('precioBase').value) || 0;
+            const precioComparar = parseFloat(document.getElementById('precioComparar').value) || 0;
+            const cantidad = parseFloat(document.getElementById('cantidadComparar').value) || 0;
+            
+            const diferencia = (precioComparar - precioBase) * cantidad;
+            const porcentaje = precioBase > 0 ? ((precioComparar - precioBase) / precioBase) * 100 : 0;
+            
+            document.getElementById('diferenciaPrecio').textContent = `${diferencia >= 0 ? '+' : ''}Q ${diferencia.toFixed(2)}`;
+            document.getElementById('porcentajeDiferencia').textContent = `${diferencia >= 0 ? '+' : ''}${porcentaje.toFixed(1)}%`;
+            
+            // Cambiar color según la diferencia
+            const diffElement = document.getElementById('diferenciaPrecio');
+            diffElement.style.color = diferencia >= 0 ? '#22c55e' : '#ef4444';
+        }
+
+        async function guardarPrecio(e) {
+            e.preventDefault();
+            
+            const datos = {
+                fecha: document.getElementById('fechaPrecio').value,
+                mercado: document.getElementById('mercadoPrecio').value,
+                valor: parseFloat(document.getElementById('valorPrecio').value),
+                fuente: document.getElementById('fuentePrecio').value,
+                observaciones: document.getElementById('observacionesPrecio').value
+            };
+            
+            try {
+                if (window.preciosManager) {
+                    await window.preciosManager.registrarPrecio(datos);
+                    mostrarNotificacion('Precio registrado correctamente', 'success');
+                    document.getElementById('formPrecio').reset();
+                    document.getElementById('fechaPrecio').value = new Date().toISOString().split('T')[0];
+                    await cargarDatosIniciales();
+                } else {
+                    console.log('Precio guardado (modo demo):', datos);
+                    mostrarNotificacion('Precio registrado en modo demo', 'info');
+                    document.getElementById('formPrecio').reset();
+                    document.getElementById('fechaPrecio').value = new Date().toISOString().split('T')[0];
+                }
+            } catch (error) {
+                console.error('Error registrando precio:', error);
+                mostrarNotificacion('Error al registrar el precio', 'error');
+            }
+        }
+
+        async function actualizarPrecios() {
+            try {
+                document.getElementById('btnActualizarPrecios').innerHTML = '<i class="fas fa-sync-alt fa-spin"></i> Actualizando';
+                
+                if (window.preciosManager) {
+                    await window.preciosManager.actualizarPreciosMercado();
+                    await cargarDatosIniciales();
+                    mostrarNotificacion('Precios actualizados correctamente', 'success');
+                    
+                    // Actualizar indicador
+                    document.getElementById('estadoActualizacion').innerHTML = 
+                        '<i class="fas fa-sync-alt"></i><span>Actualizado ahora</span>';
+                } else {
+                    mostrarNotificacion('Precios actualizados (modo demo)', 'info');
+                }
+            } catch (error) {
+                console.error('Error actualizando precios:', error);
+                mostrarNotificacion('Error actualizando precios', 'error');
+            } finally {
+                document.getElementById('btnActualizarPrecios').innerHTML = '<i class="fas fa-refresh"></i> Actualizar';
+            }
+        }
+
+        function mostrarRegistroPrecio() {
+            document.querySelector('.registro-precio').scrollIntoView({ behavior: 'smooth' });
+            document.getElementById('valorPrecio').focus();
+        }
+
+        function accionPrecio(accion) {
+            switch (accion) {
+                case 'actualizar':
+                    actualizarPrecios();
+                    break;
+                case 'comparar':
+                    document.querySelector('.comparador-precios').scrollIntoView({ behavior: 'smooth' });
+                    break;
+                case 'prediccion':
+                    if (window.preciosManager) {
+                        window.preciosManager.mostrarPrediccionDetallada();
+                    } else {
+                        mostrarNotificacion('Predicción IA: Precio favorable para próxima semana', 'info');
+                    }
+                    break;
+                case 'optimizar':
+                    if (window.preciosManager) {
+                        window.preciosManager.optimizarMomentoVenta();
+                    } else {
+                        mostrarNotificacion('Optimización: Momento actual favorable para venta', 'info');
+                    }
+                    break;
+            }
+        }
+
+        function aplicarFiltros() {
+            if (window.preciosManager) {
+                const filtros = {
+                    periodo: document.getElementById('filtroPeriodo').value,
+                    mercado: document.getElementById('filtroMercado').value,
+                    analisis: document.getElementById('filtroAnalisis').value
+                };
+                
+                window.preciosManager.aplicarFiltros(filtros);
+                actualizarTablaPrecios();
+                cargarDatosGraficos(filtros.periodo);
+            }
+            mostrarNotificacion('Filtros aplicados', 'info');
+        }
+
+        function limpiarFiltros() {
+            document.getElementById('filtroPeriodo').value = 'mes';
+            document.getElementById('filtroMercado').value = '';
+            document.getElementById('filtroAnalisis').value = 'tendencia';
+            aplicarFiltros();
+        }
+
+        function exportarAnalisis() {
+            if (window.preciosManager) {
+                window.preciosManager.exportarAnalisis();
+            } else {
+                mostrarNotificacion('Exportando análisis de precios...', 'info');
+            }
+        }
+
+        function verDetallePrecio(id) {
+            console.log('Ver detalle de precio:', id);
+            mostrarNotificacion('Detalle de precio en desarrollo', 'info');
+        }
+
+        function editarPrecio(id) {
+            console.log('Editar precio:', id);
+            mostrarNotificacion('Edición de precio en desarrollo', 'info');
+        }
+
+        // ==========================================
+        // UTILIDADES
+        // ==========================================
+
+        function formatearFecha(fecha) {
+            return new Date(fecha).toLocaleDateString('es-GT', {
+                year: 'numeric',
+                month: 'short',
+                day: 'numeric'
+            });
+        }
+
+        function mostrarNotificacion(mensaje, tipo = 'info') {
+            console.log(`${tipo.toUpperCase()}: ${mensaje}`);
+            
+            if (window.notificationManager) {
+                switch(tipo) {
+                    case 'success':
+                        window.notificationManager.success(mensaje);
+                        break;
+                    case 'error':
+                        window.notificationManager.error(mensaje);
+                        break;
+                    case 'warning':
+                        window.notificationManager.warning(mensaje);
+                        break;
+                    default:
+                        window.notificationManager.info(mensaje);
+                }
+            }
+        }
+
+        function mostrarError(mensaje) {
+            mostrarNotificacion(mensaje, 'error');
+        }
+
+        // Hacer funciones globales
+        window.accionPrecio = accionPrecio;
+        window.verDetallePrecio = verDetallePrecio;
+        window.editarPrecio = editarPrecio;
+
+        // Manejo de errores globales
+        window.addEventListener('error', (event) => {
+            console.error('❌ Error global:', event.error);
+            // No mostrar todos los errores al usuario para evitar spam
+        });
+
+        window.addEventListener('unhandledrejection', (event) => {
+            console.error('❌ Promesa rechazada no manejada:', event.reason);
+            // Solo mostrar errores críticos
+            if (event.reason && event.reason.message && 
+                (event.reason.message.includes('Firebase') || 
+                 event.reason.message.includes('Network'))) {
+                mostrarError('Error de conexión o servicio');
+            }
+        });
+    </script>
+</body>
+</html>

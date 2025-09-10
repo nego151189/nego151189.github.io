@@ -1,0 +1,1781 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestión Climática - Finca La Herradura</title>
+    
+    <!-- Meta tags -->
+    <meta name="description" content="Monitoreo climático inteligente con IA y predicciones para optimizar la producción agrícola">
+    <meta name="keywords" content="clima, meteorología, agricultura, predicción, IA, sensores">
+    
+    <!-- Favicon y PWA -->
+    <link rel="icon" type="image/x-icon" href="/icons/favicon.ico">
+    <link rel="manifest" href="/manifest.json">
+    
+    <!-- CSS -->
+    <link rel="stylesheet" href="/css/main.css">
+    <link rel="stylesheet" href="/css/style.css">
+    
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Chart.js para gráficos -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+    
+    <style>
+        .clima-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+
+        .page-title {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .title-icon {
+            width: 60px;
+            height: 60px;
+            background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+            border-radius: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 1.5rem;
+        }
+
+        .estado-conexion {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            font-size: 0.875rem;
+            font-weight: 600;
+        }
+
+        .estado-conexion.online {
+            background: rgba(34, 197, 94, 0.2);
+            color: #16a34a;
+            border: 1px solid rgba(34, 197, 94, 0.3);
+        }
+
+        .estado-conexion.offline {
+            background: rgba(239, 68, 68, 0.2);
+            color: #dc2626;
+            border: 1px solid rgba(239, 68, 68, 0.3);
+        }
+
+        .clima-actual {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 24px;
+            padding: 2rem;
+            color: white;
+            margin-bottom: 2rem;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .clima-actual::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            right: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(255, 255, 255, 0.1) 0%, transparent 70%);
+            animation: float 8s ease-in-out infinite;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0px) rotate(0deg); }
+            50% { transform: translateY(-20px) rotate(180deg); }
+        }
+
+        .clima-principal {
+            display: grid;
+            grid-template-columns: auto 1fr auto;
+            align-items: center;
+            gap: 2rem;
+            margin-bottom: 2rem;
+            position: relative;
+            z-index: 1;
+        }
+
+        .temperatura-principal {
+            font-size: 4rem;
+            font-weight: 300;
+            margin: 0;
+            display: flex;
+            align-items: flex-start;
+        }
+
+        .grado-symbol {
+            font-size: 2rem;
+            margin-top: 0.5rem;
+        }
+
+        .clima-info {
+            text-align: center;
+        }
+
+        .clima-descripcion {
+            font-size: 1.25rem;
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+        }
+
+        .sensacion-termica {
+            opacity: 0.9;
+            font-size: 0.875rem;
+        }
+
+        .clima-icono-principal {
+            font-size: 4rem;
+            opacity: 0.9;
+            animation: pulse 3s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+
+        .clima-detalles {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            gap: 1.5rem;
+            position: relative;
+            z-index: 1;
+        }
+
+        .clima-detalle {
+            text-align: center;
+            padding: 1rem;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 16px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .detalle-icon {
+            font-size: 1.5rem;
+            margin-bottom: 0.5rem;
+            opacity: 0.9;
+        }
+
+        .detalle-valor {
+            font-size: 1.25rem;
+            font-weight: 600;
+            margin-bottom: 0.25rem;
+        }
+
+        .detalle-label {
+            font-size: 0.75rem;
+            opacity: 0.8;
+        }
+
+        .alertas-climaticas {
+            margin-bottom: 2rem;
+        }
+
+        .alerta-clima {
+            background: var(--bg-card);
+            border-radius: 16px;
+            padding: 1.5rem;
+            margin-bottom: 1rem;
+            border-left: 4px solid;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .alerta-clima.warning {
+            border-left-color: #f59e0b;
+            background: rgba(245, 158, 11, 0.05);
+        }
+
+        .alerta-clima.danger {
+            border-left-color: #ef4444;
+            background: rgba(239, 68, 68, 0.05);
+        }
+
+        .alerta-clima.info {
+            border-left-color: #3b82f6;
+            background: rgba(59, 130, 246, 0.05);
+        }
+
+        .alerta-icon {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.25rem;
+            color: white;
+        }
+
+        .alerta-clima.warning .alerta-icon {
+            background: #f59e0b;
+        }
+
+        .alerta-clima.danger .alerta-icon {
+            background: #ef4444;
+        }
+
+        .alerta-clima.info .alerta-icon {
+            background: #3b82f6;
+        }
+
+        .contenido-principal {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 2rem;
+            margin-bottom: 2rem;
+        }
+
+        .graficos-container {
+            display: grid;
+            gap: 2rem;
+        }
+
+        .grafico-card {
+            background: var(--bg-card);
+            border-radius: 16px;
+            padding: 1.5rem;
+            box-shadow: 0 4px 24px rgba(0, 0, 0, 0.08);
+        }
+
+        .grafico-header {
+            display: flex;
+            justify-content: between;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+
+        .grafico-titulo {
+            font-size: 1.125rem;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .periodo-selector {
+            display: flex;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            padding: 0.25rem;
+        }
+
+        .periodo-btn {
+            padding: 0.5rem 1rem;
+            border: none;
+            background: transparent;
+            color: var(--text-secondary);
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.875rem;
+            transition: all 0.3s ease;
+        }
+
+        .periodo-btn.active {
+            background: var(--primary);
+            color: white;
+        }
+
+        .prediccion-container {
+            display: grid;
+            gap: 1.5rem;
+        }
+
+        .prediccion-card {
+            background: var(--bg-card);
+            border-radius: 16px;
+            padding: 1.5rem;
+        }
+
+        .prediccion-header {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .prediccion-icon {
+            width: 40px;
+            height: 40px;
+            background: linear-gradient(135deg, #8b5cf6, #a855f7);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+        }
+
+        .pronostico-dias {
+            display: grid;
+            gap: 1rem;
+        }
+
+        .dia-pronostico {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 12px;
+            transition: all 0.3s ease;
+        }
+
+        .dia-pronostico:hover {
+            background: rgba(255, 255, 255, 0.1);
+            transform: translateY(-1px);
+        }
+
+        .dia-info {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .dia-fecha {
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .dia-descripcion {
+            color: var(--text-secondary);
+            font-size: 0.875rem;
+        }
+
+        .dia-clima {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .dia-icon {
+            font-size: 1.5rem;
+            color: #3b82f6;
+        }
+
+        .temperatura-rango {
+            text-align: right;
+        }
+
+        .temp-max {
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .temp-min {
+            color: var(--text-secondary);
+            font-size: 0.875rem;
+        }
+
+        .recomendaciones-ia {
+            background: linear-gradient(135deg, rgba(139, 92, 246, 0.1), rgba(167, 139, 250, 0.1));
+            border: 1px solid rgba(139, 92, 246, 0.2);
+            border-radius: 16px;
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .recomendacion-item {
+            display: flex;
+            align-items: flex-start;
+            gap: 1rem;
+            padding: 1rem;
+            margin-bottom: 1rem;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 12px;
+        }
+
+        .recomendacion-icon {
+            width: 40px;
+            height: 40px;
+            background: var(--primary);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 1rem;
+            flex-shrink: 0;
+        }
+
+        .sensores-status {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        .sensor-card {
+            background: var(--bg-card);
+            border-radius: 12px;
+            padding: 1rem;
+            text-align: center;
+        }
+
+        .sensor-icon {
+            font-size: 2rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .sensor-valor {
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin-bottom: 0.25rem;
+        }
+
+        .sensor-estado {
+            font-size: 0.75rem;
+            padding: 0.25rem 0.75rem;
+            border-radius: 20px;
+            display: inline-block;
+        }
+
+        .sensor-estado.online {
+            background: rgba(34, 197, 94, 0.2);
+            color: #16a34a;
+        }
+
+        .sensor-estado.offline {
+            background: rgba(239, 68, 68, 0.2);
+            color: #dc2626;
+        }
+
+        .historico-controles {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 1rem;
+            align-items: center;
+        }
+
+        .export-btn {
+            margin-left: auto;
+        }
+
+        @media (max-width: 1024px) {
+            .contenido-principal {
+                grid-template-columns: 1fr;
+            }
+            
+            .clima-principal {
+                grid-template-columns: 1fr;
+                text-align: center;
+                gap: 1rem;
+            }
+            
+            .temperatura-principal {
+                font-size: 3rem;
+                justify-content: center;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .clima-header {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            
+            .clima-detalles {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            
+            .sensores-status {
+                grid-template-columns: 1fr;
+            }
+            
+            .historico-controles {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            
+            .export-btn {
+                margin-left: 0;
+            }
+        }
+
+        .loading-spinner {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 200px;
+            font-size: 2rem;
+            color: var(--text-secondary);
+        }
+
+        .error-message {
+            background: rgba(239, 68, 68, 0.1);
+            border: 1px solid rgba(239, 68, 68, 0.3);
+            color: #fecaca;
+            padding: 1rem;
+            border-radius: 12px;
+            text-align: center;
+            margin: 1rem 0;
+        }
+
+        .initialization-loader {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.8);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 9999;
+            color: white;
+            font-size: 1.2rem;
+        }
+
+        .initialization-loader.hidden {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <!-- Loader de inicialización -->
+    <div class="initialization-loader" id="initLoader">
+        <div style="text-align: center;">
+            <div style="font-size: 3rem; margin-bottom: 1rem;">
+                <i class="fas fa-cloud-sun fa-spin"></i>
+            </div>
+            <div>Inicializando sistema climático...</div>
+            <div style="font-size: 0.9rem; opacity: 0.7; margin-top: 0.5rem;">
+                Conectando con servicios
+            </div>
+        </div>
+    </div>
+
+    <!-- Navegación -->
+    <nav id="navbar"></nav>
+
+    <!-- Contenido principal -->
+    <main class="main-content-wrapper">
+        <!-- Header de la página -->
+        <header class="clima-header">
+            <div class="page-title">
+                <div class="title-icon">
+                    <i class="fas fa-cloud-sun"></i>
+                </div>
+                <div>
+                    <h1>Gestión Climática</h1>
+                    <p>Monitoreo inteligente y predicciones con IA</p>
+                </div>
+            </div>
+            
+            <div class="header-actions">
+                <div class="estado-conexion online" id="estadoConexion">
+                    <i class="fas fa-wifi"></i>
+                    <span>Conectado</span>
+                </div>
+                
+                <button class="btn btn-primary" id="btnActualizar">
+                    <i class="fas fa-sync-alt"></i> Actualizar
+                </button>
+                
+                <button class="btn btn-secondary" id="btnConfiguracion">
+                    <i class="fas fa-cog"></i> Configurar
+                </button>
+            </div>
+        </header>
+
+        <!-- Clima actual -->
+        <section class="clima-actual">
+            <div class="clima-principal">
+                <div class="temperatura-principal">
+                    <span id="temperaturaActual">--</span>
+                    <span class="grado-symbol">°C</span>
+                </div>
+                
+                <div class="clima-info">
+                    <div class="clima-descripcion" id="climaDescripcion">Cargando...</div>
+                    <div class="sensacion-termica">
+                        Sensación térmica: <span id="sensacionTermica">--°C</span>
+                    </div>
+                    <div class="ubicacion">
+                        <i class="fas fa-map-marker-alt"></i>
+                        <span>Finca La Herradura, Guatemala</span>
+                    </div>
+                </div>
+                
+                <div class="clima-icono-principal">
+                    <i id="iconoClimaPrincipal" class="fas fa-sun"></i>
+                </div>
+            </div>
+            
+            <div class="clima-detalles">
+                <div class="clima-detalle">
+                    <div class="detalle-icon">
+                        <i class="fas fa-tint"></i>
+                    </div>
+                    <div class="detalle-valor" id="humedad">--%</div>
+                    <div class="detalle-label">Humedad</div>
+                </div>
+                
+                <div class="clima-detalle">
+                    <div class="detalle-icon">
+                        <i class="fas fa-wind"></i>
+                    </div>
+                    <div class="detalle-valor" id="viento">-- km/h</div>
+                    <div class="detalle-label">Viento</div>
+                </div>
+                
+                <div class="clima-detalle">
+                    <div class="detalle-icon">
+                        <i class="fas fa-eye"></i>
+                    </div>
+                    <div class="detalle-valor" id="visibilidad">-- km</div>
+                    <div class="detalle-label">Visibilidad</div>
+                </div>
+                
+                <div class="clima-detalle">
+                    <div class="detalle-icon">
+                        <i class="fas fa-thermometer-half"></i>
+                    </div>
+                    <div class="detalle-valor" id="presion">-- hPa</div>
+                    <div class="detalle-label">Presión</div>
+                </div>
+                
+                <div class="clima-detalle">
+                    <div class="detalle-icon">
+                        <i class="fas fa-sun"></i>
+                    </div>
+                    <div class="detalle-valor" id="uvIndex">--</div>
+                    <div class="detalle-label">Índice UV</div>
+                </div>
+                
+                <div class="clima-detalle">
+                    <div class="detalle-icon">
+                        <i class="fas fa-cloud-rain"></i>
+                    </div>
+                    <div class="detalle-valor" id="precipitacion">-- mm</div>
+                    <div class="detalle-label">Lluvia (24h)</div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Alertas climáticas -->
+        <section class="alertas-climaticas" id="alertasClimaticas">
+            <!-- Las alertas se cargarán dinámicamente -->
+        </section>
+
+        <!-- Estado de sensores -->
+        <section class="sensores-status">
+            <div class="sensor-card">
+                <div class="sensor-icon" style="color: #22c55e;">
+                    <i class="fas fa-thermometer-three-quarters"></i>
+                </div>
+                <div class="sensor-valor" id="sensorTemperatura">25.3°C</div>
+                <div class="sensor-label">Sensor Temperatura</div>
+                <div class="sensor-estado online">Online</div>
+            </div>
+            
+            <div class="sensor-card">
+                <div class="sensor-icon" style="color: #3b82f6;">
+                    <i class="fas fa-tint"></i>
+                </div>
+                <div class="sensor-valor" id="sensorHumedad">68%</div>
+                <div class="sensor-label">Sensor Humedad</div>
+                <div class="sensor-estado online">Online</div>
+            </div>
+            
+            <div class="sensor-card">
+                <div class="sensor-icon" style="color: #f59e0b;">
+                    <i class="fas fa-seedling"></i>
+                </div>
+                <div class="sensor-valor" id="sensorSuelo">42%</div>
+                <div class="sensor-label">Humedad del Suelo</div>
+                <div class="sensor-estado offline">Offline</div>
+            </div>
+            
+            <div class="sensor-card">
+                <div class="sensor-icon" style="color: #8b5cf6;">
+                    <i class="fas fa-wind"></i>
+                </div>
+                <div class="sensor-valor" id="sensorViento">12 km/h</div>
+                <div class="sensor-label">Anemómetro</div>
+                <div class="sensor-estado online">Online</div>
+            </div>
+        </section>
+
+        <!-- Contenido principal -->
+        <div class="contenido-principal">
+            <!-- Gráficos -->
+            <!-- Gráficos con contenedores de tamaño fijo -->
+<div class="graficos-container">
+    <!-- Gráfico de temperatura -->
+    <div class="grafico-card">
+        <div class="grafico-header">
+            <h3 class="grafico-titulo">
+                <i class="fas fa-thermometer-half"></i>
+                Temperatura y Humedad
+            </h3>
+            <div class="periodo-selector">
+                <button class="periodo-btn active" data-periodo="24h">24h</button>
+                <button class="periodo-btn" data-periodo="7d">7d</button>
+                <button class="periodo-btn" data-periodo="30d">30d</button>
+            </div>
+        </div>
+        <!-- CRÍTICO: Contenedor con tamaño fijo -->
+        <div class="chart-container">
+            <canvas id="graficoTemperatura"></canvas>
+        </div>
+    </div>
+    
+    <!-- Gráfico de precipitación -->
+    <div class="grafico-card">
+        <div class="grafico-header">
+            <h3 class="grafico-titulo">
+                <i class="fas fa-cloud-rain"></i>
+                Precipitación
+            </h3>
+            <div class="historico-controles">
+                <button class="btn btn-sm btn-secondary" id="btnHistoricoLluvia">
+                    <i class="fas fa-history"></i> Histórico
+                </button>
+                <button class="btn btn-sm btn-primary export-btn" id="btnExportarDatos">
+                    <i class="fas fa-download"></i> Exportar
+                </button>
+            </div>
+        </div>
+        <!-- CRÍTICO: Contenedor con tamaño fijo -->
+        <div class="chart-container">
+            <canvas id="graficoPrecipitacion"></canvas>
+        </div>
+    </div>
+</div>
+
+            <!-- Predicciones y recomendaciones -->
+            <div class="prediccion-container">
+                <!-- Pronóstico -->
+                <div class="prediccion-card">
+                    <div class="prediccion-header">
+                        <div class="prediccion-icon">
+                            <i class="fas fa-calendar-alt"></i>
+                        </div>
+                        <h3>Pronóstico 7 días</h3>
+                    </div>
+                    
+                    <div class="pronostico-dias" id="pronosticoDias">
+                        <!-- Los días se cargarán dinámicamente -->
+                    </div>
+                </div>
+
+                <!-- Recomendaciones IA -->
+                <div class="recomendaciones-ia">
+                    <div class="prediccion-header">
+                        <div class="prediccion-icon">
+                            <i class="fas fa-robot"></i>
+                        </div>
+                        <h3>Recomendaciones IA</h3>
+                    </div>
+                    
+                    <div id="recomendacionesIA">
+                        <!-- Las recomendaciones se cargarán dinámicamente -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Modal de configuración -->
+    <div class="modal-overlay" id="modalConfiguracion">
+        <div class="modal">
+            <div class="modal-header">
+                <h2 class="modal-title">Configuración Climática</h2>
+                <button class="modal-close" id="cerrarModalConfig">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label class="form-label">Frecuencia de actualización</label>
+                    <select class="form-input" id="frecuenciaActualizacion">
+                        <option value="5">Cada 5 minutos</option>
+                        <option value="15" selected>Cada 15 minutos</option>
+                        <option value="30">Cada 30 minutos</option>
+                        <option value="60">Cada hora</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">Alertas de temperatura</label>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                        <div>
+                            <label class="form-label">Temperatura mínima (°C)</label>
+                            <input type="number" class="form-input" id="tempMinima" value="5">
+                        </div>
+                        <div>
+                            <label class="form-label">Temperatura máxima (°C)</label>
+                            <input type="number" class="form-input" id="tempMaxima" value="35">
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">Alertas de humedad</label>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                        <div>
+                            <label class="form-label">Humedad mínima (%)</label>
+                            <input type="number" class="form-input" id="humedadMinima" value="30">
+                        </div>
+                        <div>
+                            <label class="form-label">Humedad máxima (%)</label>
+                            <input type="number" class="form-input" id="humedadMaxima" value="85">
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="form-checkbox">
+                    <input type="checkbox" id="notificacionesPush" checked>
+                    <label for="notificacionesPush">Recibir notificaciones push</label>
+                </div>
+                
+                <div class="form-checkbox">
+                    <input type="checkbox" id="alertasEmail" checked>
+                    <label for="alertasEmail">Enviar alertas por email</label>
+                </div>
+                
+                <div style="display: flex; gap: 1rem; margin-top: 2rem;">
+                    <button class="btn btn-primary" id="guardarConfiguracion">
+                        <i class="fas fa-save"></i> Guardar
+                    </button>
+                    <button class="btn btn-secondary" id="resetearConfiguracion">
+                        <i class="fas fa-undo"></i> Restablecer
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts Firebase (deben cargarse primero) -->
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-storage-compat.js"></script>
+
+    <!-- Scripts de aplicación -->
+    <script type="module" src="/js/firebase-config.js"></script>
+    <script type="module" src="/js/auth.js"></script>
+    <script type="module" src="/js/nav.js"></script>
+    <script type="module" src="/js/offline.js"></script>
+    <script type="module" src="/js/clima.js"></script>
+    
+    <script>
+        // Variables globales
+        let graficoTemperatura, graficoPrecipitacion;
+        let intervaloActualizacion;
+        let sistemaInicializado = false;
+
+        // ==========================================
+        // FUNCIONES DE ESPERA Y INICIALIZACIÓN
+        // ==========================================
+
+        /**
+         * Espera a que Firebase esté completamente inicializado
+         */
+        function esperarFirebase() {
+            return new Promise((resolve) => {
+                const maxWait = 10000; // 10 segundos máximo
+                const checkInterval = 100;
+                let elapsed = 0;
+
+                const check = () => {
+                    if (window.firebase && window.auth && window.db) {
+                        console.log('✅ Firebase disponible para clima.html');
+                        resolve(true);
+                    } else if (elapsed < maxWait) {
+                        elapsed += checkInterval;
+                        setTimeout(check, checkInterval);
+                    } else {
+                        console.warn('⚠️ Timeout esperando Firebase en clima.html');
+                        resolve(false);
+                    }
+                };
+
+                // También escuchar el evento firebaseReady
+                window.addEventListener('firebaseReady', () => {
+                    console.log('🔥 Evento firebaseReady recibido');
+                    resolve(true);
+                }, { once: true });
+
+                check();
+            });
+        }
+
+        /**
+         * Espera a que AuthManager esté listo
+         */
+        function esperarAuthManager() {
+            return new Promise((resolve) => {
+                const maxWait = 10000; // 10 segundos máximo
+                const checkInterval = 100;
+                let elapsed = 0;
+
+                const check = () => {
+                    if (window.authManager && window.authManager.isInitialized) {
+                        console.log('✅ AuthManager disponible para clima.html');
+                        resolve(true);
+                    } else if (elapsed < maxWait) {
+                        elapsed += checkInterval;
+                        setTimeout(check, checkInterval);
+                    } else {
+                        console.warn('⚠️ Timeout esperando AuthManager en clima.html');
+                        resolve(false);
+                    }
+                };
+
+                check();
+            });
+        }
+
+        /**
+         * Espera a que ClimateManager esté listo
+         */
+        function esperarClimateManager() {
+            return new Promise((resolve) => {
+                const maxWait = 15000; // 15 segundos máximo
+                const checkInterval = 200;
+                let elapsed = 0;
+
+                const check = () => {
+                    if (window.climateManager || window.climaManager) {
+                        console.log('✅ ClimateManager disponible para clima.html');
+                        resolve(true);
+                    } else if (elapsed < maxWait) {
+                        elapsed += checkInterval;
+                        setTimeout(check, checkInterval);
+                    } else {
+                        console.warn('⚠️ Timeout esperando ClimateManager en clima.html');
+                        resolve(false);
+                    }
+                };
+
+                check();
+            });
+        }
+
+        /**
+         * Verificación de autenticación que espera a Firebase
+         */
+        async function verificarAutenticacion() {
+            try {
+                const firebaseReady = await esperarFirebase();
+                if (!firebaseReady) {
+                    console.error('❌ Firebase no disponible para autenticación');
+                    return false;
+                }
+
+                return new Promise((resolve) => {
+                    if (window.firebase && window.firebase.auth) {
+                        window.firebase.auth().onAuthStateChanged((user) => {
+                            resolve(!!user);
+                        });
+                    } else {
+                        console.error('❌ Firebase Auth no disponible');
+                        resolve(false);
+                    }
+                });
+            } catch (error) {
+                console.error('❌ Error en verificación de autenticación:', error);
+                return false;
+            }
+        }
+
+        // ==========================================
+        // INICIALIZACIÓN PRINCIPAL
+        // ==========================================
+
+        /**
+         * Inicialización de la página con manejo robusto de dependencias
+         */
+        document.addEventListener('DOMContentLoaded', async () => {
+            try {
+                console.log('🌦️ Iniciando aplicación climática...');
+                
+                // Mostrar loader
+                document.getElementById('initLoader').classList.remove('hidden');
+
+                // Paso 1: Verificar autenticación
+                const autenticado = await verificarAutenticacion();
+                if (!autenticado) {
+                    console.log('❌ Usuario no autenticado, redirigiendo...');
+                    window.location.href = '/login.html';
+                    return;
+                }
+                console.log('✅ Usuario autenticado');
+
+                // Paso 2: Esperar AuthManager
+                await esperarAuthManager();
+
+                // Paso 3: Esperar ClimateManager
+                await esperarClimateManager();
+
+                // Paso 4: Inicializar aplicación
+                await inicializarPagina();
+
+                sistemaInicializado = true;
+                console.log('🎉 Sistema climático completamente inicializado');
+
+            } catch (error) {
+                console.error('❌ Error fatal en inicialización:', error);
+                mostrarError('Error crítico iniciando la aplicación');
+            } finally {
+                // Ocultar loader
+                document.getElementById('initLoader').classList.add('hidden');
+            }
+        });
+
+        async function inicializarPagina() {
+            try {
+                console.log('⚙️ Inicializando componentes de la página...');
+                
+                // Configurar event listeners
+                configurarEventListeners();
+                
+                // Cargar datos climáticos iniciales
+                await cargarDatosClimaticos();
+                
+                // Inicializar gráficos
+                inicializarGraficos();
+                
+                // Configurar actualización automática
+                configurarActualizacionAutomatica();
+                
+                // Cargar pronóstico
+                await cargarPronostico();
+                
+                // Generar recomendaciones IA
+                await generarRecomendacionesIA();
+                
+                console.log('✅ Página climática inicializada correctamente');
+                
+            } catch (error) {
+                console.error('❌ Error inicializando página:', error);
+                mostrarError('Error cargando los datos climáticos');
+            }
+        }
+
+        // ==========================================
+        // CONFIGURACIÓN DE EVENTOS
+        // ==========================================
+
+        function configurarEventListeners() {
+            // Botones principales
+            document.getElementById('btnActualizar')?.addEventListener('click', actualizarDatos);
+            document.getElementById('btnConfiguracion')?.addEventListener('click', abrirConfiguracion);
+            document.getElementById('btnExportarDatos')?.addEventListener('click', exportarDatos);
+            document.getElementById('btnHistoricoLluvia')?.addEventListener('click', mostrarHistoricoLluvia);
+            
+            // Modal de configuración
+            document.getElementById('cerrarModalConfig')?.addEventListener('click', cerrarConfiguracion);
+            document.getElementById('guardarConfiguracion')?.addEventListener('click', guardarConfiguracion);
+            document.getElementById('resetearConfiguracion')?.addEventListener('click', resetearConfiguracion);
+            
+            // Selectores de período
+            document.querySelectorAll('.periodo-btn').forEach(btn => {
+                btn.addEventListener('click', (e) => cambiarPeriodo(e.target.dataset.periodo));
+            });
+
+            // Monitorear conectividad
+            window.addEventListener('online', () => {
+                actualizarEstadoConexion(true);
+                if (sistemaInicializado) {
+                    actualizarDatos();
+                }
+            });
+
+            window.addEventListener('offline', () => {
+                actualizarEstadoConexion(false);
+            });
+
+            console.log('✅ Event listeners configurados');
+        }
+
+        function actualizarEstadoConexion(isOnline) {
+            const elemento = document.getElementById('estadoConexion');
+            if (elemento) {
+                elemento.className = `estado-conexion ${isOnline ? 'online' : 'offline'}`;
+                elemento.innerHTML = `<i class="fas fa-wifi${isOnline ? '' : '-slash'}"></i><span>${isOnline ? 'Conectado' : 'Sin conexión'}</span>`;
+            }
+        }
+
+        // ==========================================
+        // FUNCIONES DE DATOS CLIMÁTICOS
+        // ==========================================
+
+        async function cargarDatosClimaticos() {
+            try {
+                mostrarCargando(true);
+                
+                // Usar el gestor climático disponible
+                const gestor = window.climateManager || window.climaManager;
+                if (gestor) {
+                    // Obtener datos actuales
+                    const datosActuales = await gestor.getWeatherData?.() || await obtenerDatosSimulados();
+                    if (datosActuales && datosActuales.current) {
+                        actualizarInterfazClima(datosActuales.current);
+                    }
+                    
+                    // Verificar alertas
+                    const alertas = await verificarAlertas(datosActuales);
+                    if (alertas.length > 0) {
+                        mostrarAlertas(alertas);
+                    }
+                    
+                    // Actualizar estado de sensores
+                    actualizarEstadoSensores();
+                } else {
+                    console.warn('⚠️ Gestor climático no disponible, usando datos simulados');
+                    const datosSimulados = await obtenerDatosSimulados();
+                    actualizarInterfazClima(datosSimulados);
+                }
+                
+            } catch (error) {
+                console.error('❌ Error cargando datos climáticos:', error);
+                // Intentar con datos offline o simulados
+                const datosBackup = await obtenerDatosSimulados();
+                actualizarInterfazClima(datosBackup);
+                mostrarError('Error cargando datos del clima - mostrando datos de respaldo');
+            } finally {
+                mostrarCargando(false);
+            }
+        }
+
+        // Función de respaldo para datos simulados
+        async function obtenerDatosSimulados() {
+            return {
+                temperature_2m: 25 + Math.random() * 10,
+                relative_humidity_2m: 60 + Math.random() * 20,
+                apparent_temperature: 27 + Math.random() * 8,
+                precipitation: Math.random() * 5,
+                wind_speed_10m: 5 + Math.random() * 15,
+                pressure_msl: 1013 + Math.random() * 20,
+                uv_index: Math.floor(Math.random() * 12),
+                weather_code: 'partly-cloudy'
+            };
+        }
+
+        function actualizarInterfazClima(datos) {
+            try {
+                // Actualizar temperatura principal
+                document.getElementById('temperaturaActual').textContent = Math.round(datos.temperature_2m || datos.temperatura || 0);
+                document.getElementById('climaDescripcion').textContent = datos.descripcion || obtenerDescripcionClima(datos.weather_code);
+                document.getElementById('sensacionTermica').textContent = `${Math.round(datos.apparent_temperature || datos.sensacionTermica || datos.temperature_2m || 0)}°C`;
+                
+                // Actualizar icono principal
+                const iconoElement = document.getElementById('iconoClimaPrincipal');
+                iconoElement.className = `fas ${obtenerIconoClima(datos.weather_code || datos.codigo)}`;
+                
+                // Actualizar detalles
+                document.getElementById('humedad').textContent = `${Math.round(datos.relative_humidity_2m || datos.humedad || 0)}%`;
+                document.getElementById('viento').textContent = `${Math.round(datos.wind_speed_10m || datos.velocidadViento || 0)} km/h`;
+                document.getElementById('visibilidad').textContent = `${datos.visibilidad || '10'} km`;
+                document.getElementById('presion').textContent = `${Math.round(datos.pressure_msl || datos.presion || 1013)} hPa`;
+                document.getElementById('uvIndex').textContent = datos.uv_index || datos.indiceUV || '--';
+                document.getElementById('precipitacion').textContent = `${(datos.precipitation || datos.precipitacion24h || 0).toFixed(1)} mm`;
+
+                console.log('✅ Interfaz climática actualizada');
+            } catch (error) {
+                console.error('❌ Error actualizando interfaz:', error);
+            }
+        }
+
+        function obtenerDescripcionClima(codigo) {
+            const descripciones = {
+                'clear': 'Despejado',
+                'partly-cloudy': 'Parcialmente nublado',
+                'cloudy': 'Nublado',
+                'rain': 'Lluvia',
+                'snow': 'Nieve',
+                'storm': 'Tormenta',
+                'fog': 'Niebla'
+            };
+            return descripciones[codigo] || 'Condiciones variables';
+        }
+
+        function obtenerIconoClima(codigo) {
+            const iconos = {
+                'clear': 'fa-sun',
+                'partly-cloudy': 'fa-cloud-sun',
+                'cloudy': 'fa-cloud',
+                'rain': 'fa-cloud-rain',
+                'snow': 'fa-snowflake',
+                'storm': 'fa-bolt',
+                'fog': 'fa-smog'
+            };
+            return iconos[codigo] || 'fa-sun';
+        }
+
+        async function verificarAlertas(datos) {
+            const alertas = [];
+            
+            if (!datos || !datos.current) return alertas;
+            
+            const current = datos.current;
+            
+            // Alertas de temperatura
+            if (current.temperature_2m > 35) {
+                alertas.push({
+                    tipo: 'danger',
+                    icono: 'fa-thermometer-full',
+                    titulo: 'Temperatura Alta',
+                    mensaje: 'Temperatura muy elevada. Incrementar riego y proteger cultivos.',
+                    accion: 'Ver recomendaciones'
+                });
+            }
+            
+            if (current.temperature_2m < 5) {
+                alertas.push({
+                    tipo: 'warning',
+                    icono: 'fa-snowflake',
+                    titulo: 'Riesgo de Helada',
+                    mensaje: 'Temperatura baja. Proteger plantas sensibles.',
+                    accion: 'Medidas de protección'
+                });
+            }
+            
+            // Alertas de viento
+            if (current.wind_speed_10m > 50) {
+                alertas.push({
+                    tipo: 'danger',
+                    icono: 'fa-wind',
+                    titulo: 'Vientos Fuertes',
+                    mensaje: 'Vientos peligrosos. Revisar estructuras y asegurar plantas.',
+                    accion: 'Plan de emergencia'
+                });
+            }
+            
+            // Alertas de humedad
+            if (current.relative_humidity_2m > 85) {
+                alertas.push({
+                    tipo: 'info',
+                    icono: 'fa-tint',
+                    titulo: 'Humedad Alta',
+                    mensaje: 'Condiciones favorables para hongos. Aplicar fungicidas preventivos.',
+                    accion: 'Ver tratamientos'
+                });
+            }
+            
+            return alertas;
+        }
+
+        function mostrarAlertas(alertas) {
+            const container = document.getElementById('alertasClimaticas');
+            
+            if (alertas.length === 0) {
+                container.innerHTML = '';
+                return;
+            }
+            
+            container.innerHTML = alertas.map(alerta => `
+                <div class="alerta-clima ${alerta.tipo}">
+                    <div class="alerta-icon">
+                        <i class="fas ${alerta.icono}"></i>
+                    </div>
+                    <div class="alerta-contenido">
+                        <h4>${alerta.titulo}</h4>
+                        <p>${alerta.mensaje}</p>
+                        ${alerta.accion ? `<button class="btn btn-sm btn-primary">${alerta.accion}</button>` : ''}
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // ==========================================
+        // FUNCIONES DE GRÁFICOS
+        // ==========================================
+
+        function inicializarGraficos() {
+            try {
+                // Gráfico de temperatura y humedad
+                const ctxTemp = document.getElementById('graficoTemperatura');
+                if (ctxTemp) {
+                    graficoTemperatura = new Chart(ctxTemp, {
+                        type: 'line',
+                        data: {
+                            labels: [],
+                            datasets: [
+                                {
+                                    label: 'Temperatura (°C)',
+                                    data: [],
+                                    borderColor: '#ef4444',
+                                    backgroundColor: 'rgba(239, 68, 68, 0.1)',
+                                    tension: 0.4,
+                                    yAxisID: 'y'
+                                },
+                                {
+                                    label: 'Humedad (%)',
+                                    data: [],
+                                    borderColor: '#3b82f6',
+                                    backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                                    tension: 0.4,
+                                    yAxisID: 'y1'
+                                }
+                            ]
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            plugins: {
+                                legend: {
+                                    labels: { 
+                                        color: getComputedStyle(document.documentElement).getPropertyValue('--text-primary') || '#333'
+                                    }
+                                }
+                            },
+                            scales: {
+                                x: {
+                                    ticks: { 
+                                        color: getComputedStyle(document.documentElement).getPropertyValue('--text-secondary') || '#666'
+                                    },
+                                    grid: { 
+                                        color: 'rgba(0, 0, 0, 0.1)'
+                                    }
+                                },
+                                y: {
+                                    type: 'linear',
+                                    display: true,
+                                    position: 'left',
+                                    ticks: { 
+                                        color: getComputedStyle(document.documentElement).getPropertyValue('--text-secondary') || '#666'
+                                    },
+                                    grid: { 
+                                        color: 'rgba(0, 0, 0, 0.1)'
+                                    }
+                                },
+                                y1: {
+                                    type: 'linear',
+                                    display: true,
+                                    position: 'right',
+                                    ticks: { 
+                                        color: getComputedStyle(document.documentElement).getPropertyValue('--text-secondary') || '#666'
+                                    },
+                                    grid: { drawOnChartArea: false }
+                                }
+                            }
+                        }
+                    });
+                }
+
+                // Gráfico de precipitación
+                const ctxPrec = document.getElementById('graficoPrecipitacion');
+                if (ctxPrec) {
+                    graficoPrecipitacion = new Chart(ctxPrec, {
+                        type: 'bar',
+                        data: {
+                            labels: [],
+                            datasets: [{
+                                label: 'Precipitación (mm)',
+                                data: [],
+                                backgroundColor: 'rgba(59, 130, 246, 0.6)',
+                                borderColor: '#3b82f6',
+                                borderWidth: 1
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            plugins: {
+                                legend: {
+                                    labels: { 
+                                        color: getComputedStyle(document.documentElement).getPropertyValue('--text-primary') || '#333'
+                                    }
+                                }
+                            },
+                            scales: {
+                                x: {
+                                    ticks: { 
+                                        color: getComputedStyle(document.documentElement).getPropertyValue('--text-secondary') || '#666'
+                                    },
+                                    grid: { 
+                                        color: 'rgba(0, 0, 0, 0.1)'
+                                    }
+                                },
+                                y: {
+                                    ticks: { 
+                                        color: getComputedStyle(document.documentElement).getPropertyValue('--text-secondary') || '#666'
+                                    },
+                                    grid: { 
+                                        color: 'rgba(0, 0, 0, 0.1)'
+                                    }
+                                }
+                            }
+                        }
+                    });
+                }
+
+                // Cargar datos iniciales para los gráficos
+                cargarDatosGraficos('24h');
+                
+                console.log('✅ Gráficos inicializados');
+            } catch (error) {
+                console.error('❌ Error inicializando gráficos:', error);
+            }
+        }
+
+        async function cargarDatosGraficos(periodo) {
+            try {
+                const gestor = window.climateManager || window.climaManager;
+                
+                if (gestor && gestor.getWeatherData) {
+                    const datosHistoricos = await gestor.getWeatherData();
+                    
+                    // Simular datos históricos si no están disponibles
+                    const labels = [];
+                    const temperaturas = [];
+                    const humedades = [];
+                    const precipitacion = [];
+                    
+                    const now = new Date();
+                    const puntos = periodo === '24h' ? 24 : periodo === '7d' ? 7 : 30;
+                    
+                    for (let i = puntos - 1; i >= 0; i--) {
+                        const fecha = new Date(now.getTime() - (i * (periodo === '24h' ? 3600000 : 86400000)));
+                        labels.push(fecha.toLocaleDateString('es-GT', { 
+                            month: 'short', 
+                            day: 'numeric',
+                            ...(periodo === '24h' && { hour: '2-digit' })
+                        }));
+                        
+                        temperaturas.push(20 + Math.random() * 15);
+                        humedades.push(50 + Math.random() * 40);
+                        precipitacion.push(Math.random() * 10);
+                    }
+                    
+                    if (graficoTemperatura) {
+                        graficoTemperatura.data.labels = labels;
+                        graficoTemperatura.data.datasets[0].data = temperaturas;
+                        graficoTemperatura.data.datasets[1].data = humedades;
+                        graficoTemperatura.update();
+                    }
+                    
+                    if (graficoPrecipitacion) {
+                        graficoPrecipitacion.data.labels = labels;
+                        graficoPrecipitacion.data.datasets[0].data = precipitacion;
+                        graficoPrecipitacion.update();
+                    }
+                }
+            } catch (error) {
+                console.error('❌ Error cargando datos históricos:', error);
+            }
+        }
+
+        // ==========================================
+        // FUNCIONES DE PRONÓSTICO Y RECOMENDACIONES
+        // ==========================================
+
+        async function cargarPronostico() {
+            try {
+                const container = document.getElementById('pronosticoDias');
+                container.innerHTML = '<div class="loading-spinner"><i class="fas fa-spinner fa-spin"></i></div>';
+                
+                const gestor = window.climateManager || window.climaManager;
+                
+                // Generar pronóstico simulado
+                const pronostico = [];
+                const today = new Date();
+                
+                for (let i = 0; i < 7; i++) {
+                    const fecha = new Date(today.getTime() + (i * 86400000));
+                    const tempMax = Math.round(25 + Math.random() * 10);
+                    const tempMin = Math.round(tempMax - 5 - Math.random() * 5);
+                    
+                    pronostico.push({
+                        fecha: fecha.toISOString(),
+                        tempMax,
+                        tempMin,
+                        descripcion: i === 0 ? 'Hoy' : fecha.toLocaleDateString('es-GT', { weekday: 'short' }),
+                        codigo: ['clear', 'partly-cloudy', 'cloudy', 'rain'][Math.floor(Math.random() * 4)]
+                    });
+                }
+                
+                container.innerHTML = pronostico.map(dia => `
+                    <div class="dia-pronostico">
+                        <div class="dia-info">
+                            <div class="dia-fecha">${formatearFecha(dia.fecha)}</div>
+                            <div class="dia-descripcion">${obtenerDescripcionClima(dia.codigo)}</div>
+                        </div>
+                        <div class="dia-clima">
+                            <div class="dia-icon">
+                                <i class="fas ${obtenerIconoClima(dia.codigo)}"></i>
+                            </div>
+                            <div class="temperatura-rango">
+                                <div class="temp-max">${dia.tempMax}°</div>
+                                <div class="temp-min">${dia.tempMin}°</div>
+                            </div>
+                        </div>
+                    </div>
+                `).join('');
+                
+                console.log('✅ Pronóstico cargado');
+            } catch (error) {
+                console.error('❌ Error cargando pronóstico:', error);
+                document.getElementById('pronosticoDias').innerHTML = '<div class="error-message">Error cargando pronóstico</div>';
+            }
+        }
+
+        async function generarRecomendacionesIA() {
+            try {
+                const container = document.getElementById('recomendacionesIA');
+                container.innerHTML = '<div class="loading-spinner"><i class="fas fa-spinner fa-spin"></i></div>';
+                
+                // Recomendaciones simuladas basadas en condiciones actuales
+                const recomendaciones = [
+                    {
+                        icono: 'fa-tint',
+                        titulo: 'Optimizar Riego',
+                        descripcion: 'Basado en la humedad del suelo y pronóstico, se recomienda riego moderado en horas de la mañana.',
+                        prioridad: 'alta'
+                    },
+                    {
+                        icono: 'fa-leaf',
+                        titulo: 'Tratamiento Preventivo',
+                        descripcion: 'Las condiciones de humedad favorecen el desarrollo de hongos. Aplicar fungicida preventivo.',
+                        prioridad: 'media'
+                    },
+                    {
+                        icono: 'fa-scissors',
+                        titulo: 'Ventana de Poda',
+                        descripcion: 'Condiciones ideales para poda en los próximos 2 días. Viento moderado y sin lluvia.',
+                        prioridad: 'baja'
+                    },
+                    {
+                        icono: 'fa-apple-alt',
+                        titulo: 'Cosecha Recomendada',
+                        descripcion: 'Condiciones óptimas para cosecha mañana. Clima seco y temperaturas moderadas.',
+                        prioridad: 'alta'
+                    }
+                ];
+                
+                container.innerHTML = recomendaciones.map(rec => `
+                    <div class="recomendacion-item">
+                        <div class="recomendacion-icon">
+                            <i class="fas ${rec.icono}"></i>
+                        </div>
+                        <div>
+                            <h4>${rec.titulo}</h4>
+                            <p>${rec.descripcion}</p>
+                            ${rec.prioridad === 'alta' ? '<span style="color: #ef4444; font-weight: 600;">Alta prioridad</span>' : ''}
+                        </div>
+                    </div>
+                `).join('');
+                
+                console.log('✅ Recomendaciones IA generadas');
+            } catch (error) {
+                console.error('❌ Error generando recomendaciones:', error);
+                document.getElementById('recomendacionesIA').innerHTML = '<div class="error-message">Error generando recomendaciones</div>';
+            }
+        }
+
+        // ==========================================
+        // FUNCIONES DE CONTROL
+        // ==========================================
+
+        function cambiarPeriodo(periodo) {
+            // Actualizar botones activos
+            document.querySelectorAll('.periodo-btn').forEach(btn => btn.classList.remove('active'));
+            document.querySelector(`[data-periodo="${periodo}"]`)?.classList.add('active');
+            
+            // Cargar nuevos datos
+            cargarDatosGraficos(periodo);
+        }
+
+        function configurarActualizacionAutomatica() {
+            const frecuencia = localStorage.getItem('frecuenciaActualizacion') || 15;
+            
+            if (intervaloActualizacion) {
+                clearInterval(intervaloActualizacion);
+            }
+            
+            intervaloActualizacion = setInterval(() => {
+                if (navigator.onLine && sistemaInicializado) {
+                    actualizarDatos();
+                }
+            }, frecuencia * 60 * 1000);
+            
+            console.log(`⏰ Actualización automática configurada cada ${frecuencia} minutos`);
+        }
+
+        async function actualizarDatos() {
+            try {
+                const btnActualizar = document.getElementById('btnActualizar');
+                if (btnActualizar) {
+                    btnActualizar.innerHTML = '<i class="fas fa-sync-alt fa-spin"></i> Actualizando';
+                }
+                
+                await Promise.all([
+                    cargarDatosClimaticos(),
+                    cargarPronostico(),
+                    generarRecomendacionesIA()
+                ]);
+                
+                mostrarNotificacion('Datos actualizados correctamente', 'success');
+                
+            } catch (error) {
+                console.error('❌ Error actualizando datos:', error);
+                mostrarNotificacion('Error actualizando datos', 'error');
+            } finally {
+                const btnActualizar = document.getElementById('btnActualizar');
+                if (btnActualizar) {
+                    btnActualizar.innerHTML = '<i class="fas fa-sync-alt"></i> Actualizar';
+                }
+            }
+        }
+
+        // ==========================================
+        // FUNCIONES DE MODAL Y CONFIGURACIÓN
+        // ==========================================
+
+        function abrirConfiguracion() {
+            document.getElementById('modalConfiguracion')?.classList.add('show');
+        }
+
+        function cerrarConfiguracion() {
+            document.getElementById('modalConfiguracion')?.classList.remove('show');
+        }
+
+        function guardarConfiguracion() {
+            const config = {
+                frecuenciaActualizacion: document.getElementById('frecuenciaActualizacion')?.value || '15',
+                tempMinima: document.getElementById('tempMinima')?.value || '5',
+                tempMaxima: document.getElementById('tempMaxima')?.value || '35',
+                humedadMinima: document.getElementById('humedadMinima')?.value || '30',
+                humedadMaxima: document.getElementById('humedadMaxima')?.value || '85',
+                notificacionesPush: document.getElementById('notificacionesPush')?.checked || false,
+                alertasEmail: document.getElementById('alertasEmail')?.checked || false
+            };
+            
+            // Guardar configuración
+            Object.entries(config).forEach(([key, value]) => {
+                localStorage.setItem(key, value);
+            });
+            
+            // Reconfigurar actualización automática
+            configurarActualizacionAutomatica();
+            
+            mostrarNotificacion('Configuración guardada', 'success');
+            cerrarConfiguracion();
+        }
+
+        function resetearConfiguracion() {
+            document.getElementById('frecuenciaActualizacion').value = '15';
+            document.getElementById('tempMinima').value = '5';
+            document.getElementById('tempMaxima').value = '35';
+            document.getElementById('humedadMinima').value = '30';
+            document.getElementById('humedadMaxima').value = '85';
+            document.getElementById('notificacionesPush').checked = true;
+            document.getElementById('alertasEmail').checked = true;
+        }
+
+        // ==========================================
+        // FUNCIONES AUXILIARES
+        // ==========================================
+
+        function exportarDatos() {
+            const gestor = window.climateManager || window.climaManager;
+            if (gestor && gestor.exportarDatos) {
+                gestor.exportarDatos();
+            } else {
+                mostrarNotificacion('Función de exportación no disponible', 'warning');
+            }
+        }
+
+        function mostrarHistoricoLluvia() {
+            const gestor = window.climateManager || window.climaManager;
+            if (gestor && gestor.mostrarHistoricoDetallado) {
+                gestor.mostrarHistoricoDetallado('precipitacion');
+            } else {
+                mostrarNotificacion('Histórico detallado no disponible', 'warning');
+            }
+        }
+
+        function actualizarEstadoSensores() {
+            // Simular estado de sensores
+            const sensores = [
+                { id: 'sensorTemperatura', valor: `${(25 + Math.random() * 10).toFixed(1)}°C`, estado: 'online' },
+                { id: 'sensorHumedad', valor: `${Math.round(60 + Math.random() * 20)}%`, estado: 'online' },
+                { id: 'sensorSuelo', valor: `${Math.round(30 + Math.random() * 40)}%`, estado: Math.random() > 0.3 ? 'online' : 'offline' },
+                { id: 'sensorViento', valor: `${Math.round(5 + Math.random() * 15)} km/h`, estado: 'online' }
+            ];
+            
+            sensores.forEach(sensor => {
+                const elemento = document.getElementById(sensor.id);
+                if (elemento) {
+                    elemento.textContent = sensor.valor;
+                }
+                
+                const estadoElement = elemento?.parentElement.querySelector('.sensor-estado');
+                if (estadoElement) {
+                    estadoElement.className = `sensor-estado ${sensor.estado}`;
+                    estadoElement.textContent = sensor.estado === 'online' ? 'Online' : 'Offline';
+                }
+            });
+        }
+
+        function formatearFecha(fecha) {
+            return new Date(fecha).toLocaleDateString('es-GT', {
+                weekday: 'short',
+                day: 'numeric',
+                month: 'short'
+            });
+        }
+
+        function mostrarCargando(mostrar) {
+            // Implementar indicador de carga si es necesario
+            console.log(mostrar ? '⏳ Cargando...' : '✅ Carga completada');
+        }
+
+        function mostrarError(mensaje) {
+            mostrarNotificacion(mensaje, 'error');
+        }
+
+        function mostrarNotificacion(mensaje, tipo = 'info') {
+            console.log(`${tipo.toUpperCase()}: ${mensaje}`);
+            
+            // Si hay un sistema de notificaciones disponible, usarlo
+            if (window.notificationManager) {
+                switch(tipo) {
+                    case 'success':
+                        window.notificationManager.success(mensaje);
+                        break;
+                    case 'error':
+                        window.notificationManager.error(mensaje);
+                        break;
+                    case 'warning':
+                        window.notificationManager.warning(mensaje);
+                        break;
+                    default:
+                        window.notificationManager.info(mensaje);
+                }
+            }
+        }
+
+        // ==========================================
+        // MANEJO DE ERRORES GLOBALES
+        // ==========================================
+
+        window.addEventListener('error', (event) => {
+            console.error('❌ Error global:', event.error);
+            mostrarError('Error inesperado en la aplicación');
+        });
+
+        window.addEventListener('unhandledrejection', (event) => {
+            console.error('❌ Promesa rechazada no manejada:', event.reason);
+            mostrarError('Error de conexión o servicio');
+        });
+    </script>
+</body>
+</html>

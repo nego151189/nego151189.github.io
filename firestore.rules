@@ -1,0 +1,366 @@
+// firestore.rules - Reglas de Seguridad Finca La Herradura
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // ==================== FUNCIONES AUXILIARES ====================
+    
+    // Verificar si el usuario está autenticado
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+    
+    // Verificar si el usuario es propietario del documento
+    function isOwner(userId) {
+      return request.auth.uid == userId;
+    }
+    
+    // Verificar rol del usuario
+    function hasRole(role) {
+      return isAuthenticated() && 
+             get(/databases/$(database)/documents/usuarios/$(request.auth.uid)).data.role == role;
+    }
+    
+    // Verificar si es administrador
+    function isAdmin() {
+      return hasRole('administrador');
+    }
+    
+    // Verificar si es trabajador
+    function isWorker() {
+      return hasRole('trabajador');
+    }
+    
+    // Verificar si es admin o trabajador
+    function isAuthorizedUser() {
+      return isAdmin() || isWorker();
+    }
+    
+    // Verificar si el documento pertenece a la finca del usuario
+    function belongsToUserFinca() {
+      return isAuthenticated() && 
+             resource.data.fincaId == get(/databases/$(database)/documents/usuarios/$(request.auth.uid)).data.fincaId;
+    }
+    
+    // Verificar campos requeridos para crear documento
+    function hasRequiredFields(fields) {
+      return request.resource.data.keys().hasAll(fields);
+    }
+    
+    // Verificar que no se modifiquen campos protegidos
+    function protectedFieldsUnchanged(fields) {
+      return !request.resource.data.diff(resource.data).affectedKeys().hasAny(fields);
+    }
+    
+    // Verificar límites de datos
+    function withinLimits() {
+      return request.resource.data.size() < 1000000; // 1MB límite por documento
+    }
+    
+    // Verificar timestamp válido
+    function validTimestamp(field) {
+      return request.resource.data[field] is timestamp &&
+             request.resource.data[field] <= request.time;
+    }
+    
+    // ==================== COLECCIÓN USUARIOS ====================
+    match /usuarios/{userId} {
+      // Lectura: Solo el propio usuario o admins
+      allow read: if isOwner(userId) || isAdmin();
+      
+      // Creación: Solo durante registro con campos válidos
+      allow create: if isOwner(userId) && 
+                   hasRequiredFields(['email', 'role', 'fincaId', 'fechaCreacion']) &&
+                   request.resource.data.role in ['administrador', 'trabajador'] &&
+                   validTimestamp('fechaCreacion') &&
+                   withinLimits();
+      
+      // Actualización: Solo el propio usuario (no puede cambiar role o fincaId)
+      allow update: if isOwner(userId) && 
+                   protectedFieldsUnchanged(['role', 'fincaId', 'email', 'fechaCreacion']) &&
+                   withinLimits();
+      
+      // Eliminación: Solo administradores
+      allow delete: if isAdmin();
+    }
+    
+    // ==================== COLECCIÓN ÁRBOLES ====================
+    match /arboles/{arbolId} {
+      // Lectura: Usuarios autorizados de la misma finca
+      allow read: if isAuthorizedUser() && belongsToUserFinca();
+      
+      // Creación: Solo administradores con datos válidos
+      allow create: if isAdmin() && 
+                   hasRequiredFields(['numero', 'ubicacion', 'fechaPlantacion', 'estado']) &&
+                   request.resource.data.estado in ['saludable', 'enfermo', 'tratamiento', 'cosecha'] &&
+                   validTimestamp('fechaPlantacion') &&
+                   withinLimits();
+      
+      // Actualización: Admins pueden todo, trabajadores solo ciertos campos
+      allow update: if (isAdmin() && withinLimits()) ||
+                   (isWorker() && belongsToUserFinca() && 
+                    request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+                      'estado', 'observaciones', 'ultimaRevision', 'fotos'
+                    ]) && withinLimits());
+      
+      // Eliminación: Solo administradores
+      allow delete: if isAdmin();
+      
+      // Sub-colección historial
+      match /historial/{historialId} {
+        allow read, write: if isAuthorizedUser() && belongsToUserFinca();
+      }
+    }
+    
+    // ==================== COLECCIÓN PRODUCCIÓN ====================
+    match /produccion/{produccionId} {
+      // Lectura: Usuarios autorizados
+      allow read: if isAuthorizedUser() && belongsToUserFinca();
+      
+      // Creación: Usuarios autorizados con datos válidos
+      allow create: if isAuthorizedUser() && 
+                   hasRequiredFields(['fecha', 'cantidad', 'arbolId', 'responsable']) &&
+                   request.resource.data.cantidad >= 0 &&
+                   validTimestamp('fecha') &&
+                   withinLimits();
+      
+      // Actualización: Solo el responsable o admins
+      allow update: if (isAdmin() || 
+                       (resource.data.responsable == request.auth.uid)) &&
+                   belongsToUserFinca() &&
+                   withinLimits();
+      
+      // Eliminación: Solo administradores
+      allow delete: if isAdmin();
+    }
+    
+    // ==================== COLECCIÓN TRATAMIENTOS ====================
+    match /tratamientos/{tratamientoId} {
+      // Lectura: Usuarios autorizados
+      allow read: if isAuthorizedUser() && belongsToUserFinca();
+      
+      // Creación: Usuarios autorizados con datos válidos
+      allow create: if isAuthorizedUser() && 
+                   hasRequiredFields(['fecha', 'arbolId', 'producto', 'enfermedad']) &&
+                   validTimestamp('fecha') &&
+                   withinLimits();
+      
+      // Actualización: Responsable o admin
+      allow update: if (isAdmin() || 
+                       (resource.data.responsable == request.auth.uid)) &&
+                   belongsToUserFinca() &&
+                   withinLimits();
+      
+      // Eliminación: Solo administradores
+      allow delete: if isAdmin();
+    }
+    
+    // ==================== COLECCIÓN VENTAS ====================
+    match /ventas/{ventaId} {
+      // Lectura: Usuarios autorizados
+      allow read: if isAuthorizedUser() && belongsToUserFinca();
+      
+      // Creación: Usuarios autorizados con datos válidos
+      allow create: if isAuthorizedUser() && 
+                   hasRequiredFields(['fecha', 'cantidad', 'precio', 'cliente']) &&
+                   request.resource.data.cantidad > 0 &&
+                   request.resource.data.precio > 0 &&
+                   validTimestamp('fecha') &&
+                   withinLimits();
+      
+      // Actualización: Admin o responsable de la venta
+      allow update: if (isAdmin() || 
+                       (resource.data.responsable == request.auth.uid)) &&
+                   belongsToUserFinca() &&
+                   // No permitir cambiar cantidad o precio si ya está confirmada
+                   (resource.data.estado != 'confirmada' || 
+                    protectedFieldsUnchanged(['cantidad', 'precio'])) &&
+                   withinLimits();
+      
+      // Eliminación: Solo admin y solo si no está confirmada
+      allow delete: if isAdmin() && resource.data.estado != 'confirmada';
+    }
+    
+    // ==================== COLECCIÓN GASTOS ====================
+    match /gastos/{gastoId} {
+      // Lectura: Usuarios autorizados
+      allow read: if isAuthorizedUser() && belongsToUserFinca();
+      
+      // Creación: Usuarios autorizados
+      allow create: if isAuthorizedUser() && 
+                   hasRequiredFields(['fecha', 'monto', 'categoria', 'descripcion']) &&
+                   request.resource.data.monto > 0 &&
+                   validTimestamp('fecha') &&
+                   withinLimits();
+      
+      // Actualización: Admin o quien registró el gasto
+      allow update: if (isAdmin() || 
+                       (resource.data.creadoPor == request.auth.uid)) &&
+                   belongsToUserFinca() &&
+                   withinLimits();
+      
+      // Eliminación: Solo administradores
+      allow delete: if isAdmin();
+    }
+    
+    // ==================== COLECCIÓN RECORDATORIOS ====================
+    match /recordatorios/{recordatorioId} {
+      // Lectura: Usuarios autorizados
+      allow read: if isAuthorizedUser() && belongsToUserFinca();
+      
+      // Creación: Usuarios autorizados
+      allow create: if isAuthorizedUser() && 
+                   hasRequiredFields(['titulo', 'fecha', 'responsable']) &&
+                   validTimestamp('fecha') &&
+                   withinLimits();
+      
+      // Actualización: Responsable o admin
+      allow update: if (isAdmin() || 
+                       (resource.data.responsable == request.auth.uid) ||
+                       (request.resource.data.responsable == request.auth.uid)) &&
+                   belongsToUserFinca() &&
+                   withinLimits();
+      
+      // Eliminación: Responsable o admin
+      allow delete: if (isAdmin() || 
+                       (resource.data.responsable == request.auth.uid));
+    }
+    
+    // ==================== COLECCIÓN PRECIOS ====================
+    match /precios/{precioId} {
+      // Lectura: Todos los usuarios autorizados
+      allow read: if isAuthorizedUser();
+      
+      // Creación/Actualización: Solo administradores
+      allow create, update: if isAdmin() && 
+                           hasRequiredFields(['fecha', 'precio', 'mercado']) &&
+                           request.resource.data.precio > 0 &&
+                           validTimestamp('fecha') &&
+                           withinLimits();
+      
+      // Eliminación: Solo administradores
+      allow delete: if isAdmin();
+    }
+    
+    // ==================== COLECCIÓN CLIENTES ====================
+    match /clientes/{clienteId} {
+      // Lectura: Usuarios autorizados
+      allow read: if isAuthorizedUser() && belongsToUserFinca();
+      
+      // Creación: Usuarios autorizados con datos válidos
+      allow create: if isAuthorizedUser() && 
+                   hasRequiredFields(['nombre', 'tipo', 'contacto']) &&
+                   withinLimits();
+      
+      // Actualización: Admin o quien lo creó
+      allow update: if (isAdmin() || 
+                       (resource.data.creadoPor == request.auth.uid)) &&
+                   belongsToUserFinca() &&
+                   withinLimits();
+      
+      // Eliminación: Solo administradores
+      allow delete: if isAdmin();
+    }
+    
+    // ==================== COLECCIÓN CONTRATOS ====================
+    match /contratos/{contratoId} {
+      // Lectura: Usuarios autorizados
+      allow read: if isAuthorizedUser() && belongsToUserFinca();
+      
+      // Creación: Solo administradores
+      allow create: if isAdmin() && 
+                   hasRequiredFields(['clienteId', 'fechaInicio', 'fechaFin', 'condiciones']) &&
+                   withinLimits();
+      
+      // Actualización: Solo administradores
+      allow update: if isAdmin() && belongsToUserFinca() && withinLimits();
+      
+      // Eliminación: Solo administradores
+      allow delete: if isAdmin();
+    }
+    
+    // ==================== COLECCIÓN LOGS ====================
+    match /logs/{logId} {
+      // Solo lectura para administradores
+      allow read: if isAdmin();
+      
+      // Solo creación (los logs no se modifican ni eliminan)
+      allow create: if isAuthenticated() && 
+                   hasRequiredFields(['timestamp', 'userId', 'action']) &&
+                   validTimestamp('timestamp') &&
+                   withinLimits();
+    }
+    
+    // ==================== COLECCIÓN CONFIGURACIÓN ====================
+    match /configuracion/{configId} {
+      // Lectura: Usuarios autorizados
+      allow read: if isAuthorizedUser();
+      
+      // Escritura: Solo administradores
+      allow write: if isAdmin() && withinLimits();
+    }
+    
+    // ==================== COLECCIÓN NOTIFICACIONES ====================
+    match /notificaciones/{notifId} {
+      // Lectura: Solo el destinatario
+      allow read: if isAuthenticated() && 
+                 resource.data.destinatario == request.auth.uid;
+      
+      // Creación: Sistema o administradores
+      allow create: if isAdmin() && 
+                   hasRequiredFields(['destinatario', 'mensaje', 'fecha']) &&
+                   validTimestamp('fecha') &&
+                   withinLimits();
+      
+      // Actualización: Solo marcar como leída
+      allow update: if isAuthenticated() && 
+                   resource.data.destinatario == request.auth.uid &&
+                   request.resource.data.diff(resource.data).affectedKeys().hasOnly(['leida', 'fechaLectura']);
+      
+      // Eliminación: Destinatario o admin
+      allow delete: if isAdmin() || 
+                   (isAuthenticated() && resource.data.destinatario == request.auth.uid);
+    }
+    
+    // ==================== COLECCIÓN ARCHIVOS ====================
+    match /archivos/{archivoId} {
+      // Lectura: Usuarios autorizados de la misma finca
+      allow read: if isAuthorizedUser() && belongsToUserFinca();
+      
+      // Creación: Usuarios autorizados
+      allow create: if isAuthorizedUser() && 
+                   hasRequiredFields(['nombre', 'tipo', 'fechaSubida']) &&
+                   validTimestamp('fechaSubida') &&
+                   withinLimits();
+      
+      // Actualización: Solo metadatos, no el archivo
+      allow update: if isAuthorizedUser() && 
+                   belongsToUserFinca() &&
+                   protectedFieldsUnchanged(['url', 'nombre', 'tipo', 'tamano']) &&
+                   withinLimits();
+      
+      // Eliminación: Admin o quien lo subió
+      allow delete: if isAdmin() || 
+                   (resource.data.subidoPor == request.auth.uid);
+    }
+    
+    // ==================== BACKUP Y SINCRONIZACIÓN ====================
+    match /backup/{backupId} {
+      // Solo administradores pueden gestionar backups
+      allow read, write: if isAdmin();
+    }
+    
+    match /sync/{syncId} {
+      // Control de sincronización offline
+      allow read, write: if isAuthenticated() && 
+                         resource.data.userId == request.auth.uid;
+    }
+    
+    // ==================== REGLAS POR DEFECTO ====================
+    // Denegar acceso a cualquier otra colección no especificada
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

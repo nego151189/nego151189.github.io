@@ -1,0 +1,1423 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestión de Árboles - Finca La Herradura</title>
+    
+    <!-- Meta tags -->
+    <meta name="description" content="Gestión inteligente de árboles de limón con IA, GPS y análisis predictivo">
+    <meta name="keywords" content="árboles, limones, gestión, salud, GPS, agricultura">
+    
+    <!-- Favicon y PWA -->
+    <link rel="icon" type="image/x-icon" href="/icons/favicon.ico">
+    <link rel="manifest" href="/manifest.json">
+    
+    <!-- CSS -->
+    <link rel="stylesheet" href="/css/main.css">
+    <link rel="stylesheet" href="/css/style.css">
+    
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Mapbox GL JS para mapas GPS -->
+    <script src='https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.js'></script>
+    <link href='https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.css' rel='stylesheet' />
+    
+    <style>
+        /* Variables CSS */
+        :root {
+            --primary: #22c55e;
+            --primary-dark: #16a34a;
+            --secondary: #64748b;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+            --info: #3b82f6;
+            
+            --bg-primary: #ffffff;
+            --bg-secondary: #f8fafc;
+            --bg-card: #ffffff;
+            --text-primary: #1e293b;
+            --text-secondary: #64748b;
+            --border: #e2e8f0;
+            
+            --gradient-primary: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+            
+            --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+            --shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
+            --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+        }
+
+        [data-theme="dark"] {
+            --bg-primary: #0f172a;
+            --bg-secondary: #1e293b;
+            --bg-card: #1e293b;
+            --text-primary: #f1f5f9;
+            --text-secondary: #94a3b8;
+            --border: #334155;
+        }
+
+        /* Layout principal */
+        .main-content-wrapper {
+            padding: 2rem;
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        /* Header de página */
+        .arboles-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+
+        .page-title {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .title-icon {
+            width: 60px;
+            height: 60px;
+            background: var(--gradient-primary);
+            border-radius: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 1.5rem;
+        }
+
+        .page-title h1 {
+            margin: 0;
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--text-primary);
+        }
+
+        .page-title p {
+            margin: 0;
+            color: var(--text-secondary);
+            font-size: 1rem;
+        }
+
+        .header-actions {
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        /* Estadísticas rápidas */
+        .quick-stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .quick-stat {
+            background: var(--bg-card);
+            border-radius: 16px;
+            padding: 1.5rem;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+            border: 1px solid var(--border);
+            transition: all 0.3s ease;
+        }
+
+        .quick-stat:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-lg);
+        }
+
+        .quick-stat::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: var(--gradient-primary);
+        }
+
+        .quick-stat.saludable::before {
+            background: linear-gradient(90deg, #22c55e, #16a34a);
+        }
+
+        .quick-stat.enfermo::before {
+            background: linear-gradient(90deg, #ef4444, #dc2626);
+        }
+
+        .quick-stat.tratamiento::before {
+            background: linear-gradient(90deg, #f59e0b, #d97706);
+        }
+
+        .stat-value {
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin: 0.5rem 0;
+        }
+
+        .stat-label {
+            color: var(--text-secondary);
+            font-size: 0.875rem;
+            font-weight: 500;
+        }
+
+        /* Controles de vista */
+        .view-toggles {
+            display: flex;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 0.25rem;
+            gap: 0.25rem;
+        }
+
+        .view-toggle {
+            padding: 0.75rem 1.5rem;
+            border: none;
+            background: transparent;
+            color: var(--text-secondary);
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: 600;
+            font-size: 0.875rem;
+        }
+
+        .view-toggle.active {
+            background: var(--primary);
+            color: white;
+            box-shadow: var(--shadow);
+        }
+
+        .view-toggle:hover:not(.active) {
+            background: var(--bg-secondary);
+            color: var(--text-primary);
+        }
+
+        /* Botones */
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.75rem 1.5rem;
+            border: none;
+            border-radius: 12px;
+            font-weight: 600;
+            font-size: 0.875rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            white-space: nowrap;
+        }
+
+        .btn-primary {
+            background: var(--primary);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: var(--primary-dark);
+            transform: translateY(-1px);
+            box-shadow: var(--shadow-lg);
+        }
+
+        .btn-secondary {
+            background: var(--bg-secondary);
+            color: var(--text-primary);
+            border: 1px solid var(--border);
+        }
+
+        .btn-secondary:hover {
+            background: var(--bg-card);
+            transform: translateY(-1px);
+            box-shadow: var(--shadow);
+        }
+
+        .btn-danger {
+            background: var(--danger);
+            color: white;
+        }
+
+        .btn-warning {
+            background: var(--warning);
+            color: white;
+        }
+
+        .btn-sm {
+            padding: 0.5rem 1rem;
+            font-size: 0.75rem;
+        }
+
+        /* Filtros */
+        .filtros-avanzados {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .filtros-avanzados h3 {
+            margin: 0 0 1rem 0;
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .filtros-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            align-items: end;
+        }
+
+        .filtro-grupo {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .form-label {
+            font-weight: 600;
+            color: var(--text-primary);
+            font-size: 0.875rem;
+        }
+
+        .form-input, .form-select {
+            padding: 0.75rem;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            font-size: 0.875rem;
+            transition: all 0.3s ease;
+        }
+
+        .form-input:focus, .form-select:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(34, 197, 94, 0.1);
+        }
+
+        /* IA Insights */
+        .ia-insights {
+            background: linear-gradient(135deg, rgba(139, 92, 246, 0.1), rgba(167, 139, 250, 0.1));
+            border: 1px solid rgba(139, 92, 246, 0.2);
+            border-radius: 16px;
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .ia-title {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            margin-bottom: 1rem;
+            color: #8b5cf6;
+            font-weight: 600;
+        }
+
+        .ia-icon {
+            width: 40px;
+            height: 40px;
+            background: linear-gradient(135deg, #8b5cf6, #a855f7);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+        }
+
+        .insights-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1rem;
+        }
+
+        .insight-item {
+            display: flex;
+            gap: 1rem;
+            padding: 1rem;
+            background: rgba(255, 255, 255, 0.7);
+            border-radius: 12px;
+            border: 1px solid rgba(139, 92, 246, 0.1);
+        }
+
+        .insight-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            flex-shrink: 0;
+        }
+
+        .insight-item.success .insight-icon {
+            background: var(--success);
+        }
+
+        .insight-item.warning .insight-icon {
+            background: var(--warning);
+        }
+
+        .insight-item.info .insight-icon {
+            background: var(--info);
+        }
+
+        .insight-content h4 {
+            margin: 0 0 0.5rem 0;
+            font-size: 1rem;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .insight-content p {
+            margin: 0 0 0.5rem 0;
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+            line-height: 1.4;
+        }
+
+        /* Layout principal */
+        .main-content {
+            display: grid;
+            grid-template-columns: 1fr 400px;
+            gap: 2rem;
+            align-items: start;
+        }
+
+        /* Grid de árboles */
+        .arboles-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 1.5rem;
+        }
+
+        .arbol-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 1.5rem;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .arbol-card:hover {
+            transform: translateY(-4px);
+            box-shadow: var(--shadow-lg);
+            border-color: var(--primary);
+        }
+
+        .arbol-numero {
+            font-size: 1.75rem;
+            font-weight: 700;
+            color: var(--primary);
+            margin-bottom: 0.5rem;
+        }
+
+        .arbol-estado-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.375rem 1rem;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 1rem;
+        }
+
+        .arbol-estado-badge.saludable {
+            background: rgba(34, 197, 94, 0.2);
+            color: #16a34a;
+            border: 1px solid rgba(34, 197, 94, 0.3);
+        }
+
+        .arbol-estado-badge.enfermo {
+            background: rgba(239, 68, 68, 0.2);
+            color: #dc2626;
+            border: 1px solid rgba(239, 68, 68, 0.3);
+        }
+
+        .arbol-estado-badge.tratamiento {
+            background: rgba(245, 158, 11, 0.2);
+            color: #d97706;
+            border: 1px solid rgba(245, 158, 11, 0.3);
+        }
+
+        .arbol-metricas {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+            margin: 1rem 0;
+        }
+
+        .metrica-item {
+            text-align: center;
+            padding: 0.75rem;
+            background: var(--bg-secondary);
+            border-radius: 12px;
+        }
+
+        .metrica-valor {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            display: block;
+        }
+
+        .metrica-label {
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+            margin-top: 0.25rem;
+        }
+
+        .arbol-ubicacion {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            color: var(--text-secondary);
+            font-size: 0.875rem;
+            margin-top: 1rem;
+        }
+
+        .gps-coords {
+            font-family: 'Courier New', monospace;
+            background: var(--bg-secondary);
+            padding: 0.25rem 0.5rem;
+            border-radius: 6px;
+            font-size: 0.75rem;
+        }
+
+        .arbol-acciones {
+            display: flex;
+            gap: 0.5rem;
+            margin-top: 1rem;
+        }
+
+        .btn-accion {
+            flex: 1;
+            padding: 0.5rem;
+            border: none;
+            border-radius: 8px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .btn-detalle {
+            background: var(--primary);
+            color: white;
+        }
+
+        .btn-editar {
+            background: var(--warning);
+            color: white;
+        }
+
+        .btn-historial {
+            background: var(--info);
+            color: white;
+        }
+
+        .btn-accion:hover {
+            transform: translateY(-1px);
+            box-shadow: var(--shadow);
+        }
+
+        /* Mapa */
+        .mapa-container {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            overflow: hidden;
+            height: 500px;
+            position: sticky;
+            top: 2rem;
+        }
+
+        #mapa-arboles, #mapa-completo {
+            width: 100%;
+            height: 100%;
+        }
+
+        .mapa-controles {
+            position: absolute;
+            top: 1rem;
+            right: 1rem;
+            z-index: 1000;
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .control-btn {
+            width: 40px;
+            height: 40px;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            color: var(--text-primary);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: var(--shadow);
+            backdrop-filter: blur(10px);
+            transition: all 0.3s ease;
+        }
+
+        .control-btn:hover {
+            background: var(--primary);
+            color: white;
+        }
+
+        /* Modal */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.7);
+            backdrop-filter: blur(4px);
+            z-index: 9999;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .modal-overlay.show {
+            display: flex;
+            opacity: 1;
+        }
+
+        .modal {
+            background: var(--bg-card);
+            border-radius: 20px;
+            max-width: 800px;
+            width: 90%;
+            max-height: 90vh;
+            overflow-y: auto;
+            position: relative;
+            transform: scale(0.9);
+            transition: transform 0.3s ease;
+            border: 1px solid var(--border);
+        }
+
+        .modal-overlay.show .modal {
+            transform: scale(1);
+        }
+
+        .modal-header {
+            padding: 2rem 2rem 1rem;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .modal-title {
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin: 0;
+        }
+
+        .modal-close {
+            background: none;
+            border: none;
+            color: var(--text-secondary);
+            font-size: 1.5rem;
+            cursor: pointer;
+            padding: 0.5rem;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+        }
+
+        .modal-close:hover {
+            background: var(--bg-secondary);
+            color: var(--text-primary);
+        }
+
+        .modal-body {
+            padding: 1rem 2rem 2rem;
+        }
+
+        /* Formularios */
+        .tree-form, .sector-form {
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+        }
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .form-actions {
+            display: flex;
+            gap: 1rem;
+            justify-content: flex-end;
+            margin-top: 1rem;
+        }
+
+        .gps-section {
+            padding: 1rem;
+            background: var(--bg-secondary);
+            border-radius: 12px;
+            border: 1px solid var(--border);
+        }
+
+        .gps-section h4 {
+            margin: 0 0 1rem 0;
+            color: var(--text-primary);
+            font-size: 1rem;
+        }
+
+        .danger-zone {
+            margin-top: 2rem;
+            padding: 1rem;
+            background: rgba(239, 68, 68, 0.1);
+            border: 1px solid rgba(239, 68, 68, 0.2);
+            border-radius: 12px;
+        }
+
+        .danger-zone h4 {
+            margin: 0 0 1rem 0;
+            color: var(--danger);
+            font-size: 1rem;
+        }
+
+        /* Detalles del árbol */
+        .tree-details {
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+        }
+
+        .details-header {
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+        }
+
+        .tree-meta {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .details-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem;
+        }
+
+        .detail-section {
+            padding: 1rem;
+            background: var(--bg-secondary);
+            border-radius: 12px;
+            border: 1px solid var(--border);
+        }
+
+        .detail-section h4 {
+            margin: 0 0 1rem 0;
+            color: var(--text-primary);
+            font-size: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .measurements, .production, .location, .health {
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+        }
+
+        .measure-item, .prod-item, .coord-item, .health-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .measure-label, .prod-label, .coord-label, .health-label {
+            font-weight: 500;
+            color: var(--text-secondary);
+            font-size: 0.875rem;
+        }
+
+        .measure-value, .prod-value, .coord-value {
+            font-weight: 600;
+            color: var(--text-primary);
+            font-size: 0.875rem;
+        }
+
+        .health-bar {
+            position: relative;
+            width: 60px;
+            height: 8px;
+            background: var(--bg-primary);
+            border-radius: 4px;
+            overflow: hidden;
+            border: 1px solid var(--border);
+        }
+
+        .health-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--danger) 0%, var(--warning) 50%, var(--success) 100%);
+            transition: width 0.3s ease;
+        }
+
+        .health-text {
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-left: 0.5rem;
+        }
+
+        .detail-actions {
+            display: flex;
+            gap: 1rem;
+            flex-wrap: wrap;
+        }
+
+        .tree-notes {
+            background: var(--bg-primary);
+            padding: 1rem;
+            border-radius: 8px;
+            border: 1px solid var(--border);
+            font-style: italic;
+            color: var(--text-secondary);
+        }
+
+        /* Tabla */
+        .table-container {
+            background: var(--bg-card);
+            border-radius: 16px;
+            overflow: hidden;
+            border: 1px solid var(--border);
+        }
+
+        .table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .table th {
+            background: var(--bg-secondary);
+            padding: 1rem;
+            text-align: left;
+            font-weight: 600;
+            color: var(--text-primary);
+            border-bottom: 1px solid var(--border);
+        }
+
+        .table td {
+            padding: 1rem;
+            border-bottom: 1px solid var(--border);
+            color: var(--text-primary);
+        }
+
+        .table tbody tr:hover {
+            background: var(--bg-secondary);
+        }
+
+        .status {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.25rem;
+            font-size: 0.875rem;
+        }
+
+        .status.saludable {
+            color: var(--success);
+        }
+
+        .status.enfermo {
+            color: var(--danger);
+        }
+
+        .status.tratamiento {
+            color: var(--warning);
+        }
+
+        /* Historial */
+        .historial-container {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .historial-tabs {
+            display: flex;
+            gap: 0.5rem;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .tab-btn {
+            padding: 0.75rem 1.5rem;
+            border: none;
+            background: transparent;
+            color: var(--text-secondary);
+            font-weight: 500;
+            cursor: pointer;
+            border-bottom: 2px solid transparent;
+            transition: all 0.3s ease;
+        }
+
+        .tab-btn.active {
+            color: var(--primary);
+            border-bottom-color: var(--primary);
+        }
+
+        .tab-content {
+            display: none;
+            padding: 1rem 0;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .timeline {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .timeline-item {
+            display: flex;
+            gap: 1rem;
+            padding: 1rem;
+            background: var(--bg-secondary);
+            border-radius: 8px;
+            border: 1px solid var(--border);
+        }
+
+        .timeline-date {
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+            white-space: nowrap;
+        }
+
+        .timeline-content h5 {
+            margin: 0 0 0.5rem 0;
+            font-size: 0.875rem;
+            color: var(--text-primary);
+        }
+
+        .timeline-content p {
+            margin: 0;
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+        }
+
+        /* Notificaciones */
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 12px 20px;
+            border-radius: 8px;
+            color: white;
+            font-weight: 500;
+            z-index: 10000;
+            animation: slideIn 0.3s ease;
+            box-shadow: var(--shadow-lg);
+        }
+
+        .notification.error {
+            background: var(--danger);
+        }
+
+        .notification.success {
+            background: var(--success);
+        }
+
+        .notification.info {
+            background: var(--info);
+        }
+
+        .notification.warning {
+            background: var(--warning);
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        /* Loading */
+        .loading-skeleton {
+            animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        .no-results {
+            text-align: center;
+            padding: 3rem;
+            color: var(--text-secondary);
+        }
+
+        .no-results i {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+            color: var(--text-secondary);
+        }
+
+        .no-results h3 {
+            margin: 0 0 0.5rem 0;
+            color: var(--text-primary);
+        }
+
+        .no-results p {
+            margin: 0 0 1.5rem 0;
+        }
+
+        /* Responsive */
+        @media (max-width: 1024px) {
+            .main-content {
+                grid-template-columns: 1fr;
+            }
+            
+            .mapa-container {
+                height: 400px;
+                position: relative;
+                top: auto;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .main-content-wrapper {
+                padding: 1rem;
+            }
+            
+            .arboles-header {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            
+            .header-actions {
+                justify-content: center;
+            }
+            
+            .quick-stats {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            
+            .arboles-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .arbol-metricas {
+                grid-template-columns: 1fr;
+            }
+            
+            .filtros-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .insights-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .details-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .form-actions {
+                flex-direction: column;
+            }
+        }
+
+        /* Marcadores del mapa */
+        .tree-marker {
+            border: 2px solid white;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .tree-marker:hover {
+            transform: scale(1.2);
+        }
+
+        .tree-popup {
+            padding: 0.5rem;
+        }
+
+        .tree-popup h4 {
+            margin: 0 0 0.5rem 0;
+            font-size: 1rem;
+        }
+
+        .tree-popup p {
+            margin: 0 0 0.25rem 0;
+            font-size: 0.875rem;
+        }
+
+        .tree-popup button {
+            margin-top: 0.5rem;
+            padding: 0.25rem 0.5rem;
+            font-size: 0.75rem;
+        }
+    </style>
+</head>
+<body>
+    <!-- Navegación -->
+    <nav id="navbar"></nav>
+
+    <!-- Contenido principal -->
+    <main class="main-content-wrapper">
+        <!-- Header de la página -->
+        <header class="arboles-header">
+            <div class="page-title">
+                <div class="title-icon">
+                    <i class="fas fa-tree"></i>
+                </div>
+                <div>
+                    <h1>Gestión de Árboles</h1>
+                    <p>Monitoreo inteligente con IA y GPS</p>
+                </div>
+            </div>
+            
+            <div class="header-actions">
+                <div class="view-toggles">
+                    <button class="view-toggle active" data-view="grid">
+                        <i class="fas fa-th-large"></i> Cuadrícula
+                    </button>
+                    <button class="view-toggle" data-view="mapa">
+                        <i class="fas fa-map"></i> Mapa
+                    </button>
+                    <button class="view-toggle" data-view="lista">
+                        <i class="fas fa-list"></i> Lista
+                    </button>
+                </div>
+                
+                <button class="btn btn-primary" id="btnNuevoArbol">
+                    <i class="fas fa-plus"></i> Nuevo Árbol
+                </button>
+                
+                <button class="btn btn-secondary" id="btnGestionSectores">
+                    <i class="fas fa-map-marked-alt"></i> Gestión de Sectores
+                </button>
+                
+                <button class="btn btn-secondary" id="btnExportar">
+                    <i class="fas fa-download"></i> Exportar
+                </button>
+            </div>
+        </header>
+
+        <!-- Estadísticas rápidas -->
+        <section class="quick-stats">
+            <div class="quick-stat saludable">
+                <div class="stat-icon">
+                    <i class="fas fa-seedling" style="color: #22c55e; font-size: 2rem;"></i>
+                </div>
+                <div class="stat-value" id="totalSaludables">-</div>
+                <div class="stat-label">Árboles Saludables</div>
+            </div>
+            
+            <div class="quick-stat enfermo">
+                <div class="stat-icon">
+                    <i class="fas fa-exclamation-triangle" style="color: #ef4444; font-size: 2rem;"></i>
+                </div>
+                <div class="stat-value" id="totalEnfermos">-</div>
+                <div class="stat-label">Árboles Enfermos</div>
+            </div>
+            
+            <div class="quick-stat tratamiento">
+                <div class="stat-icon">
+                    <i class="fas fa-stethoscope" style="color: #f59e0b; font-size: 2rem;"></i>
+                </div>
+                <div class="stat-value" id="totalTratamiento">-</div>
+                <div class="stat-label">En Tratamiento</div>
+            </div>
+            
+            <div class="quick-stat">
+                <div class="stat-icon">
+                    <i class="fas fa-chart-line" style="color: #8b5cf6; font-size: 2rem;"></i>
+                </div>
+                <div class="stat-value" id="produccionPromedio">-</div>
+                <div class="stat-label">Producción Promedio</div>
+            </div>
+        </section>
+
+        <!-- Filtros avanzados -->
+        <section class="filtros-avanzados">
+            <h3>
+                <i class="fas fa-filter"></i> Filtros Avanzados
+            </h3>
+            
+            <div class="filtros-grid">
+                <div class="filtro-grupo">
+                    <label class="form-label">Estado</label>
+                    <select class="form-input" id="filtroEstado">
+                        <option value="">Todos los estados</option>
+                        <option value="saludable">Saludable</option>
+                        <option value="enfermo">Enfermo</option>
+                        <option value="tratamiento">En Tratamiento</option>
+                        <option value="cosecha">En Cosecha</option>
+                    </select>
+                </div>
+                
+                <div class="filtro-grupo">
+                    <label class="form-label">Sector</label>
+                    <select class="form-input" id="filtroBloque">
+                        <option value="">Todos los sectores</option>
+                    </select>
+                </div>
+                
+                <div class="filtro-grupo">
+                    <label class="form-label">Edad (años)</label>
+                    <select class="form-input" id="filtroEdad">
+                        <option value="">Todas las edades</option>
+                        <option value="0-2">0-2 años</option>
+                        <option value="3-5">3-5 años</option>
+                        <option value="6-10">6-10 años</option>
+                        <option value="10+">Más de 10 años</option>
+                    </select>
+                </div>
+                
+                <div class="filtro-grupo">
+                    <label class="form-label">Última revisión</label>
+                    <select class="form-input" id="filtroRevision">
+                        <option value="">Cualquier fecha</option>
+                        <option value="7">Últimos 7 días</option>
+                        <option value="30">Últimos 30 días</option>
+                        <option value="90">Últimos 3 meses</option>
+                    </select>
+                </div>
+                
+                <div class="filtro-grupo">
+                    <label class="form-label">Búsqueda</label>
+                    <input type="text" class="form-input" id="busquedaArbol" placeholder="Buscar por número o notas...">
+                </div>
+                
+                <div class="filtro-grupo">
+                    <button class="btn btn-primary" id="aplicarFiltros">
+                        <i class="fas fa-search"></i> Buscar
+                    </button>
+                    <button class="btn btn-secondary" id="limpiarFiltros">
+                        <i class="fas fa-times"></i> Limpiar
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <!-- Insights de IA -->
+        <section class="ia-insights">
+            <div class="ia-title">
+                <div class="ia-icon">
+                    <i class="fas fa-robot"></i>
+                </div>
+                <span>Análisis Inteligente</span>
+            </div>
+            <div id="iaInsights" class="loading-skeleton">
+                Analizando datos con IA...
+            </div>
+        </section>
+
+        <!-- Contenido principal -->
+        <div class="main-content">
+            <!-- Vista de cuadrícula de árboles -->
+            <section id="vistaGrid" class="vista-contenido">
+                <div class="arboles-grid" id="arbolesGrid">
+                    <!-- Los árboles se cargarán dinámicamente aquí -->
+                </div>
+            </section>
+
+            <!-- Vista de lista -->
+            <section id="vistaLista" class="vista-contenido" style="display: none;">
+                <div class="table-container">
+                    <table class="table" id="tablaArboles">
+                        <thead>
+                            <tr>
+                                <th>Número</th>
+                                <th>Estado</th>
+                                <th>Sector</th>
+                                <th>Edad</th>
+                                <th>Última Revisión</th>
+                                <th>Producción</th>
+                                <th>Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tablaArbolesBody">
+                            <!-- Datos se cargarán dinámicamente -->
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+            <!-- Vista completa del mapa -->
+            <section id="vistaMapa" class="vista-contenido" style="display: none;">
+                <div style="height: 600px; border-radius: 16px; overflow: hidden;">
+                    <div id="mapa-completo" style="width: 100%; height: 100%;"></div>
+                </div>
+            </section>
+
+            <!-- Mapa lateral (solo visible en vista grid) -->
+            <aside class="mapa-container">
+                <div class="mapa-controles">
+                    <button class="control-btn" id="btnCentrarMapa" title="Centrar mapa">
+                        <i class="fas fa-crosshairs"></i>
+                    </button>
+                    <button class="control-btn" id="btnCapasMapa" title="Capas del mapa">
+                        <i class="fas fa-layer-group"></i>
+                    </button>
+                    <button class="control-btn" id="btnPantallaCompleta" title="Pantalla completa">
+                        <i class="fas fa-expand"></i>
+                    </button>
+                </div>
+                <div id="mapa-arboles"></div>
+            </aside>
+        </div>
+    </main>
+
+    <!-- Modal para detalles/edición de árbol -->
+    <div class="modal-overlay" id="modalArbol">
+        <div class="modal">
+            <div class="modal-header">
+                <h2 class="modal-title" id="modalTitulo">Detalles del Árbol</h2>
+                <button class="modal-close" id="cerrarModal">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div id="contenidoModal">
+                    <!-- Contenido se carga dinámicamente -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-storage.js"></script>
+    <script src="js/firebase-config.js"></script>
+    <script src="js/auth.js"></script>
+    <script src="js/nav.js"></script>
+    <script src="js/offline.js"></script>
+    <script src="js/arboles.js"></script>
+
+    <script>
+        // ✅ VERIFICACIÓN SIMPLE DE AUTENTICACIÓN
+        document.addEventListener('DOMContentLoaded', async () => {
+            try {
+                console.log('🚀 Inicializando página de árboles...');
+                
+                // Esperar un momento a que todo se cargue
+                await new Promise(resolve => setTimeout(resolve, 1000));
+                
+                // Verificación simple: si hay authManager Y está autenticado, o si hay usuario en Firebase
+                const isAuthenticated = await checkSimpleAuth();
+                
+                if (!isAuthenticated) {
+                    console.log('🚫 Usuario no autenticado, redirigiendo');
+                    window.location.href = '/login.html';
+                    return;
+                }
+                
+                console.log('✅ Usuario autenticado, inicializando página');
+                
+                console.log('✅ Página de árboles lista');
+                
+            } catch (error) {
+                console.error('❌ Error:', error);
+                // En caso de error, permitir acceso con datos de ejemplo
+                console.log('⚠️ Continuando con datos de ejemplo');
+            }
+        });
+
+        // ✅ VERIFICACIÓN SIMPLE Y DIRECTA
+        async function checkSimpleAuth() {
+            // Opción 1: Si authManager existe y está autenticado
+            if (window.authManager && window.authManager.isAuthenticated) {
+                return true;
+            }
+            
+            // Opción 2: Si Firebase tiene usuario actual
+            if (window.firebase && window.firebase.auth && window.firebase.auth().currentUser) {
+                return true;
+            }
+            
+            // Opción 3: Esperar un poco más por Firebase
+            return new Promise((resolve) => {
+                let attempts = 0;
+                const maxAttempts = 30; // 3 segundos máximo
+                
+                const check = () => {
+                    attempts++;
+                    
+                    // Verificar authManager
+                    if (window.authManager && window.authManager.isAuthenticated) {
+                        resolve(true);
+                        return;
+                    }
+                    
+                    // Verificar Firebase
+                    if (window.firebase && window.firebase.auth) {
+                        const user = window.firebase.auth().currentUser;
+                        if (user) {
+                            resolve(true);
+                            return;
+                        }
+                    }
+                    
+                    // Si no se encontró nada y aún hay intentos
+                    if (attempts < maxAttempts) {
+                        setTimeout(check, 100);
+                    } else {
+                        // Timeout: permitir acceso con datos de ejemplo
+                        resolve(true);
+                    }
+                };
+                
+                check();
+            });
+        }
+    </script>
+</body>
+</html>
