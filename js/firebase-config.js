@@ -134,43 +134,47 @@ function initializeFirebase() {
 /**
  * Configura Firestore con opciones optimizadas
  */
+// REEMPLAZAR la función configureFirestore
 async function configureFirestore() {
-    if (!db) return;
-    
+    if (db) {
+        console.log('ℹ️ Firestore ya configurado previamente');
+        return;
+    }
+
     try {
-        // SOLO configurar si Firestore no ha sido usado aún
-        if (!db._delegate._settings) {
-            console.log('🔧 Configurando Firestore antes del primer uso...');
-            
-            const settings = {
-                cacheSizeBytes: firebase.firestore.CACHE_SIZE_UNLIMITED,
-                experimentalForceLongPolling: true,
-                merge: true
-            };
-            
-            db.settings(settings);
-            console.log('✅ Settings de Firestore aplicados');
-        } else {
-            console.log('ℹ️ Firestore ya configurado previamente');
+        // ✅ LIMPIAR DATOS INCOMPATIBLES PRIMERO
+        if ('indexedDB' in window) {
+            try {
+                const databases = await indexedDB.databases();
+                for (const db of databases) {
+                    if (db.name && db.name.includes('firestore')) {
+                        indexedDB.deleteDatabase(db.name);
+                    }
+                }
+            } catch (e) {
+                console.warn('No se pudieron limpiar las bases de datos:', e);
+            }
         }
-        
-        // Habilitar persistencia offline
-        await db.enablePersistence({
-            synchronizeTabs: true
+
+        // Configurar persistencia SIN conflictos
+        await firebase.firestore().enablePersistence({
+            synchronizeTabs: false // ✅ IMPORTANTE: Evita conflictos
         });
+        
         console.log('💾 Persistencia offline habilitada');
         
     } catch (error) {
         if (error.code === 'failed-precondition') {
             console.warn('⚠️ Persistencia no habilitada - múltiples tabs abiertos');
         } else if (error.code === 'unimplemented') {
-            console.warn('⚠️ Persistencia no soportada por el navegador');
-        } else if (error.message?.includes('already been started')) {
-            console.log('ℹ️ Firestore ya está configurado - continuando normalmente');
+            console.warn('⚠️ Persistencia no soportada en este navegador');
         } else {
-            console.warn('⚠️ Error habilitando persistencia:', error);
+            console.warn('⚠️ Error en persistencia:', error);
         }
     }
+
+    db = firebase.firestore();
+    window.db = db;
 }
 
 /**
