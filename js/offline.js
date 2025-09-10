@@ -1266,7 +1266,7 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 // CRÍTICO: Export default para ES6 modules
-export default offlineManager;
+//export default offlineManager;
 
 // Exportar para otros módulos (mantener para compatibilidad)
 if (typeof module !== 'undefined' && module.exports) {
