@@ -20,10 +20,6 @@
     <!-- Font Awesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
-    <!-- Mapbox GL JS para mapas GPS -->
-    <script src='https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.js'></script>
-    <link href='https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.css' rel='stylesheet' />
-    
     <style>
         /* Variables CSS */
         :root {
@@ -590,6 +586,216 @@
             color: white;
         }
 
+        /* Mapas alternativos sin errores */
+        .fallback-map {
+            height: 100%;
+            background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);
+            display: flex;
+            flex-direction: column;
+            padding: 1rem;
+            overflow: hidden;
+        }
+
+        .map-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+            padding: 0.5rem;
+            background: rgba(255,255,255,0.9);
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .map-header h4 {
+            margin: 0;
+            color: #1976d2;
+            font-size: 1rem;
+        }
+
+        .map-coords {
+            font-family: monospace;
+            font-size: 0.8rem;
+            color: #666;
+            background: #f5f5f5;
+            padding: 0.25rem 0.5rem;
+            border-radius: 4px;
+        }
+
+        .trees-grid-map {
+            flex: 1;
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
+            gap: 0.5rem;
+            overflow-y: auto;
+            padding: 0.5rem;
+            background: rgba(255,255,255,0.5);
+            border-radius: 8px;
+        }
+
+        .tree-marker-fallback {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+            font-size: 0.7rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+            border: 2px solid white;
+        }
+
+        .tree-marker-fallback:hover {
+            transform: scale(1.1);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+        }
+
+        .tree-marker-fallback.healthy {
+            background: linear-gradient(135deg, #4caf50, #2e7d32);
+        }
+
+        .tree-marker-fallback.warning {
+            background: linear-gradient(135deg, #ff9800, #f57c00);
+        }
+
+        .tree-marker-fallback.danger {
+            background: linear-gradient(135deg, #f44336, #d32f2f);
+        }
+
+        .map-footer {
+            margin-top: 1rem;
+            text-align: center;
+            color: #666;
+            background: rgba(255,255,255,0.8);
+            padding: 0.5rem;
+            border-radius: 6px;
+        }
+
+        /* Mapa completo alternativo */
+        .fallback-map-full {
+            height: 100%;
+            background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+            display: flex;
+            flex-direction: column;
+            padding: 1.5rem;
+            overflow-y: auto;
+        }
+
+        .map-header-full {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+            padding: 1rem;
+            background: rgba(255,255,255,0.9);
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+
+        .map-header-full h3 {
+            margin: 0;
+            color: #0c4a6e;
+            font-size: 1.25rem;
+        }
+
+        .map-stats {
+            display: flex;
+            gap: 1rem;
+        }
+
+        .stat-item {
+            background: #f1f5f9;
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            font-size: 0.875rem;
+            font-weight: 600;
+            color: #334155;
+        }
+
+        .sectors-overview {
+            flex: 1;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .sector-overview-card {
+            background: rgba(255,255,255,0.8);
+            border-radius: 12px;
+            padding: 1rem;
+            border: 1px solid rgba(0,0,0,0.1);
+        }
+
+        .sector-overview-card h4 {
+            margin: 0 0 1rem 0;
+            color: #1e40af;
+            text-align: center;
+            padding: 0.5rem;
+            background: #dbeafe;
+            border-radius: 8px;
+        }
+
+        .sector-trees-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(60px, 1fr));
+            gap: 0.5rem;
+        }
+
+        .tree-marker-sector {
+            width: 50px;
+            height: 50px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+            font-size: 0.7rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+            border: 2px solid white;
+        }
+
+        .tree-marker-sector:hover {
+            transform: scale(1.1);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+        }
+
+        .tree-marker-sector.healthy {
+            background: linear-gradient(135deg, #22c55e, #16a34a);
+        }
+
+        .tree-marker-sector.warning {
+            background: linear-gradient(135deg, #f59e0b, #d97706);
+        }
+
+        .tree-marker-sector.danger {
+            background: linear-gradient(135deg, #ef4444, #dc2626);
+        }
+
+        .no-trees {
+            grid-column: 1 / -1;
+            text-align: center;
+            color: #9ca3af;
+            font-style: italic;
+            padding: 1rem;
+        }
+
+        .map-footer-full {
+            text-align: center;
+            color: #64748b;
+            background: rgba(255,255,255,0.8);
+            padding: 1rem;
+            border-radius: 8px;
+            font-size: 0.9rem;
+        }
+
         /* Modal */
         .modal-overlay {
             position: fixed;
@@ -703,123 +909,6 @@
             font-size: 1rem;
         }
 
-        .danger-zone {
-            margin-top: 2rem;
-            padding: 1rem;
-            background: rgba(239, 68, 68, 0.1);
-            border: 1px solid rgba(239, 68, 68, 0.2);
-            border-radius: 12px;
-        }
-
-        .danger-zone h4 {
-            margin: 0 0 1rem 0;
-            color: var(--danger);
-            font-size: 1rem;
-        }
-
-        /* Detalles del árbol */
-        .tree-details {
-            display: flex;
-            flex-direction: column;
-            gap: 1.5rem;
-        }
-
-        .details-header {
-            display: flex;
-            gap: 1rem;
-            align-items: center;
-        }
-
-        .tree-meta {
-            display: flex;
-            flex-direction: column;
-            gap: 0.5rem;
-        }
-
-        .details-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-            gap: 1.5rem;
-        }
-
-        .detail-section {
-            padding: 1rem;
-            background: var(--bg-secondary);
-            border-radius: 12px;
-            border: 1px solid var(--border);
-        }
-
-        .detail-section h4 {
-            margin: 0 0 1rem 0;
-            color: var(--text-primary);
-            font-size: 1rem;
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-        }
-
-        .measurements, .production, .location, .health {
-            display: flex;
-            flex-direction: column;
-            gap: 0.75rem;
-        }
-
-        .measure-item, .prod-item, .coord-item, .health-item {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        .measure-label, .prod-label, .coord-label, .health-label {
-            font-weight: 500;
-            color: var(--text-secondary);
-            font-size: 0.875rem;
-        }
-
-        .measure-value, .prod-value, .coord-value {
-            font-weight: 600;
-            color: var(--text-primary);
-            font-size: 0.875rem;
-        }
-
-        .health-bar {
-            position: relative;
-            width: 60px;
-            height: 8px;
-            background: var(--bg-primary);
-            border-radius: 4px;
-            overflow: hidden;
-            border: 1px solid var(--border);
-        }
-
-        .health-fill {
-            height: 100%;
-            background: linear-gradient(90deg, var(--danger) 0%, var(--warning) 50%, var(--success) 100%);
-            transition: width 0.3s ease;
-        }
-
-        .health-text {
-            font-size: 0.75rem;
-            font-weight: 600;
-            color: var(--text-primary);
-            margin-left: 0.5rem;
-        }
-
-        .detail-actions {
-            display: flex;
-            gap: 1rem;
-            flex-wrap: wrap;
-        }
-
-        .tree-notes {
-            background: var(--bg-primary);
-            padding: 1rem;
-            border-radius: 8px;
-            border: 1px solid var(--border);
-            font-style: italic;
-            color: var(--text-secondary);
-        }
-
         /* Tabla */
         .table-container {
             background: var(--bg-card);
@@ -871,77 +960,6 @@
             color: var(--warning);
         }
 
-        /* Historial */
-        .historial-container {
-            display: flex;
-            flex-direction: column;
-            gap: 1rem;
-        }
-
-        .historial-tabs {
-            display: flex;
-            gap: 0.5rem;
-            border-bottom: 1px solid var(--border);
-        }
-
-        .tab-btn {
-            padding: 0.75rem 1.5rem;
-            border: none;
-            background: transparent;
-            color: var(--text-secondary);
-            font-weight: 500;
-            cursor: pointer;
-            border-bottom: 2px solid transparent;
-            transition: all 0.3s ease;
-        }
-
-        .tab-btn.active {
-            color: var(--primary);
-            border-bottom-color: var(--primary);
-        }
-
-        .tab-content {
-            display: none;
-            padding: 1rem 0;
-        }
-
-        .tab-content.active {
-            display: block;
-        }
-
-        .timeline {
-            display: flex;
-            flex-direction: column;
-            gap: 1rem;
-        }
-
-        .timeline-item {
-            display: flex;
-            gap: 1rem;
-            padding: 1rem;
-            background: var(--bg-secondary);
-            border-radius: 8px;
-            border: 1px solid var(--border);
-        }
-
-        .timeline-date {
-            font-size: 0.75rem;
-            color: var(--text-secondary);
-            white-space: nowrap;
-        }
-
-        .timeline-content h5 {
-            margin: 0 0 0.5rem 0;
-            font-size: 0.875rem;
-            color: var(--text-primary);
-        }
-
-        .timeline-content p {
-            margin: 0;
-            font-size: 0.75rem;
-            color: var(--text-secondary);
-        }
-
         /* Notificaciones */
         .notification {
             position: fixed;
@@ -981,16 +999,6 @@
                 transform: translateX(0);
                 opacity: 1;
             }
-        }
-
-        /* Loading */
-        .loading-skeleton {
-            animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
-        }
-
-        @keyframes pulse {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0.5; }
         }
 
         .no-results {
@@ -1060,46 +1068,6 @@
             .insights-grid {
                 grid-template-columns: 1fr;
             }
-            
-            .details-grid {
-                grid-template-columns: 1fr;
-            }
-            
-            .form-actions {
-                flex-direction: column;
-            }
-        }
-
-        /* Marcadores del mapa */
-        .tree-marker {
-            border: 2px solid white;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.3);
-            cursor: pointer;
-            transition: all 0.3s ease;
-        }
-
-        .tree-marker:hover {
-            transform: scale(1.2);
-        }
-
-        .tree-popup {
-            padding: 0.5rem;
-        }
-
-        .tree-popup h4 {
-            margin: 0 0 0.5rem 0;
-            font-size: 1rem;
-        }
-
-        .tree-popup p {
-            margin: 0 0 0.25rem 0;
-            font-size: 0.875rem;
-        }
-
-        .tree-popup button {
-            margin-top: 0.5rem;
-            padding: 0.25rem 0.5rem;
-            font-size: 0.75rem;
         }
     </style>
 </head>
@@ -1343,7 +1311,7 @@
     <script src="js/arboles.js"></script>
 
     <script>
-        // ✅ VERIFICACIÓN SIMPLE DE AUTENTICACIÓN
+        // Verificación simple de autenticación
         document.addEventListener('DOMContentLoaded', async () => {
             try {
                 console.log('🚀 Inicializando página de árboles...');
@@ -1361,7 +1329,6 @@
                 }
                 
                 console.log('✅ Usuario autenticado, inicializando página');
-                
                 console.log('✅ Página de árboles lista');
                 
             } catch (error) {
@@ -1371,7 +1338,7 @@
             }
         });
 
-        // ✅ VERIFICACIÓN SIMPLE Y DIRECTA
+        // Verificación simple y directa
         async function checkSimpleAuth() {
             // Opción 1: Si authManager existe y está autenticado
             if (window.authManager && window.authManager.isAuthenticated) {
