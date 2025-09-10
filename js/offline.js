@@ -26,10 +26,11 @@ class OfflineManager {
     
     // Tipos de datos a cachear
     this.cacheableTypes = [
-      'arboles', 'produccion', 'gastos', 'ventas', 
-      'riego', 'tratamientos', 'recordatorios', 'usuarios',
-      'clientes', 'facturas', 'pagos'
-    ];
+        'arboles', 'produccion', 'gastos', 'ventas', 
+        'riego', 'tratamientos', 'recordatorios', 'usuarios',
+        'clientes', 'facturas', 'pagos',
+        'weather', 'weather_analysis', 'forecast_analysis', 'weather_historical' // ✅ AGREGAR ESTA LÍNEA
+      ];
     
     // Estado de conectividad
     this.connectionQuality = 'unknown';
