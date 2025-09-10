@@ -1459,5 +1459,3 @@ document.addEventListener('DOMContentLoaded', () => {
   console.log('🌦️ Sistema climático con IA inicializado');
 });
 
-// IMPORTANTE: Agregar export default
-export default ClimateManager;
