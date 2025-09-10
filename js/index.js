@@ -110,13 +110,18 @@ function checkAuthentication() {
       }
 
       // 3. Botón de sincronización (usa tu API de offline.js sin romper UI)
-      if (el.syncNow) {
-        el.syncNow.addEventListener('click', ()=> {
-          window.offline?.sync()
-            .then(cnt => { if (el.pendingCount) el.pendingCount.textContent = String(window.offline?.getPendingCount?.() ?? 0); })
-            .catch(()=>{ /* noop */ });
-        });
-      }
+        if (el.syncNow) {
+          el.syncNow.addEventListener('click', async ()=> {
+            try {
+              const result = await window.offline?.syncPendingData();
+              if (el.pendingCount) {
+                el.pendingCount.textContent = String(window.offline?.getPendingCount?.() ?? 0);
+              }
+            } catch (error) {
+              console.error('Error en sincronización:', error);
+            }
+          });
+        }
 
       // 4. Asegurar sesión (anónima si hace falta)
       await ensureAuth();
@@ -160,6 +165,8 @@ function checkAuthentication() {
   }
 
   async function loadAll(){
+
+    console.log('🔍 Verificando Firebase:', { db: !!db, auth: !!auth });
     // Solo proceder si tenemos Firebase disponible
     if (!db) {
       console.warn('Firebase no disponible, usando valores por defecto');
@@ -285,7 +292,12 @@ function checkAuthentication() {
   async function loadProductionToday(){
     if (!db) throw new Error('DB no disponible');
     
-    const { start, end } = dayRange();
+     console.log('📊 Cargando producción de hoy...');
+  
+      const { start, end } = dayRange();
+    console.log('📅 Rango de fechas:', { start, end });
+    
+    
     let totalHoy = 0, totalAyer = 0;
 
     // Hoy
@@ -297,6 +309,10 @@ function checkAuthentication() {
       totalHoy += Number(x.primera||x.unidades_primera||0)
                 + Number(x.segunda||x.unidades_segunda||0)
                 + Number(x.descarte||x.unidades_descarte||0);
+
+      console.log('✅ Producción cargada:', { totalHoy, totalAyer, trend });
+  return { totalHoy, trendText, trendColor };
+          
     });
 
     // Ayer
