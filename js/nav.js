@@ -16,7 +16,7 @@ let menuCollapsed = localStorage.getItem('menuCollapsed') === 'true';
 
 function initNavigationManager() {
   // Configuración de menús según rol
-  const menuConfig = getMenuConfiguration();
+  const menuConfig = getMenuConfiguration();F
   
   // Escuchar cambios de autenticación
   setupAuthListener();
@@ -117,8 +117,8 @@ function getMenuConfiguration() {
       {
         icon: '💧',
         label: 'Riego',
-        href: '/riego.html',
-        id: 'riego',
+        href: '/riegos.html',
+        id: 'riegos',
         description: 'Control de riego'
       },
       {
@@ -1314,4 +1314,5 @@ document.addEventListener('DOMContentLoaded', () => {
   window.getMenuConfiguration = getMenuConfiguration;
 
   console.log('Sistema de navegación inicializado');
+
 });
