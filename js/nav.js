@@ -16,7 +16,7 @@ let menuCollapsed = localStorage.getItem('menuCollapsed') === 'true';
 
 function initNavigationManager() {
   // Configuración de menús según rol
-  const menuConfig = getMenuConfiguration();F
+  const menuConfig = getMenuConfiguration();
   
   // Escuchar cambios de autenticación
   setupAuthListener();
@@ -116,10 +116,10 @@ function getMenuConfiguration() {
       },
       {
         icon: '💧',
-        label: 'Riego',
+        label: 'Riegos',
         href: '/riegos.html',
         id: 'riegos',
-        description: 'Control de riego'
+        description: 'Control de riegos'
       },
       {
         icon: '🧪',
@@ -176,11 +176,11 @@ function getMenuConfiguration() {
       },
       {
         icon: '💧',
-        label: 'Riego',
-        href: '/riego.html',
-        id: 'riego',
-        description: 'Registro de riego',
-        permission: 'riego'
+        label: 'Riegos',
+        href: '/riegos.html',
+        id: 'riegos',
+        description: 'Registro de riegos',
+        permission: 'riegos'
       },
       {
         icon: '🧪',
@@ -591,7 +591,7 @@ function getCurrentPage() {
     'gastos': 'gastos',
     'precios': 'precios',
     'clima': 'clima',
-    'riego': 'riego',
+    'riegos': 'riegos',
     'tratamientos': 'tratamientos',
     'clientes': 'clientes',
     'negocios': 'negocios',
@@ -1314,5 +1314,4 @@ document.addEventListener('DOMContentLoaded', () => {
   window.getMenuConfiguration = getMenuConfiguration;
 
   console.log('Sistema de navegación inicializado');
-
 });
