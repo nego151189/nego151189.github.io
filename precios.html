@@ -1,0 +1,2677 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestión de Precios - Finca La Herradura</title>
+    
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Chart.js para gráficos -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+    
+    <style>
+        /* Variables CSS */
+        :root {
+            --primary: #f59e0b;
+            --secondary: #3b82f6;
+            --success: #22c55e;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+            --info: #3b82f6;
+            --light: #f8fafc;
+            --dark: #1e293b;
+            --bg-primary: #ffffff;
+            --bg-secondary: #f8fafc;
+            --bg-card: #ffffff;
+            --text-primary: #1e293b;
+            --text-secondary: #64748b;
+            --border: #e2e8f0;
+            --shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: var(--bg-secondary);
+            color: var(--text-primary);
+            line-height: 1.6;
+        }
+
+        .main-content-wrapper {
+            padding: 2rem;
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        /* Estilos básicos */
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            padding: 0.75rem 1.5rem;
+            font-size: 0.875rem;
+            font-weight: 600;
+            border-radius: 8px;
+            border: none;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            text-decoration: none;
+            white-space: nowrap;
+        }
+
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .btn-primary {
+            background: var(--primary);
+            color: white;
+        }
+
+        .btn-primary:hover:not(:disabled) {
+            background: #d97706;
+            transform: translateY(-1px);
+        }
+
+        .btn-secondary {
+            background: var(--secondary);
+            color: white;
+        }
+
+        .btn-secondary:hover:not(:disabled) {
+            background: #1d4ed8;
+            transform: translateY(-1px);
+        }
+
+        .btn-success {
+            background: var(--success);
+            color: white;
+        }
+
+        .btn-success:hover:not(:disabled) {
+            background: #16a34a;
+            transform: translateY(-1px);
+        }
+
+        .btn-danger {
+            background: var(--danger);
+            color: white;
+        }
+
+        .btn-danger:hover:not(:disabled) {
+            background: #dc2626;
+            transform: translateY(-1px);
+        }
+
+        .btn-sm {
+            padding: 0.5rem 0.75rem;
+            font-size: 0.75rem;
+        }
+
+        .form-input, .form-select {
+            width: 100%;
+            padding: 0.75rem;
+            border: 2px solid var(--border);
+            border-radius: 8px;
+            font-size: 1rem;
+            transition: border-color 0.2s ease;
+        }
+
+        .form-input:focus, .form-select:focus {
+            outline: none;
+            border-color: var(--primary);
+        }
+
+        .form-label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .form-group {
+            margin-bottom: 1rem;
+        }
+
+        .table {
+            width: 100%;
+            border-collapse: collapse;
+            background: white;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: var(--shadow);
+        }
+
+        .table th,
+        .table td {
+            padding: 1rem;
+            text-align: left;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .table th {
+            background: var(--bg-secondary);
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .table tr:hover {
+            background: #f8fafc;
+        }
+
+        /* Precios específicos */
+        .precios-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+
+        .page-title {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .title-icon {
+            width: 60px;
+            height: 60px;
+            background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+            border-radius: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 1.5rem;
+        }
+
+        .header-actions {
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .actualizacion-precios {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.75rem 1.5rem;
+            border-radius: 20px;
+            font-weight: 600;
+            background: rgba(34, 197, 94, 0.2);
+            color: #16a34a;
+            border: 1px solid rgba(34, 197, 94, 0.3);
+        }
+
+        .precio-actual-card {
+            background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+            color: white;
+            border-radius: 24px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .precio-principal {
+            display: grid;
+            grid-template-columns: auto 1fr auto;
+            align-items: center;
+            gap: 2rem;
+            margin-bottom: 2rem;
+            position: relative;
+            z-index: 1;
+        }
+
+        .precio-valor {
+            font-size: 4rem;
+            font-weight: 300;
+            margin: 0;
+            display: flex;
+            align-items: flex-start;
+        }
+
+        .precio-moneda {
+            font-size: 2rem;
+            margin-top: 0.5rem;
+            margin-right: 0.5rem;
+        }
+
+        .precio-info {
+            text-align: center;
+        }
+
+        .precio-descripcion {
+            font-size: 1.25rem;
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+        }
+
+        .precio-fecha {
+            opacity: 0.9;
+            font-size: 0.875rem;
+        }
+
+        .precio-tendencia {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            font-size: 2rem;
+        }
+
+        .tendencia-positiva {
+            color: #22c55e;
+        }
+
+        .tendencia-negativa {
+            color: #ef4444;
+        }
+
+        .comparacion-precios {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            gap: 1.5rem;
+            position: relative;
+            z-index: 1;
+        }
+
+        .comparacion-item {
+            text-align: center;
+            padding: 1rem;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 16px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .comp-icon {
+            font-size: 1.5rem;
+            margin-bottom: 0.5rem;
+            opacity: 0.9;
+        }
+
+        .comp-valor {
+            font-size: 1.25rem;
+            font-weight: 600;
+            margin-bottom: 0.25rem;
+        }
+
+        .comp-label {
+            font-size: 0.75rem;
+            opacity: 0.8;
+        }
+
+        .mercados-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .mercado-card {
+            background: var(--bg-card);
+            border-radius: 16px;
+            padding: 1.5rem;
+            position: relative;
+            overflow: hidden;
+            transition: transform 0.3s ease;
+            box-shadow: var(--shadow);
+        }
+
+        .mercado-card:hover {
+            transform: translateY(-4px);
+        }
+
+        .mercado-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+        }
+
+        .mercado-card.mayorista::before {
+            background: linear-gradient(90deg, #ef4444, #dc2626);
+        }
+
+        .mercado-card.minorista::before {
+            background: linear-gradient(90deg, #3b82f6, #1d4ed8);
+        }
+
+        .mercado-card.exportacion::before {
+            background: linear-gradient(90deg, #8b5cf6, #7c3aed);
+        }
+
+        .mercado-card.finca::before {
+            background: linear-gradient(90deg, #22c55e, #16a34a);
+        }
+
+        .mercado-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+
+        .mercado-nombre {
+            font-size: 1.125rem;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .mercado-estado {
+            padding: 0.25rem 0.75rem;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .mercado-estado.activo {
+            background: rgba(34, 197, 94, 0.2);
+            color: #16a34a;
+        }
+
+        .mercado-precio {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-bottom: 0.5rem;
+        }
+
+        .mercado-cambio {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.875rem;
+            font-weight: 600;
+        }
+
+        .mercado-cambio.positiva {
+            color: #22c55e;
+        }
+
+        .mercado-cambio.negativa {
+            color: #ef4444;
+        }
+
+        .mercado-fecha {
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+            margin-top: 0.5rem;
+        }
+
+        .contenido-principal {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 2rem;
+            margin-bottom: 2rem;
+        }
+
+        .graficos-precios {
+            display: grid;
+            gap: 2rem;
+        }
+
+        .grafico-card {
+            background: var(--bg-card);
+            border-radius: 16px;
+            padding: 1.5rem;
+            box-shadow: var(--shadow);
+            height: 400px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .grafico-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+            flex-shrink: 0;
+        }
+
+        .grafico-titulo {
+            font-size: 1.125rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .chart-container {
+            position: relative;
+            flex: 1;
+            height: 300px;
+            max-height: 300px;
+            overflow: hidden;
+        }
+
+        .chart-container canvas {
+            width: 100% !important;
+            height: 100% !important;
+            max-width: 100% !important;
+            max-height: 100% !important;
+        }
+
+        .alertas-precio {
+            background: var(--bg-card);
+            border-radius: 16px;
+            padding: 1.5rem;
+            box-shadow: var(--shadow);
+            margin-bottom: 1.5rem;
+        }
+
+        .alerta-item {
+            display: flex;
+            align-items: flex-start;
+            gap: 1rem;
+            padding: 1rem;
+            margin-bottom: 1rem;
+            border-radius: 12px;
+            border-left: 4px solid;
+        }
+
+        .alerta-item:last-child {
+            margin-bottom: 0;
+        }
+
+        .alerta-item.oportunidad {
+            background: rgba(34, 197, 94, 0.1);
+            border-left-color: #22c55e;
+        }
+
+        .alerta-item.advertencia {
+            background: rgba(245, 158, 11, 0.1);
+            border-left-color: #f59e0b;
+        }
+
+        .alerta-item.critica {
+            background: rgba(239, 68, 68, 0.1);
+            border-left-color: #ef4444;
+        }
+
+        .alerta-item.info {
+            background: rgba(59, 130, 246, 0.1);
+            border-left-color: #3b82f6;
+        }
+
+        .alerta-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 1rem;
+            flex-shrink: 0;
+        }
+
+        .alerta-item.oportunidad .alerta-icon {
+            background: #22c55e;
+        }
+
+        .alerta-item.advertencia .alerta-icon {
+            background: #f59e0b;
+        }
+
+        .alerta-item.critica .alerta-icon {
+            background: #ef4444;
+        }
+
+        .alerta-item.info .alerta-icon {
+            background: #3b82f6;
+        }
+
+        .alerta-info {
+            flex: 1;
+        }
+
+        .alerta-info h4 {
+            margin: 0 0 0.5rem 0;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .alerta-info p {
+            margin: 0 0 0.5rem 0;
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+        }
+
+        .form-precio {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 1rem;
+            align-items: end;
+            background: var(--bg-card);
+            border-radius: 16px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            box-shadow: var(--shadow);
+        }
+
+        .tabla-precios {
+            background: var(--bg-card);
+            border-radius: 16px;
+            padding: 1.5rem;
+            margin-top: 2rem;
+            box-shadow: var(--shadow);
+        }
+
+        .tipo-precio-badge {
+            padding: 0.25rem 0.75rem;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .tipo-precio-badge.mayorista {
+            background: rgba(239, 68, 68, 0.2);
+            color: #dc2626;
+        }
+
+        .tipo-precio-badge.minorista {
+            background: rgba(59, 130, 246, 0.2);
+            color: #2563eb;
+        }
+
+        .tipo-precio-badge.exportacion {
+            background: rgba(139, 92, 246, 0.2);
+            color: #8b5cf6;
+        }
+
+        .tipo-precio-badge.finca {
+            background: rgba(34, 197, 94, 0.2);
+            color: #16a34a;
+        }
+
+        .initialization-loader {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.8);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 9999;
+            color: white;
+            font-size: 1.2rem;
+        }
+
+        .initialization-loader.hidden {
+            display: none;
+        }
+
+        .acciones-precios {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 2rem;
+            flex-wrap: wrap;
+        }
+
+        .accion-precio {
+            background: var(--bg-card);
+            border-radius: 12px;
+            padding: 1rem 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border: 2px solid transparent;
+            min-width: 200px;
+            box-shadow: var(--shadow);
+        }
+
+        .accion-precio:hover {
+            border-color: var(--primary);
+            transform: translateY(-2px);
+        }
+
+        .accion-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 1rem;
+        }
+
+        .filtros-precios {
+            background: var(--bg-card);
+            border-radius: 16px;
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+            box-shadow: var(--shadow);
+        }
+
+        .filtros-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 1rem;
+            align-items: end;
+        }
+
+        /* Modal styles */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.7);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 10000;
+        }
+
+        .modal-content {
+            background: white;
+            border-radius: 16px;
+            width: 90%;
+            max-width: 600px;
+            padding: 2rem;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.3);
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+            padding-bottom: 1rem;
+            border-bottom: 2px solid var(--border);
+        }
+
+        .modal-close {
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            cursor: pointer;
+            color: var(--text-secondary);
+            padding: 0.5rem;
+            border-radius: 50%;
+            transition: all 0.2s ease;
+        }
+
+        .modal-close:hover {
+            background: var(--bg-secondary);
+            color: var(--text-primary);
+        }
+
+        /* Responsivo */
+        @media (max-width: 1024px) {
+            .contenido-principal {
+                grid-template-columns: 1fr;
+            }
+            
+            .precio-principal {
+                grid-template-columns: 1fr;
+                text-align: center;
+                gap: 1rem;
+            }
+
+            .grafico-card {
+                height: 350px;
+            }
+
+            .chart-container {
+                height: 250px;
+                max-height: 250px;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .main-content-wrapper {
+                padding: 1rem;
+            }
+            
+            .precios-header {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            
+            .mercados-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .form-precio {
+                grid-template-columns: 1fr;
+            }
+            
+            .comparacion-precios {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .grafico-card {
+                height: 320px;
+                padding: 1rem;
+            }
+
+            .chart-container {
+                height: 220px;
+                max-height: 220px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Loader de inicialización -->
+    <div class="initialization-loader" id="initLoader">
+        <div style="text-align: center;">
+            <div style="font-size: 3rem; margin-bottom: 1rem;">
+                <i class="fas fa-chart-line fa-spin"></i>
+            </div>
+            <div>Inicializando sistema de precios...</div>
+        </div>
+    </div>
+
+    <!-- Contenido principal -->
+    <main class="main-content-wrapper">
+        <!-- Header de la página -->
+        <header class="precios-header">
+            <div class="page-title">
+                <div class="title-icon">
+                    <i class="fas fa-chart-line"></i>
+                </div>
+                <div>
+                    <h1>Gestión de Precios</h1>
+                    <p>Monitoreo de mercado y análisis de tendencias</p>
+                </div>
+            </div>
+            
+            <div class="header-actions">
+                <div class="actualizacion-precios" id="estadoActualizacion">
+                    <i class="fas fa-sync-alt"></i>
+                    <span>Actualizado hace 5 min</span>
+                </div>
+                
+                <button class="btn btn-primary" id="btnActualizarPrecios">
+                    <i class="fas fa-refresh"></i> Actualizar
+                </button>
+                
+                <button class="btn btn-success" id="btnNuevoPrecio">
+                    <i class="fas fa-plus"></i> Nuevo Precio
+                </button>
+                
+                <button class="btn btn-secondary" id="btnExportarAnalisis">
+                    <i class="fas fa-download"></i> Exportar
+                </button>
+            </div>
+        </header>
+
+        <!-- Precio actual destacado -->
+        <section class="precio-actual-card">
+            <div class="precio-principal">
+                <div class="precio-valor">
+                    <span class="precio-moneda">Q</span>
+                    <span id="precioActual">12.50</span>
+                </div>
+                
+                <div class="precio-info">
+                    <div class="precio-descripcion">Precio Promedio Actual</div>
+                    <div class="precio-fecha">Limón por kilogramo</div>
+                    <div class="precio-fecha">Último update: <span id="ultimaActualizacion">Hoy 14:30</span></div>
+                </div>
+                
+                <div class="precio-tendencia">
+                    <div id="tendenciaIcon" class="tendencia-positiva">
+                        <i class="fas fa-arrow-up"></i>
+                    </div>
+                    <div>
+                        <div style="font-size: 1.5rem; font-weight: 600;" id="cambioAbsoluto">+Q 0.75</div>
+                        <div style="font-size: 1rem; opacity: 0.9;" id="cambioRelativo">+6.4%</div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="comparacion-precios">
+                <div class="comparacion-item">
+                    <div class="comp-icon">
+                        <i class="fas fa-calendar-day"></i>
+                    </div>
+                    <div class="comp-valor" id="precioHoy">Q 12.50</div>
+                    <div class="comp-label">Hoy</div>
+                </div>
+                
+                <div class="comparacion-item">
+                    <div class="comp-icon">
+                        <i class="fas fa-calendar-week"></i>
+                    </div>
+                    <div class="comp-valor" id="precioSemana">Q 11.80</div>
+                    <div class="comp-label">Promedio Semanal</div>
+                </div>
+                
+                <div class="comparacion-item">
+                    <div class="comp-icon">
+                        <i class="fas fa-calendar-alt"></i>
+                    </div>
+                    <div class="comp-valor" id="precioMes">Q 11.25</div>
+                    <div class="comp-label">Promedio Mensual</div>
+                </div>
+                
+                <div class="comparacion-item">
+                    <div class="comp-icon">
+                        <i class="fas fa-chart-bar"></i>
+                    </div>
+                    <div class="comp-valor" id="precioMaximo">Q 15.00</div>
+                    <div class="comp-label">Máximo Mensual</div>
+                </div>
+                
+                <div class="comparacion-item">
+                    <div class="comp-icon">
+                        <i class="fas fa-chart-bar"></i>
+                    </div>
+                    <div class="comp-valor" id="precioMinimo">Q 9.50</div>
+                    <div class="comp-label">Mínimo Mensual</div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Precios por mercado -->
+        <section class="mercados-grid">
+            <div class="mercado-card mayorista">
+                <div class="mercado-header">
+                    <div class="mercado-nombre">
+                        <i class="fas fa-warehouse"></i> Mercado Mayorista
+                    </div>
+                    <div class="mercado-estado activo">Activo</div>
+                </div>
+                <div class="mercado-precio" id="precioMayorista">Q 11.80</div>
+                <div class="mercado-cambio positiva">
+                    <i class="fas fa-arrow-up"></i>
+                    <span>+Q 0.50 (4.4%)</span>
+                </div>
+                <div class="mercado-fecha">Actualizado: Hoy 13:45</div>
+            </div>
+            
+            <div class="mercado-card minorista">
+                <div class="mercado-header">
+                    <div class="mercado-nombre">
+                        <i class="fas fa-store"></i> Mercado Minorista
+                    </div>
+                    <div class="mercado-estado activo">Activo</div>
+                </div>
+                <div class="mercado-precio" id="precioMinorista">Q 15.00</div>
+                <div class="mercado-cambio positiva">
+                    <i class="fas fa-arrow-up"></i>
+                    <span>+Q 0.25 (1.7%)</span>
+                </div>
+                <div class="mercado-fecha">Actualizado: Hoy 14:20</div>
+            </div>
+            
+            <div class="mercado-card exportacion">
+                <div class="mercado-header">
+                    <div class="mercado-nombre">
+                        <i class="fas fa-shipping-fast"></i> Exportación
+                    </div>
+                    <div class="mercado-estado activo">Consulta</div>
+                </div>
+                <div class="mercado-precio" id="precioExportacion">Q 18.50</div>
+                <div class="mercado-cambio positiva">
+                    <i class="fas fa-arrow-up"></i>
+                    <span>+Q 1.00 (5.7%)</span>
+                </div>
+                <div class="mercado-fecha">Actualizado: Hoy 16:00</div>
+            </div>
+            
+            <div class="mercado-card finca">
+                <div class="mercado-header">
+                    <div class="mercado-nombre">
+                        <i class="fas fa-seedling"></i> Precio Finca
+                    </div>
+                    <div class="mercado-estado activo">Nuestro</div>
+                </div>
+                <div class="mercado-precio" id="precioFinca">Q 12.75</div>
+                <div class="mercado-cambio positiva">
+                    <i class="fas fa-arrow-up"></i>
+                    <span>+Q 0.25 (2.0%)</span>
+                </div>
+                <div class="mercado-fecha">Actualizado: Hoy 15:00</div>
+            </div>
+        </section>
+
+        <!-- Filtros -->
+        <section class="filtros-precios">
+            <h3 style="margin-bottom: 1rem;">
+                <i class="fas fa-filter"></i> Filtros de Análisis
+            </h3>
+            
+            <div class="filtros-grid">
+                <div class="filtro-grupo">
+                    <label class="form-label">Período</label>
+                    <select class="form-input" id="filtroPeriodo">
+                        <option value="semana">Última Semana</option>
+                        <option value="mes" selected>Último Mes</option>
+                        <option value="trimestre">Último Trimestre</option>
+                        <option value="ano">Último Año</option>
+                    </select>
+                </div>
+                
+                <div class="filtro-grupo">
+                    <label class="form-label">Mercado</label>
+                    <select class="form-input" id="filtroMercado">
+                        <option value="">Todos los mercados</option>
+                        <option value="mayorista">Mayorista</option>
+                        <option value="minorista">Minorista</option>
+                        <option value="exportacion">Exportación</option>
+                        <option value="finca">Precio Finca</option>
+                    </select>
+                </div>
+                
+                <div class="filtro-grupo">
+                    <label class="form-label">Tipo de Análisis</label>
+                    <select class="form-input" id="filtroAnalisis">
+                        <option value="tendencia">Tendencias</option>
+                        <option value="volatilidad">Volatilidad</option>
+                        <option value="correlacion">Correlaciones</option>
+                        <option value="estacional">Estacionalidad</option>
+                    </select>
+                </div>
+                
+                <div class="filtro-grupo">
+                    <button class="btn btn-primary" id="aplicarFiltros">
+                        <i class="fas fa-search"></i> Analizar
+                    </button>
+                    <button class="btn btn-secondary" id="limpiarFiltros" style="margin-top: 0.5rem;">
+                        <i class="fas fa-times"></i> Limpiar
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <!-- Acciones rápidas -->
+        <section class="acciones-precios">
+            <div class="accion-precio" data-accion="actualizar">
+                <div class="accion-icon" style="background: #f59e0b;">
+                    <i class="fas fa-sync-alt"></i>
+                </div>
+                <div>
+                    <div style="font-weight: 600;">Actualizar Precios</div>
+                    <div style="font-size: 0.75rem; color: var(--text-secondary);">Obtener últimos datos</div>
+                </div>
+            </div>
+            
+            <div class="accion-precio" data-accion="comparar">
+                <div class="accion-icon" style="background: #3b82f6;">
+                    <i class="fas fa-balance-scale"></i>
+                </div>
+                <div>
+                    <div style="font-weight: 600;">Comparar Mercados</div>
+                    <div style="font-size: 0.75rem; color: var(--text-secondary);">Análisis comparativo</div>
+                </div>
+            </div>
+            
+            <div class="accion-precio" data-accion="prediccion">
+                <div class="accion-icon" style="background: #8b5cf6;">
+                    <i class="fas fa-crystal-ball"></i>
+                </div>
+                <div>
+                    <div style="font-weight: 600;">Predicción IA</div>
+                    <div style="font-size: 0.75rem; color: var(--text-secondary);">Proyección de precios</div>
+                </div>
+            </div>
+            
+            <div class="accion-precio" data-accion="optimizar">
+                <div class="accion-icon" style="background: #22c55e;">
+                    <i class="fas fa-bullseye"></i>
+                </div>
+                <div>
+                    <div style="font-weight: 600;">Optimizar Ventas</div>
+                    <div style="font-size: 0.75rem; color: var(--text-secondary);">Mejor momento</div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Registro rápido de precio -->
+        <section class="form-precio">
+            <h3 style="grid-column: 1 / -1; margin-bottom: 1.5rem;">
+                <i class="fas fa-plus"></i> Registro Manual de Precio
+            </h3>
+            
+            <div class="form-group">
+                <label class="form-label">Fecha</label>
+                <input type="date" class="form-input" id="fechaPrecio" required>
+            </div>
+            
+            <div class="form-group">
+                <label class="form-label">Mercado</label>
+                <select class="form-input" id="mercadoPrecio" required>
+                    <option value="">Seleccionar...</option>
+                    <option value="mayorista">Mayorista</option>
+                    <option value="minorista">Minorista</option>
+                    <option value="exportacion">Exportación</option>
+                    <option value="finca">Precio Finca</option>
+                </select>
+            </div>
+            
+            <div class="form-group">
+                <label class="form-label">Precio (Q/kg)</label>
+                <input type="number" class="form-input" id="valorPrecio" step="0.01" min="0" required>
+            </div>
+            
+            <div class="form-group">
+                <label class="form-label">Fuente</label>
+                <input type="text" class="form-input" id="fuentePrecio" placeholder="Ej: Mercado La Terminal">
+            </div>
+            
+            <div class="form-group">
+                <label class="form-label">Observaciones</label>
+                <input type="text" class="form-input" id="observacionesPrecio" placeholder="Observaciones opcionales">
+            </div>
+            
+            <div class="form-group">
+                <button type="button" class="btn btn-success" id="guardarPrecio">
+                    <i class="fas fa-save"></i> Registrar
+                </button>
+            </div>
+        </section>
+
+        <!-- Contenido principal -->
+        <div class="contenido-principal">
+            <!-- Gráficos -->
+            <div class="graficos-precios">
+                <!-- Gráfico de evolución de precios -->
+                <div class="grafico-card">
+                    <div class="grafico-header">
+                        <h3 class="grafico-titulo">
+                            <i class="fas fa-chart-line"></i>
+                            Evolución de Precios
+                        </h3>
+                        <button class="btn btn-sm btn-secondary" id="btnDetalleEvolucion">
+                            <i class="fas fa-expand"></i> Detalle
+                        </button>
+                    </div>
+                    <div class="chart-container">
+                        <canvas id="graficoEvolucion"></canvas>
+                    </div>
+                </div>
+                
+                <!-- Gráfico comparativo de mercados -->
+                <div class="grafico-card">
+                    <div class="grafico-header">
+                        <h3 class="grafico-titulo">
+                            <i class="fas fa-chart-bar"></i>
+                            Comparación de Mercados
+                        </h3>
+                        <button class="btn btn-sm btn-secondary" id="btnDetalleComparacion">
+                            <i class="fas fa-expand"></i> Detalle
+                        </button>
+                    </div>
+                    <div class="chart-container">
+                        <canvas id="graficoComparativo"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Panel lateral -->
+            <div>
+                <!-- Alertas de precios -->
+                <div class="alertas-precio">
+                    <h3 style="margin-bottom: 1.5rem;">
+                        <i class="fas fa-bell"></i>
+                        Alertas de Precios
+                    </h3>
+                    
+                    <div id="listaAlertasPrecios">
+                        <div class="alerta-item oportunidad">
+                            <div class="alerta-icon">
+                                <i class="fas fa-arrow-up"></i>
+                            </div>
+                            <div class="alerta-info">
+                                <h4>Oportunidad de Venta</h4>
+                                <p>Los precios han subido 6.4% esta semana. Buen momento para vender.</p>
+                                <button class="btn btn-sm btn-success" onclick="verAnalisisDetallado('oportunidad')">Ver Análisis</button>
+                            </div>
+                        </div>
+                        
+                        <div class="alerta-item advertencia">
+                            <div class="alerta-icon">
+                                <i class="fas fa-exclamation-triangle"></i>
+                            </div>
+                            <div class="alerta-info">
+                                <h4>Volatilidad Alta</h4>
+                                <p>El mercado mayorista muestra alta volatilidad. Monitorear de cerca.</p>
+                                <button class="btn btn-sm btn-primary" onclick="verDetallesVolatilidad()">Ver Detalles</button>
+                            </div>
+                        </div>
+                        
+                        <div class="alerta-item critica">
+                            <div class="alerta-icon">
+                                <i class="fas fa-exclamation-circle"></i>
+                            </div>
+                            <div class="alerta-info">
+                                <h4>Precio Bajo Competencia</h4>
+                                <p>Nuestro precio está 8% por debajo de la competencia en exportación.</p>
+                                <button class="btn btn-sm btn-danger" onclick="ajustarPrecio('exportacion')">Ajustar Precio</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tabla de historial de precios -->
+        <section class="tabla-precios">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+                <h3>
+                    <i class="fas fa-table"></i>
+                    Historial de Precios
+                </h3>
+                <button class="btn btn-sm btn-secondary" id="btnVistaDetallada">
+                    <i class="fas fa-expand"></i> Vista Detallada
+                </button>
+            </div>
+            
+            <div class="table-container">
+                <table class="table" id="tablaPrecios">
+                    <thead>
+                        <tr>
+                            <th>Fecha</th>
+                            <th>Mercado</th>
+                            <th>Precio (Q/kg)</th>
+                            <th>Cambio</th>
+                            <th>Fuente</th>
+                            <th>Observaciones</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tablaPreciosBody">
+                        <tr>
+                            <td>Hoy</td>
+                            <td><span class="tipo-precio-badge mayorista">mayorista</span></td>
+                            <td>Q 11.80</td>
+                            <td style="color: #22c55e;">+4.4%</td>
+                            <td>Mercado La Terminal</td>
+                            <td>Precio estable</td>
+                            <td>
+                                <button class="btn btn-sm btn-primary" onclick="editarPrecio('PRECIO_001')" title="Editar">
+                                    <i class="fas fa-edit"></i>
+                                </button>
+                                <button class="btn btn-sm btn-danger" onclick="eliminarPrecio('PRECIO_001')" title="Eliminar">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>Hoy</td>
+                            <td><span class="tipo-precio-badge minorista">minorista</span></td>
+                            <td>Q 15.00</td>
+                            <td style="color: #22c55e;">+1.7%</td>
+                            <td>Supermercados</td>
+                            <td>Demanda alta</td>
+                            <td>
+                                <button class="btn btn-sm btn-primary" onclick="editarPrecio('PRECIO_002')" title="Editar">
+                                    <i class="fas fa-edit"></i>
+                                </button>
+                                <button class="btn btn-sm btn-danger" onclick="eliminarPrecio('PRECIO_002')" title="Eliminar">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>Hoy</td>
+                            <td><span class="tipo-precio-badge exportacion">exportacion</span></td>
+                            <td>Q 18.50</td>
+                            <td style="color: #22c55e;">+5.7%</td>
+                            <td>Exportadora Maya</td>
+                            <td>Precio premium</td>
+                            <td>
+                                <button class="btn btn-sm btn-primary" onclick="editarPrecio('PRECIO_003')" title="Editar">
+                                    <i class="fas fa-edit"></i>
+                                </button>
+                                <button class="btn btn-sm btn-danger" onclick="eliminarPrecio('PRECIO_003')" title="Eliminar">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+    </main>
+
+    <script>
+        // Variables globales
+        let precios = new Map();
+        let graficoEvolucion, graficoComparativo;
+        let nextPrecioId = 5;
+        let filtrosActivos = {
+            periodo: 'mes',
+            mercado: '',
+            analisis: 'tendencia'
+        };
+
+        // Datos iniciales mejorados
+        const initialPrecios = [
+            {
+                id: 'PRECIO_001',
+                fecha: new Date().toISOString().split('T')[0],
+                mercado: 'mayorista',
+                valor: 11.80,
+                fuente: 'Mercado La Terminal',
+                observaciones: 'Precio estable',
+                cambio: 4.4
+            },
+            {
+                id: 'PRECIO_002',
+                fecha: new Date().toISOString().split('T')[0],
+                mercado: 'minorista',
+                valor: 15.00,
+                fuente: 'Supermercados',
+                observaciones: 'Demanda alta',
+                cambio: 1.7
+            },
+            {
+                id: 'PRECIO_003',
+                fecha: new Date().toISOString().split('T')[0],
+                mercado: 'exportacion',
+                valor: 18.50,
+                fuente: 'Exportadora Maya',
+                observaciones: 'Precio premium',
+                cambio: 5.7
+            },
+            {
+                id: 'PRECIO_004',
+                fecha: new Date().toISOString().split('T')[0],
+                mercado: 'finca',
+                valor: 12.75,
+                fuente: 'Precio Interno',
+                observaciones: 'Ajustado a mercado',
+                cambio: 2.0
+            }
+        ];
+
+        // Cargar datos iniciales
+        initialPrecios.forEach(precio => {
+            precios.set(precio.id, precio);
+        });
+
+        // ===== FUNCIONES DE UTILIDAD =====
+        function formatCurrency(amount) {
+            return new Intl.NumberFormat('es-GT', {
+                style: 'currency',
+                currency: 'GTQ'
+            }).format(amount || 0);
+        }
+
+        function formatearFecha(fecha) {
+            const date = new Date(fecha);
+            const today = new Date();
+            
+            if (fecha === today.toISOString().split('T')[0]) return 'Hoy';
+            
+            return date.toLocaleDateString('es-GT', {
+                year: 'numeric',
+                month: 'short',
+                day: 'numeric'
+            });
+        }
+
+        function mostrarNotificacion(mensaje, tipo = 'success') {
+            const notification = document.createElement('div');
+            notification.style.cssText = `
+                position: fixed;
+                top: 20px;
+                right: 20px;
+                background: ${tipo === 'success' ? '#22c55e' : tipo === 'error' ? '#ef4444' : tipo === 'warning' ? '#f59e0b' : '#3b82f6'};
+                color: white;
+                padding: 1rem 1.5rem;
+                border-radius: 8px;
+                z-index: 10000;
+                box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+                max-width: 400px;
+                font-size: 0.9rem;
+                font-weight: 500;
+                animation: slideInRight 0.3s ease-out;
+            `;
+            
+            // Agregar estilos de animación
+            if (!document.querySelector('#notification-styles')) {
+                const style = document.createElement('style');
+                style.id = 'notification-styles';
+                style.textContent = `
+                    @keyframes slideInRight {
+                        from { transform: translateX(100%); opacity: 0; }
+                        to { transform: translateX(0); opacity: 1; }
+                    }
+                    @keyframes slideOutRight {
+                        from { transform: translateX(0); opacity: 1; }
+                        to { transform: translateX(100%); opacity: 0; }
+                    }
+                `;
+                document.head.appendChild(style);
+            }
+            
+            notification.textContent = mensaje;
+            document.body.appendChild(notification);
+            
+            setTimeout(() => {
+                notification.style.animation = 'slideOutRight 0.3s ease-out';
+                setTimeout(() => {
+                    if (notification.parentNode) {
+                        notification.parentNode.removeChild(notification);
+                    }
+                }, 300);
+            }, 3000);
+        }
+
+        function generatePrecioId() {
+            return `PRECIO_${String(nextPrecioId++).padStart(3, '0')}`;
+        }
+
+        function crearModal(titulo, contenido, botones = []) {
+            const modal = document.createElement('div');
+            modal.className = 'modal-overlay';
+            
+            modal.innerHTML = `
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h3 style="margin: 0; color: #333;">
+                            <i class="fas fa-chart-line" style="margin-right: 0.5rem; color: #f59e0b;"></i>
+                            ${titulo}
+                        </h3>
+                        <button class="modal-close" onclick="cerrarModal()">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    </div>
+                    <div class="modal-body">
+                        ${contenido}
+                    </div>
+                    ${botones.length > 0 ? `
+                        <div style="display: flex; gap: 1rem; margin-top: 2rem; justify-content: flex-end;">
+                            ${botones.map(btn => `<button class="btn ${btn.clase}" onclick="${btn.accion}">${btn.texto}</button>`).join('')}
+                        </div>
+                    ` : ''}
+                </div>
+            `;
+            
+            document.body.appendChild(modal);
+            
+            // Cerrar con click fuera del modal
+            modal.addEventListener('click', (e) => {
+                if (e.target === modal) {
+                    cerrarModal();
+                }
+            });
+            
+            return modal;
+        }
+
+        // ===== FUNCIONES PRINCIPALES MEJORADAS =====
+        function mostrarFormularioPrecio() {
+            const contenido = `
+                <div style="display: grid; gap: 1rem;">
+                    <div>
+                        <label style="display: block; margin-bottom: 0.5rem; font-weight: 600;">Fecha</label>
+                        <input type="date" id="modalFechaPrecio" class="form-input" value="${new Date().toISOString().split('T')[0]}">
+                    </div>
+                    
+                    <div>
+                        <label style="display: block; margin-bottom: 0.5rem; font-weight: 600;">Mercado</label>
+                        <select id="modalMercadoPrecio" class="form-input" required>
+                            <option value="">Seleccionar...</option>
+                            <option value="mayorista">Mayorista</option>
+                            <option value="minorista">Minorista</option>
+                            <option value="exportacion">Exportación</option>
+                            <option value="finca">Precio Finca</option>
+                        </select>
+                    </div>
+                    
+                    <div>
+                        <label style="display: block; margin-bottom: 0.5rem; font-weight: 600;">Precio (Q/kg)</label>
+                        <input type="number" id="modalValorPrecio" class="form-input" step="0.01" min="0" required>
+                    </div>
+                    
+                    <div>
+                        <label style="display: block; margin-bottom: 0.5rem; font-weight: 600;">Fuente</label>
+                        <input type="text" id="modalFuentePrecio" class="form-input" placeholder="Ej: Mercado La Terminal">
+                    </div>
+                    
+                    <div>
+                        <label style="display: block; margin-bottom: 0.5rem; font-weight: 600;">Observaciones</label>
+                        <textarea id="modalObservacionesPrecio" class="form-input" rows="3" placeholder="Observaciones opcionales"></textarea>
+                    </div>
+                </div>
+            `;
+            
+            const botones = [
+                { texto: 'Cancelar', clase: 'btn-secondary', accion: 'cerrarModal()' },
+                { texto: '<i class="fas fa-save"></i> Guardar', clase: 'btn-success', accion: 'guardarPrecioModal()' }
+            ];
+            
+            crearModal('Nuevo Precio', contenido, botones);
+        }
+
+        function cerrarModal() {
+            const modal = document.querySelector('.modal-overlay');
+            if (modal) {
+                modal.remove();
+            }
+        }
+
+        function guardarPrecioModal() {
+            const datos = {
+                fecha: document.getElementById('modalFechaPrecio').value,
+                mercado: document.getElementById('modalMercadoPrecio').value,
+                valor: parseFloat(document.getElementById('modalValorPrecio').value),
+                fuente: document.getElementById('modalFuentePrecio').value,
+                observaciones: document.getElementById('modalObservacionesPrecio').value
+            };
+            
+            if (!datos.mercado || !datos.valor || datos.valor <= 0) {
+                mostrarNotificacion('Por favor complete todos los campos correctamente', 'error');
+                return;
+            }
+            
+            const precio = {
+                id: generatePrecioId(),
+                fecha: datos.fecha,
+                mercado: datos.mercado,
+                valor: datos.valor,
+                fuente: datos.fuente || 'Manual',
+                observaciones: datos.observaciones || '',
+                cambio: Math.random() * 10 - 5 // Simulado
+            };
+            
+            precios.set(precio.id, precio);
+            actualizarUI();
+            cerrarModal();
+            mostrarNotificacion(`Precio de ${formatCurrency(datos.valor)} registrado correctamente`);
+        }
+
+        function guardarPrecioRapido() {
+            const datos = {
+                fecha: document.getElementById('fechaPrecio').value,
+                mercado: document.getElementById('mercadoPrecio').value,
+                valor: parseFloat(document.getElementById('valorPrecio').value),
+                fuente: document.getElementById('fuentePrecio').value,
+                observaciones: document.getElementById('observacionesPrecio').value
+            };
+            
+            if (!datos.fecha || !datos.mercado || !datos.valor || datos.valor <= 0) {
+                mostrarNotificacion('Por favor complete todos los campos correctamente', 'error');
+                return;
+            }
+            
+            const precio = {
+                id: generatePrecioId(),
+                fecha: datos.fecha,
+                mercado: datos.mercado,
+                valor: datos.valor,
+                fuente: datos.fuente || 'Manual',
+                observaciones: datos.observaciones || '',
+                cambio: Math.random() * 10 - 5 // Simulado
+            };
+            
+            precios.set(precio.id, precio);
+            
+            // Limpiar formulario
+            document.getElementById('mercadoPrecio').value = '';
+            document.getElementById('valorPrecio').value = '';
+            document.getElementById('fuentePrecio').value = '';
+            document.getElementById('observacionesPrecio').value = '';
+            
+            actualizarUI();
+            mostrarNotificacion(`Precio de ${formatCurrency(datos.valor)} registrado correctamente`);
+        }
+
+        function editarPrecio(id) {
+            const precio = precios.get(id);
+            if (!precio) {
+                mostrarNotificacion('Precio no encontrado', 'error');
+                return;
+            }
+            
+            const contenido = `
+                <div style="display: grid; gap: 1rem;">
+                    <div>
+                        <label style="display: block; margin-bottom: 0.5rem; font-weight: 600;">Fecha</label>
+                        <input type="date" id="editFechaPrecio" class="form-input" value="${precio.fecha}">
+                    </div>
+                    
+                    <div>
+                        <label style="display: block; margin-bottom: 0.5rem; font-weight: 600;">Mercado</label>
+                        <select id="editMercadoPrecio" class="form-input" required>
+                            <option value="">Seleccionar...</option>
+                            <option value="mayorista" ${precio.mercado === 'mayorista' ? 'selected' : ''}>Mayorista</option>
+                            <option value="minorista" ${precio.mercado === 'minorista' ? 'selected' : ''}>Minorista</option>
+                            <option value="exportacion" ${precio.mercado === 'exportacion' ? 'selected' : ''}>Exportación</option>
+                            <option value="finca" ${precio.mercado === 'finca' ? 'selected' : ''}>Precio Finca</option>
+                        </select>
+                    </div>
+                    
+                    <div>
+                        <label style="display: block; margin-bottom: 0.5rem; font-weight: 600;">Precio (Q/kg)</label>
+                        <input type="number" id="editValorPrecio" class="form-input" step="0.01" min="0" value="${precio.valor}" required>
+                    </div>
+                    
+                    <div>
+                        <label style="display: block; margin-bottom: 0.5rem; font-weight: 600;">Fuente</label>
+                        <input type="text" id="editFuentePrecio" class="form-input" value="${precio.fuente}">
+                    </div>
+                    
+                    <div>
+                        <label style="display: block; margin-bottom: 0.5rem; font-weight: 600;">Observaciones</label>
+                        <textarea id="editObservacionesPrecio" class="form-input" rows="3">${precio.observaciones}</textarea>
+                    </div>
+                </div>
+            `;
+            
+            const botones = [
+                { texto: 'Cancelar', clase: 'btn-secondary', accion: 'cerrarModal()' },
+                { texto: '<i class="fas fa-save"></i> Actualizar', clase: 'btn-primary', accion: `actualizarPrecio('${id}')` }
+            ];
+            
+            crearModal('Editar Precio', contenido, botones);
+        }
+
+        function actualizarPrecio(id) {
+            const datos = {
+                fecha: document.getElementById('editFechaPrecio').value,
+                mercado: document.getElementById('editMercadoPrecio').value,
+                valor: parseFloat(document.getElementById('editValorPrecio').value),
+                fuente: document.getElementById('editFuentePrecio').value,
+                observaciones: document.getElementById('editObservacionesPrecio').value
+            };
+            
+            if (!datos.mercado || !datos.valor || datos.valor <= 0) {
+                mostrarNotificacion('Por favor complete todos los campos correctamente', 'error');
+                return;
+            }
+            
+            const precio = precios.get(id);
+            if (precio) {
+                precio.fecha = datos.fecha;
+                precio.mercado = datos.mercado;
+                precio.valor = datos.valor;
+                precio.fuente = datos.fuente;
+                precio.observaciones = datos.observaciones;
+                
+                actualizarUI();
+                cerrarModal();
+                mostrarNotificacion('Precio actualizado correctamente');
+            }
+        }
+
+        function eliminarPrecio(id) {
+            const precio = precios.get(id);
+            if (!precio) {
+                mostrarNotificacion('Precio no encontrado', 'error');
+                return;
+            }
+            
+            const contenido = `
+                <div style="text-align: center;">
+                    <div style="font-size: 3rem; color: #ef4444; margin-bottom: 1rem;">
+                        <i class="fas fa-exclamation-triangle"></i>
+                    </div>
+                    <p style="margin-bottom: 1rem;">¿Está seguro de que desea eliminar este precio?</p>
+                    <div style="background: #f8fafc; padding: 1rem; border-radius: 8px; margin-bottom: 1rem;">
+                        <strong>${precio.mercado}</strong> - ${formatCurrency(precio.valor)}<br>
+                        <small>Fecha: ${formatearFecha(precio.fecha)}</small>
+                    </div>
+                    <p style="color: #ef4444; font-weight: 600;">Esta acción no se puede deshacer</p>
+                </div>
+            `;
+            
+            const botones = [
+                { texto: 'Cancelar', clase: 'btn-secondary', accion: 'cerrarModal()' },
+                { texto: '<i class="fas fa-trash"></i> Eliminar', clase: 'btn-danger', accion: `confirmarEliminarPrecio('${id}')` }
+            ];
+            
+            crearModal('Eliminar Precio', contenido, botones);
+        }
+
+        function confirmarEliminarPrecio(id) {
+            if (precios.delete(id)) {
+                actualizarUI();
+                cerrarModal();
+                mostrarNotificacion('Precio eliminado correctamente');
+            } else {
+                mostrarNotificacion('Error al eliminar el precio', 'error');
+            }
+        }
+
+        // ===== FUNCIONES DE ACCIONES MEJORADAS =====
+        function actualizarPrecios() {
+            const btn = document.getElementById('btnActualizarPrecios');
+            const originalContent = btn.innerHTML;
+            
+            btn.innerHTML = '<i class="fas fa-sync-alt fa-spin"></i> Actualizando';
+            btn.disabled = true;
+            
+            // Simular actualización con delay realista
+            setTimeout(() => {
+                // Actualizar algunos precios aleatoriamente
+                Array.from(precios.values()).forEach(precio => {
+                    if (Math.random() > 0.7) {
+                        const cambio = (Math.random() - 0.5) * 2;
+                        precio.valor += cambio;
+                        precio.cambio = (cambio / precio.valor) * 100;
+                    }
+                });
+                
+                // Actualizar timestamp
+                document.getElementById('estadoActualizacion').innerHTML = 
+                    '<i class="fas fa-sync-alt"></i><span>Actualizado ahora</span>';
+                
+                // Actualizar UI
+                actualizarUI();
+                
+                btn.innerHTML = originalContent;
+                btn.disabled = false;
+                mostrarNotificacion('Precios actualizados correctamente');
+            }, 2000);
+        }
+
+        function exportarAnalisis() {
+            const btn = document.getElementById('btnExportarAnalisis');
+            const originalContent = btn.innerHTML;
+            
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Exportando';
+            btn.disabled = true;
+            
+            setTimeout(() => {
+                const analisis = {
+                    fecha_generacion: new Date().toISOString(),
+                    filtros_aplicados: filtrosActivos,
+                    precios: Array.from(precios.values()),
+                    estadisticas: {
+                        precio_promedio: Array.from(precios.values()).reduce((sum, p) => sum + p.valor, 0) / precios.size,
+                        total_registros: precios.size,
+                        mercados_activos: [...new Set(Array.from(precios.values()).map(p => p.mercado))],
+                        rango_fechas: {
+                            desde: Math.min(...Array.from(precios.values()).map(p => new Date(p.fecha))),
+                            hasta: Math.max(...Array.from(precios.values()).map(p => new Date(p.fecha)))
+                        }
+                    }
+                };
+                
+                const dataStr = JSON.stringify(analisis, null, 2);
+                const dataBlob = new Blob([dataStr], { type: 'application/json' });
+                const url = URL.createObjectURL(dataBlob);
+                const link = document.createElement('a');
+                link.href = url;
+                link.download = `analisis_precios_${new Date().toISOString().split('T')[0]}.json`;
+                link.click();
+                URL.revokeObjectURL(url);
+                
+                btn.innerHTML = originalContent;
+                btn.disabled = false;
+                mostrarNotificacion('Análisis exportado correctamente');
+            }, 1000);
+        }
+
+        function ejecutarAccion(accion) {
+            console.log('Ejecutando acción:', accion);
+            
+            switch(accion) {
+                case 'actualizar':
+                    actualizarPrecios();
+                    break;
+                case 'comparar':
+                    mostrarComparacionDetallada();
+                    break;
+                case 'prediccion':
+                    mostrarPrediccionIA();
+                    break;
+                case 'optimizar':
+                    mostrarOptimizacionVentas();
+                    break;
+                default:
+                    mostrarNotificacion(`Acción "${accion}" en desarrollo`, 'info');
+            }
+        }
+
+        function mostrarComparacionDetallada() {
+            const preciosPorMercado = {};
+            Array.from(precios.values()).forEach(precio => {
+                if (!preciosPorMercado[precio.mercado]) {
+                    preciosPorMercado[precio.mercado] = [];
+                }
+                preciosPorMercado[precio.mercado].push(precio.valor);
+            });
+            
+            const promedios = Object.keys(preciosPorMercado).map(mercado => {
+                const promedio = preciosPorMercado[mercado].reduce((sum, val) => sum + val, 0) / preciosPorMercado[mercado].length;
+                return { mercado, promedio };
+            }).sort((a, b) => b.promedio - a.promedio);
+            
+            const contenido = `
+                <div>
+                    <h4 style="margin-bottom: 1rem;">Comparación de Mercados</h4>
+                    <div style="display: grid; gap: 1rem;">
+                        ${promedios.map((item, index) => `
+                            <div style="padding: 1rem; background: ${index === 0 ? '#22c55e20' : '#f8fafc'}; border-radius: 8px; border-left: 4px solid ${index === 0 ? '#22c55e' : '#e2e8f0'};">
+                                <div style="display: flex; justify-content: space-between; align-items: center;">
+                                    <span style="font-weight: 600; text-transform: capitalize;">${item.mercado}</span>
+                                    <span style="font-size: 1.2rem; font-weight: 700; color: ${index === 0 ? '#22c55e' : '#374151'};">
+                                        ${formatCurrency(item.promedio)}
+                                    </span>
+                                </div>
+                                ${index === 0 ? '<small style="color: #16a34a;">🏆 Mejor precio promedio</small>' : ''}
+                            </div>
+                        `).join('')}
+                    </div>
+                    <div style="margin-top: 1.5rem; padding: 1rem; background: #fef3c7; border-radius: 8px;">
+                        <h5 style="margin: 0 0 0.5rem 0; color: #92400e;">📊 Recomendación</h5>
+                        <p style="margin: 0; color: #92400e;">
+                            ${promedios[0] ? `El mercado de ${promedios[0].mercado} ofrece el mejor precio promedio. Considera enfocar más ventas en este canal.` : 'No hay suficientes datos para generar recomendaciones.'}
+                        </p>
+                    </div>
+                </div>
+            `;
+            
+            crearModal('Comparación de Mercados', contenido, [
+                { texto: 'Cerrar', clase: 'btn-primary', accion: 'cerrarModal()' }
+            ]);
+        }
+
+        function mostrarPrediccionIA() {
+            const contenido = `
+                <div>
+                    <h4 style="margin-bottom: 1rem;">🔮 Predicción con IA</h4>
+                    <div style="display: grid; gap: 1rem;">
+                        <div style="padding: 1rem; background: #dbeafe; border-radius: 8px; border-left: 4px solid #3b82f6;">
+                            <h5 style="margin: 0 0 0.5rem 0; color: #1e40af;">Próxima Semana</h5>
+                            <div style="font-size: 1.3rem; font-weight: 700; color: #1e40af;">Q 13.25/kg</div>
+                            <small style="color: #1e40af;">Confianza: 85%</small>
+                        </div>
+                        
+                        <div style="padding: 1rem; background: #fef3c7; border-radius: 8px; border-left: 4px solid #f59e0b;">
+                            <h5 style="margin: 0 0 0.5rem 0; color: #92400e;">Próximo Mes</h5>
+                            <div style="font-size: 1.3rem; font-weight: 700; color: #92400e;">Q 14.80/kg</div>
+                            <small style="color: #92400e;">Confianza: 72%</small>
+                        </div>
+                        
+                        <div style="padding: 1rem; background: #f3e8ff; border-radius: 8px; border-left: 4px solid #8b5cf6;">
+                            <h5 style="margin: 0 0 0.5rem 0; color: #6b21a8;">Trimestre</h5>
+                            <div style="font-size: 1.3rem; font-weight: 700; color: #6b21a8;">Q 13.90/kg</div>
+                            <small style="color: #6b21a8;">Confianza: 68%</small>
+                        </div>
+                    </div>
+                    
+                    <div style="margin-top: 1.5rem; padding: 1rem; background: #dcfce7; border-radius: 8px;">
+                        <h5 style="margin: 0 0 0.5rem 0; color: #16a34a;">💡 Recomendación IA</h5>
+                        <p style="margin: 0; color: #16a34a;">
+                            La tendencia sugiere un incremento gradual. Considera reservar inventario para el próximo mes donde se proyecta el precio más alto.
+                        </p>
+                    </div>
+                </div>
+            `;
+            
+            crearModal('Predicción de Precios', contenido, [
+                { texto: 'Cerrar', clase: 'btn-primary', accion: 'cerrarModal()' }
+            ]);
+        }
+
+        function mostrarOptimizacionVentas() {
+            const contenido = `
+                <div>
+                    <h4 style="margin-bottom: 1rem;">🎯 Optimización de Ventas</h4>
+                    
+                    <div style="margin-bottom: 1.5rem;">
+                        <div style="padding: 1rem; background: #dcfce7; border-radius: 8px; border-left: 4px solid #22c55e;">
+                            <h5 style="margin: 0 0 0.5rem 0; color: #16a34a;">✅ Momento Óptimo de Venta</h5>
+                            <p style="margin: 0 0 0.5rem 0; color: #16a34a;">
+                                <strong>AHORA es un buen momento para vender</strong>
+                            </p>
+                            <small style="color: #16a34a;">Los precios están 6.4% por encima del promedio mensual</small>
+                        </div>
+                    </div>
+                    
+                    <div style="display: grid; gap: 1rem; margin-bottom: 1.5rem;">
+                        <div>
+                            <h5 style="margin: 0 0 0.5rem 0;">🏆 Mercados Recomendados (por rentabilidad)</h5>
+                            <div style="display: grid; gap: 0.5rem;">
+                                <div style="display: flex; justify-content: space-between; align-items: center; padding: 0.5rem; background: #f8fafc; border-radius: 6px;">
+                                    <span>1. Exportación</span>
+                                    <span style="color: #22c55e; font-weight: 600;">Q 18.50/kg</span>
+                                </div>
+                                <div style="display: flex; justify-content: space-between; align-items: center; padding: 0.5rem; background: #f8fafc; border-radius: 6px;">
+                                    <span>2. Minorista</span>
+                                    <span style="color: #22c55e; font-weight: 600;">Q 15.00/kg</span>
+                                </div>
+                                <div style="display: flex; justify-content: space-between; align-items: center; padding: 0.5rem; background: #f8fafc; border-radius: 6px;">
+                                    <span>3. Finca</span>
+                                    <span style="color: #f59e0b; font-weight: 600;">Q 12.75/kg</span>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div>
+                            <h5 style="margin: 0 0 0.5rem 0;">📈 Estrategia Recomendada</h5>
+                            <ul style="margin: 0; padding-left: 1.2rem; color: #374151;">
+                                <li>Priorizar ventas a exportación (máximo margen)</li>
+                                <li>Mantener stock para mercado minorista</li>
+                                <li>Evaluar incremento de precio finca en 5-8%</li>
+                            </ul>
+                        </div>
+                    </div>
+                    
+                    <div style="padding: 1rem; background: #fef3c7; border-radius: 8px;">
+                        <h5 style="margin: 0 0 0.5rem 0; color: #92400e;">⚠️ Monitorear</h5>
+                        <p style="margin: 0; color: #92400e;">
+                            Volatilidad alta en mercado mayorista. Revisar condiciones en 2-3 días.
+                        </p>
+                    </div>
+                </div>
+            `;
+            
+            crearModal('Optimización de Ventas', contenido, [
+                { texto: 'Cerrar', clase: 'btn-primary', accion: 'cerrarModal()' }
+            ]);
+        }
+
+        // ===== FUNCIONES DE FILTROS MEJORADAS =====
+        function aplicarFiltros() {
+            const btn = document.getElementById('aplicarFiltros');
+            const originalContent = btn.innerHTML;
+            
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Analizando';
+            btn.disabled = true;
+            
+            const periodo = document.getElementById('filtroPeriodo').value;
+            const mercado = document.getElementById('filtroMercado').value;
+            const analisis = document.getElementById('filtroAnalisis').value;
+            
+            filtrosActivos = { periodo, mercado, analisis };
+            
+            setTimeout(() => {
+                // Simular análisis
+                let mensaje = `Análisis ${analisis} aplicado para ${periodo}`;
+                if (mercado) {
+                    mensaje += ` en mercado ${mercado}`;
+                }
+                
+                // Generar insights basados en filtros
+                let insight = '';
+                switch(analisis) {
+                    case 'tendencia':
+                        insight = 'Tendencia general: Alza sostenida (+6.4%)';
+                        break;
+                    case 'volatilidad':
+                        insight = 'Volatilidad: Moderada (±12% variación)';
+                        break;
+                    case 'correlacion':
+                        insight = 'Correlación: Alta entre exportación y mayorista (0.85)';
+                        break;
+                    case 'estacional':
+                        insight = 'Estacionalidad: Patrón alcista en Q1';
+                        break;
+                }
+                
+                mostrarNotificacion(`${mensaje}. ${insight}`, 'info');
+                
+                btn.innerHTML = originalContent;
+                btn.disabled = false;
+            }, 1500);
+        }
+
+        function limpiarFiltros() {
+            document.getElementById('filtroPeriodo').value = 'mes';
+            document.getElementById('filtroMercado').value = '';
+            document.getElementById('filtroAnalisis').value = 'tendencia';
+            
+            filtrosActivos = {
+                periodo: 'mes',
+                mercado: '',
+                analisis: 'tendencia'
+            };
+            
+            mostrarNotificacion('Filtros restablecidos a valores por defecto', 'info');
+        }
+
+        // ===== FUNCIONES DE ALERTAS =====
+        function verAnalisisDetallado(tipo) {
+            let contenido = '';
+            
+            switch(tipo) {
+                case 'oportunidad':
+                    contenido = `
+                        <div>
+                            <h4 style="margin-bottom: 1rem; color: #22c55e;">🚀 Oportunidad de Venta Detectada</h4>
+                            
+                            <div style="margin-bottom: 1.5rem; padding: 1rem; background: #dcfce7; border-radius: 8px;">
+                                <h5 style="margin: 0 0 0.5rem 0; color: #16a34a;">Situación Actual</h5>
+                                <p style="margin: 0; color: #16a34a;">
+                                    Los precios han experimentado un alza del <strong>6.4%</strong> en los últimos 7 días, 
+                                    superando el promedio mensual en <strong>Q 1.25/kg</strong>.
+                                </p>
+                            </div>
+                            
+                            <div style="margin-bottom: 1.5rem;">
+                                <h5 style="margin: 0 0 0.5rem 0;">📊 Análisis por Mercado</h5>
+                                <div style="display: grid; gap: 0.5rem;">
+                                    <div style="display: flex; justify-content: space-between; padding: 0.5rem; background: #f0f9ff; border-radius: 6px;">
+                                        <span>Exportación</span>
+                                        <span style="color: #22c55e; font-weight: 600;">+5.7% ⬆️</span>
+                                    </div>
+                                    <div style="display: flex; justify-content: space-between; padding: 0.5rem; background: #f0f9ff; border-radius: 6px;">
+                                        <span>Mayorista</span>
+                                        <span style="color: #22c55e; font-weight: 600;">+4.4% ⬆️</span>
+                                    </div>
+                                    <div style="display: flex; justify-content: space-between; padding: 0.5rem; background: #f0f9ff; border-radius: 6px;">
+                                        <span>Finca</span>
+                                        <span style="color: #22c55e; font-weight: 600;">+2.0% ⬆️</span>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div style="padding: 1rem; background: #fef3c7; border-radius: 8px;">
+                                <h5 style="margin: 0 0 0.5rem 0; color: #92400e;">💰 Recomendación</h5>
+                                <p style="margin: 0; color: #92400e;">
+                                    <strong>Aprovechar la ventana de oportunidad:</strong><br>
+                                    • Acelerar ventas en exportación (precio premium)<br>
+                                    • Liquidar stock disponible en próximos 3-5 días<br>
+                                    • Considerar precios competitivos para maximizar volumen
+                                </p>
+                            </div>
+                        </div>
+                    `;
+                    break;
+            }
+            
+            crearModal('Análisis Detallado', contenido, [
+                { texto: 'Cerrar', clase: 'btn-primary', accion: 'cerrarModal()' }
+            ]);
+        }
+
+        function verDetallesVolatilidad() {
+            const contenido = `
+                <div>
+                    <h4 style="margin-bottom: 1rem; color: #f59e0b;">⚠️ Análisis de Volatilidad</h4>
+                    
+                    <div style="margin-bottom: 1.5rem; padding: 1rem; background: #fef3c7; border-radius: 8px;">
+                        <h5 style="margin: 0 0 0.5rem 0; color: #92400e;">Volatilidad Detectada</h5>
+                        <p style="margin: 0; color: #92400e;">
+                            El mercado mayorista ha mostrado variaciones de <strong>±12%</strong> en los últimos 5 días,
+                            superando el umbral normal de volatilidad (8%).
+                        </p>
+                    </div>
+                    
+                    <div style="margin-bottom: 1.5rem;">
+                        <h5 style="margin: 0 0 0.5rem 0;">📈 Indicadores de Riesgo</h5>
+                        <div style="display: grid; gap: 0.5rem;">
+                            <div style="display: flex; justify-content: space-between; padding: 0.5rem; background: #fef2f2; border-radius: 6px;">
+                                <span>Desviación Estándar</span>
+                                <span style="color: #ef4444; font-weight: 600;">1.45 (Alto)</span>
+                            </div>
+                            <div style="display: flex; justify-content: space-between; padding: 0.5rem; background: #fef3c7; border-radius: 6px;">
+                                <span>Coeficiente de Variación</span>
+                                <span style="color: #f59e0b; font-weight: 600;">12.3% (Moderado-Alto)</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div style="padding: 1rem; background: #dbeafe; border-radius: 8px;">
+                        <h5 style="margin: 0 0 0.5rem 0; color: #1e40af;">🎯 Plan de Acción</h5>
+                        <ul style="margin: 0; padding-left: 1.2rem; color: #1e40af;">
+                            <li>Monitorear precios cada 6 horas durante próximos 3 días</li>
+                            <li>Establecer precios de venta más conservadores</li>
+                            <li>Diversificar canales de venta para reducir riesgo</li>
+                            <li>Considerar contratos a precio fijo para volúmenes grandes</li>
+                        </ul>
+                    </div>
+                </div>
+            `;
+            
+            crearModal('Análisis de Volatilidad', contenido, [
+                { texto: 'Cerrar', clase: 'btn-primary', accion: 'cerrarModal()' }
+            ]);
+        }
+
+        function ajustarPrecio(mercado) {
+            const preciosDelMercado = Array.from(precios.values()).filter(p => p.mercado === mercado);
+            const precioActual = preciosDelMercado.length > 0 ? preciosDelMercado[0].valor : 0;
+            const precioSugerido = precioActual * 1.08; // 8% de incremento
+            
+            const contenido = `
+                <div>
+                    <h4 style="margin-bottom: 1rem; color: #ef4444;">⚠️ Ajuste de Precio Requerido</h4>
+                    
+                    <div style="margin-bottom: 1.5rem; padding: 1rem; background: #fef2f2; border-radius: 8px;">
+                        <h5 style="margin: 0 0 0.5rem 0; color: #dc2626;">Situación Actual</h5>
+                        <p style="margin: 0; color: #dc2626;">
+                            El precio actual en <strong>${mercado}</strong> está <strong>8% por debajo</strong> 
+                            de la competencia, reduciendo significativamente la rentabilidad.
+                        </p>
+                    </div>
+                    
+                    <div style="margin-bottom: 1.5rem;">
+                        <h5 style="margin: 0 0 1rem 0;">📊 Comparación de Precios</h5>
+                        <div style="display: grid; gap: 1rem;">
+                            <div style="padding: 1rem; background: #f8fafc; border-radius: 8px; border-left: 4px solid #ef4444;">
+                                <div style="display: flex; justify-content: space-between; align-items: center;">
+                                    <span>Precio Actual</span>
+                                    <span style="color: #ef4444; font-weight: 700; font-size: 1.2rem;">${formatCurrency(precioActual)}</span>
+                                </div>
+                            </div>
+                            
+                            <div style="padding: 1rem; background: #f8fafc; border-radius: 8px; border-left: 4px solid #22c55e;">
+                                <div style="display: flex; justify-content: space-between; align-items: center;">
+                                    <span>Precio Sugerido</span>
+                                    <span style="color: #22c55e; font-weight: 700; font-size: 1.2rem;">${formatCurrency(precioSugerido)}</span>
+                                </div>
+                                <small style="color: #16a34a;">Incremento de ${formatCurrency(precioSugerido - precioActual)} (+8%)</small>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div style="margin-bottom: 1.5rem;">
+                        <label style="display: block; margin-bottom: 0.5rem; font-weight: 600;">Nuevo Precio (Q/kg)</label>
+                        <input type="number" id="nuevoPrecioAjuste" class="form-input" step="0.01" min="0" value="${precioSugerido.toFixed(2)}">
+                    </div>
+                    
+                    <div style="padding: 1rem; background: #dcfce7; border-radius: 8px;">
+                        <h5 style="margin: 0 0 0.5rem 0; color: #16a34a;">💰 Impacto Proyectado</h5>
+                        <p style="margin: 0; color: #16a34a;">
+                            El ajuste de precio podría incrementar los ingresos en aproximadamente 
+                            <strong>8-12%</strong> manteniendo competitividad en el mercado.
+                        </p>
+                    </div>
+                </div>
+            `;
+            
+            const botones = [
+                { texto: 'Cancelar', clase: 'btn-secondary', accion: 'cerrarModal()' },
+                { texto: '<i class="fas fa-check"></i> Aplicar Ajuste', clase: 'btn-success', accion: `confirmarAjustePrecio('${mercado}')` }
+            ];
+            
+            crearModal('Ajuste de Precio', contenido, botones);
+        }
+
+        function confirmarAjustePrecio(mercado) {
+            const nuevoPrecio = parseFloat(document.getElementById('nuevoPrecioAjuste').value);
+            
+            if (!nuevoPrecio || nuevoPrecio <= 0) {
+                mostrarNotificacion('Por favor ingrese un precio válido', 'error');
+                return;
+            }
+            
+            // Simular aplicación del ajuste
+            const precio = {
+                id: generatePrecioId(),
+                fecha: new Date().toISOString().split('T')[0],
+                mercado: mercado,
+                valor: nuevoPrecio,
+                fuente: 'Ajuste Automático',
+                observaciones: 'Ajuste por análisis de competitividad',
+                cambio: 8.0 // Porcentaje de incremento
+            };
+            
+            precios.set(precio.id, precio);
+            actualizarUI();
+            cerrarModal();
+            mostrarNotificacion(`Precio de ${mercado} ajustado a ${formatCurrency(nuevoPrecio)}`, 'success');
+        }
+
+        // ===== FUNCIONES DE VISTA DETALLADA =====
+        function mostrarVistaDetallada() {
+            const contenido = `
+                <div style="max-height: 70vh; overflow-y: auto;">
+                    <h4 style="margin-bottom: 1rem;">📋 Vista Detallada del Historial</h4>
+                    
+                    <div style="margin-bottom: 1rem;">
+                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 1rem; margin-bottom: 1rem;">
+                            <div style="text-align: center; padding: 1rem; background: #f8fafc; border-radius: 8px;">
+                                <div style="font-size: 1.5rem; font-weight: 700; color: #1e293b;">${formatCurrency(Array.from(precios.values()).reduce((sum, p) => sum + p.valor, 0) / precios.size)}</div>
+                                <div style="font-size: 0.75rem; color: #64748b;">Precio Promedio</div>
+                            </div>
+                            <div style="text-align: center; padding: 1rem; background: #f8fafc; border-radius: 8px;">
+                                <div style="font-size: 1.5rem; font-weight: 700; color: #22c55e;">${formatCurrency(Math.max(...Array.from(precios.values()).map(p => p.valor)))}</div>
+                                <div style="font-size: 0.75rem; color: #64748b;">Precio Máximo</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div style="background: white; border-radius: 8px; overflow: hidden; border: 1px solid #e2e8f0;">
+                        <table style="width: 100%; border-collapse: collapse;">
+                            <thead style="background: #f8fafc;">
+                                <tr>
+                                    <th style="padding: 0.75rem; text-align: left; font-weight: 600; border-bottom: 1px solid #e2e8f0;">Fecha</th>
+                                    <th style="padding: 0.75rem; text-align: left; font-weight: 600; border-bottom: 1px solid #e2e8f0;">Mercado</th>
+                                    <th style="padding: 0.75rem; text-align: left; font-weight: 600; border-bottom: 1px solid #e2e8f0;">Precio</th>
+                                    <th style="padding: 0.75rem; text-align: left; font-weight: 600; border-bottom: 1px solid #e2e8f0;">Cambio</th>
+                                    <th style="padding: 0.75rem; text-align: left; font-weight: 600; border-bottom: 1px solid #e2e8f0;">Fuente</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${Array.from(precios.values())
+                                    .sort((a, b) => new Date(b.fecha) - new Date(a.fecha))
+                                    .map(precio => `
+                                        <tr style="border-bottom: 1px solid #f1f5f9;">
+                                            <td style="padding: 0.75rem;">${formatearFecha(precio.fecha)}</td>
+                                            <td style="padding: 0.75rem;">
+                                                <span style="padding: 0.25rem 0.5rem; border-radius: 12px; font-size: 0.75rem; font-weight: 600; text-transform: uppercase; background: ${precio.mercado === 'mayorista' ? '#fef2f2; color: #dc2626' : precio.mercado === 'minorista' ? '#eff6ff; color: #2563eb' : precio.mercado === 'exportacion' ? '#faf5ff; color: #8b5cf6' : '#f0fdf4; color: #16a34a'};">
+                                                    ${precio.mercado}
+                                                </span>
+                                            </td>
+                                            <td style="padding: 0.75rem; font-weight: 600;">${formatCurrency(precio.valor)}</td>
+                                            <td style="padding: 0.75rem; color: ${precio.cambio >= 0 ? '#22c55e' : '#ef4444'}; font-weight: 600;">
+                                                ${precio.cambio >= 0 ? '+' : ''}${precio.cambio.toFixed(1)}%
+                                            </td>
+                                            <td style="padding: 0.75rem; color: #64748b;">${precio.fuente}</td>
+                                        </tr>
+                                    `).join('')}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            `;
+            
+            crearModal('Vista Detallada', contenido, [
+                { texto: 'Exportar Datos', clase: 'btn-secondary', accion: 'exportarDatosDetallados()' },
+                { texto: 'Cerrar', clase: 'btn-primary', accion: 'cerrarModal()' }
+            ]);
+        }
+
+        function exportarDatosDetallados() {
+            const datos = Array.from(precios.values()).sort((a, b) => new Date(b.fecha) - new Date(a.fecha));
+            
+            let csvContent = "data:text/csv;charset=utf-8,";
+            csvContent += "Fecha,Mercado,Precio,Cambio,Fuente,Observaciones\n";
+            
+            datos.forEach(precio => {
+                csvContent += `${precio.fecha},${precio.mercado},${precio.valor},${precio.cambio}%,${precio.fuente},"${precio.observaciones}"\n`;
+            });
+            
+            const encodedUri = encodeURI(csvContent);
+            const link = document.createElement("a");
+            link.setAttribute("href", encodedUri);
+            link.setAttribute("download", `precios_detallados_${new Date().toISOString().split('T')[0]}.csv`);
+            link.click();
+            
+            mostrarNotificacion('Datos exportados en formato CSV');
+        }
+
+        function mostrarDetalleGrafico(tipo) {
+            let contenido = '';
+            
+            if (tipo === 'evolucion') {
+                contenido = `
+                    <div>
+                        <h4 style="margin-bottom: 1rem;">📈 Análisis de Evolución de Precios</h4>
+                        
+                        <div style="margin-bottom: 1.5rem;">
+                            <h5 style="margin: 0 0 0.5rem 0;">Tendencias Identificadas</h5>
+                            <div style="display: grid; gap: 0.5rem;">
+                                <div style="padding: 0.75rem; background: #dcfce7; border-radius: 6px; border-left: 4px solid #22c55e;">
+                                    <strong>Tendencia Alcista:</strong> +6.4% en los últimos 7 días
+                                </div>
+                                <div style="padding: 0.75rem; background: #dbeafe; border-radius: 6px; border-left: 4px solid #3b82f6;">
+                                    <strong>Patrón Estacional:</strong> Incremento típico en Q1
+                                </div>
+                                <div style="padding: 0.75rem; background: #fef3c7; border-radius: 6px; border-left: 4px solid #f59e0b;">
+                                    <strong>Volatilidad:</strong> Moderada (±8% variación semanal)
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div style="margin-bottom: 1.5rem;">
+                            <h5 style="margin: 0 0 0.5rem 0;">Estadísticas Detalladas</h5>
+                            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 1rem;">
+                                <div style="text-align: center; padding: 1rem; background: #f8fafc; border-radius: 8px;">
+                                    <div style="font-size: 1.2rem; font-weight: 700; color: #22c55e;">+12.5%</div>
+                                    <div style="font-size: 0.75rem; color: #64748b;">Crecimiento Mensual</div>
+                                </div>
+                                <div style="text-align: center; padding: 1rem; background: #f8fafc; border-radius: 8px;">
+                                    <div style="font-size: 1.2rem; font-weight: 700; color: #3b82f6;">8.2%</div>
+                                    <div style="font-size: 0.75rem; color: #64748b;">Volatilidad Promedio</div>
+                                </div>
+                                <div style="text-align: center; padding: 1rem; background: #f8fafc; border-radius: 8px;">
+                                    <div style="font-size: 1.2rem; font-weight: 700; color: #8b5cf6;">0.87</div>
+                                    <div style="font-size: 0.75rem; color: #64748b;">Correlación Semanal</div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div style="padding: 1rem; background: #f0f9ff; border-radius: 8px;">
+                            <h5 style="margin: 0 0 0.5rem 0; color: #1e40af;">💡 Insights Clave</h5>
+                            <ul style="margin: 0; padding-left: 1.2rem; color: #1e40af;">
+                                <li>El precio ha superado resistencias técnicas importantes</li>
+                                <li>Momentum alcista sostenido por 3 semanas consecutivas</li>
+                                <li>Volúmenes de trading por encima del promedio</li>
+                                <li>Proyección favorable para próximas 2-3 semanas</li>
+                            </ul>
+                        </div>
+                    </div>
+                `;
+            } else if (tipo === 'comparacion') {
+                contenido = `
+                    <div>
+                        <h4 style="margin-bottom: 1rem;">⚖️ Análisis Comparativo de Mercados</h4>
+                        
+                        <div style="margin-bottom: 1.5rem;">
+                            <h5 style="margin: 0 0 0.5rem 0;">Performance por Mercado</h5>
+                            <div style="display: grid; gap: 1rem;">
+                                <div style="padding: 1rem; background: #f0fdf4; border-radius: 8px; border-left: 4px solid #22c55e;">
+                                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+                                        <strong style="color: #16a34a;">🏆 Exportación</strong>
+                                        <span style="color: #16a34a; font-weight: 700;">Q 18.50</span>
+                                    </div>
+                                    <div style="color: #16a34a; font-size: 0.875rem;">
+                                        • Mejor margen (+45% vs costo)<br>
+                                        • Demanda estable internacional<br>
+                                        • Premium quality pricing
+                                    </div>
+                                </div>
+                                
+                                <div style="padding: 1rem; background: #eff6ff; border-radius: 8px; border-left: 4px solid #3b82f6;">
+                                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+                                        <strong style="color: #2563eb;">🥈 Minorista</strong>
+                                        <span style="color: #2563eb; font-weight: 700;">Q 15.00</span>
+                                    </div>
+                                    <div style="color: #2563eb; font-size: 0.875rem;">
+                                        • Volumen alto, margen medio<br>
+                                        • Mercado local consolidado<br>
+                                        • Relación precio-volumen óptima
+                                    </div>
+                                </div>
+                                
+                                <div style="padding: 1rem; background: #f8fafc; border-radius: 8px; border-left: 4px solid #64748b;">
+                                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+                                        <strong style="color: #475569;">🥉 Finca</strong>
+                                        <span style="color: #475569; font-weight: 700;">Q 12.75</span>
+                                    </div>
+                                    <div style="color: #475569; font-size: 0.875rem;">
+                                        • Precio base competitivo<br>
+                                        • Oportunidad de mejora (+8-12%)<br>
+                                        • Ajustar según mercado mayorista
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div style="padding: 1rem; background: #fef3c7; border-radius: 8px;">
+                            <h5 style="margin: 0 0 0.5rem 0; color: #92400e;">🎯 Recomendaciones Estratégicas</h5>
+                            <div style="color: #92400e;">
+                                <strong>Corto Plazo (1-2 semanas):</strong><br>
+                                • Incrementar volumen en exportación<br>
+                                • Mantener presión en minorista<br>
+                                • Evaluar ajuste de precio finca<br><br>
+                                
+                                <strong>Medio Plazo (1-3 meses):</strong><br>
+                                • Diversificar canales de exportación<br>
+                                • Desarrollar productos premium<br>
+                                • Optimizar costos operativos
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }
+            
+            crearModal(`Análisis Detallado - ${tipo === 'evolucion' ? 'Evolución' : 'Comparación'}`, contenido, [
+                { texto: 'Cerrar', clase: 'btn-primary', accion: 'cerrarModal()' }
+            ]);
+        }
+
+        // ===== FUNCIÓN DE ACTUALIZACIÓN DE UI MEJORADA =====
+        function actualizarUI() {
+            // Actualizar tabla
+            const tbody = document.getElementById('tablaPreciosBody');
+            const precioArray = Array.from(precios.values()).sort((a, b) => new Date(b.fecha) - new Date(a.fecha));
+            
+            tbody.innerHTML = precioArray.map(precio => `
+                <tr>
+                    <td>${formatearFecha(precio.fecha)}</td>
+                    <td><span class="tipo-precio-badge ${precio.mercado}">${precio.mercado}</span></td>
+                    <td>${formatCurrency(precio.valor)}</td>
+                    <td style="color: ${precio.cambio >= 0 ? '#22c55e' : '#ef4444'};">
+                        ${precio.cambio >= 0 ? '+' : ''}${precio.cambio.toFixed(1)}%
+                    </td>
+                    <td>${precio.fuente}</td>
+                    <td>${precio.observaciones || '-'}</td>
+                    <td>
+                        <button class="btn btn-sm btn-primary" onclick="editarPrecio('${precio.id}')" title="Editar">
+                            <i class="fas fa-edit"></i>
+                        </button>
+                        <button class="btn btn-sm btn-danger" onclick="eliminarPrecio('${precio.id}')" title="Eliminar">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </td>
+                </tr>
+            `).join('');
+            
+            // Actualizar precio promedio
+            if (precioArray.length > 0) {
+                const promedio = precioArray.reduce((sum, precio) => sum + precio.valor, 0) / precioArray.length;
+                document.getElementById('precioActual').textContent = promedio.toFixed(2);
+                
+                // Actualizar comparaciones
+                const preciosHoy = precioArray.filter(p => p.fecha === new Date().toISOString().split('T')[0]);
+                if (preciosHoy.length > 0) {
+                    const promedioHoy = preciosHoy.reduce((sum, p) => sum + p.valor, 0) / preciosHoy.length;
+                    document.getElementById('precioHoy').textContent = formatCurrency(promedioHoy);
+                }
+                
+                // Actualizar precios por mercado
+                const mercados = ['mayorista', 'minorista', 'exportacion', 'finca'];
+                mercados.forEach(mercado => {
+                    const precioMercado = precioArray.find(p => p.mercado === mercado);
+                    if (precioMercado) {
+                        const elemento = document.getElementById(`precio${mercado.charAt(0).toUpperCase() + mercado.slice(1)}`);
+                        if (elemento) {
+                            elemento.textContent = formatCurrency(precioMercado.valor);
+                        }
+                    }
+                });
+            }
+
+            // Actualizar gráficos si están inicializados
+            if (graficoComparativo) {
+                const mercados = ['mayorista', 'minorista', 'exportacion', 'finca'];
+                const nuevosPrecios = mercados.map(mercado => {
+                    const precioMercado = precioArray.find(p => p.mercado === mercado);
+                    return precioMercado ? precioMercado.valor : 0;
+                });
+                
+                graficoComparativo.data.datasets[0].data = nuevosPrecios;
+                graficoComparativo.update('none');
+            }
+
+            if (graficoEvolucion) {
+                // Actualizar datos del gráfico de evolución
+                const ultimosSieteDias = [];
+                const hoy = new Date();
+                
+                for (let i = 6; i >= 0; i--) {
+                    const fecha = new Date(hoy);
+                    fecha.setDate(fecha.getDate() - i);
+                    const fechaStr = fecha.toISOString().split('T')[0];
+                    
+                    const preciosFecha = precioArray.filter(p => p.fecha === fechaStr);
+                    const promedio = preciosFecha.length > 0 
+                        ? preciosFecha.reduce((sum, p) => sum + p.valor, 0) / preciosFecha.length 
+                        : null;
+                    
+                    ultimosSieteDias.push({
+                        fecha: fechaStr,
+                        promedio: promedio
+                    });
+                }
+                
+                const etiquetas = ultimosSieteDias.map(d => {
+                    const fecha = new Date(d.fecha);
+                    return fecha.toLocaleDateString('es-GT', { weekday: 'short', day: 'numeric' });
+                });
+                
+                const datos = ultimosSieteDias.map(d => d.promedio);
+                
+                graficoEvolucion.data.labels = etiquetas;
+                graficoEvolucion.data.datasets[0].data = datos;
+                graficoEvolucion.update('none');
+            }
+        }
+
+        // ===== INICIALIZACIÓN MEJORADA =====
+        document.addEventListener('DOMContentLoaded', () => {
+            console.log('🌱 Iniciando aplicación de gestión de precios...');
+            
+            // Ocultar loader después de un breve momento
+            setTimeout(() => {
+                document.getElementById('initLoader').classList.add('hidden');
+            }, 1200);
+            
+            // Configurar fecha por defecto
+            document.getElementById('fechaPrecio').value = new Date().toISOString().split('T')[0];
+            
+            // ===== EVENT LISTENERS PRINCIPALES =====
+            document.getElementById('btnActualizarPrecios').addEventListener('click', actualizarPrecios);
+            document.getElementById('btnNuevoPrecio').addEventListener('click', mostrarFormularioPrecio);
+            document.getElementById('btnExportarAnalisis').addEventListener('click', exportarAnalisis);
+            document.getElementById('guardarPrecio').addEventListener('click', guardarPrecioRapido);
+            document.getElementById('btnVistaDetallada').addEventListener('click', mostrarVistaDetallada);
+            
+            // Event listeners para botones de detalle de gráficos
+            document.getElementById('btnDetalleEvolucion').addEventListener('click', () => mostrarDetalleGrafico('evolucion'));
+            document.getElementById('btnDetalleComparacion').addEventListener('click', () => mostrarDetalleGrafico('comparacion'));
+            
+            // Filtros
+            document.getElementById('aplicarFiltros').addEventListener('click', aplicarFiltros);
+            document.getElementById('limpiarFiltros').addEventListener('click', limpiarFiltros);
+            
+            // Acciones rápidas con data-accion
+            document.querySelectorAll('.accion-precio').forEach(accion => {
+                accion.addEventListener('click', () => {
+                    const accionTipo = accion.getAttribute('data-accion');
+                    if (accionTipo) {
+                        ejecutarAccion(accionTipo);
+                    }
+                });
+            });
+            
+            // Envío con Enter en formularios
+            ['mercadoPrecio', 'valorPrecio', 'fuentePrecio', 'observacionesPrecio'].forEach(id => {
+                const elemento = document.getElementById(id);
+                if (elemento) {
+                    elemento.addEventListener('keypress', (e) => {
+                        if (e.key === 'Enter') {
+                            e.preventDefault();
+                            guardarPrecioRapido();
+                        }
+                    });
+                }
+            });
+            
+            // Cerrar modales con ESC
+            document.addEventListener('keydown', (e) => {
+                if (e.key === 'Escape') {
+                    const modal = document.querySelector('.modal-overlay');
+                    if (modal) {
+                        cerrarModal();
+                    }
+                }
+            });
+            
+            // ===== INICIALIZAR GRÁFICOS CON CHART.JS =====
+            if (window.Chart) {
+                // Configuración global de Chart.js
+                Chart.defaults.font.family = 'Inter, sans-serif';
+                Chart.defaults.color = '#64748b';
+                Chart.defaults.borderColor = '#e2e8f0';
+                
+                // Gráfico de evolución
+                const ctxEvol = document.getElementById('graficoEvolucion');
+                if (ctxEvol) {
+                    graficoEvolucion = new Chart(ctxEvol, {
+                        type: 'line',
+                        data: {
+                            labels: ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'],
+                            datasets: [{
+                                label: 'Precio Promedio (Q)',
+                                data: [10.80, 11.25, 11.80, 12.50, 12.30, 12.75, 13.10],
+                                borderColor: '#f59e0b',
+                                backgroundColor: 'rgba(245, 158, 11, 0.1)',
+                                tension: 0.4,
+                                fill: true,
+                                pointBackgroundColor: '#f59e0b',
+                                pointBorderColor: '#ffffff',
+                                pointBorderWidth: 2,
+                                pointRadius: 5,
+                                pointHoverRadius: 7
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            plugins: {
+                                legend: {
+                                    display: true,
+                                    position: 'top',
+                                    labels: {
+                                        usePointStyle: true,
+                                        padding: 20
+                                    }
+                                },
+                                tooltip: {
+                                    mode: 'index',
+                                    intersect: false,
+                                    backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                                    titleColor: '#ffffff',
+                                    bodyColor: '#ffffff',
+                                    borderColor: '#f59e0b',
+                                    borderWidth: 1
+                                }
+                            },
+                            scales: {
+                                y: {
+                                    beginAtZero: false,
+                                    min: 10,
+                                    grid: {
+                                        color: '#f1f5f9'
+                                    },
+                                    ticks: {
+                                        callback: function(value) {
+                                            return 'Q ' + value.toFixed(2);
+                                        }
+                                    }
+                                },
+                                x: {
+                                    grid: {
+                                        display: false
+                                    }
+                                }
+                            },
+                            interaction: {
+                                intersect: false,
+                                mode: 'index'
+                            }
+                        }
+                    });
+                }
+                
+                // Gráfico comparativo
+                const ctxComp = document.getElementById('graficoComparativo');
+                if (ctxComp) {
+                    graficoComparativo = new Chart(ctxComp, {
+                        type: 'bar',
+                        data: {
+                            labels: ['Mayorista', 'Minorista', 'Exportación', 'Finca'],
+                            datasets: [{
+                                label: 'Precio Actual (Q)',
+                                data: [11.80, 15.00, 18.50, 12.75],
+                                backgroundColor: [
+                                    'rgba(239, 68, 68, 0.8)',
+                                    'rgba(59, 130, 246, 0.8)',
+                                    'rgba(139, 92, 246, 0.8)',
+                                    'rgba(34, 197, 94, 0.8)'
+                                ],
+                                borderColor: [
+                                    '#ef4444',
+                                    '#3b82f6',
+                                    '#8b5cf6',
+                                    '#22c55e'
+                                ],
+                                borderWidth: 2,
+                                borderRadius: 8,
+                                borderSkipped: false
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            plugins: {
+                                legend: {
+                                    display: false
+                                },
+                                tooltip: {
+                                    backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                                    titleColor: '#ffffff',
+                                    bodyColor: '#ffffff',
+                                    borderColor: '#f59e0b',
+                                    borderWidth: 1,
+                                    callbacks: {
+                                        label: function(context) {
+                                            return `Precio: Q ${context.parsed.y.toFixed(2)}/kg`;
+                                        }
+                                    }
+                                }
+                            },
+                            scales: {
+                                y: {
+                                    beginAtZero: false,
+                                    min: 10,
+                                    grid: {
+                                        color: '#f1f5f9'
+                                    },
+                                    ticks: {
+                                        callback: function(value) {
+                                            return 'Q ' + value.toFixed(2);
+                                        }
+                                    }
+                                },
+                                x: {
+                                    grid: {
+                                        display: false
+                                    }
+                                }
+                            }
+                        }
+                    });
+                }
+                
+                console.log('📊 Gráficos inicializados correctamente');
+            } else {
+                console.warn('⚠️ Chart.js no disponible');
+            }
+            
+            // Actualizar UI inicial
+            actualizarUI();
+            
+            console.log('✅ Sistema de gestión de precios inicializado correctamente');
+            console.log(`📊 ${precios.size} precios cargados en memoria`);
+        });
+
+        // ===== FUNCIONES GLOBALES DISPONIBLES =====
+        window.editarPrecio = editarPrecio;
+        window.eliminarPrecio = eliminarPrecio;
+        window.confirmarEliminarPrecio = confirmarEliminarPrecio;
+        window.cerrarModal = cerrarModal;
+        window.guardarPrecioModal = guardarPrecioModal;
+        window.actualizarPrecio = actualizarPrecio;
+        window.confirmarAjustePrecio = confirmarAjustePrecio;
+        window.ejecutarAccion = ejecutarAccion;
+        window.verAnalisisDetallado = verAnalisisDetallado;
+        window.verDetallesVolatilidad = verDetallesVolatilidad;
+        window.ajustarPrecio = ajustarPrecio;
+        window.exportarDatosDetallados = exportarDatosDetallados;
+        
+        // Función de utilidad para debugging
+        window.debugPrecios = () => {
+            console.log('🔍 Estado del sistema de precios:');
+            console.log('- Precios en memoria:', precios.size);
+            console.log('- Filtros activos:', filtrosActivos);
+            console.log('- Gráficos:', { evolucion: !!graficoEvolucion, comparativo: !!graficoComparativo });
+            console.table(Array.from(precios.values()));
+        };
+        
+        console.log('🚀 Sistema de precios completamente cargado y funcional');
+    </script>
+</body>
+</html>

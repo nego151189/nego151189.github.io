@@ -1,0 +1,567 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Poblador de Datos - Finca La Herradura</title>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            max-width: 800px;
+            margin: 2rem auto;
+            padding: 2rem;
+            background: #f8fafc;
+        }
+        
+        .container {
+            background: white;
+            padding: 2rem;
+            border-radius: 16px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+        }
+        
+        .header {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+        
+        .header h1 {
+            color: #22c55e;
+            margin-bottom: 0.5rem;
+        }
+        
+        .status {
+            padding: 1rem;
+            border-radius: 8px;
+            margin: 1rem 0;
+            font-weight: 600;
+        }
+        
+        .status.success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        
+        .status.error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f1b0b7;
+        }
+        
+        .status.info {
+            background: #cce7f0;
+            color: #0c5460;
+            border: 1px solid #b8daff;
+        }
+        
+        button {
+            background: #22c55e;
+            color: white;
+            border: none;
+            padding: 1rem 2rem;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 1rem;
+            margin: 0.5rem;
+            transition: background 0.3s ease;
+        }
+        
+        button:hover {
+            background: #16a34a;
+        }
+        
+        button:disabled {
+            background: #94a3b8;
+            cursor: not-allowed;
+        }
+        
+        .progress {
+            width: 100%;
+            height: 20px;
+            background: #e2e8f0;
+            border-radius: 10px;
+            overflow: hidden;
+            margin: 1rem 0;
+        }
+        
+        .progress-bar {
+            height: 100%;
+            background: linear-gradient(90deg, #22c55e, #16a34a);
+            transition: width 0.3s ease;
+            width: 0%;
+        }
+        
+        .data-preview {
+            background: #f1f5f9;
+            padding: 1rem;
+            border-radius: 8px;
+            margin: 1rem 0;
+            border-left: 4px solid #22c55e;
+        }
+        
+        .collection-status {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.5rem;
+            margin: 0.5rem 0;
+            border-radius: 6px;
+            background: #f8fafc;
+        }
+        
+        .badge {
+            padding: 0.25rem 0.75rem;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+        
+        .badge.empty {
+            background: #fee2e2;
+            color: #dc2626;
+        }
+        
+        .badge.populated {
+            background: #d1fae5;
+            color: #059669;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🌱 Poblador de Datos</h1>
+            <p>Agrega datos de prueba a tu Firebase para que el dashboard funcione</p>
+        </div>
+        
+        <div id="firebaseStatus" class="status info">
+            🔍 Verificando conexión con Firebase...
+        </div>
+        
+        <div id="collectionsStatus"></div>
+        
+        <div class="progress">
+            <div class="progress-bar" id="progressBar"></div>
+        </div>
+        
+        <div style="text-align: center; margin: 2rem 0;">
+            <button id="checkDataBtn">🔍 Verificar Datos Existentes</button>
+            <button id="seedDataBtn" disabled>🌱 Poblar con Datos de Prueba</button>
+            <button id="clearDataBtn" disabled>🗑️ Limpiar Todas las Colecciones</button>
+        </div>
+        
+        <div id="results"></div>
+        
+        <div class="data-preview">
+            <h3>📊 Datos que se crearán:</h3>
+            <ul>
+                <li><strong>cosechas_diarias:</strong> 30 días de producción (1000-1500 limones/día)</li>
+                <li><strong>ventas_directas:</strong> 15 ventas con ingresos Q800-Q2500</li>
+                <li><strong>gastos:</strong> 20 gastos operativos Q50-Q800</li>
+                <li><strong>arboles:</strong> 800 árboles (95% saludables, 5% con problemas)</li>
+                <li><strong>riegos:</strong> Registros de riego con niveles de tanque</li>
+                <li><strong>precios_maga:</strong> Precios históricos Q0.35-Q0.45</li>
+            </ul>
+        </div>
+    </div>
+
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+
+    <script>
+        // Configuración Firebase - REEMPLAZAR con tu configuración
+        const firebaseConfig = {
+            apiKey: "AIzaSyDm_DenNbuG-zLS-8tupO8BZEpfo5z3MY8",
+            authDomain: "fincalaherradura-c5229.firebaseapp.com",
+            projectId: "fincalaherradura-c5229",
+            storageBucket: "fincalaherradura-c5229.firebasestorage.app",
+            messagingSenderId: "453253173599",
+            appId: "1:453253173599:web:f5f31e55fc1a93e7f5a6ea"
+        };
+
+        // Inicializar Firebase
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
+        const auth = firebase.auth();
+
+        // Referencias a elementos DOM
+        const firebaseStatus = document.getElementById('firebaseStatus');
+        const collectionsStatus = document.getElementById('collectionsStatus');
+        const progressBar = document.getElementById('progressBar');
+        const checkDataBtn = document.getElementById('checkDataBtn');
+        const seedDataBtn = document.getElementById('seedDataBtn');
+        const clearDataBtn = document.getElementById('clearDataBtn');
+        const results = document.getElementById('results');
+
+        let currentProgress = 0;
+
+        // Verificar conexión Firebase
+        async function checkFirebaseConnection() {
+            try {
+                // Intentar autenticación anónima
+                await auth.signInAnonymously();
+                firebaseStatus.textContent = '✅ Conectado a Firebase exitosamente';
+                firebaseStatus.className = 'status success';
+                
+                // Habilitar botones
+                checkDataBtn.disabled = false;
+                
+                return true;
+            } catch (error) {
+                firebaseStatus.textContent = `❌ Error conectando a Firebase: ${error.message}`;
+                firebaseStatus.className = 'status error';
+                return false;
+            }
+        }
+
+        // Verificar datos existentes
+        async function checkExistingData() {
+            const collections = [
+                'cosechas_diarias',
+                'ventas_directas', 
+                'gastos',
+                'arboles',
+                'riegos',
+                'precios_maga'
+            ];
+
+            let statusHTML = '<h3>📋 Estado de Colecciones:</h3>';
+            let hasData = false;
+
+            for (const collection of collections) {
+                try {
+                    const snapshot = await db.collection(collection).limit(1).get();
+                    const count = snapshot.size;
+                    const status = count > 0 ? 'populated' : 'empty';
+                    const badge = count > 0 ? `${count}+ docs` : 'Vacía';
+                    
+                    if (count > 0) hasData = true;
+                    
+                    statusHTML += `
+                        <div class="collection-status">
+                            <span><strong>${collection}</strong></span>
+                            <span class="badge ${status}">${badge}</span>
+                        </div>
+                    `;
+                } catch (error) {
+                    statusHTML += `
+                        <div class="collection-status">
+                            <span><strong>${collection}</strong></span>
+                            <span class="badge error">Error</span>
+                        </div>
+                    `;
+                }
+            }
+
+            collectionsStatus.innerHTML = statusHTML;
+            seedDataBtn.disabled = false;
+            clearDataBtn.disabled = !hasData;
+
+            return hasData;
+        }
+
+        // Funciones de datos de prueba
+        function generateDateRange(days) {
+            const dates = [];
+            for (let i = days - 1; i >= 0; i--) {
+                const date = new Date();
+                date.setDate(date.getDate() - i);
+                dates.push(date.toISOString().slice(0, 10));
+            }
+            return dates;
+        }
+
+        function randomBetween(min, max) {
+            return Math.floor(Math.random() * (max - min + 1)) + min;
+        }
+
+        function randomFloat(min, max, decimals = 2) {
+            return parseFloat((Math.random() * (max - min) + min).toFixed(decimals));
+        }
+
+        // Crear datos de cosechas
+        async function createCosechasData() {
+            updateProgress(10, 'Creando datos de cosechas...');
+            
+            const dates = generateDateRange(30);
+            const batch = db.batch();
+            
+            dates.forEach(fecha => {
+                const docRef = db.collection('cosechas_diarias').doc();
+                batch.set(docRef, {
+                    fecha: fecha,
+                    primera: randomBetween(800, 1200),
+                    segunda: randomBetween(300, 600),
+                    descarte: randomBetween(50, 150),
+                    trabajadores: randomBetween(3, 8),
+                    horas_trabajo: randomFloat(6, 10, 1),
+                    notas: 'Cosecha generada automáticamente',
+                    createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                });
+            });
+            
+            await batch.commit();
+            logResult('✅ Creadas 30 cosechas diarias');
+        }
+
+        // Crear datos de ventas
+        async function createVentasData() {
+            updateProgress(25, 'Creando datos de ventas...');
+            
+            const dates = generateDateRange(15);
+            const batch = db.batch();
+            
+            dates.forEach(fecha => {
+                // 1-3 ventas por día
+                const ventasPorDia = randomBetween(1, 3);
+                for (let i = 0; i < ventasPorDia; i++) {
+                    const docRef = db.collection('ventas_directas').doc();
+                    const unidades = randomBetween(500, 2000);
+                    const precioUnitario = randomFloat(0.35, 0.45);
+                    
+                    batch.set(docRef, {
+                        fecha: fecha,
+                        unidades_vendidas: unidades,
+                        precio_por_unidad: precioUnitario,
+                        total_venta: parseFloat((unidades * precioUnitario).toFixed(2)),
+                        cliente: `Cliente ${randomBetween(1, 10)}`,
+                        tipo_venta: ['directa', 'mayorista', 'exportacion'][randomBetween(0, 2)],
+                        createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                    });
+                }
+            });
+            
+            await batch.commit();
+            logResult('✅ Creadas ~30 ventas directas');
+        }
+
+        // Crear datos de gastos
+        async function createGastosData() {
+            updateProgress(40, 'Creando datos de gastos...');
+            
+            const dates = generateDateRange(20);
+            const batch = db.batch();
+            const tiposGasto = [
+                'Fertilizantes', 'Pesticidas', 'Combustible', 'Mantenimiento',
+                'Salarios', 'Herramientas', 'Transporte', 'Electricidad'
+            ];
+            
+            dates.forEach(fecha => {
+                const gastosPorDia = randomBetween(1, 2);
+                for (let i = 0; i < gastosPorDia; i++) {
+                    const docRef = db.collection('gastos').doc();
+                    const tipo = tiposGasto[randomBetween(0, tiposGasto.length - 1)];
+                    
+                    batch.set(docRef, {
+                        fecha: fecha,
+                        tipo: tipo,
+                        descripcion: `Gasto en ${tipo.toLowerCase()}`,
+                        monto: randomFloat(50, 800),
+                        proveedor: `Proveedor ${randomBetween(1, 5)}`,
+                        createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                    });
+                }
+            });
+            
+            await batch.commit();
+            logResult('✅ Creados ~40 gastos operativos');
+        }
+
+        // Crear datos de árboles
+        async function createArbolesData() {
+            updateProgress(60, 'Creando datos de árboles...');
+            
+            const sectores = ['A', 'B', 'C', 'D'];
+            const estados = ['sano', 'enfermo', 'tratamiento'];
+            const batch = db.batch();
+            let batchCount = 0;
+            
+            for (let i = 1; i <= 800; i++) {
+                const docRef = db.collection('arboles').doc();
+                const estadoProbabilidad = Math.random();
+                let estado = 'sano';
+                
+                if (estadoProbabilidad > 0.97) estado = 'enfermo';
+                else if (estadoProbabilidad > 0.93) estado = 'tratamiento';
+                
+                batch.set(docRef, {
+                    numero: i,
+                    sector: sectores[randomBetween(0, 3)],
+                    estado_salud: estado,
+                    edad_años: randomBetween(2, 15),
+                    produccion_promedio: randomFloat(50, 200),
+                    ultima_revision: generateDateRange(30)[randomBetween(0, 29)],
+                    coordenadas: {
+                        lat: randomFloat(14.77, 14.78, 6),
+                        lng: randomFloat(-90.26, -90.25, 6)
+                    },
+                    notas: estado === 'sano' ? 'Árbol en buen estado' : 
+                           estado === 'enfermo' ? 'Requiere atención urgente' : 
+                           'En proceso de tratamiento',
+                    createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                });
+                
+                batchCount++;
+                
+                // Firebase limita a 500 operaciones por batch
+                if (batchCount === 500) {
+                    await batch.commit();
+                    batch = db.batch();
+                    batchCount = 0;
+                }
+            }
+            
+            if (batchCount > 0) {
+                await batch.commit();
+            }
+            
+            logResult('✅ Creados 800 árboles (95% saludables)');
+        }
+
+        // Crear datos de riegos
+        async function createRiegosData() {
+            updateProgress(80, 'Creando datos de riegos...');
+            
+            const dates = generateDateRange(15);
+            const batch = db.batch();
+            let nivelActual = 23000;
+            
+            dates.forEach(fecha => {
+                const docRef = db.collection('riegos').doc();
+                const litrosUsados = randomBetween(1000, 3000);
+                nivelActual = Math.max(5000, nivelActual - litrosUsados + randomBetween(0, 2000));
+                
+                batch.set(docRef, {
+                    fecha: fecha,
+                    hora_inicio: `${randomBetween(5, 7)}:${randomBetween(0, 59).toString().padStart(2, '0')}`,
+                    duracion_minutos: randomBetween(90, 180),
+                    litros_utilizados: litrosUsados,
+                    nivel_tanque: nivelActual,
+                    sector: ['A', 'B', 'C', 'D'][randomBetween(0, 3)],
+                    timestamp: firebase.firestore.FieldValue.serverTimestamp()
+                });
+            });
+            
+            await batch.commit();
+            logResult('✅ Creados 15 registros de riego');
+        }
+
+        // Crear datos de precios MAGA
+        async function createPreciosData() {
+            updateProgress(95, 'Creando datos de precios MAGA...');
+            
+            const dates = generateDateRange(10);
+            const batch = db.batch();
+            
+            dates.forEach(fecha => {
+                const docRef = db.collection('precios_maga').doc();
+                batch.set(docRef, {
+                    fecha: fecha,
+                    precio_por_unidad: randomFloat(0.35, 0.45),
+                    precio_millar_limon_persa: randomFloat(350, 450),
+                    mercado: 'Central',
+                    calidad: 'Primera',
+                    createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                });
+            });
+            
+            await batch.commit();
+            logResult('✅ Creados 10 precios MAGA');
+        }
+
+        // Poblar todas las colecciones
+        async function seedAllData() {
+            seedDataBtn.disabled = true;
+            results.innerHTML = '<h3>📋 Proceso de Poblado:</h3>';
+            
+            try {
+                await createCosechasData();
+                await createVentasData();
+                await createGastosData();
+                await createArbolesData();
+                await createRiegosData();
+                await createPreciosData();
+                
+                updateProgress(100, '🎉 ¡Proceso completado exitosamente!');
+                logResult('✅ Todas las colecciones han sido pobladas con datos de prueba');
+                logResult('🔄 Recarga tu dashboard para ver los datos reales');
+                
+                clearDataBtn.disabled = false;
+                
+            } catch (error) {
+                logResult(`❌ Error durante el poblado: ${error.message}`);
+                console.error('Error:', error);
+            }
+            
+            seedDataBtn.disabled = false;
+        }
+
+        // Limpiar todas las colecciones
+        async function clearAllData() {
+            if (!confirm('⚠️ ¿Estás seguro de que quieres eliminar TODOS los datos? Esta acción no se puede deshacer.')) {
+                return;
+            }
+
+            clearDataBtn.disabled = true;
+            results.innerHTML = '<h3>🗑️ Limpiando datos:</h3>';
+            
+            const collections = ['cosechas_diarias', 'ventas_directas', 'gastos', 'arboles', 'riegos', 'precios_maga'];
+            
+            try {
+                for (const collectionName of collections) {
+                    const snapshot = await db.collection(collectionName).get();
+                    const batch = db.batch();
+                    
+                    snapshot.docs.forEach(doc => {
+                        batch.delete(doc.ref);
+                    });
+                    
+                    await batch.commit();
+                    logResult(`✅ Limpiada colección: ${collectionName}`);
+                }
+                
+                logResult('🎉 Todas las colecciones han sido limpiadas');
+                clearDataBtn.disabled = true;
+                
+            } catch (error) {
+                logResult(`❌ Error durante la limpieza: ${error.message}`);
+            }
+        }
+
+        // Funciones auxiliares
+        function updateProgress(percent, message) {
+            progressBar.style.width = percent + '%';
+            currentProgress = percent;
+            
+            if (message) {
+                logResult(`📊 ${message} (${percent}%)`);
+            }
+        }
+
+        function logResult(message) {
+            const p = document.createElement('p');
+            p.textContent = message;
+            p.style.margin = '0.5rem 0';
+            results.appendChild(p);
+            results.scrollTop = results.scrollHeight;
+        }
+
+        // Event listeners
+        checkDataBtn.addEventListener('click', checkExistingData);
+        seedDataBtn.addEventListener('click', seedAllData);
+        clearDataBtn.addEventListener('click', clearAllData);
+
+        // Inicialización
+        window.addEventListener('load', async () => {
+            const connected = await checkFirebaseConnection();
+            if (connected) {
+                await checkExistingData();
+            }
+        });
+    </script>
+</body>
+</html>

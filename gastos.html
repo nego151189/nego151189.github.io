@@ -1,0 +1,1449 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestión de Gastos - Finca La Herradura</title>
+    
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Chart.js para gráficos -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+    
+    <style>
+        /* Variables CSS */
+        :root {
+            --primary: #dc2626;
+            --secondary: #3b82f6;
+            --success: #22c55e;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+            --info: #3b82f6;
+            --light: #f8fafc;
+            --dark: #1e293b;
+            --bg-primary: #ffffff;
+            --bg-secondary: #f8fafc;
+            --bg-card: #ffffff;
+            --text-primary: #1e293b;
+            --text-secondary: #64748b;
+            --border: #e2e8f0;
+            --shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: var(--bg-secondary);
+            color: var(--text-primary);
+            line-height: 1.6;
+        }
+
+        .main-content-wrapper {
+            padding: 2rem;
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        /* Estilos básicos */
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            padding: 0.75rem 1.5rem;
+            font-size: 0.875rem;
+            font-weight: 600;
+            border-radius: 8px;
+            border: none;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            text-decoration: none;
+            white-space: nowrap;
+        }
+
+        .btn-primary {
+            background: var(--primary);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #b91c1c;
+            transform: translateY(-1px);
+        }
+
+        .btn-secondary {
+            background: var(--secondary);
+            color: white;
+        }
+
+        .btn-secondary:hover {
+            background: #1d4ed8;
+        }
+
+        .btn-success {
+            background: var(--success);
+            color: white;
+        }
+
+        .btn-success:hover {
+            background: #16a34a;
+        }
+
+        .btn-danger {
+            background: var(--danger);
+            color: white;
+        }
+
+        .btn-sm {
+            padding: 0.5rem 0.75rem;
+            font-size: 0.75rem;
+        }
+
+        .form-input, .form-select {
+            width: 100%;
+            padding: 0.75rem;
+            border: 2px solid var(--border);
+            border-radius: 8px;
+            font-size: 1rem;
+            transition: border-color 0.2s ease;
+        }
+
+        .form-input:focus, .form-select:focus {
+            outline: none;
+            border-color: var(--primary);
+        }
+
+        .form-label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .form-group {
+            margin-bottom: 1rem;
+        }
+
+        .table {
+            width: 100%;
+            border-collapse: collapse;
+            background: white;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: var(--shadow);
+        }
+
+        .table th,
+        .table td {
+            padding: 1rem;
+            text-align: left;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .table th {
+            background: var(--bg-secondary);
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .table tr:hover {
+            background: #f8fafc;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 8px;
+            background: #e2e8f0;
+            border-radius: 4px;
+            overflow: hidden;
+        }
+
+        .progress {
+            height: 100%;
+            background: linear-gradient(90deg, var(--primary), #f59e0b);
+            transition: width 0.3s ease;
+        }
+
+        /* CSS específico para la página de gastos */
+        .gastos-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+
+        .page-title {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .title-icon {
+            width: 60px;
+            height: 60px;
+            background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
+            border-radius: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 1.5rem;
+        }
+
+        .header-actions {
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .estado-presupuesto {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.75rem 1.5rem;
+            border-radius: 20px;
+            font-weight: 600;
+            background: rgba(34, 197, 94, 0.2);
+            color: #16a34a;
+            border: 1px solid rgba(34, 197, 94, 0.3);
+        }
+
+        .resumen-financiero {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .resumen-card {
+            background: var(--bg-card);
+            border-radius: 16px;
+            padding: 1.5rem;
+            position: relative;
+            overflow: hidden;
+            box-shadow: var(--shadow);
+        }
+
+        .resumen-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+        }
+
+        .resumen-card.gastos::before {
+            background: linear-gradient(90deg, #dc2626, #b91c1c);
+        }
+
+        .resumen-card.presupuesto::before {
+            background: linear-gradient(90deg, #3b82f6, #1d4ed8);
+        }
+
+        .resumen-card.proyectado::before {
+            background: linear-gradient(90deg, #f59e0b, #d97706);
+        }
+
+        .resumen-card.diferencia::before {
+            background: linear-gradient(90deg, #8b5cf6, #7c3aed);
+        }
+
+        .resumen-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 1rem;
+        }
+
+        .resumen-icon {
+            width: 50px;
+            height: 50px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 1.25rem;
+        }
+
+        .resumen-tendencia {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.875rem;
+            font-weight: 600;
+            color: #22c55e;
+        }
+
+        .resumen-valor {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-bottom: 0.5rem;
+        }
+
+        .resumen-label {
+            color: var(--text-secondary);
+            font-size: 0.875rem;
+        }
+
+        .progress-presupuesto {
+            margin-top: 1rem;
+        }
+
+        .progress-info {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.5rem;
+            font-size: 0.875rem;
+        }
+
+        .contenido-principal {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 2rem;
+            margin-bottom: 2rem;
+        }
+
+        .graficos-container {
+            display: grid;
+            gap: 2rem;
+        }
+
+        .grafico-card {
+            background: var(--bg-card);
+            border-radius: 16px;
+            padding: 1.5rem;
+            height: 400px;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            box-shadow: var(--shadow);
+        }
+
+        .grafico-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+            min-height: 40px;
+            flex-shrink: 0;
+        }
+
+        .grafico-titulo {
+            font-size: 1.125rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .chart-container {
+            position: relative;
+            height: 300px;
+            flex: 1;
+            min-height: 250px;
+            max-height: 350px;
+            overflow: hidden;
+        }
+
+        .chart-container canvas {
+            max-width: 100% !important;
+            max-height: 100% !important;
+            width: 100% !important;
+            height: 100% !important;
+        }
+
+        .filtros-gastos {
+            background: var(--bg-card);
+            border-radius: 16px;
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+            box-shadow: var(--shadow);
+        }
+
+        .filtros-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 1rem;
+            align-items: end;
+        }
+
+        .acciones-rapidas {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 2rem;
+            flex-wrap: wrap;
+        }
+
+        .accion-rapida {
+            background: var(--bg-card);
+            border-radius: 12px;
+            padding: 1rem 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border: 2px solid transparent;
+            min-width: 180px;
+            box-shadow: var(--shadow);
+        }
+
+        .accion-rapida:hover {
+            border-color: var(--primary);
+            transform: translateY(-2px);
+        }
+
+        .accion-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 1rem;
+        }
+
+        .categorias-gastos {
+            background: var(--bg-card);
+            border-radius: 16px;
+            padding: 1.5rem;
+            box-shadow: var(--shadow);
+        }
+
+        .categoria-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem;
+            margin-bottom: 0.75rem;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 12px;
+            border-left: 4px solid;
+            transition: all 0.3s ease;
+        }
+
+        .categoria-item.mano-obra {
+            border-left-color: #ef4444;
+        }
+
+        .categoria-item.insumos {
+            border-left-color: #f59e0b;
+        }
+
+        .categoria-item.transporte {
+            border-left-color: #3b82f6;
+        }
+
+        .categoria-item.mantenimiento {
+            border-left-color: #8b5cf6;
+        }
+
+        .categoria-item.servicios {
+            border-left-color: #22c55e;
+        }
+
+        .categoria-info {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .categoria-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 1rem;
+        }
+
+        .categoria-datos {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-end;
+        }
+
+        .categoria-monto {
+            font-size: 1.125rem;
+            font-weight: 700;
+            color: var(--text-primary);
+        }
+
+        .categoria-porcentaje {
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+        }
+
+        .form-registro-gasto {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            align-items: end;
+            background: var(--bg-card);
+            border-radius: 16px;
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+            box-shadow: var(--shadow);
+        }
+
+        .tabla-gastos {
+            background: var(--bg-card);
+            border-radius: 16px;
+            padding: 1.5rem;
+            margin-top: 2rem;
+            box-shadow: var(--shadow);
+        }
+
+        .tabla-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+        }
+
+        .categoria-badge {
+            padding: 0.25rem 0.75rem;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .categoria-badge.mano-obra {
+            background: rgba(239, 68, 68, 0.2);
+            color: #dc2626;
+        }
+
+        .categoria-badge.insumos {
+            background: rgba(245, 158, 11, 0.2);
+            color: #d97706;
+        }
+
+        .categoria-badge.transporte {
+            background: rgba(59, 130, 246, 0.2);
+            color: #2563eb;
+        }
+
+        .categoria-badge.mantenimiento {
+            background: rgba(139, 92, 246, 0.2);
+            color: #8b5cf6;
+        }
+
+        .categoria-badge.servicios {
+            background: rgba(34, 197, 94, 0.2);
+            color: #16a34a;
+        }
+
+        .estado-badge {
+            padding: 0.25rem 0.75rem;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .estado-badge.pendiente {
+            background: rgba(245, 158, 11, 0.2);
+            color: #d97706;
+        }
+
+        .estado-badge.pagado {
+            background: rgba(34, 197, 94, 0.2);
+            color: #16a34a;
+        }
+
+        .initialization-loader {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.8);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 9999;
+            color: white;
+            font-size: 1.2rem;
+        }
+
+        .initialization-loader.hidden {
+            display: none;
+        }
+
+        /* Responsivo */
+        @media (max-width: 1024px) {
+            .contenido-principal {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .main-content-wrapper {
+                padding: 1rem;
+            }
+            
+            .gastos-header {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            
+            .resumen-financiero {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            
+            .filtros-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .form-registro-gasto {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .resumen-financiero {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Loader de inicialización -->
+    <div class="initialization-loader" id="initLoader">
+        <div style="text-align: center;">
+            <div style="font-size: 3rem; margin-bottom: 1rem;">
+                <i class="fas fa-receipt fa-spin"></i>
+            </div>
+            <div>Inicializando sistema de gastos...</div>
+        </div>
+    </div>
+
+    <!-- Contenido principal -->
+    <main class="main-content-wrapper">
+        <!-- Header de la página -->
+        <header class="gastos-header">
+            <div class="page-title">
+                <div class="title-icon">
+                    <i class="fas fa-receipt"></i>
+                </div>
+                <div>
+                    <h1>Gestión de Gastos</h1>
+                    <p>Control financiero y análisis de costos</p>
+                </div>
+            </div>
+            
+            <div class="header-actions">
+                <div class="estado-presupuesto" id="estadoPresupuesto">
+                    <i class="fas fa-check-circle"></i>
+                    <span>Dentro del presupuesto</span>
+                </div>
+                
+                <button class="btn btn-primary" id="btnNuevoGasto">
+                    <i class="fas fa-plus"></i> Nuevo Gasto
+                </button>
+                
+                <button class="btn btn-secondary" id="btnExportarReporte">
+                    <i class="fas fa-file-export"></i> Exportar
+                </button>
+            </div>
+        </header>
+
+        <!-- Resumen financiero -->
+        <section class="resumen-financiero">
+            <div class="resumen-card gastos">
+                <div class="resumen-header">
+                    <div class="resumen-icon" style="background: #dc2626;">
+                        <i class="fas fa-money-bill-wave"></i>
+                    </div>
+                    <div class="resumen-tendencia">
+                        <i class="fas fa-arrow-down"></i>
+                        <span>-5%</span>
+                    </div>
+                </div>
+                <div class="resumen-valor" id="gastosDelMes">Q 2,370</div>
+                <div class="resumen-label">Gastos del Mes</div>
+                <div class="progress-presupuesto">
+                    <div class="progress-info">
+                        <span>Presupuesto usado</span>
+                        <span id="porcentajeUsado">15.8%</span>
+                    </div>
+                    <div class="progress-bar">
+                        <div class="progress" id="progressPresupuesto" style="width: 15.8%;"></div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="resumen-card presupuesto">
+                <div class="resumen-header">
+                    <div class="resumen-icon" style="background: #3b82f6;">
+                        <i class="fas fa-calculator"></i>
+                    </div>
+                    <div class="resumen-tendencia">
+                        <i class="fas fa-arrow-up"></i>
+                        <span>+2%</span>
+                    </div>
+                </div>
+                <div class="resumen-valor">Q 15,000</div>
+                <div class="resumen-label">Presupuesto Mensual</div>
+            </div>
+            
+            <div class="resumen-card proyectado">
+                <div class="resumen-header">
+                    <div class="resumen-icon" style="background: #f59e0b;">
+                        <i class="fas fa-chart-line"></i>
+                    </div>
+                    <div class="resumen-tendencia">
+                        <i class="fas fa-arrow-up"></i>
+                        <span>+8%</span>
+                    </div>
+                </div>
+                <div class="resumen-valor" id="gastoProyectado">Q 3,555</div>
+                <div class="resumen-label">Proyectado fin de mes</div>
+            </div>
+            
+            <div class="resumen-card diferencia">
+                <div class="resumen-header">
+                    <div class="resumen-icon" style="background: #8b5cf6;">
+                        <i class="fas fa-balance-scale"></i>
+                    </div>
+                    <div class="resumen-tendencia">
+                        <i class="fas fa-arrow-down"></i>
+                        <span>Q 12,630</span>
+                    </div>
+                </div>
+                <div class="resumen-valor" id="diferenciapresupuesto">Q 12,630</div>
+                <div class="resumen-label">Diferencia vs Presupuesto</div>
+            </div>
+        </section>
+
+        <!-- Filtros -->
+        <section class="filtros-gastos">
+            <h3 style="margin-bottom: 1rem;">
+                <i class="fas fa-filter"></i> Filtros de Gastos
+            </h3>
+            
+            <div class="filtros-grid">
+                <div class="filtro-grupo">
+                    <label class="form-label">Período</label>
+                    <select class="form-input" id="filtroPeriodo">
+                        <option value="hoy">Hoy</option>
+                        <option value="semana">Esta Semana</option>
+                        <option value="mes" selected>Este Mes</option>
+                        <option value="trimestre">Este Trimestre</option>
+                        <option value="ano">Este Año</option>
+                    </select>
+                </div>
+                
+                <div class="filtro-grupo">
+                    <label class="form-label">Categoría</label>
+                    <select class="form-input" id="filtroCategoria">
+                        <option value="">Todas las categorías</option>
+                        <option value="mano-obra">Mano de Obra</option>
+                        <option value="insumos">Insumos</option>
+                        <option value="transporte">Transporte</option>
+                        <option value="mantenimiento">Mantenimiento</option>
+                        <option value="servicios">Servicios</option>
+                    </select>
+                </div>
+                
+                <div class="filtro-grupo">
+                    <label class="form-label">Estado</label>
+                    <select class="form-input" id="filtroEstado">
+                        <option value="">Todos los estados</option>
+                        <option value="pendiente">Pendiente</option>
+                        <option value="pagado">Pagado</option>
+                    </select>
+                </div>
+                
+                <div class="filtro-grupo">
+                    <button class="btn btn-primary" id="aplicarFiltros">
+                        <i class="fas fa-search"></i> Aplicar
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <!-- Acciones rápidas -->
+        <section class="acciones-rapidas">
+            <div class="accion-rapida" id="accionNuevoGasto">
+                <div class="accion-icon" style="background: #dc2626;">
+                    <i class="fas fa-plus"></i>
+                </div>
+                <div>
+                    <div style="font-weight: 600;">Registrar Gasto</div>
+                    <div style="font-size: 0.75rem; color: var(--text-secondary);">Nuevo registro</div>
+                </div>
+            </div>
+            
+            <div class="accion-rapida" id="accionPresupuesto">
+                <div class="accion-icon" style="background: #3b82f6;">
+                    <i class="fas fa-chart-pie"></i>
+                </div>
+                <div>
+                    <div style="font-weight: 600;">Gestionar Presupuesto</div>
+                    <div style="font-size: 0.75rem; color: var(--text-secondary);">Configurar límites</div>
+                </div>
+            </div>
+            
+            <div class="accion-rapida" id="accionReporte">
+                <div class="accion-icon" style="background: #f59e0b;">
+                    <i class="fas fa-file-chart-line"></i>
+                </div>
+                <div>
+                    <div style="font-weight: 600;">Generar Reporte</div>
+                    <div style="font-size: 0.75rem; color: var(--text-secondary);">Análisis financiero</div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Registro rápido de gasto -->
+        <section class="form-registro-gasto">
+            <h3 style="grid-column: 1 / -1; margin-bottom: 1rem;">
+                <i class="fas fa-bolt"></i> Registro Rápido de Gasto
+            </h3>
+            
+            <div class="form-group">
+                <label class="form-label">Fecha</label>
+                <input type="date" class="form-input" id="fechaGasto" required>
+            </div>
+            
+            <div class="form-group">
+                <label class="form-label">Categoría</label>
+                <select class="form-input" id="categoriaGasto" required>
+                    <option value="">Seleccionar...</option>
+                    <option value="mano-obra">Mano de Obra</option>
+                    <option value="insumos">Insumos</option>
+                    <option value="transporte">Transporte</option>
+                    <option value="mantenimiento">Mantenimiento</option>
+                    <option value="servicios">Servicios</option>
+                </select>
+            </div>
+            
+            <div class="form-group">
+                <label class="form-label">Concepto</label>
+                <input type="text" class="form-input" id="conceptoGasto" placeholder="Descripción del gasto" required>
+            </div>
+            
+            <div class="form-group">
+                <label class="form-label">Monto (Q)</label>
+                <input type="number" class="form-input" id="montoGasto" step="0.01" min="0" required>
+            </div>
+            
+            <div class="form-group">
+                <label class="form-label">Estado</label>
+                <select class="form-input" id="estadoGasto" required>
+                    <option value="pagado">Pagado</option>
+                    <option value="pendiente">Pendiente</option>
+                </select>
+            </div>
+            
+            <div class="form-group">
+                <button type="button" class="btn btn-success" id="guardarGastoRapido">
+                    <i class="fas fa-save"></i> Guardar
+                </button>
+            </div>
+        </section>
+
+        <!-- Contenido principal -->
+        <div class="contenido-principal">
+            <!-- Gráficos -->
+            <div class="graficos-container">
+                <!-- Gráfico de evolución de gastos -->
+                <div class="grafico-card">
+                    <div class="grafico-header">
+                        <h3 class="grafico-titulo">
+                            <i class="fas fa-chart-line"></i>
+                            Evolución de Gastos
+                        </h3>
+                    </div>
+                    <div class="chart-container">
+                        <canvas id="graficoEvolucion"></canvas>
+                    </div>
+                </div>
+                
+                <!-- Gráfico de gastos por categoría -->
+                <div class="grafico-card">
+                    <div class="grafico-header">
+                        <h3 class="grafico-titulo">
+                            <i class="fas fa-chart-pie"></i>
+                            Distribución por Categoría
+                        </h3>
+                    </div>
+                    <div class="chart-container">
+                        <canvas id="graficoCategorias"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Panel lateral -->
+            <div>
+                <!-- Categorías de gastos -->
+                <div class="categorias-gastos">
+                    <h3 style="margin-bottom: 1.5rem;">
+                        <i class="fas fa-tags"></i>
+                        Gastos por Categoría
+                    </h3>
+                    
+                    <div id="listaCategoriasGastos">
+                        <div class="categoria-item mano-obra">
+                            <div class="categoria-info">
+                                <div class="categoria-icon" style="background: #ef4444;">
+                                    <i class="fas fa-users"></i>
+                                </div>
+                                <div>
+                                    <div style="font-weight: 600; color: var(--text-primary);">Mano de Obra</div>
+                                    <div style="font-size: 0.875rem; color: var(--text-secondary);">1 gasto</div>
+                                </div>
+                            </div>
+                            <div class="categoria-datos">
+                                <div class="categoria-monto">Q 1,200</div>
+                                <div class="categoria-porcentaje">50.6%</div>
+                            </div>
+                        </div>
+                        
+                        <div class="categoria-item insumos">
+                            <div class="categoria-info">
+                                <div class="categoria-icon" style="background: #f59e0b;">
+                                    <i class="fas fa-seedling"></i>
+                                </div>
+                                <div>
+                                    <div style="font-weight: 600; color: var(--text-primary);">Insumos</div>
+                                    <div style="font-size: 0.875rem; color: var(--text-secondary);">1 gasto</div>
+                                </div>
+                            </div>
+                            <div class="categoria-datos">
+                                <div class="categoria-monto">Q 850</div>
+                                <div class="categoria-porcentaje">35.9%</div>
+                            </div>
+                        </div>
+                        
+                        <div class="categoria-item transporte">
+                            <div class="categoria-info">
+                                <div class="categoria-icon" style="background: #3b82f6;">
+                                    <i class="fas fa-truck"></i>
+                                </div>
+                                <div>
+                                    <div style="font-weight: 600; color: var(--text-primary);">Transporte</div>
+                                    <div style="font-size: 0.875rem; color: var(--text-secondary);">1 gasto</div>
+                                </div>
+                            </div>
+                            <div class="categoria-datos">
+                                <div class="categoria-monto">Q 320</div>
+                                <div class="categoria-porcentaje">13.5%</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tabla de gastos -->
+        <section class="tabla-gastos">
+            <div class="tabla-header">
+                <h3>
+                    <i class="fas fa-table"></i>
+                    Registros de Gastos
+                </h3>
+            </div>
+            
+            <div class="table-container">
+                <table class="table" id="tablaGastos">
+                    <thead>
+                        <tr>
+                            <th>Fecha</th>
+                            <th>Categoría</th>
+                            <th>Concepto</th>
+                            <th>Monto</th>
+                            <th>Estado</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tablaGastosBody">
+                        <tr>
+                            <td>Hoy</td>
+                            <td><span class="categoria-badge mano-obra">Mano de Obra</span></td>
+                            <td>Jornales de cosecha</td>
+                            <td>Q 1,200</td>
+                            <td><span class="estado-badge pagado">pagado</span></td>
+                            <td>
+                                <button class="btn btn-sm btn-primary" onclick="editarGasto('EXP_001')" title="Editar">
+                                    <i class="fas fa-edit"></i>
+                                </button>
+                                <button class="btn btn-sm btn-danger" onclick="eliminarGasto('EXP_001')" title="Eliminar" style="margin-left: 0.5rem;">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>Ayer</td>
+                            <td><span class="categoria-badge insumos">Insumos</span></td>
+                            <td>Fertilizantes NPK</td>
+                            <td>Q 850</td>
+                            <td><span class="estado-badge pendiente">pendiente</span></td>
+                            <td>
+                                <button class="btn btn-sm btn-primary" onclick="editarGasto('EXP_002')" title="Editar">
+                                    <i class="fas fa-edit"></i>
+                                </button>
+                                <button class="btn btn-sm btn-danger" onclick="eliminarGasto('EXP_002')" title="Eliminar" style="margin-left: 0.5rem;">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>Hace 2 días</td>
+                            <td><span class="categoria-badge transporte">Transporte</span></td>
+                            <td>Combustible</td>
+                            <td>Q 320</td>
+                            <td><span class="estado-badge pagado">pagado</span></td>
+                            <td>
+                                <button class="btn btn-sm btn-primary" onclick="editarGasto('EXP_003')" title="Editar">
+                                    <i class="fas fa-edit"></i>
+                                </button>
+                                <button class="btn btn-sm btn-danger" onclick="eliminarGasto('EXP_003')" title="Eliminar" style="margin-left: 0.5rem;">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+    </main>
+
+    <script>
+        // Variables globales
+        let expenses = new Map();
+        let graficoEvolucion, graficoCategorias;
+        let nextExpenseId = 4;
+
+        // Datos iniciales
+        const initialExpenses = [
+            {
+                id: 'EXP_001',
+                amount: 1200,
+                category: 'mano-obra',
+                description: 'Jornales de cosecha',
+                date: new Date().toISOString().split('T')[0],
+                status: 'pagado'
+            },
+            {
+                id: 'EXP_002',
+                amount: 850,
+                category: 'insumos',
+                description: 'Fertilizantes NPK',
+                date: new Date(Date.now() - 86400000).toISOString().split('T')[0],
+                status: 'pendiente'
+            },
+            {
+                id: 'EXP_003',
+                amount: 320,
+                category: 'transporte',
+                description: 'Combustible',
+                date: new Date(Date.now() - 172800000).toISOString().split('T')[0],
+                status: 'pagado'
+            }
+        ];
+
+        // Cargar datos iniciales
+        initialExpenses.forEach(expense => {
+            expenses.set(expense.id, expense);
+        });
+
+        // Funciones de utilidad
+        function formatCurrency(amount) {
+            return new Intl.NumberFormat('es-GT', {
+                style: 'currency',
+                currency: 'GTQ'
+            }).format(amount || 0);
+        }
+
+        function formatearFecha(fecha) {
+            const date = new Date(fecha);
+            const today = new Date();
+            const yesterday = new Date(today.getTime() - 86400000);
+            const dayBefore = new Date(today.getTime() - 172800000);
+            
+            if (fecha === today.toISOString().split('T')[0]) return 'Hoy';
+            if (fecha === yesterday.toISOString().split('T')[0]) return 'Ayer';
+            if (fecha === dayBefore.toISOString().split('T')[0]) return 'Hace 2 días';
+            
+            return date.toLocaleDateString('es-GT', {
+                year: 'numeric',
+                month: 'short',
+                day: 'numeric'
+            });
+        }
+
+        function mostrarNotificacion(mensaje, tipo = 'success') {
+            const notification = document.createElement('div');
+            notification.style.cssText = `
+                position: fixed;
+                top: 20px;
+                right: 20px;
+                background: ${tipo === 'success' ? '#22c55e' : tipo === 'error' ? '#ef4444' : '#3b82f6'};
+                color: white;
+                padding: 1rem 1.5rem;
+                border-radius: 8px;
+                z-index: 10000;
+                box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+                max-width: 400px;
+                font-size: 0.9rem;
+                font-weight: 500;
+            `;
+            
+            notification.textContent = mensaje;
+            document.body.appendChild(notification);
+            
+            setTimeout(() => {
+                if (notification.parentNode) {
+                    notification.parentNode.removeChild(notification);
+                }
+            }, 3000);
+        }
+
+        function generateExpenseId() {
+            return `EXP_${String(nextExpenseId++).padStart(3, '0')}`;
+        }
+
+        // Funciones principales
+        function mostrarFormularioGasto() {
+            const modal = document.createElement('div');
+            modal.style.cssText = `
+                position: fixed;
+                top: 0;
+                left: 0;
+                right: 0;
+                bottom: 0;
+                background: rgba(0, 0, 0, 0.7);
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                z-index: 10000;
+            `;
+            
+            modal.innerHTML = `
+                <div style="
+                    background: white;
+                    border-radius: 16px;
+                    width: 90%;
+                    max-width: 600px;
+                    padding: 2rem;
+                    box-shadow: 0 20px 40px rgba(0,0,0,0.3);
+                ">
+                    <h3 style="margin-bottom: 1.5rem; color: #333;">
+                        <i class="fas fa-plus" style="margin-right: 0.5rem; color: #ef4444;"></i>
+                        Nuevo Gasto
+                    </h3>
+                    
+                    <div style="display: grid; gap: 1rem;">
+                        <div>
+                            <label style="display: block; margin-bottom: 0.5rem; font-weight: 600;">Fecha</label>
+                            <input type="date" id="modalFecha" style="width: 100%; padding: 0.75rem; border: 2px solid #e5e5e5; border-radius: 8px;" value="${new Date().toISOString().split('T')[0]}">
+                        </div>
+                        
+                        <div>
+                            <label style="display: block; margin-bottom: 0.5rem; font-weight: 600;">Categoría</label>
+                            <select id="modalCategoria" style="width: 100%; padding: 0.75rem; border: 2px solid #e5e5e5; border-radius: 8px;" required>
+                                <option value="">Seleccionar...</option>
+                                <option value="mano-obra">Mano de Obra</option>
+                                <option value="insumos">Insumos</option>
+                                <option value="transporte">Transporte</option>
+                                <option value="mantenimiento">Mantenimiento</option>
+                                <option value="servicios">Servicios</option>
+                            </select>
+                        </div>
+                        
+                        <div>
+                            <label style="display: block; margin-bottom: 0.5rem; font-weight: 600;">Concepto</label>
+                            <input type="text" id="modalConcepto" style="width: 100%; padding: 0.75rem; border: 2px solid #e5e5e5; border-radius: 8px;" placeholder="Descripción del gasto" required>
+                        </div>
+                        
+                        <div>
+                            <label style="display: block; margin-bottom: 0.5rem; font-weight: 600;">Monto (Q)</label>
+                            <input type="number" id="modalMonto" style="width: 100%; padding: 0.75rem; border: 2px solid #e5e5e5; border-radius: 8px;" step="0.01" min="0" required>
+                        </div>
+                        
+                        <div>
+                            <label style="display: block; margin-bottom: 0.5rem; font-weight: 600;">Estado</label>
+                            <select id="modalEstado" style="width: 100%; padding: 0.75rem; border: 2px solid #e5e5e5; border-radius: 8px;">
+                                <option value="pagado">Pagado</option>
+                                <option value="pendiente">Pendiente</option>
+                            </select>
+                        </div>
+                        
+                        <div style="display: flex; gap: 1rem; margin-top: 1rem;">
+                            <button onclick="cerrarModal()" style="flex: 1; padding: 0.75rem; border: 2px solid #e5e5e5; background: white; border-radius: 8px; cursor: pointer;">
+                                Cancelar
+                            </button>
+                            <button onclick="guardarGastoModal()" style="flex: 1; padding: 0.75rem; border: none; background: #ef4444; color: white; border-radius: 8px; cursor: pointer; font-weight: 600;">
+                                <i class="fas fa-save" style="margin-right: 0.5rem;"></i>
+                                Guardar
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            document.body.appendChild(modal);
+            
+            // Cerrar con click fuera
+            modal.addEventListener('click', (e) => {
+                if (e.target === modal) {
+                    cerrarModal();
+                }
+            });
+        }
+
+        function cerrarModal() {
+            const modal = document.querySelector('[style*="position: fixed"][style*="z-index: 10000"]');
+            if (modal) {
+                modal.remove();
+            }
+        }
+
+        function guardarGastoModal() {
+            const datos = {
+                fecha: document.getElementById('modalFecha').value,
+                categoria: document.getElementById('modalCategoria').value,
+                concepto: document.getElementById('modalConcepto').value,
+                monto: parseFloat(document.getElementById('modalMonto').value),
+                estado: document.getElementById('modalEstado').value
+            };
+            
+            if (!datos.categoria || !datos.concepto || !datos.monto || datos.monto <= 0) {
+                mostrarNotificacion('Por favor complete todos los campos correctamente', 'error');
+                return;
+            }
+            
+            const expense = {
+                id: generateExpenseId(),
+                amount: datos.monto,
+                category: datos.categoria,
+                description: datos.concepto,
+                date: datos.fecha,
+                status: datos.estado
+            };
+            
+            expenses.set(expense.id, expense);
+            actualizarUI();
+            cerrarModal();
+            mostrarNotificacion(`Gasto de ${formatCurrency(datos.monto)} registrado correctamente`);
+        }
+
+        function guardarGastoRapido() {
+            const datos = {
+                fecha: document.getElementById('fechaGasto').value,
+                categoria: document.getElementById('categoriaGasto').value,
+                concepto: document.getElementById('conceptoGasto').value,
+                monto: parseFloat(document.getElementById('montoGasto').value),
+                estado: document.getElementById('estadoGasto').value
+            };
+            
+            if (!datos.categoria || !datos.concepto || !datos.monto || datos.monto <= 0) {
+                mostrarNotificacion('Por favor complete todos los campos correctamente', 'error');
+                return;
+            }
+            
+            const expense = {
+                id: generateExpenseId(),
+                amount: datos.monto,
+                category: datos.categoria,
+                description: datos.concepto,
+                date: datos.fecha,
+                status: datos.estado
+            };
+            
+            expenses.set(expense.id, expense);
+            
+            // Limpiar formulario
+            document.getElementById('categoriaGasto').value = '';
+            document.getElementById('conceptoGasto').value = '';
+            document.getElementById('montoGasto').value = '';
+            document.getElementById('estadoGasto').value = 'pagado';
+            
+            actualizarUI();
+            mostrarNotificacion(`Gasto de ${formatCurrency(datos.monto)} registrado correctamente`);
+        }
+
+        function editarGasto(id) {
+            const expense = expenses.get(id);
+            if (!expense) {
+                mostrarNotificacion('Gasto no encontrado', 'error');
+                return;
+            }
+            
+            mostrarNotificacion('Función de edición próximamente disponible');
+        }
+
+        function eliminarGasto(id) {
+            if (!confirm('¿Está seguro de que desea eliminar este gasto?')) {
+                return;
+            }
+            
+            expenses.delete(id);
+            actualizarUI();
+            mostrarNotificacion('Gasto eliminado correctamente');
+        }
+
+        function exportarReporte() {
+            const reporte = {
+                fecha_generacion: new Date().toISOString(),
+                gastos: Array.from(expenses.values()),
+                total_gastos: Array.from(expenses.values()).reduce((sum, expense) => sum + expense.amount, 0)
+            };
+            
+            const dataStr = JSON.stringify(reporte, null, 2);
+            const dataBlob = new Blob([dataStr], { type: 'application/json' });
+            const url = URL.createObjectURL(dataBlob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = `reporte_gastos_${new Date().toISOString().split('T')[0]}.json`;
+            link.click();
+            URL.revokeObjectURL(url);
+            
+            mostrarNotificacion('Reporte exportado correctamente');
+        }
+
+        function aplicarFiltros() {
+            mostrarNotificacion('Filtros aplicados correctamente');
+        }
+
+        function actualizarUI() {
+            // Actualizar tabla
+            const tbody = document.getElementById('tablaGastosBody');
+            const expenseArray = Array.from(expenses.values()).sort((a, b) => new Date(b.date) - new Date(a.date));
+            
+            tbody.innerHTML = expenseArray.map(expense => `
+                <tr>
+                    <td>${formatearFecha(expense.date)}</td>
+                    <td><span class="categoria-badge ${expense.category}">${expense.category.replace('-', ' ')}</span></td>
+                    <td>${expense.description}</td>
+                    <td>${formatCurrency(expense.amount)}</td>
+                    <td><span class="estado-badge ${expense.status}">${expense.status}</span></td>
+                    <td>
+                        <button class="btn btn-sm btn-primary" onclick="editarGasto('${expense.id}')" title="Editar">
+                            <i class="fas fa-edit"></i>
+                        </button>
+                        <button class="btn btn-sm btn-danger" onclick="eliminarGasto('${expense.id}')" title="Eliminar" style="margin-left: 0.5rem;">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </td>
+                </tr>
+            `).join('');
+            
+            // Actualizar totales
+            const total = expenseArray.reduce((sum, expense) => sum + expense.amount, 0);
+            document.getElementById('gastosDelMes').textContent = formatCurrency(total);
+            document.getElementById('gastoProyectado').textContent = formatCurrency(total * 1.5);
+            document.getElementById('diferenciapresupuesto').textContent = formatCurrency(15000 - total);
+            
+            const porcentaje = (total / 15000) * 100;
+            document.getElementById('porcentajeUsado').textContent = `${porcentaje.toFixed(1)}%`;
+            document.getElementById('progressPresupuesto').style.width = `${Math.min(porcentaje, 100)}%`;
+        }
+
+        // Inicialización
+        document.addEventListener('DOMContentLoaded', () => {
+            console.log('Iniciando aplicación de gastos...');
+            
+            // Ocultar loader después de un breve momento
+            setTimeout(() => {
+                document.getElementById('initLoader').classList.add('hidden');
+            }, 800);
+            
+            // Configurar fecha por defecto
+            document.getElementById('fechaGasto').value = new Date().toISOString().split('T')[0];
+            
+            // Event listeners
+            document.getElementById('btnNuevoGasto').addEventListener('click', mostrarFormularioGasto);
+            document.getElementById('btnExportarReporte').addEventListener('click', exportarReporte);
+            document.getElementById('accionNuevoGasto').addEventListener('click', mostrarFormularioGasto);
+            document.getElementById('accionReporte').addEventListener('click', exportarReporte);
+            document.getElementById('accionPresupuesto').addEventListener('click', () => {
+                mostrarNotificacion('Gestión de presupuesto próximamente disponible');
+            });
+            document.getElementById('guardarGastoRapido').addEventListener('click', guardarGastoRapido);
+            document.getElementById('aplicarFiltros').addEventListener('click', aplicarFiltros);
+            
+            // Envío con Enter en formularios
+            ['categoriaGasto', 'conceptoGasto', 'montoGasto'].forEach(id => {
+                document.getElementById(id).addEventListener('keypress', (e) => {
+                    if (e.key === 'Enter') {
+                        e.preventDefault();
+                        guardarGastoRapido();
+                    }
+                });
+            });
+            
+            // Inicializar gráficos
+            if (window.Chart) {
+                const ctxEvol = document.getElementById('graficoEvolucion');
+                if (ctxEvol) {
+                    graficoEvolucion = new Chart(ctxEvol, {
+                        type: 'line',
+                        data: {
+                            labels: ['Sem 1', 'Sem 2', 'Sem 3', 'Sem 4'],
+                            datasets: [{
+                                label: 'Gastos (Q)',
+                                data: [500, 800, 600, 1200],
+                                borderColor: '#dc2626',
+                                backgroundColor: 'rgba(220, 38, 38, 0.1)',
+                                tension: 0.4,
+                                fill: true
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false
+                        }
+                    });
+                }
+                
+                const ctxCat = document.getElementById('graficoCategorias');
+                if (ctxCat) {
+                    graficoCategorias = new Chart(ctxCat, {
+                        type: 'doughnut',
+                        data: {
+                            labels: ['Mano de Obra', 'Insumos', 'Transporte'],
+                            datasets: [{
+                                data: [1200, 850, 320],
+                                backgroundColor: ['#ef4444', '#f59e0b', '#3b82f6'],
+                                borderWidth: 0
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            plugins: {
+                                legend: {
+                                    position: 'bottom'
+                                }
+                            }
+                        }
+                    });
+                }
+            }
+            
+            console.log('Sistema de gastos inicializado correctamente');
+        });
+    </script>
+</body>
+</html>
