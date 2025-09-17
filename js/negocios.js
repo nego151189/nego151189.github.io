@@ -8,14 +8,14 @@
 // ==========================================
 
 // Estado del sistema
-let negociosSystemInitialized = false;
-let negociosOfflineAvailable = false;
+let systemInitialized = false;
+let offlineAvailable = false;
 
 // Datos en memoria
-let negociosData = [];
-let contratosData = [];
-let actividadesData = [];
-let negociosMetricas = {
+let negocios = [];
+let contratos = [];
+let actividades = [];
+let metricas = {
   ventasTotales: 125500,
   negociosActivos: 12,
   clientesActivos: 8,
@@ -33,7 +33,7 @@ const negociosEjemplo = [
   {
     id: 'NEG_001',
     nombre: 'Suministro Aguacates Premium',
-    clienteId: 'CLI_001',
+    clienteId: 'CLI_001', // Vinculado con ClientesManager
     cliente: 'María González',
     empresa: 'Exportadora Maya',
     valor: 85000,
@@ -46,15 +46,15 @@ const negociosEjemplo = [
     diasDesdeCreacion: 15,
     productos: 'Aguacates Hass Premium, calibre 16-20',
     notas: 'Cliente interesado en certificación orgánica',
-    precioEstimado: 12.50,
-    cantidadEstimada: 6800,
+    precioEstimado: 12.50, // Vinculado con precios
+    cantidadEstimada: 6800, // kg
     margenEstimado: 35.5,
     fechaCreacion: '2024-01-15'
   },
   {
     id: 'NEG_002',
     nombre: 'Venta Directa Mercado Local',
-    clienteId: 'CLI_002',
+    clienteId: 'CLI_002', // Vinculado con ClientesManager
     cliente: 'Carlos Ruiz',
     empresa: 'Supermercados Paiz',
     valor: 45000,
@@ -67,7 +67,7 @@ const negociosEjemplo = [
     diasDesdeCreacion: 8,
     productos: 'Aguacates variados, empaque retail',
     notas: 'Requieren entrega puntual los lunes',
-    precioEstimado: 15.00,
+    precioEstimado: 15.00, // Precio minorista
     cantidadEstimada: 3000,
     margenEstimado: 42.3,
     fechaCreacion: '2024-02-01'
@@ -75,7 +75,7 @@ const negociosEjemplo = [
   {
     id: 'NEG_003',
     nombre: 'Contrato Procesadora',
-    clienteId: 'CLI_003',
+    clienteId: 'CLI_003', // Vinculado con ClientesManager
     cliente: 'Ana López',
     empresa: 'Alimentos La Pradera',
     valor: 120000,
@@ -88,7 +88,7 @@ const negociosEjemplo = [
     diasDesdeCreacion: 45,
     productos: 'Aguacates grado industrial, segunda calidad',
     notas: 'Contrato firmado, entregas programadas',
-    precioEstimado: 10.80,
+    precioEstimado: 10.80, // Precio procesador
     cantidadEstimada: 11111,
     margenEstimado: 28.7,
     fechaCreacion: '2023-12-15'
@@ -96,7 +96,7 @@ const negociosEjemplo = [
   {
     id: 'NEG_004',
     nombre: 'Distribución Regional',
-    clienteId: 'CLI_004',
+    clienteId: 'CLI_004', // Vinculado con ClientesManager
     cliente: 'Roberto Mendoza',
     empresa: 'Distribuidora López',
     valor: 65000,
@@ -159,741 +159,705 @@ const actividadesEjemplo = [
   }
 ];
 
-// Variables de estado
-let eventListeners = new Map();
-let filtrosActivos = {};
-
 // ==========================================
-// FUNCIONES PRINCIPALES DE INICIALIZACIÓN
+// CLASE PRINCIPAL DE NEGOCIOS
 // ==========================================
 
-function initNegociosManager() {
-    console.log('💼 Inicializando sistema de negocios...');
-    
-    return new Promise(function(resolve) {
-        waitForClientesManager()
-            .then(function() {
-                loadNegociosSampleData();
-                setupNegociosSyncListeners();
-                
-                negociosSystemInitialized = true;
-                console.log('✅ Sistema de negocios inicializado correctamente');
-                
-                dispatchNegociosSystemEvent('negociosManagerReady', {
-                    negociosCount: negociosData.length,
-                    mode: 'integrated'
-                });
-                
-                resolve();
-            })
-            .catch(function(error) {
-                console.error('❌ Error en inicialización de negocios:', error);
-                resolve();
-            });
-    });
-}
+class NegociosManager {
+  constructor() {
+    this.eventListeners = new Map();
+    this.filtrosActivos = {};
+    this.init();
+  }
 
-function waitForClientesManager() {
-    return new Promise(function(resolve) {
-        var maxWait = 15000;
-        var checkInterval = 200;
-        var elapsed = 0;
+  async init() {
+    try {
+      console.log('💼 Inicializando sistema de negocios...');
+      
+      // Esperar ClientesManager
+      await this.waitForClientesManager();
+      
+      // Cargar datos de ejemplo
+      this.loadSampleData();
+      
+      // Configurar listeners de sincronización
+      this.setupSyncListeners();
+      
+      // Sistema inicializado
+      systemInitialized = true;
+      console.log('✅ Sistema de negocios inicializado correctamente');
+      
+      // Notificar inicialización
+      this.dispatchSystemEvent('negociosManagerReady', {
+        negociosCount: negocios.length,
+        mode: 'integrated'
+      });
+      
+    } catch (error) {
+      console.error('❌ Error en inicialización de negocios:', error);
+    }
+  }
 
-        function check() {
-            if (window.clientesManager) {
-                console.log('✅ ClientesManager disponible para NegociosManager');
-                resolve();
-            } else if (elapsed < maxWait) {
-                elapsed += checkInterval;
-                setTimeout(check, checkInterval);
-            } else {
-                console.warn('⚠️ Timeout esperando ClientesManager');
-                resolve();
-            }
+  async waitForClientesManager() {
+    return new Promise((resolve) => {
+      const maxWait = 15000;
+      const checkInterval = 200;
+      let elapsed = 0;
+
+      const check = () => {
+        if (window.clientesManager) {
+          console.log('✅ ClientesManager disponible para NegociosManager');
+          resolve();
+        } else if (elapsed < maxWait) {
+          elapsed += checkInterval;
+          setTimeout(check, checkInterval);
+        } else {
+          console.warn('⚠️ Timeout esperando ClientesManager');
+          resolve();
         }
+      };
 
-        check();
+      check();
     });
-}
+  }
 
-function setupNegociosSyncListeners() {
+  setupSyncListeners() {
     // Escuchar cambios de clientes
-    window.addEventListener('clienteCreated', function(event) {
-        onClienteUpdated(event.detail.cliente, 'created');
+    window.addEventListener('clienteCreated', (event) => {
+      this.onClienteUpdated(event.detail.cliente, 'created');
     });
 
-    window.addEventListener('clienteUpdated', function(event) {
-        onClienteUpdated(event.detail.cliente, 'updated');
+    window.addEventListener('clienteUpdated', (event) => {
+      this.onClienteUpdated(event.detail.cliente, 'updated');
     });
 
     // Escuchar cambios de precios
-    window.addEventListener('precioCreated', function(event) {
-        onPrecioUpdated(event.detail.precio);
+    window.addEventListener('precioCreated', (event) => {
+      this.onPrecioUpdated(event.detail.precio);
     });
 
     // Escuchar cambios de ventas
-    window.addEventListener('ventaCreated', function(event) {
-        onVentaCreated(event.detail.venta);
+    window.addEventListener('ventaCreated', (event) => {
+      this.onVentaCreated(event.detail.venta);
     });
-}
+  }
 
-function loadNegociosSampleData() {
+  loadSampleData() {
     try {
-        negociosData = negociosEjemplo.slice();
-        actividadesData = actividadesEjemplo.slice();
-        
-        // Sincronizar datos de clientes si está disponible
-        if (window.clientesManager) {
-            sincronizarDatosClientes();
-        }
-        
-        console.log('📊 Datos cargados: ' + negociosData.length + ' negocios');
-        
+      negocios = [...negociosEjemplo];
+      actividades = [...actividadesEjemplo];
+      
+      // Sincronizar datos de clientes si está disponible
+      if (window.clientesManager) {
+        this.sincronizarDatosClientes();
+      }
+      
+      console.log(`📊 Datos cargados: ${negocios.length} negocios`);
+      
     } catch (error) {
-        console.error('❌ Error cargando datos de ejemplo:', error);
+      console.error('❌ Error cargando datos de ejemplo:', error);
     }
-}
+  }
 
-function sincronizarDatosClientes() {
-    negociosData.forEach(function(negocio) {
-        var cliente = window.clientesManager.obtenerCliente(negocio.clienteId);
-        if (cliente) {
-            negocio.cliente = cliente.nombre;
-            negocio.empresa = cliente.empresa;
-            negocio.contacto = cliente.telefono;
-        }
+  sincronizarDatosClientes() {
+    negocios.forEach(negocio => {
+      const cliente = window.clientesManager.obtenerCliente(negocio.clienteId);
+      if (cliente) {
+        negocio.cliente = cliente.nombre;
+        negocio.empresa = cliente.empresa;
+        negocio.contacto = cliente.telefono;
+      }
     });
-}
+  }
 
-// ==========================================
-// FUNCIONES PRINCIPALES DE NEGOCIOS
-// ==========================================
+  // ==========================================
+  // FUNCIONES PRINCIPALES DE NEGOCIOS
+  // ==========================================
 
-function obtenerNegociosMetricas() {
+  obtenerMetricas() {
     // Calcular métricas dinámicas
-    var negociosActivos = negociosData.filter(function(n) {
-        return ['prospecto', 'calificado', 'propuesta', 'negociacion'].includes(n.estado);
-    }).length;
+    const negociosActivos = negocios.filter(n => 
+      ['prospecto', 'calificado', 'propuesta', 'negociacion'].includes(n.estado)
+    ).length;
     
-    var negociosCerrados = negociosData.filter(function(n) {
-        return n.estado === 'cerrado';
-    }).length;
-    var totalNegocios = negociosData.length;
+    const negociosCerrados = negocios.filter(n => n.estado === 'cerrado').length;
+    const totalNegocios = negocios.length;
     
-    return Object.assign({}, negociosMetricas, {
-        negociosActivos: negociosActivos,
-        tasaConversion: totalNegocios > 0 ? Math.round((negociosCerrados / totalNegocios) * 100) : 0,
-        clientesActivos: window.clientesManager ? 
-            window.clientesManager.obtenerTodos().length : negociosMetricas.clientesActivos
-    });
-}
+    return {
+      ...metricas,
+      negociosActivos,
+      tasaConversion: totalNegocios > 0 ? Math.round((negociosCerrados / totalNegocios) * 100) : 0,
+      clientesActivos: window.clientesManager ? 
+        window.clientesManager.obtenerTodos().length : metricas.clientesActivos
+    };
+  }
 
-function obtenerNegociosFiltrados(filtros) {
-    filtros = filtros || {};
-    var negociosFiltrados = negociosData.slice();
+  obtenerNegociosFiltrados(filtros = {}) {
+    let negociosFiltrados = [...negocios];
     
     if (filtros.estado) {
-        negociosFiltrados = negociosFiltrados.filter(function(n) {
-            return n.estado === filtros.estado;
-        });
+      negociosFiltrados = negociosFiltrados.filter(n => n.estado === filtros.estado);
     }
     
     if (filtros.cliente) {
-        negociosFiltrados = negociosFiltrados.filter(function(n) {
-            return n.clienteId === filtros.cliente;
-        });
+      negociosFiltrados = negociosFiltrados.filter(n => n.clienteId === filtros.cliente);
     }
     
     if (filtros.valorMin) {
-        negociosFiltrados = negociosFiltrados.filter(function(n) {
-            return n.valor >= filtros.valorMin;
-        });
+      negociosFiltrados = negociosFiltrados.filter(n => n.valor >= filtros.valorMin);
     }
     
-    return negociosFiltrados.sort(function(a, b) {
-        return new Date(b.fechaCreacion) - new Date(a.fechaCreacion);
-    });
-}
+    return negociosFiltrados.sort((a, b) => new Date(b.fechaCreacion) - new Date(a.fechaCreacion));
+  }
 
-function obtenerNegociosPipelineVisual() {
-    var pipeline = [
-        {
-            clase: 'prospectos',
-            nombre: 'Prospectos',
-            descripcion: 'Clientes potenciales',
-            cantidad: negociosData.filter(function(n) { return n.estado === 'prospecto'; }).length,
-            valor: negociosData.filter(function(n) { return n.estado === 'prospecto'; }).reduce(function(sum, n) { return sum + n.valor; }, 0),
-            color: '#3b82f6',
-            icono: 'fa-eye'
-        },
-        {
-            clase: 'calificados',
-            nombre: 'Calificados',
-            descripcion: 'Oportunidades válidas',
-            cantidad: negociosData.filter(function(n) { return n.estado === 'calificado'; }).length,
-            valor: negociosData.filter(function(n) { return n.estado === 'calificado'; }).reduce(function(sum, n) { return sum + n.valor; }, 0),
-            color: '#8b5cf6',
-            icono: 'fa-filter'
-        },
-        {
-            clase: 'propuestas',
-            nombre: 'Propuestas',
-            descripcion: 'Propuestas enviadas',
-            cantidad: negociosData.filter(function(n) { return n.estado === 'propuesta'; }).length,
-            valor: negociosData.filter(function(n) { return n.estado === 'propuesta'; }).reduce(function(sum, n) { return sum + n.valor; }, 0),
-            color: '#f59e0b',
-            icono: 'fa-file-alt'
-        },
-        {
-            clase: 'negociacion',
-            nombre: 'Negociación',
-            descripcion: 'En negociación',
-            cantidad: negociosData.filter(function(n) { return n.estado === 'negociacion'; }).length,
-            valor: negociosData.filter(function(n) { return n.estado === 'negociacion'; }).reduce(function(sum, n) { return sum + n.valor; }, 0),
-            color: '#ef4444',
-            icono: 'fa-handshake'
-        },
-        {
-            clase: 'cerrados',
-            nombre: 'Cerrados',
-            descripcion: 'Negocios ganados',
-            cantidad: negociosData.filter(function(n) { return n.estado === 'cerrado'; }).length,
-            valor: negociosData.filter(function(n) { return n.estado === 'cerrado'; }).reduce(function(sum, n) { return sum + n.valor; }, 0),
-            color: '#22c55e',
-            icono: 'fa-check-circle'
-        }
+  obtenerPipelineVisual() {
+    const pipeline = [
+      {
+        clase: 'prospectos',
+        nombre: 'Prospectos',
+        descripcion: 'Clientes potenciales',
+        cantidad: negocios.filter(n => n.estado === 'prospecto').length,
+        valor: negocios.filter(n => n.estado === 'prospecto').reduce((sum, n) => sum + n.valor, 0),
+        color: '#3b82f6',
+        icono: 'fa-eye'
+      },
+      {
+        clase: 'calificados',
+        nombre: 'Calificados',
+        descripcion: 'Oportunidades válidas',
+        cantidad: negocios.filter(n => n.estado === 'calificado').length,
+        valor: negocios.filter(n => n.estado === 'calificado').reduce((sum, n) => sum + n.valor, 0),
+        color: '#8b5cf6',
+        icono: 'fa-filter'
+      },
+      {
+        clase: 'propuestas',
+        nombre: 'Propuestas',
+        descripcion: 'Propuestas enviadas',
+        cantidad: negocios.filter(n => n.estado === 'propuesta').length,
+        valor: negocios.filter(n => n.estado === 'propuesta').reduce((sum, n) => sum + n.valor, 0),
+        color: '#f59e0b',
+        icono: 'fa-file-alt'
+      },
+      {
+        clase: 'negociacion',
+        nombre: 'Negociación',
+        descripcion: 'En negociación',
+        cantidad: negocios.filter(n => n.estado === 'negociacion').length,
+        valor: negocios.filter(n => n.estado === 'negociacion').reduce((sum, n) => sum + n.valor, 0),
+        color: '#ef4444',
+        icono: 'fa-handshake'
+      },
+      {
+        clase: 'cerrados',
+        nombre: 'Cerrados',
+        descripcion: 'Negocios ganados',
+        cantidad: negocios.filter(n => n.estado === 'cerrado').length,
+        valor: negocios.filter(n => n.estado === 'cerrado').reduce((sum, n) => sum + n.valor, 0),
+        color: '#22c55e',
+        icono: 'fa-check-circle'
+      }
     ];
     
     return pipeline;
-}
+  }
 
-function obtenerClientesRecientes() {
+  obtenerClientesRecientes() {
     if (!window.clientesManager) {
-        return [];
+      return [];
     }
     
     return window.clientesManager.obtenerTodos()
-        .sort(function(a, b) {
-            return new Date(b.ultimaCompra || 0) - new Date(a.ultimaCompra || 0);
-        })
-        .slice(0, 5)
-        .map(function(cliente) {
-            return {
-                id: cliente.id,
-                nombre: cliente.nombre,
-                empresa: cliente.empresa,
-                valorTotal: cliente.totalVentas,
-                telefono: cliente.telefono,
-                email: cliente.email
-            };
-        });
-}
+      .sort((a, b) => new Date(b.ultimaCompra || 0) - new Date(a.ultimaCompra || 0))
+      .slice(0, 5)
+      .map(cliente => ({
+        id: cliente.id,
+        nombre: cliente.nombre,
+        empresa: cliente.empresa,
+        valorTotal: cliente.totalVentas,
+        telefono: cliente.telefono,
+        email: cliente.email
+      }));
+  }
 
-function obtenerActividadesRecientes() {
-    return actividadesData
-        .sort(function(a, b) {
-            return new Date(b.fecha) - new Date(a.fecha);
-        })
-        .slice(0, 5);
-}
+  obtenerActividadesRecientes() {
+    return actividades
+      .sort((a, b) => new Date(b.fecha) - new Date(a.fecha))
+      .slice(0, 5);
+  }
 
-function obtenerListaClientes() {
+  obtenerListaClientes() {
     if (!window.clientesManager) {
-        return [];
+      return [];
     }
     
     return window.clientesManager.obtenerParaSelectores();
-}
+  }
 
-function obtenerNegocio(id) {
-    return negociosData.find(function(n) {
-        return n.id === id;
-    });
-}
+  obtenerNegocio(id) {
+    return negocios.find(n => n.id === id);
+  }
 
-function obtenerContactosCliente(clienteId) {
+  obtenerContactosCliente(clienteId) {
     if (!window.clientesManager) {
-        return [];
+      return [];
     }
     
-    var cliente = window.clientesManager.obtenerCliente(clienteId);
+    const cliente = window.clientesManager.obtenerCliente(clienteId);
     if (!cliente) return [];
     
     return [
-        {
-            nombre: cliente.nombre,
-            cargo: 'Contacto Principal',
-            email: cliente.email,
-            telefono: cliente.telefono
-        }
+      {
+        nombre: cliente.nombre,
+        cargo: 'Contacto Principal',
+        email: cliente.email,
+        telefono: cliente.telefono
+      }
     ];
-}
+  }
 
-// ==========================================
-// GESTIÓN DE NEGOCIOS CON VALIDACIONES
-// ==========================================
+  // ==========================================
+  // GESTIÓN DE NEGOCIOS CON VALIDACIONES
+  // ==========================================
 
-function guardarNegocio(datos) {
-    return new Promise(function(resolve, reject) {
-        try {
-            // Validar cliente
-            if (!window.clientesManager || !window.clientesManager.obtenerCliente(datos.clienteId)) {
-                reject(new Error('Cliente no válido'));
-                return;
-            }
-
-            // Validar precio contra mercado si está disponible
-            if (window.preciosManager && datos.precioEstimado) {
-                validarPrecioConMercado(datos.precioEstimado)
-                    .then(function(validacionPrecio) {
-                        if (!validacionPrecio.valido) {
-                            console.warn('⚠️ Precio fuera de rango de mercado:', validacionPrecio.mensaje);
-                        }
-                        continuarGuardado();
-                    })
-                    .catch(function() {
-                        continuarGuardado();
-                    });
-            } else {
-                continuarGuardado();
-            }
-
-            function continuarGuardado() {
-                // Calcular margen estimado
-                if (datos.precioEstimado && datos.cantidadEstimada) {
-                    calcularMargenEstimado(datos.precioEstimado, datos.cantidadEstimada)
-                        .then(function(margen) {
-                            datos.margenEstimado = margen;
-                            finalizarGuardado();
-                        })
-                        .catch(function() {
-                            finalizarGuardado();
-                        });
-                } else {
-                    finalizarGuardado();
-                }
-            }
-
-            function finalizarGuardado() {
-                if (datos.id) {
-                    // Actualizar existente
-                    var index = negociosData.findIndex(function(n) {
-                        return n.id === datos.id;
-                    });
-                    if (index !== -1) {
-                        negociosData[index] = Object.assign({}, negociosData[index], datos, {
-                            fechaModificacion: new Date().toISOString()
-                        });
-                    }
-                } else {
-                    // Crear nuevo
-                    var nuevoNegocio = Object.assign({
-                        id: generateNegocioId(),
-                        fechaCreacion: new Date().toISOString(),
-                        diasDesdeCreacion: 0,
-                        progreso: calcularProgresoInicial(datos.estado)
-                    }, datos);
-                    negociosData.push(nuevoNegocio);
-                }
-                
-                // Notificar cambio
-                dispatchNegociosSystemEvent('negocioGuardado', { negocio: datos });
-                
-                console.log('✅ Negocio guardado correctamente');
-                resolve();
-            }
-            
-        } catch (error) {
-            console.error('❌ Error guardando negocio:', error);
-            reject(error);
+  async guardarNegocio(datos) {
+    return new Promise(async (resolve, reject) => {
+      try {
+        // Validar cliente
+        if (!window.clientesManager || !window.clientesManager.obtenerCliente(datos.clienteId)) {
+          throw new Error('Cliente no válido');
         }
-    });
-}
 
-function avanzarEtapa(id) {
-    return new Promise(function(resolve, reject) {
-        try {
-            var negocio = negociosData.find(function(n) {
-                return n.id === id;
-            });
-            if (!negocio) {
-                reject(new Error('Negocio no encontrado'));
-                return;
-            }
-            
-            var estados = ['prospecto', 'calificado', 'propuesta', 'negociacion', 'cerrado'];
-            var currentIndex = estados.indexOf(negocio.estado);
-            
-            if (currentIndex < estados.length - 1) {
-                negocio.estado = estados[currentIndex + 1];
-                negocio.progreso = Math.min(100, negocio.progreso + 25);
-                
-                if (negocio.estado === 'cerrado') {
-                    negocio.probabilidad = 100;
-                    negocio.progreso = 100;
-                    
-                    // Actualizar métricas del cliente
-                    if (window.clientesManager) {
-                        window.clientesManager.actualizarMetricasNegocio(
-                            negocio.clienteId, 
-                            negocio.valor, 
-                            'cerrado'
-                        );
-                    }
-                }
-            }
-            
-            // Registrar actividad
-            registrarActividad({
-                negocioId: id,
-                clienteId: negocio.clienteId,
-                tipo: 'avance_etapa',
-                descripcion: 'Negocio avanzado a etapa: ' + negocio.estado,
-                resultado: 'Etapa actualizada automáticamente'
-            });
-            
-            console.log('✅ Etapa avanzada: ' + negocio.nombre + ' -> ' + negocio.estado);
-            resolve();
-            
-        } catch (error) {
-            console.error('❌ Error avanzando etapa:', error);
-            reject(error);
+        // Validar precio contra mercado si está disponible
+        if (window.preciosManager && datos.precioEstimado) {
+          const validacionPrecio = await this.validarPrecioConMercado(datos.precioEstimado);
+          if (!validacionPrecio.valido) {
+            console.warn('⚠️ Precio fuera de rango de mercado:', validacionPrecio.mensaje);
+          }
         }
-    });
-}
 
-function aplicarFiltros(filtros) {
+        // Calcular margen estimado
+        if (datos.precioEstimado && datos.cantidadEstimada) {
+          datos.margenEstimado = await this.calcularMargenEstimado(
+            datos.precioEstimado, 
+            datos.cantidadEstimada
+          );
+        }
+
+        if (datos.id) {
+          // Actualizar existente
+          const index = negocios.findIndex(n => n.id === datos.id);
+          if (index !== -1) {
+            negocios[index] = { 
+              ...negocios[index], 
+              ...datos,
+              fechaModificacion: new Date().toISOString()
+            };
+          }
+        } else {
+          // Crear nuevo
+          const nuevoNegocio = {
+            id: this.generateId(),
+            ...datos,
+            fechaCreacion: new Date().toISOString(),
+            diasDesdeCreacion: 0,
+            progreso: this.calcularProgresoInicial(datos.estado)
+          };
+          negocios.push(nuevoNegocio);
+        }
+        
+        // Notificar cambio
+        this.dispatchSystemEvent('negocioGuardado', { negocio: datos });
+        
+        console.log('✅ Negocio guardado correctamente');
+        resolve();
+        
+      } catch (error) {
+        console.error('❌ Error guardando negocio:', error);
+        reject(error);
+      }
+    });
+  }
+
+  async avanzarEtapa(id) {
+    return new Promise(async (resolve, reject) => {
+      try {
+        const negocio = negocios.find(n => n.id === id);
+        if (!negocio) {
+          throw new Error('Negocio no encontrado');
+        }
+        
+        const estados = ['prospecto', 'calificado', 'propuesta', 'negociacion', 'cerrado'];
+        const currentIndex = estados.indexOf(negocio.estado);
+        
+        if (currentIndex < estados.length - 1) {
+          negocio.estado = estados[currentIndex + 1];
+          negocio.progreso = Math.min(100, negocio.progreso + 25);
+          
+          if (negocio.estado === 'cerrado') {
+            negocio.probabilidad = 100;
+            negocio.progreso = 100;
+            
+            // Actualizar métricas del cliente
+            if (window.clientesManager) {
+              await window.clientesManager.actualizarMetricasNegocio(
+                negocio.clienteId, 
+                negocio.valor, 
+                'cerrado'
+              );
+            }
+          }
+        }
+        
+        // Registrar actividad
+        this.registrarActividad({
+          negocioId: id,
+          clienteId: negocio.clienteId,
+          tipo: 'avance_etapa',
+          descripcion: `Negocio avanzado a etapa: ${negocio.estado}`,
+          resultado: 'Etapa actualizada automáticamente'
+        });
+        
+        console.log(`✅ Etapa avanzada: ${negocio.nombre} -> ${negocio.estado}`);
+        resolve();
+        
+      } catch (error) {
+        console.error('❌ Error avanzando etapa:', error);
+        reject(error);
+      }
+    });
+  }
+
+  aplicarFiltros(filtros) {
     console.log('🔍 Aplicando filtros:', filtros);
-    filtrosActivos = Object.assign({}, filtrosActivos, filtros);
-}
+    this.filtrosActivos = { ...this.filtrosActivos, ...filtros };
+  }
 
-// ==========================================
-// ANÁLISIS Y VALIDACIONES
-// ==========================================
+  // ==========================================
+  // ANÁLISIS Y VALIDACIONES
+  // ==========================================
 
-function validarPrecioConMercado(precioEstimado) {
-    return new Promise(function(resolve) {
-        if (!window.preciosManager) {
-            resolve({ valido: true, mensaje: 'Sistema de precios no disponible' });
-            return;
-        }
+  async validarPrecioConMercado(precioEstimado) {
+    if (!window.preciosManager) {
+      return { valido: true, mensaje: 'Sistema de precios no disponible' };
+    }
 
-        try {
-            var resumenPrecios = window.preciosManager.obtenerResumenPrecios();
-            var precioMercado = resumenPrecios.actual;
-            
-            var diferencia = Math.abs(precioEstimado - precioMercado) / precioMercado * 100;
-            
-            if (diferencia > 20) {
-                resolve({
-                    valido: false,
-                    mensaje: 'Precio estimado (Q' + precioEstimado + ') difiere ' + diferencia.toFixed(1) + '% del mercado (Q' + precioMercado + ')'
-                });
-            } else {
-                resolve({ valido: true, mensaje: 'Precio dentro del rango de mercado' });
-            }
-            
-        } catch (error) {
-            console.error('❌ Error validando precio:', error);
-            resolve({ valido: true, mensaje: 'No se pudo validar precio' });
-        }
-    });
-}
+    try {
+      const resumenPrecios = window.preciosManager.obtenerResumenPrecios();
+      const precioMercado = resumenPrecios.actual;
+      
+      const diferencia = Math.abs(precioEstimado - precioMercado) / precioMercado * 100;
+      
+      if (diferencia > 20) {
+        return {
+          valido: false,
+          mensaje: `Precio estimado (Q${precioEstimado}) difiere ${diferencia.toFixed(1)}% del mercado (Q${precioMercado})`
+        };
+      }
+      
+      return { valido: true, mensaje: 'Precio dentro del rango de mercado' };
+      
+    } catch (error) {
+      console.error('❌ Error validando precio:', error);
+      return { valido: true, mensaje: 'No se pudo validar precio' };
+    }
+  }
 
-function calcularMargenEstimado(precioVenta, cantidad) {
-    return new Promise(function(resolve) {
-        var costoPorKg = 8.50; // Costo base por defecto
-        
-        // Obtener costo real si está disponible el sistema de gastos
-        if (window.expenseManager || window.gastosManager) {
-            try {
-                var gestor = window.expenseManager || window.gastosManager;
-                var resumenFinanciero = gestor.getFinancialSummary('month');
-                var produccionEstimada = 1000; // kg por mes
-                costoPorKg = resumenFinanciero.total / produccionEstimada;
-            } catch (error) {
-                console.warn('⚠️ No se pudo calcular costo real:', error);
-            }
-        }
-        
-        var costoTotal = cantidad * costoPorKg;
-        var ingresoTotal = cantidad * precioVenta;
-        var margen = ((ingresoTotal - costoTotal) / ingresoTotal) * 100;
-        
-        resolve(Math.round(margen * 10) / 10); // Redondear a 1 decimal
-    });
-}
+  async calcularMargenEstimado(precioVenta, cantidad) {
+    let costoPorKg = 8.50; // Costo base por defecto
+    
+    // Obtener costo real si está disponible el sistema de gastos
+    if (window.expenseManager || window.gastosManager) {
+      try {
+        const gestor = window.expenseManager || window.gastosManager;
+        const resumenFinanciero = gestor.getFinancialSummary('month');
+        const produccionEstimada = 1000; // kg por mes
+        costoPorKg = resumenFinanciero.total / produccionEstimada;
+      } catch (error) {
+        console.warn('⚠️ No se pudo calcular costo real:', error);
+      }
+    }
+    
+    const costoTotal = cantidad * costoPorKg;
+    const ingresoTotal = cantidad * precioVenta;
+    const margen = ((ingresoTotal - costoTotal) / ingresoTotal) * 100;
+    
+    return Math.round(margen * 10) / 10; // Redondear a 1 decimal
+  }
 
-function calcularProgresoInicial(estado) {
-    var progresos = {
-        'prospecto': 10,
-        'calificado': 25,
-        'propuesta': 50,
-        'negociacion': 75,
-        'cerrado': 100
+  calcularProgresoInicial(estado) {
+    const progresos = {
+      'prospecto': 10,
+      'calificado': 25,
+      'propuesta': 50,
+      'negociacion': 75,
+      'cerrado': 100
     };
     return progresos[estado] || 10;
-}
+  }
 
-function registrarActividad(datos) {
-    var actividad = Object.assign({
-        id: generateNegocioId(),
-        fecha: new Date(),
-        tiempoRelativo: 'hace unos momentos'
-    }, datos);
+  registrarActividad(datos) {
+    const actividad = {
+      id: this.generateId(),
+      ...datos,
+      fecha: new Date(),
+      tiempoRelativo: 'hace unos momentos'
+    };
     
-    actividadesData.unshift(actividad);
+    actividades.unshift(actividad);
     
     // Mantener solo las últimas 100 actividades
-    if (actividadesData.length > 100) {
-        actividadesData = actividadesData.slice(0, 100);
+    if (actividades.length > 100) {
+      actividades = actividades.slice(0, 100);
     }
-}
+  }
 
-// ==========================================
-// ANÁLISIS Y REPORTES
-// ==========================================
+  // ==========================================
+  // ANÁLISIS Y REPORTES
+  // ==========================================
 
-function obtenerDatosVentasMes() {
-    var ventasPorMes = negociosData
-        .filter(function(n) { return n.estado === 'cerrado'; })
-        .reduce(function(acc, negocio) {
-            var fecha = new Date(negocio.fechaCreacion);
-            var mes = fecha.getMonth();
-            acc[mes] = (acc[mes] || 0) + negocio.valor;
-            return acc;
-        }, {});
+  obtenerDatosVentasMes() {
+    const ventasPorMes = negocios
+      .filter(n => n.estado === 'cerrado')
+      .reduce((acc, negocio) => {
+        const fecha = new Date(negocio.fechaCreacion);
+        const mes = fecha.getMonth();
+        acc[mes] = (acc[mes] || 0) + negocio.valor;
+        return acc;
+      }, {});
     
     return {
-        labels: ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun'],
-        data: [
-            ventasPorMes[0] || 85000,
-            ventasPorMes[1] || 92000,
-            ventasPorMes[2] || 78000,
-            ventasPorMes[3] || 105000,
-            ventasPorMes[4] || 98000,
-            ventasPorMes[5] || 125500
-        ]
+      labels: ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun'],
+      data: [
+        ventasPorMes[0] || 85000,
+        ventasPorMes[1] || 92000,
+        ventasPorMes[2] || 78000,
+        ventasPorMes[3] || 105000,
+        ventasPorMes[4] || 98000,
+        ventasPorMes[5] || 125500
+      ]
     };
-}
+  }
 
-function obtenerDistribucionEstados() {
-    var estados = negociosData.reduce(function(acc, negocio) {
-        acc[negocio.estado] = (acc[negocio.estado] || 0) + 1;
-        return acc;
+  obtenerDistribucionEstados() {
+    const estados = negocios.reduce((acc, negocio) => {
+      acc[negocio.estado] = (acc[negocio.estado] || 0) + 1;
+      return acc;
     }, {});
     
     return {
-        labels: Object.keys(estados).map(function(estado) {
-            return estado.charAt(0).toUpperCase() + estado.slice(1);
-        }),
-        data: Object.values(estados)
+      labels: Object.keys(estados).map(estado => 
+        estado.charAt(0).toUpperCase() + estado.slice(1)
+      ),
+      data: Object.values(estados)
     };
-}
+  }
 
-// ==========================================
-// EVENTOS DE SINCRONIZACIÓN
-// ==========================================
+  // ==========================================
+  // EVENTOS DE SINCRONIZACIÓN
+  // ==========================================
 
-function onClienteUpdated(cliente, accion) {
-    console.log('🔄 Cliente ' + accion + ':', cliente.nombre);
+  onClienteUpdated(cliente, accion) {
+    console.log(`🔄 Cliente ${accion}:`, cliente.nombre);
     
     // Actualizar negocios relacionados
-    negociosData.forEach(function(negocio) {
-        if (negocio.clienteId === cliente.id) {
-            negocio.cliente = cliente.nombre;
-            negocio.empresa = cliente.empresa;
-            negocio.contacto = cliente.telefono;
-        }
+    negocios.forEach(negocio => {
+      if (negocio.clienteId === cliente.id) {
+        negocio.cliente = cliente.nombre;
+        negocio.empresa = cliente.empresa;
+        negocio.contacto = cliente.telefono;
+      }
     });
-}
+  }
 
-function onPrecioUpdated(precio) {
+  onPrecioUpdated(precio) {
     console.log('💰 Precio actualizado:', precio);
     
     // Recalcular márgenes de negocios activos
-    var negociosActivos = negociosData.filter(function(n) {
-        return ['prospecto', 'calificado', 'propuesta', 'negociacion'].includes(n.estado);
-    });
+    const negociosActivos = negocios.filter(n => 
+      ['prospecto', 'calificado', 'propuesta', 'negociacion'].includes(n.estado)
+    );
     
-    negociosActivos.forEach(function(negocio) {
-        if (negocio.precioEstimado && negocio.cantidadEstimada) {
-            calcularMargenEstimado(negocio.precioEstimado, negocio.cantidadEstimada)
-                .then(function(margen) {
-                    negocio.margenEstimado = margen;
-                })
-                .catch(function(error) {
-                    console.error('Error recalculando margen:', error);
-                });
-        }
+    negociosActivos.forEach(async (negocio) => {
+      if (negocio.precioEstimado && negocio.cantidadEstimada) {
+        negocio.margenEstimado = await this.calcularMargenEstimado(
+          negocio.precioEstimado,
+          negocio.cantidadEstimada
+        );
+      }
     });
-}
+  }
 
-function onVentaCreated(venta) {
+  onVentaCreated(venta) {
     console.log('💵 Venta creada:', venta);
     
     // Buscar negocio relacionado y actualizarlo
-    var negocioRelacionado = negociosData.find(function(n) {
-        return n.clienteId === venta.clienteId && n.estado !== 'cerrado';
-    });
+    const negocioRelacionado = negocios.find(n => 
+      n.clienteId === venta.clienteId && n.estado !== 'cerrado'
+    );
     
     if (negocioRelacionado) {
-        negocioRelacionado.estado = 'cerrado';
-        negocioRelacionado.progreso = 100;
-        negocioRelacionado.probabilidad = 100;
-        
-        registrarActividad({
-            negocioId: negocioRelacionado.id,
-            clienteId: venta.clienteId,
-            tipo: 'venta_realizada',
-            descripcion: 'Venta realizada: ' + venta.cantidad + ' kg por Q' + venta.total,
-            resultado: 'Negocio cerrado exitosamente'
-        });
+      negocioRelacionado.estado = 'cerrado';
+      negocioRelacionado.progreso = 100;
+      negocioRelacionado.probabilidad = 100;
+      
+      this.registrarActividad({
+        negocioId: negocioRelacionado.id,
+        clienteId: venta.clienteId,
+        tipo: 'venta_realizada',
+        descripcion: `Venta realizada: ${venta.cantidad} kg por Q${venta.total}`,
+        resultado: 'Negocio cerrado exitosamente'
+      });
     }
-}
+  }
 
-// Función para sincronizar cliente (llamada desde ClientesManager)
-function sincronizarClienteNegocios(cliente, accion) {
-    onClienteUpdated(cliente, accion);
-}
+  // Función para sincronizar cliente (llamada desde ClientesManager)
+  async sincronizarCliente(cliente, accion) {
+    this.onClienteUpdated(cliente, accion);
+  }
 
-// ==========================================
-// FUNCIONES DE INTERFAZ
-// ==========================================
+  // ==========================================
+  // FUNCIONES DE INTERFAZ
+  // ==========================================
 
-function mostrarModalActividad(id) {
-    console.log('📝 Mostrar modal de actividad para negocio ' + id);
+  mostrarModalActividad(id) {
+    console.log(`🔍 Mostrar modal de actividad para negocio ${id}`);
     if (window.notificationManager) {
-        window.notificationManager.info('Función de actividades en desarrollo');
+      window.notificationManager.info('Función de actividades en desarrollo');
     }
-}
+  }
 
-function mostrarDetalle(id) {
-    var negocio = obtenerNegocio(id);
+  mostrarDetalle(id) {
+    const negocio = this.obtenerNegocio(id);
     if (negocio) {
-        console.log('👁️ Mostrar detalle del negocio: ' + negocio.nombre);
-        if (window.notificationManager) {
-            window.notificationManager.info('Detalle: ' + negocio.nombre + ' - Q' + negocio.valor.toLocaleString());
-        }
+      console.log(`👁️ Mostrar detalle del negocio: ${negocio.nombre}`);
+      if (window.notificationManager) {
+        window.notificationManager.info(`Detalle: ${negocio.nombre} - Q${negocio.valor.toLocaleString()}`);
+      }
     }
-}
+  }
 
-function mostrarDetalleCliente(id) {
+  mostrarDetalleCliente(id) {
     if (!window.clientesManager) return;
     
-    var cliente = window.clientesManager.obtenerCliente(id);
+    const cliente = window.clientesManager.obtenerCliente(id);
     if (cliente) {
-        console.log('👤 Mostrar detalle del cliente: ' + cliente.nombre);
-        if (window.notificationManager) {
-            window.notificationManager.info('Cliente: ' + cliente.nombre + ' - ' + cliente.empresa);
-        }
+      console.log(`👤 Mostrar detalle del cliente: ${cliente.nombre}`);
+      if (window.notificationManager) {
+        window.notificationManager.info(`Cliente: ${cliente.nombre} - ${cliente.empresa}`);
+      }
     }
-}
+  }
 
-function mostrarModalCliente() {
+  mostrarModalCliente() {
     console.log('👥 Mostrar modal de nuevo cliente');
     if (window.notificationManager) {
-        window.notificationManager.info('Función de nuevo cliente en desarrollo');
+      window.notificationManager.info('Función de nuevo cliente en desarrollo');
     }
-}
+  }
 
-function generarReporte() {
+  generarReporte() {
     console.log('📊 Generar reporte de negocios');
     if (window.notificationManager) {
-        window.notificationManager.info('Generando reporte de negocios...');
+      window.notificationManager.info('Generando reporte de negocios...');
     }
-}
+  }
 
-function exportarDatos() {
+  exportarDatos() {
     console.log('💾 Exportar datos de negocios');
     if (window.notificationManager) {
-        window.notificationManager.info('Exportando datos de negocios...');
+      window.notificationManager.info('Exportando datos de negocios...');
     }
-}
+  }
 
-// ==========================================
-// UTILIDADES
-// ==========================================
+  // ==========================================
+  // UTILIDADES
+  // ==========================================
 
-function generateNegocioId() {
+  generateId() {
     return 'NEG_' + Date.now().toString(36) + '_' + Math.random().toString(36).substr(2, 9);
-}
+  }
 
-function dispatchNegociosSystemEvent(eventType, data) {
+  dispatchSystemEvent(eventType, data) {
     window.dispatchEvent(new CustomEvent(eventType, {
-        detail: Object.assign({}, data, {
-            timestamp: Date.now(),
-            source: 'negociosManager'
-        })
+      detail: {
+        ...data,
+        timestamp: Date.now(),
+        source: 'negociosManager'
+      }
     }));
-}
+  }
 
-function getNegociosSystemStatus() {
+  getSystemStatus() {
     return {
-        initialized: negociosSystemInitialized,
-        offlineAvailable: negociosOfflineAvailable,
-        negociosCount: negociosData.length,
-        integrations: {
-            clientesManager: !!window.clientesManager,
-            preciosManager: !!window.preciosManager,
-            expenseManager: !!(window.expenseManager || window.gastosManager)
-        }
+      initialized: systemInitialized,
+      offlineAvailable: offlineAvailable,
+      negociosCount: negocios.length,
+      integrations: {
+        clientesManager: !!window.clientesManager,
+        preciosManager: !!window.preciosManager,
+        expenseManager: !!(window.expenseManager || window.gastosManager)
+      }
     };
+  }
 }
 
 // ==========================================
 // INICIALIZACIÓN Y EXPORTACIÓN
 // ==========================================
 
-// Manager global de negocios
-window.negociosManager = {
-    // Estado
-    getStatus: getNegociosSystemStatus,
-    
-    // Datos principales
-    obtenerMetricas: obtenerNegociosMetricas,
-    obtenerNegociosFiltrados: obtenerNegociosFiltrados,
-    obtenerPipelineVisual: obtenerNegociosPipelineVisual,
-    obtenerClientesRecientes: obtenerClientesRecientes,
-    obtenerActividadesRecientes: obtenerActividadesRecientes,
-    obtenerListaClientes: obtenerListaClientes,
-    obtenerNegocio: obtenerNegocio,
-    obtenerContactosCliente: obtenerContactosCliente,
-    
-    // Gestión de negocios
-    guardarNegocio: guardarNegocio,
-    avanzarEtapa: avanzarEtapa,
-    aplicarFiltros: aplicarFiltros,
-    
-    // Análisis y reportes
-    obtenerDatosVentasMes: obtenerDatosVentasMes,
-    obtenerDistribucionEstados: obtenerDistribucionEstados,
-    
-    // Interfaz
-    mostrarModalActividad: mostrarModalActividad,
-    mostrarDetalle: mostrarDetalle,
-    mostrarDetalleCliente: mostrarDetalleCliente,
-    mostrarModalCliente: mostrarModalCliente,
-    generarReporte: generarReporte,
-    exportarDatos: exportarDatos,
-    
-    // Sincronización
-    sincronizarCliente: sincronizarClienteNegocios,
-    
-    // Datos directos
-    get negocios() { return negociosData; },
-    get actividades() { return actividadesData; }
-};
+// Crear instancia global
+let negociosManagerInstance = null;
 
 // Inicializar cuando el DOM esté listo
-document.addEventListener('DOMContentLoaded', function() {
-    initNegociosManager()
-        .then(function() {
-            console.log('💼 NegociosManager disponible globalmente');
-        })
-        .catch(function(error) {
-            console.error('Error inicializando NegociosManager:', error);
-        });
+document.addEventListener('DOMContentLoaded', () => {
+  if (!negociosManagerInstance) {
+    negociosManagerInstance = new NegociosManager();
+    window.negociosManager = negociosManagerInstance;
+    
+    console.log('💼 NegociosManager disponible globalmente');
+  }
 });
 
+// Manager global de negocios
+window.negociosManager = {
+  // Estado
+  getStatus: () => negociosManagerInstance?.getSystemStatus(),
+  
+  // Datos principales
+  obtenerMetricas: () => negociosManagerInstance?.obtenerMetricas(),
+  obtenerNegociosFiltrados: (filtros) => negociosManagerInstance?.obtenerNegociosFiltrados(filtros),
+  obtenerPipelineVisual: () => negociosManagerInstance?.obtenerPipelineVisual(),
+  obtenerClientesRecientes: () => negociosManagerInstance?.obtenerClientesRecientes(),
+  obtenerActividadesRecientes: () => negociosManagerInstance?.obtenerActividadesRecientes(),
+  obtenerListaClientes: () => negociosManagerInstance?.obtenerListaClientes(),
+  obtenerNegocio: (id) => negociosManagerInstance?.obtenerNegocio(id),
+  obtenerContactosCliente: (clienteId) => negociosManagerInstance?.obtenerContactosCliente(clienteId),
+  
+  // Gestión de negocios
+  guardarNegocio: (datos) => negociosManagerInstance?.guardarNegocio(datos),
+  avanzarEtapa: (id) => negociosManagerInstance?.avanzarEtapa(id),
+  aplicarFiltros: (filtros) => negociosManagerInstance?.aplicarFiltros(filtros),
+  
+  // Análisis y reportes
+  obtenerDatosVentasMes: () => negociosManagerInstance?.obtenerDatosVentasMes(),
+  obtenerDistribucionEstados: () => negociosManagerInstance?.obtenerDistribucionEstados(),
+  
+  // Interfaz
+  mostrarModalActividad: (id) => negociosManagerInstance?.mostrarModalActividad(id),
+  mostrarDetalle: (id) => negociosManagerInstance?.mostrarDetalle(id),
+  mostrarDetalleCliente: (id) => negociosManagerInstance?.mostrarDetalleCliente(id),
+  mostrarModalCliente: () => negociosManagerInstance?.mostrarModalCliente(),
+  generarReporte: () => negociosManagerInstance?.generarReporte(),
+  exportarDatos: () => negociosManagerInstance?.exportarDatos(),
+  
+  // Sincronización
+  sincronizarCliente: (cliente, accion) => negociosManagerInstance?.sincronizarCliente(cliente, accion),
+  
+  // Datos directos
+  get negocios() { return negocios; },
+  get actividades() { return actividades; }
+};
+
 console.log('💼 Sistema de negocios integrado cargado correctamente');
+
