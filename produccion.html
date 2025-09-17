@@ -23,7 +23,7 @@
     <!-- Chart.js para gráficos -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
     
-    <!-- Estilos mantenidos del archivo original -->
+    <!-- Estilos específicos para producción -->
     <style>
         .main-content-wrapper {
             margin-left: 280px;
@@ -111,6 +111,24 @@
 
         .btn-secondary:hover {
             background: #4b5563;
+        }
+
+        .btn-warning {
+            background: #f59e0b;
+            color: white;
+        }
+
+        .btn-warning:hover {
+            background: #d97706;
+        }
+
+        .btn-info {
+            background: #06b6d4;
+            color: white;
+        }
+
+        .btn-info:hover {
+            background: #0891b2;
         }
 
         .kpis-grid {
@@ -202,53 +220,6 @@
             font-size: 0.875rem;
         }
 
-        .kpi-meta {
-            margin-top: 0.5rem;
-            font-size: 0.75rem;
-            color: #9ca3af;
-        }
-
-        .filtros-produccion {
-            background: white;
-            border-radius: 16px;
-            padding: 1.5rem;
-            margin-bottom: 2rem;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
-        }
-
-        .filtros-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 1rem;
-            align-items: end;
-        }
-
-        .form-group {
-            display: flex;
-            flex-direction: column;
-            gap: 0.5rem;
-        }
-
-        .form-label {
-            font-weight: 600;
-            color: #374151;
-            font-size: 0.875rem;
-        }
-
-        .form-input {
-            padding: 0.75rem;
-            border: 1px solid #d1d5db;
-            border-radius: 8px;
-            font-size: 1rem;
-            transition: border-color 0.3s ease;
-        }
-
-        .form-input:focus {
-            outline: none;
-            border-color: #3b82f6;
-            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
-        }
-
         .quick-actions {
             display: flex;
             gap: 1rem;
@@ -267,6 +238,7 @@
             transition: all 0.3s ease;
             border: 2px solid transparent;
             box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+            min-width: 200px;
         }
 
         .quick-action:hover {
@@ -290,92 +262,6 @@
             grid-template-columns: 2fr 1fr;
             gap: 2rem;
             margin-bottom: 2rem;
-        }
-
-        .registro-rapido {
-            background: white;
-            border-radius: 16px;
-            padding: 2rem;
-            margin-bottom: 2rem;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
-        }
-
-        .registro-form {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 1rem;
-            align-items: end;
-        }
-
-        .produccion-timeline {
-            background: white;
-            border-radius: 16px;
-            padding: 1.5rem;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
-        }
-
-        .timeline-container {
-            position: relative;
-            padding-left: 2rem;
-            max-height: 500px;
-            overflow-y: auto;
-        }
-
-        .timeline-container::before {
-            content: '';
-            position: absolute;
-            left: 1rem;
-            top: 0;
-            bottom: 0;
-            width: 2px;
-            background: linear-gradient(to bottom, #3b82f6, #16a34a);
-        }
-
-        .timeline-item {
-            position: relative;
-            margin-bottom: 2rem;
-            padding-left: 2rem;
-            padding-bottom: 1.5rem;
-            border-bottom: 1px solid #f3f4f6;
-        }
-
-        .timeline-item:last-child {
-            border-bottom: none;
-        }
-
-        .timeline-item::before {
-            content: '';
-            position: absolute;
-            left: -0.5rem;
-            top: 0.5rem;
-            width: 1rem;
-            height: 1rem;
-            background: #3b82f6;
-            border-radius: 50%;
-            border: 3px solid white;
-        }
-
-        .timeline-fecha {
-            font-size: 0.75rem;
-            color: #6b7280;
-            margin-bottom: 0.5rem;
-        }
-
-        .timeline-contenido {
-            color: #1f2937;
-        }
-
-        .timeline-cantidad {
-            font-weight: 700;
-            color: #16a34a;
-            font-size: 1.125rem;
-            margin-top: 0.5rem;
-        }
-
-        .timeline-detalles {
-            margin-top: 0.5rem;
-            font-size: 0.875rem;
-            color: #6b7280;
         }
 
         .graficos-container {
@@ -479,74 +365,48 @@
             color: #6b7280;
         }
 
-        .tabla-produccion {
+        .timeline-container {
             background: white;
             border-radius: 16px;
             padding: 1.5rem;
-            margin-top: 2rem;
+            margin-bottom: 2rem;
             box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
         }
 
-        .tabla-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
+        .timeline-item {
+            position: relative;
+            padding-left: 2rem;
             margin-bottom: 1.5rem;
+            border-left: 2px solid #e5e7eb;
         }
 
-        .table-container {
-            overflow-x: auto;
+        .timeline-item::before {
+            content: '';
+            position: absolute;
+            left: -6px;
+            top: 0.5rem;
+            width: 10px;
+            height: 10px;
+            background: #3b82f6;
+            border-radius: 50%;
+            border: 2px solid white;
         }
 
-        .table {
-            width: 100%;
-            border-collapse: collapse;
-        }
-
-        .table th,
-        .table td {
-            padding: 1rem;
-            text-align: left;
-            border-bottom: 1px solid #f3f4f6;
-        }
-
-        .table th {
-            background: #f9fafb;
-            font-weight: 600;
-            color: #374151;
-        }
-
-        .table tbody tr:hover {
-            background: #f9fafb;
-        }
-
-        .cosecha-badge {
-            padding: 0.25rem 0.75rem;
-            border-radius: 20px;
+        .timeline-fecha {
             font-size: 0.75rem;
-            font-weight: 600;
-            text-transform: uppercase;
+            color: #6b7280;
+            margin-bottom: 0.5rem;
         }
 
-        .cosecha-badge.aa,
-        .cosecha-badge.aaa {
-            background: rgba(34, 197, 94, 0.2);
+        .timeline-contenido {
+            color: #1f2937;
+        }
+
+        .timeline-cantidad {
+            font-weight: 700;
             color: #16a34a;
-        }
-
-        .cosecha-badge.a {
-            background: rgba(245, 158, 11, 0.2);
-            color: #d97706;
-        }
-
-        .cosecha-badge.b {
-            background: rgba(139, 92, 246, 0.2);
-            color: #8b5cf6;
-        }
-
-        .btn-sm {
-            padding: 0.5rem 0.75rem;
-            font-size: 0.875rem;
+            font-size: 1.125rem;
+            margin-top: 0.5rem;
         }
 
         .modal-overlay {
@@ -579,10 +439,10 @@
 
         .modal-header {
             padding: 2rem 2rem 0;
-            border-bottom: 1px solid #f3f4f6;
             display: flex;
             justify-content: space-between;
             align-items: center;
+            border-bottom: 1px solid #f3f4f6;
         }
 
         .modal-title {
@@ -625,83 +485,33 @@
             gap: 0.75rem;
         }
 
-        .form-textarea {
-            min-height: 100px;
-            resize: vertical;
+        .form-group {
+            margin-bottom: 1rem;
         }
 
-        .gps-capture {
-            background: rgba(34, 197, 94, 0.1);
-            border: 1px solid rgba(34, 197, 94, 0.3);
-            border-radius: 8px;
-            padding: 1rem;
-            margin-top: 1rem;
-            text-align: center;
-        }
-
-        .gps-status {
+        .form-label {
+            display: block;
+            font-weight: 600;
+            color: #374151;
             font-size: 0.875rem;
-            color: #6b7280;
             margin-bottom: 0.5rem;
         }
 
-        .gps-coords {
-            font-family: 'Courier New', monospace;
-            font-weight: 600;
-            color: #16a34a;
-        }
-
-        .foto-preview {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
-            gap: 1rem;
-            margin-top: 1rem;
-        }
-
-        .foto-item {
-            position: relative;
-            border-radius: 8px;
-            overflow: hidden;
-            aspect-ratio: 1;
-            background: #f3f4f6;
-        }
-
-        .foto-item img {
+        .form-input {
             width: 100%;
-            height: 100%;
-            object-fit: cover;
+            padding: 0.75rem;
+            border: 1px solid #d1d5db;
+            border-radius: 8px;
+            font-size: 1rem;
+            transition: border-color 0.3s ease;
         }
 
-        .foto-remove {
-            position: absolute;
-            top: 0.5rem;
-            right: 0.5rem;
-            background: rgba(239, 68, 68, 0.9);
-            color: white;
-            border: none;
-            border-radius: 50%;
-            width: 24px;
-            height: 24px;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 0.75rem;
+        .form-input:focus {
+            outline: none;
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
         }
 
-        .loading-spinner {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            padding: 2rem;
-        }
-
-        .loading-spinner i {
-            font-size: 2rem;
-            color: #3b82f6;
-        }
-
-        /* Indicador de integración */
         .integration-status {
             position: fixed;
             top: 10px;
@@ -725,6 +535,61 @@
             color: #f59e0b;
         }
 
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 1rem 1.5rem;
+            border-radius: 8px;
+            color: white;
+            font-weight: 600;
+            z-index: 10000;
+            max-width: 300px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            opacity: 0;
+            transform: translateX(100%);
+            transition: all 0.3s ease;
+        }
+
+        .notification.show {
+            opacity: 1;
+            transform: translateX(0);
+        }
+
+        .notification.success {
+            background: #16a34a;
+        }
+
+        .notification.error {
+            background: #dc2626;
+        }
+
+        .notification.warning {
+            background: #d97706;
+        }
+
+        .notification.info {
+            background: #3b82f6;
+        }
+
+        .loading-spinner {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 2rem;
+        }
+
+        .loading-spinner i {
+            font-size: 2rem;
+            color: #3b82f6;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
         @media (max-width: 1024px) {
             .main-content {
                 grid-template-columns: 1fr;
@@ -744,14 +609,6 @@
             .quick-actions {
                 justify-content: center;
             }
-            
-            .filtros-grid {
-                grid-template-columns: 1fr;
-            }
-            
-            .registro-form {
-                grid-template-columns: 1fr;
-            }
         }
     </style>
 </head>
@@ -761,12 +618,12 @@
         <i class="fas fa-sync fa-spin"></i> Cargando datos...
     </div>
 
-    <!-- NavegaciÃ³n -->
+    <!-- Navegación -->
     <nav id="navbar"></nav>
 
     <!-- Contenido principal -->
     <main class="main-content-wrapper">
-        <!-- Header de la pÃ¡gina -->
+        <!-- Header de la página -->
         <header class="produccion-header">
             <div class="page-title">
                 <div class="title-icon">
@@ -779,8 +636,8 @@
             </div>
             
             <div class="header-actions">
-                <button class="btn btn-success" id="btnRegistroRapido">
-                    <i class="fas fa-plus"></i> Registro Rápido
+                <button class="btn btn-success" id="btnNuevoCorte">
+                    <i class="fas fa-cut"></i> Nuevo Corte
                 </button>
                 
                 <button class="btn btn-primary" id="btnNuevoRegistro">
@@ -802,12 +659,11 @@
                     </div>
                     <div class="kpi-tendencia positiva">
                         <i class="fas fa-arrow-up"></i>
-                        <span>+12%</span>
+                        <span id="tendenciaProduccion">+12%</span>
                     </div>
                 </div>
                 <div class="kpi-valor" id="produccionMes">0 kg</div>
                 <div class="kpi-label">Producción del Mes</div>
-                <div class="kpi-meta">Meta: <span id="metaProduccion">5,000 kg</span></div>
             </div>
             
             <div class="kpi-card">
@@ -817,12 +673,11 @@
                     </div>
                     <div class="kpi-tendencia positiva">
                         <i class="fas fa-arrow-up"></i>
-                        <span>+8%</span>
+                        <span id="tendenciaRendimiento">+8%</span>
                     </div>
                 </div>
                 <div class="kpi-valor" id="rendimientoPromedio">0 kg/árbol</div>
                 <div class="kpi-label">Rendimiento Promedio</div>
-                <div class="kpi-meta">Objetivo: <span id="objetivoRendimiento">25 kg/árbol</span></div>
             </div>
             
             <div class="kpi-card">
@@ -832,12 +687,11 @@
                     </div>
                     <div class="kpi-tendencia positiva">
                         <i class="fas fa-arrow-up"></i>
-                        <span>+5%</span>
+                        <span id="tendenciaCalidad">+5%</span>
                     </div>
                 </div>
                 <div class="kpi-valor" id="calidadPromedio">0%</div>
                 <div class="kpi-label">Calidad Promedio</div>
-                <div class="kpi-meta">Estándar: <span id="estandarCalidad">85%</span></div>
             </div>
             
             <div class="kpi-card">
@@ -847,73 +701,15 @@
                     </div>
                     <div class="kpi-tendencia positiva">
                         <i class="fas fa-arrow-up"></i>
-                        <span>+15%</span>
+                        <span id="tendenciaIngresos">+15%</span>
                     </div>
                 </div>
                 <div class="kpi-valor" id="ingresosMes">Q 0</div>
                 <div class="kpi-label">Ingresos del Mes</div>
-                <div class="kpi-meta">Proyectado: <span id="proyeccionIngresos">Q 45,000</span></div>
             </div>
         </section>
 
-        <!-- Filtros -->
-        <section class="filtros-produccion">
-            <h3 style="margin-bottom: 1rem;">
-                <i class="fas fa-filter"></i> Filtros de Producción
-            </h3>
-            
-            <div class="filtros-grid">
-                <div class="form-group">
-                    <label class="form-label">Período</label>
-                    <select class="form-input" id="filtroPeriodo">
-                        <option value="hoy">Hoy</option>
-                        <option value="semana">Esta Semana</option>
-                        <option value="mes" selected>Este Mes</option>
-                        <option value="trimestre">Este Trimestre</option>
-                        <option value="ano">Este Año</option>
-                    </select>
-                </div>
-                
-                <div class="form-group">
-                    <label class="form-label">Sector</label>
-                    <select class="form-input" id="filtroBloque">
-                        <option value="">Todos los sectores</option>
-                        <!-- Se llenarán dinámicamente -->
-                    </select>
-                </div>
-                
-                <div class="form-group">
-                    <label class="form-label">Tipo de Cosecha</label>
-                    <select class="form-input" id="filtroTipoCosecha">
-                        <option value="">Todos los tipos</option>
-                        <option value="principal">Principal</option>
-                        <option value="secundaria">Secundaria</option>
-                        <option value="extra">Extra</option>
-                    </select>
-                </div>
-                
-                <div class="form-group">
-                    <label class="form-label">Responsable</label>
-                    <select class="form-input" id="filtroResponsable">
-                        <option value="">Todos los responsables</option>
-                        <option value="juan_perez">Juan Pérez</option>
-                        <option value="maria_gonzalez">María González</option>
-                        <option value="carlos_lopez">Carlos López</option>
-                    </select>
-                </div>
-                
-                <div class="form-group" style="display: flex; gap: 0.5rem;">
-                    <button class="btn btn-primary" id="aplicarFiltros">
-                        <i class="fas fa-search"></i> Aplicar
-                    </button>
-                    <button class="btn btn-secondary" id="limpiarFiltros">
-                        <i class="fas fa-times"></i> Limpiar
-                    </button>
-                </div>
-            </div>
-        </section>
-
-        <!-- Acciones rÃ¡pidas -->
+        <!-- Acciones rápidas -->
         <section class="quick-actions">
             <div class="quick-action" onclick="accionRapida('nuevo-corte')">
                 <div class="quick-action-icon" style="background: #16a34a;">
@@ -921,7 +717,7 @@
                 </div>
                 <div>
                     <div style="font-weight: 600;">Nuevo Corte</div>
-                    <div style="font-size: 0.75rem; color: #6b7280;">Registrar cosecha</div>
+                    <div style="font-size: 0.75rem; color: #6b7280;">Registrar cosecha rápida</div>
                 </div>
             </div>
             
@@ -931,7 +727,7 @@
                 </div>
                 <div>
                     <div style="font-weight: 600;">Control de Calidad</div>
-                    <div style="font-size: 0.75rem; color: #6b7280;">Evaluar producto</div>
+                    <div style="font-size: 0.75rem; color: #6b7280;">Análisis completo</div>
                 </div>
             </div>
             
@@ -941,7 +737,7 @@
                 </div>
                 <div>
                     <div style="font-weight: 600;">Reporte Diario</div>
-                    <div style="font-size: 0.75rem; color: #6b7280;">Resumen del día</div>
+                    <div style="font-size: 0.75rem; color: #6b7280;">Resumen automático</div>
                 </div>
             </div>
             
@@ -951,59 +747,36 @@
                 </div>
                 <div>
                     <div style="font-weight: 600;">Planificar Cosecha</div>
-                    <div style="font-size: 0.75rem; color: #6b7280;">Programar actividades</div>
+                    <div style="font-size: 0.75rem; color: #6b7280;">IA inteligente</div>
+                </div>
+            </div>
+
+            <div class="quick-action" onclick="accionRapida('analizar-rendimiento')">
+                <div class="quick-action-icon" style="background: #06b6d4;">
+                    <i class="fas fa-analytics"></i>
+                </div>
+                <div>
+                    <div style="font-weight: 600;">Analizar Rendimiento</div>
+                    <div style="font-size: 0.75rem; color: #6b7280;">Análisis avanzado</div>
+                </div>
+            </div>
+
+            <div class="quick-action" onclick="accionRapida('gestionar-tratamientos')">
+                <div class="quick-action-icon" style="background: #ec4899;">
+                    <i class="fas fa-leaf"></i>
+                </div>
+                <div>
+                    <div style="font-weight: 600;">Tratamientos</div>
+                    <div style="font-size: 0.75rem; color: #6b7280;">Gestión sanitaria</div>
                 </div>
             </div>
         </section>
 
-        <!-- Registro rÃ¡pido -->
-        <section class="registro-rapido">
-            <h3 style="margin-bottom: 1.5rem;">
-                <i class="fas fa-bolt"></i> Registro Rápido de Producción
-            </h3>
-            
-            <form class="registro-form" id="formRegistroRapido">
-                <div class="form-group">
-                    <label class="form-label">Fecha</label>
-                    <input type="date" class="form-input" id="fechaRapida" required>
-                </div>
-                
-                <div class="form-group">
-                    <label class="form-label">Árbol/Sector</label>
-                    <select class="form-input" id="arbolRapido" required>
-                        <option value="">Seleccionar...</option>
-                        <!-- Se llenarán dinámicamente con árboles y sectores reales -->
-                    </select>
-                </div>
-                
-                <div class="form-group">
-                    <label class="form-label">Cantidad (kg)</label>
-                    <input type="number" class="form-input" id="cantidadRapida" step="0.1" min="0" required>
-                </div>
-                
-                <div class="form-group">
-                    <label class="form-label">Tipo</label>
-                    <select class="form-input" id="tipoRapido" required>
-                        <option value="">Seleccionar...</option>
-                        <option value="principal">Principal</option>
-                        <option value="secundaria">Secundaria</option>
-                        <option value="extra">Extra</option>
-                    </select>
-                </div>
-                
-                <div class="form-group">
-                    <button type="submit" class="btn btn-success">
-                        <i class="fas fa-save"></i> Guardar Rápido
-                    </button>
-                </div>
-            </form>
-        </section>
-
         <!-- Contenido principal -->
         <div class="main-content">
-            <!-- GrÃ¡ficos -->
+            <!-- Gráficos -->
             <div class="graficos-container">
-                <!-- GrÃ¡fico de producciÃ³n -->
+                <!-- Gráfico de producción -->
                 <div class="grafico-card">
                     <div class="grafico-header">
                         <h3 class="grafico-titulo">
@@ -1011,15 +784,15 @@
                             Evolución de la Producción
                         </h3>
                         <div class="periodo-selector">
-                            <button class="periodo-btn active" data-periodo="semana">Semana</button>
-                            <button class="periodo-btn" data-periodo="mes">Mes</button>
-                            <button class="periodo-btn" data-periodo="ano">Año</button>
+                            <button class="periodo-btn active" data-periodo="semana" onclick="cambiarPeriodoGrafico('semana')">Semana</button>
+                            <button class="periodo-btn" data-periodo="mes" onclick="cambiarPeriodoGrafico('mes')">Mes</button>
+                            <button class="periodo-btn" data-periodo="ano" onclick="cambiarPeriodoGrafico('año')">Año</button>
                         </div>
                     </div>
                     <canvas id="graficoProduccion" height="300"></canvas>
                 </div>
                 
-                <!-- GrÃ¡fico de rendimiento por bloque -->
+                <!-- Gráfico de rendimiento por bloque -->
                 <div class="grafico-card">
                     <div class="grafico-header">
                         <h3 class="grafico-titulo">
@@ -1029,18 +802,29 @@
                     </div>
                     <canvas id="graficoRendimiento" height="250"></canvas>
                 </div>
+
+                <!-- Gráfico de calidad -->
+                <div class="grafico-card">
+                    <div class="grafico-header">
+                        <h3 class="grafico-titulo">
+                            <i class="fas fa-star"></i>
+                            Evolución de Calidad
+                        </h3>
+                    </div>
+                    <canvas id="graficoCalidad" height="250"></canvas>
+                </div>
             </div>
 
-            <!-- Timeline y predicciones -->
+            <!-- Sidebar derecho -->
             <div>
-                <!-- Timeline de producciÃ³n -->
-                <div class="produccion-timeline">
+                <!-- Timeline de actividades -->
+                <div class="timeline-container">
                     <h3 style="margin-bottom: 1.5rem;">
                         <i class="fas fa-history"></i>
                         Actividades Recientes
                     </h3>
                     
-                    <div class="timeline-container" id="timelineProduccion">
+                    <div id="timelineProduccion">
                         <div class="loading-spinner">
                             <i class="fas fa-spinner fa-spin"></i>
                         </div>
@@ -1064,196 +848,61 @@
                 </div>
             </div>
         </div>
-
-        <!-- Tabla de producciÃ³n -->
-        <section class="tabla-produccion">
-            <div class="tabla-header">
-                <h3>
-                    <i class="fas fa-table"></i>
-                    Registros de Producción
-                </h3>
-                <div>
-                    <button class="btn btn-sm btn-secondary" id="btnVistaDetallada">
-                        <i class="fas fa-expand"></i> Vista Detallada
-                    </button>
-                </div>
-            </div>
-            
-            <div class="table-container">
-                <table class="table" id="tablaProduccion">
-                    <thead>
-                        <tr>
-                            <th>Fecha</th>
-                            <th>Árbol/Sector</th>
-                            <th>Cantidad</th>
-                            <th>Tipo</th>
-                            <th>Calidad</th>
-                            <th>Responsable</th>
-                            <th>Acciones</th>
-                        </tr>
-                    </thead>
-                    <tbody id="tablaProduccionBody">
-                        <tr>
-                            <td colspan="7" style="text-align: center; padding: 2rem; color: #6b7280;">
-                                <i class="fas fa-spinner fa-spin" style="margin-right: 0.5rem;"></i>
-                                Cargando registros...
-                            </td>
-                        </tr>
-                    </tbody>
-                </table>
-            </div>
-        </section>
     </main>
 
-    <!-- Modal para registro completo -->
-    <div class="modal-overlay" id="modalRegistroCompleto">
+    <!-- Modal para registro rápido -->
+    <div class="modal-overlay" id="modalRegistroRapido">
         <div class="modal">
             <div class="modal-header">
-                <h2 class="modal-title">Registro Completo de Producción</h2>
-                <button class="modal-close" id="cerrarModalRegistro">
+                <h2 class="modal-title">Nuevo Corte - Registro Rápido</h2>
+                <button class="modal-close" onclick="cerrarModal('modalRegistroRapido')">
                     <i class="fas fa-times"></i>
                 </button>
             </div>
             <div class="modal-body">
-                <form id="formRegistroCompleto" class="form-sections">
-                    <!-- InformaciÃ³n bÃ¡sica -->
+                <form id="formRegistroRapido" class="form-sections">
                     <div class="form-section">
                         <h4 class="section-title">
-                            <i class="fas fa-info-circle"></i>
-                            Información Básica
+                            <i class="fas fa-cut"></i>
+                            Información de Cosecha
                         </h4>
                         
                         <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem;">
                             <div class="form-group">
-                                <label class="form-label">Fecha de Cosecha</label>
-                                <input type="datetime-local" class="form-input" id="fechaCompleta" required>
+                                <label class="form-label">Fecha</label>
+                                <input type="date" class="form-input" id="fechaRapida" required>
                             </div>
                             
                             <div class="form-group">
                                 <label class="form-label">Árbol/Sector</label>
-                                <select class="form-input" id="arbolCompleto" required>
+                                <select class="form-input" id="arbolRapido" required>
                                     <option value="">Seleccionar...</option>
-                                    <!-- Se llenarán dinámicamente -->
                                 </select>
                             </div>
                             
                             <div class="form-group">
-                                <label class="form-label">Tipo de Cosecha</label>
-                                <select class="form-input" id="tipoCompleto" required>
+                                <label class="form-label">Cantidad (kg)</label>
+                                <input type="number" class="form-input" id="cantidadRapida" step="0.1" min="0" required>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label class="form-label">Tipo</label>
+                                <select class="form-input" id="tipoRapido" required>
                                     <option value="">Seleccionar...</option>
                                     <option value="principal">Principal</option>
                                     <option value="secundaria">Secundaria</option>
                                     <option value="extra">Extra</option>
                                 </select>
                             </div>
-                            
-                            <div class="form-group">
-                                <label class="form-label">Responsable</label>
-                                <select class="form-input" id="responsableCompleto" required>
-                                    <option value="">Seleccionar...</option>
-                                    <option value="juan_perez">Juan Pérez</option>
-                                    <option value="maria_gonzalez">María González</option>
-                                    <option value="carlos_lopez">Carlos López</option>
-                                </select>
-                            </div>
                         </div>
                     </div>
 
-                    <!-- Datos de producciÃ³n -->
-                    <div class="form-section">
-                        <h4 class="section-title">
-                            <i class="fas fa-weight-hanging"></i>
-                            Datos de Producción
-                        </h4>
-                        
-                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 1rem;">
-                            <div class="form-group">
-                                <label class="form-label">Cantidad Total (kg)</label>
-                                <input type="number" class="form-input" id="cantidadTotal" step="0.1" min="0" required>
-                            </div>
-                            
-                            <div class="form-group">
-                                <label class="form-label">Calibre Grande (%)</label>
-                                <input type="number" class="form-input" id="calibreGrande" step="0.1" min="0" max="100">
-                            </div>
-                            
-                            <div class="form-group">
-                                <label class="form-label">Calibre Mediano (%)</label>
-                                <input type="number" class="form-input" id="calibreMediano" step="0.1" min="0" max="100">
-                            </div>
-                            
-                            <div class="form-group">
-                                <label class="form-label">Calibre Pequeño (%)</label>
-                                <input type="number" class="form-input" id="calibrePequeno" step="0.1" min="0" max="100">
-                            </div>
-                            
-                            <div class="form-group">
-                                <label class="form-label">Calidad (%)</label>
-                                <input type="number" class="form-input" id="calidadCompleta" step="0.1" min="0" max="100">
-                            </div>
-                            
-                            <div class="form-group">
-                                <label class="form-label">Merma (%)</label>
-                                <input type="number" class="form-input" id="merma" step="0.1" min="0" max="100">
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- UbicaciÃ³n GPS -->
-                    <div class="form-section">
-                        <h4 class="section-title">
-                            <i class="fas fa-map-marker-alt"></i>
-                            Ubicación GPS
-                        </h4>
-                        
-                        <div class="gps-capture">
-                            <div class="gps-status" id="gpsStatus">Presiona para capturar ubicación</div>
-                            <div class="gps-coords" id="gpsCoords">--°, --°</div>
-                            <button type="button" class="btn btn-sm btn-primary" id="btnCapturarGPS">
-                                <i class="fas fa-location-arrow"></i> Capturar GPS
-                            </button>
-                        </div>
-                    </div>
-
-                    <!-- Fotos -->
-                    <div class="form-section">
-                        <h4 class="section-title">
-                            <i class="fas fa-camera"></i>
-                            Fotografías
-                        </h4>
-                        
-                        <div class="form-group">
-                            <input type="file" class="form-input" id="fotosCompletas" multiple accept="image/*" style="display: none;">
-                            <button type="button" class="btn btn-secondary" onclick="document.getElementById('fotosCompletas').click()">
-                                <i class="fas fa-upload"></i> Subir Fotos
-                            </button>
-                        </div>
-                        
-                        <div class="foto-preview" id="fotoPreview">
-                            <!-- Las fotos se mostrarán aquí -->
-                        </div>
-                    </div>
-
-                    <!-- Observaciones -->
-                    <div class="form-section">
-                        <h4 class="section-title">
-                            <i class="fas fa-sticky-note"></i>
-                            Observaciones
-                        </h4>
-                        
-                        <div class="form-group">
-                            <textarea class="form-input form-textarea" id="observacionesCompletas" 
-                                      placeholder="Observaciones sobre la cosecha, condiciones, etc."></textarea>
-                        </div>
-                    </div>
-
-                    <!-- Botones de acciÃ³n -->
                     <div style="display: flex; gap: 1rem; justify-content: flex-end; margin-top: 2rem;">
-                        <button type="button" class="btn btn-secondary" id="cancelarRegistro">
+                        <button type="button" class="btn btn-secondary" onclick="cerrarModal('modalRegistroRapido')">
                             <i class="fas fa-times"></i> Cancelar
                         </button>
                         <button type="submit" class="btn btn-success">
-                            <i class="fas fa-save"></i> Guardar Registro
+                            <i class="fas fa-save"></i> Guardar
                         </button>
                     </div>
                 </form>
@@ -1261,126 +910,186 @@
         </div>
     </div>
 
-    <!-- Scripts corregidos para integración -->
+    <!-- Modal para control de calidad -->
+    <div class="modal-overlay" id="modalControlCalidad">
+        <div class="modal">
+            <div class="modal-header">
+                <h2 class="modal-title">Control de Calidad Avanzado</h2>
+                <button class="modal-close" onclick="cerrarModal('modalControlCalidad')">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <form id="formControlCalidad" class="form-sections">
+                    <div class="form-section">
+                        <h4 class="section-title">
+                            <i class="fas fa-microscope"></i>
+                            Muestra de Análisis
+                        </h4>
+                        
+                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem;">
+                            <div class="form-group">
+                                <label class="form-label">Ubicación</label>
+                                <select class="form-input" id="ubicacionCalidad" required>
+                                    <option value="">Seleccionar ubicación...</option>
+                                </select>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label class="form-label">Inspector</label>
+                                <input type="text" class="form-input" id="inspectorCalidad" placeholder="Nombre del inspector">
+                            </div>
+                            
+                            <div class="form-group">
+                                <label class="form-label">Tamaño de Muestra</label>
+                                <input type="number" class="form-input" id="tamanoMuestra" min="1" max="100" value="20">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div style="display: flex; gap: 1rem; justify-content: flex-end; margin-top: 2rem;">
+                        <button type="button" class="btn btn-secondary" onclick="cerrarModal('modalControlCalidad')">
+                            <i class="fas fa-times"></i> Cancelar
+                        </button>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-play"></i> Iniciar Análisis
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal para planificación de cosecha -->
+    <div class="modal-overlay" id="modalPlanificarCosecha">
+        <div class="modal">
+            <div class="modal-header">
+                <h2 class="modal-title">Planificación Inteligente de Cosecha</h2>
+                <button class="modal-close" onclick="cerrarModal('modalPlanificarCosecha')">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <form id="formPlanificarCosecha" class="form-sections">
+                    <div class="form-section">
+                        <h4 class="section-title">
+                            <i class="fas fa-calendar-alt"></i>
+                            Parámetros de Planificación
+                        </h4>
+                        
+                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem;">
+                            <div class="form-group">
+                                <label class="form-label">Fecha Objetivo</label>
+                                <input type="date" class="form-input" id="fechaObjetivo" required>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label class="form-label">Duración (días)</label>
+                                <input type="number" class="form-input" id="duracionCosecha" min="1" max="30" value="7">
+                            </div>
+                            
+                            <div class="form-group">
+                                <label class="form-label">Prioridad</label>
+                                <select class="form-input" id="prioridadCosecha">
+                                    <option value="rendimiento">Maximizar Rendimiento</option>
+                                    <option value="calidad">Maximizar Calidad</option>
+                                    <option value="eficiencia">Maximizar Eficiencia</option>
+                                </select>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label class="form-label">Personal Disponible</label>
+                                <input type="number" class="form-input" id="personalDisponible" min="1" max="20" value="5">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div style="display: flex; gap: 1rem; justify-content: flex-end; margin-top: 2rem;">
+                        <button type="button" class="btn btn-secondary" onclick="cerrarModal('modalPlanificarCosecha')">
+                            <i class="fas fa-times"></i> Cancelar
+                        </button>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-robot"></i> Generar Plan IA
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-storage-compat.js"></script>
     
-    <script type="module" src="/js/firebase-config.js"></script>
-    <script type="module" src="/js/offline.js"></script>
-    <script type="module" src="/js/auth.js"></script>
-    <script type="module" src="/js/nav.js"></script>
-    <script type="module" src="/js/clima.js"></script>
-    <script type="module" src="/js/produccion.js"></script>
+    <script src="/js/firebase-config.js"></script>
+    <script src="/js/offline.js"></script>
+    <script src="/js/auth.js"></script>
+    <script src="/js/nav.js"></script>
+    <script src="/js/clima.js"></script>
+    <script src="/js/tree-manager.js"></script>
+    <script src="/js/produccion.js"></script>
     
     <script>
         // Variables globales
-        let graficoProduccion, graficoRendimiento;
-        let coordenadasGPS = null;
-        let fotosSeleccionadas = [];
-        let sectoresDisponibles = [];
-        let arbolesDisponibles = [];
+        let graficoProduccion, graficoRendimiento, graficoCalidad;
+        let productionSystemReady = false;
 
-        // SISTEMA CORREGIDO DE INICIALIZACIÓN
+        // INICIALIZACIÓN PRINCIPAL
         document.addEventListener('DOMContentLoaded', async () => {
-            console.log('🚀 Iniciando aplicación de producción...');
+            console.log('🚀 Iniciando aplicación de producción completa...');
             
             try {
-                // Mostrar estado de carga
-                updateIntegrationStatus('loading', 'Cargando datos...');
+                updateIntegrationStatus('loading', 'Inicializando sistema...');
                 
-                // Esperar Firebase con timeout corto
-                const firebaseReady = await waitForFirebase(3000);
-                
-                // Verificar autenticación de forma simple
-                const authenticated = await simpleAuthCheck();
+                // Verificar autenticación
+                const authenticated = await verifyAuthentication();
                 if (!authenticated) {
-                    console.log('❌ Usuario no autenticado, redirigiendo...');
                     window.location.href = '/login.html';
                     return;
                 }
 
-                // Inicializar componentes
-                await initializeComponents();
+                // Esperar managers
+                await waitForSystemManagers();
                 
-                updateIntegrationStatus('connected', 'Datos cargados correctamente');
+                // Configurar eventos
+                setupEventListeners();
                 
-                console.log('✅ Aplicación de producción inicializada');
+                // Inicializar gráficos
+                await initializeCharts();
+                
+                // Cargar datos iniciales
+                await loadInitialData();
+                
+                // Configurar fecha actual
+                setCurrentDate();
+                
+                productionSystemReady = true;
+                updateIntegrationStatus('connected', 'Sistema listo');
+                
+                console.log('✅ Sistema de producción completo inicializado');
                 
             } catch (error) {
-                console.error('❌ Error en inicialización:', error);
-                await initializeBasicMode();
-                updateIntegrationStatus('connected', 'Modo básico activo');
+                console.error('❌ Error inicializando:', error);
+                updateIntegrationStatus('error', 'Error en inicialización');
+                showNotification('Error inicializando el sistema', 'error');
             }
         });
 
-        // FUNCIÓN CORREGIDA PARA ESPERAR FIREBASE
-        function waitForFirebase(timeout = 3000) {
-            return new Promise((resolve) => {
-                const timeoutId = setTimeout(() => {
-                    console.warn('⏰ Timeout esperando Firebase');
-                    resolve(false);
-                }, timeout);
-                
-                if (window.firebase) {
-                    clearTimeout(timeoutId);
-                    resolve(true);
-                    return;
-                }
-                
-                const checkFirebase = () => {
-                    if (window.firebase) {
-                        clearTimeout(timeoutId);
-                        resolve(true);
-                    }
-                };
-                
-                // Escuchar eventos de Firebase
-                window.addEventListener('firebaseReady', () => {
-                    clearTimeout(timeoutId);
-                    resolve(true);
-                }, { once: true });
-                
-                window.addEventListener('firebaseError', () => {
-                    clearTimeout(timeoutId);
-                    resolve(false);
-                }, { once: true });
-                
-                // Verificar periódicamente
-                const interval = setInterval(checkFirebase, 100);
-                setTimeout(() => clearInterval(interval), timeout - 100);
-            });
-        }
-
-        // VERIFICACIÓN SIMPLE DE AUTENTICACIÓN
-        async function simpleAuthCheck() {
-            // Método 1: AuthManager
-            if (window.authManager && window.authManager.isAuthenticated) {
-                return true;
-            }
-            
-            // Método 2: Firebase Auth
-            if (window.firebase && window.firebase.auth && window.firebase.auth().currentUser) {
-                return true;
-            }
-            
-            // Método 3: Esperar un poco más
+        // VERIFICACIÓN DE AUTENTICACIÓN
+        async function verifyAuthentication() {
             return new Promise((resolve) => {
                 let attempts = 0;
                 const checkAuth = () => {
-                    if (window.authManager && window.authManager.isAuthenticated) {
-                        resolve(true);
-                        return;
-                    }
-                    
-                    if (window.firebase && window.firebase.auth && window.firebase.auth().currentUser) {
+                    if (window.authManager?.isAuthenticated || 
+                        window.firebase?.auth?.()?.currentUser) {
                         resolve(true);
                         return;
                     }
                     
                     attempts++;
-                    if (attempts < 20) {
+                    if (attempts < 30) {
                         setTimeout(checkAuth, 100);
                     } else {
                         resolve(true); // Permitir acceso en modo demo
@@ -1390,428 +1099,113 @@
             });
         }
 
-        // INICIALIZACIÓN DE COMPONENTES CON INTEGRACIÓN
-        async function initializeComponents() {
-            // Configurar event listeners primero
-            setupEventListeners();
+        // ESPERAR MANAGERS DEL SISTEMA
+        async function waitForSystemManagers() {
+            const managers = [
+                { name: 'treeManager', timeout: 5000 },
+                { name: 'productionManager', timeout: 8000 },
+                { name: 'climateManager', timeout: 3000 }
+            ];
             
-            // NUEVO: Configurar listeners de actualización de formularios
-            setupFormUpdateListeners();
-            
-            // Esperar ProductionManager
-            await waitForProductionManager();
-            
-            // Cargar sectores y árboles con la nueva integración
-            await loadSectorsAndTrees();
-            
-            // Cargar datos iniciales
-            await loadInitialData();
-            
-            // Inicializar gráficos
-            initializeCharts();
-            
-            // Configurar fecha actual
-            setCurrentDates();
+            for (const manager of managers) {
+                try {
+                    await waitForManager(manager.name, manager.timeout);
+                    console.log(`✅ ${manager.name} cargado`);
+                } catch (error) {
+                    console.warn(`⚠️ ${manager.name} no disponible:`, error);
+                }
+            }
         }
 
-        function waitForProductionManager() {
-            return new Promise((resolve) => {
-                let attempts = 0;
+        function waitForManager(managerName, timeout = 5000) {
+            return new Promise((resolve, reject) => {
+                const timeoutId = setTimeout(() => {
+                    reject(new Error(`Timeout esperando ${managerName}`));
+                }, timeout);
+                
                 const checkManager = () => {
-                    if (window.productionManager) {
-                        resolve();
-                    } else if (attempts < 50) {
-                        attempts++;
-                        setTimeout(checkManager, 100);
-                    } else {
-                        resolve(); // Continuar sin manager
+                    if (window[managerName]) {
+                        clearTimeout(timeoutId);
+                        resolve(window[managerName]);
                     }
                 };
-                checkManager();
+                
+                if (window[managerName]) {
+                    clearTimeout(timeoutId);
+                    resolve(window[managerName]);
+                    return;
+                }
+                
+                // Verificar cada 100ms
+                const interval = setInterval(() => {
+                    if (window[managerName]) {
+                        clearInterval(interval);
+                        clearTimeout(timeoutId);
+                        resolve(window[managerName]);
+                    }
+                }, 100);
+                
+                // Cleanup en timeout
+                setTimeout(() => clearInterval(interval), timeout);
             });
         }
 
-        // CARGAR SECTORES Y ÁRBOLES DESDE EL SISTEMA INTEGRADO
- async function loadSectorsAndTrees() {
-            try {
-                updateIntegrationStatus('loading', 'Cargando sectores y árboles...');
-                
-                // Esperar a que ProductionManager esté listo
-                if (!window.productionManager) {
-                    await waitForProductionManager();
-                }
-                
-                if (window.productionManager) {
-                    const opciones = await window.productionManager.getOpcionesFormulario();
-                    
-                    sectoresDisponibles = opciones.sectores || [];
-                    arbolesDisponibles = opciones.opciones || []; // Incluye sectores + árboles
-                    
-                    console.log(`✅ Cargados desde ProductionManager: ${sectoresDisponibles.length} sectores, ${arbolesDisponibles.length} opciones totales`);
-                } else {
-                    console.warn('⚠️ ProductionManager no disponible, usando fallback');
-                    loadFallbackOptions();
-                }
-                
-                // Actualizar desplegables inmediatamente
-                updateSelectOptions();
-                
-                console.log(`📦 Sectores cargados: ${sectoresDisponibles.length}`);
-                console.log(`🌳 Opciones de ubicación cargadas: ${arbolesDisponibles.length}`);
-                
-            } catch (error) {
-                console.error('❌ Error cargando sectores y árboles:', error);
-                loadFallbackOptions();
-                updateSelectOptions();
-            }
-        }
-
-
-
-
-        // NUEVA FUNCIÓN: Escuchar actualizaciones del sistema de árboles
-        function setupFormUpdateListeners() {
-            // Escuchar cuando se actualicen árboles/sectores
-            window.addEventListener('productionFormUpdateNeeded', async (event) => {
-                console.log('🔄 Actualizando formularios por cambios en árboles/sectores');
-                await loadSectorsAndTrees();
-                showNotification('Formularios actualizados con nuevos árboles/sectores', 'info');
-            });
-            
-            // También escuchar eventos directos del TreeManager
-            window.addEventListener('treeUpdate', async (event) => {
-                console.log('🌳 Árbol actualizado, refrescando opciones');
-                setTimeout(async () => {
-                    await loadSectorsAndTrees();
-                }, 500); // Pequeño delay para que TreeManager termine su actualización
-            });
-            
-            window.addEventListener('sectorUpdate', async (event) => {
-                console.log('📦 Sector actualizado, refrescando opciones');
-                setTimeout(async () => {
-                    await loadSectorsAndTrees();
-                }, 500);
-            });
-        }
-
-        // ACTUALIZAR OPCIONES EN LOS FORMULARIOS
-     // FUNCIÓN MEJORADA PARA ACTUALIZAR OPCIONES EN LOS FORMULARIOS
-        function updateSelectOptions() {
-            // Actualizar filtro de sectores (solo sectores)
-            const filtroBloque = document.getElementById('filtroBloque');
-            if (filtroBloque && sectoresDisponibles.length > 0) {
-                filtroBloque.innerHTML = '<option value="">Todos los sectores</option>';
-                sectoresDisponibles.forEach(sector => {
-                    const option = document.createElement('option');
-                    option.value = sector.value;
-                    option.textContent = sector.label;
-                    filtroBloque.appendChild(option);
-                });
-                console.log(`🔄 Filtro de sectores actualizado: ${sectoresDisponibles.length} opciones`);
-            }
-            
-            // Actualizar formulario rápido (sectores + árboles)
-            const arbolRapido = document.getElementById('arbolRapido');
-            if (arbolRapido && arbolesDisponibles.length > 0) {
-                const currentValue = arbolRapido.value; // Preservar selección actual si existe
-                arbolRapido.innerHTML = '<option value="">Seleccionar...</option>';
-                
-                arbolesDisponibles.forEach(item => {
-                    const option = document.createElement('option');
-                    option.value = item.value;
-                    option.textContent = item.label;
-                    arbolRapido.appendChild(option);
-                });
-                
-                // Restaurar selección si aún existe
-                if (currentValue) {
-                    arbolRapido.value = currentValue;
-                }
-                
-                console.log(`🔄 Formulario rápido actualizado: ${arbolesDisponibles.length} opciones`);
-            }
-            
-            // Actualizar formulario completo (sectores + árboles)
-            const arbolCompleto = document.getElementById('arbolCompleto');
-            if (arbolCompleto && arbolesDisponibles.length > 0) {
-                const currentValue = arbolCompleto.value; // Preservar selección actual si existe
-                arbolCompleto.innerHTML = '<option value="">Seleccionar...</option>';
-                
-                arbolesDisponibles.forEach(item => {
-                    const option = document.createElement('option');
-                    option.value = item.value;
-                    option.textContent = item.label;
-                    arbolCompleto.appendChild(option);
-                });
-                
-                // Restaurar selección si aún existe
-                if (currentValue) {
-                    arbolCompleto.value = currentValue;
-                }
-                
-                console.log(`🔄 Formulario completo actualizado: ${arbolesDisponibles.length} opciones`);
-            }
-            
-            updateIntegrationStatus('connected', 'Formularios sincronizados');
-        }
-
-        function loadFallbackOptions() {
-            sectoresDisponibles = [
-                { value: 'sector_a', label: 'Sector A' },
-                { value: 'sector_b', label: 'Sector B' },
-                { value: 'sector_c', label: 'Sector C' }
-            ];
-            
-            arbolesDisponibles = [
-                { value: 'arbol_001', label: 'Árbol 001' },
-                { value: 'arbol_002', label: 'Árbol 002' },
-                { value: 'arbol_003', label: 'Árbol 003' }
-            ];
-            
-            updateSelectOptions();
-        }
-
-        // INICIALIZACIÓN BÁSICA SIN FIREBASE
-        async function initializeBasicMode() {
-            console.log('🔧 Modo básico activado');
-            
-            setupEventListeners();
-            loadFallbackOptions();
-            loadSampleData();
-            initializeCharts();
-            setCurrentDates();
-        }
-
-        // Resto de funciones mantenidas del código original...
+        // CONFIGURAR EVENT LISTENERS
         function setupEventListeners() {
             // Botones principales
-            const btnRegistroRapido = document.getElementById('btnRegistroRapido');
+            const btnNuevoCorte = document.getElementById('btnNuevoCorte');
             const btnNuevoRegistro = document.getElementById('btnNuevoRegistro');
             const btnExportarDatos = document.getElementById('btnExportarDatos');
             
-            if (btnRegistroRapido) btnRegistroRapido.addEventListener('click', mostrarRegistroRapido);
-            if (btnNuevoRegistro) btnNuevoRegistro.addEventListener('click', mostrarRegistroCompleto);
+            if (btnNuevoCorte) btnNuevoCorte.addEventListener('click', () => accionRapida('nuevo-corte'));
+            if (btnNuevoRegistro) btnNuevoRegistro.addEventListener('click', () => accionRapida('registro-completo'));
             if (btnExportarDatos) btnExportarDatos.addEventListener('click', exportarDatos);
             
             // Formularios
-            const formRapido = document.getElementById('formRegistroRapido');
-            const formCompleto = document.getElementById('formRegistroCompleto');
+            setupFormListeners();
             
-            if (formRapido) formRapido.addEventListener('submit', guardarRegistroRapido);
-            if (formCompleto) formCompleto.addEventListener('submit', guardarRegistroCompleto);
-            
-            // Modales
-            const cerrarModal = document.getElementById('cerrarModalRegistro');
-            const cancelarRegistro = document.getElementById('cancelarRegistro');
-            
-            if (cerrarModal) cerrarModal.addEventListener('click', cerrarModalFunction);
-            if (cancelarRegistro) cancelarRegistro.addEventListener('click', cerrarModalFunction);
-            
-            // Filtros
-            const aplicarFiltros = document.getElementById('aplicarFiltros');
-            const limpiarFiltros = document.getElementById('limpiarFiltros');
-            
-            if (aplicarFiltros) aplicarFiltros.addEventListener('click', aplicarFiltrosFunction);
-            if (limpiarFiltros) limpiarFiltros.addEventListener('click', limpiarFiltrosFunction);
-            
-            // GPS y fotos
-            const btnCapturarGPS = document.getElementById('btnCapturarGPS');
-            const fotosCompletas = document.getElementById('fotosCompletas');
-            
-            if (btnCapturarGPS) btnCapturarGPS.addEventListener('click', capturarUbicacionGPS);
-            if (fotosCompletas) fotosCompletas.addEventListener('change', manejarFotos);
-            
-            // Selectores de período
-            document.querySelectorAll('.periodo-btn').forEach(btn => {
-                btn.addEventListener('click', (e) => cambiarPeriodoGrafico(e.target.dataset.periodo));
-            });
+            // Eventos del sistema
+            window.addEventListener('productionManagerReady', handleProductionManagerReady);
+            window.addEventListener('treeUpdate', handleTreeUpdate);
+            window.addEventListener('qualityControlCompleted', handleQualityControlCompleted);
+            window.addEventListener('harvestPlanReady', handleHarvestPlanReady);
             
             console.log('✅ Event listeners configurados');
         }
 
-      // FUNCIÓN MEJORADA PARA CARGAR DATOS INICIALES
-        async function loadInitialData() {
+        function setupFormListeners() {
+            // Formulario registro rápido
+            const formRapido = document.getElementById('formRegistroRapido');
+            if (formRapido) {
+                formRapido.addEventListener('submit', async (e) => {
+                    e.preventDefault();
+                    await procesarRegistroRapido(e);
+                });
+            }
+            
+            // Formulario control de calidad
+            const formCalidad = document.getElementById('formControlCalidad');
+            if (formCalidad) {
+                formCalidad.addEventListener('submit', async (e) => {
+                    e.preventDefault();
+                    await procesarControlCalidad(e);
+                });
+            }
+            
+            // Formulario planificación
+            const formPlanificacion = document.getElementById('formPlanificarCosecha');
+            if (formPlanificacion) {
+                formPlanificacion.addEventListener('submit', async (e) => {
+                    e.preventDefault();
+                    await procesarPlanificacionCosecha(e);
+                });
+            }
+        }
+
+        // INICIALIZAR GRÁFICOS
+        async function initializeCharts() {
             try {
-                if (window.productionManager) {
-                    await window.productionManager.cargarDatos();
-                    updateKPIs();
-                    updateTimeline();
-                    updateProductionTable();
-                    await generateAIPredictions();
-                } else {
-                    loadSampleData();
-                }
-            } catch (error) {
-                console.error('❌ Error cargando datos:', error);
-                loadSampleData();
-            }
-        }
-
- function loadSampleData() {
-            // Usar ubicaciones reales si están disponibles
-            const sampleLocation = arbolesDisponibles.length > 0 ? 
-                arbolesDisponibles[0].label : 'Árbol 001';
-            const sampleSector = sectoresDisponibles.length > 0 ?
-                sectoresDisponibles[0].label : 'Sector A';
-            
-            // Datos de ejemplo
-            document.getElementById('produccionMes').textContent = '3,250 kg';
-            document.getElementById('rendimientoPromedio').textContent = '22.5 kg/árbol';
-            document.getElementById('calidadPromedio').textContent = '87%';
-            document.getElementById('ingresosMes').textContent = 'Q 32,500';
-            
-            const timeline = document.getElementById('timelineProduccion');
-            if (timeline) {
-                timeline.innerHTML = `
-                    <div class="timeline-item">
-                        <div class="timeline-fecha">Hoy, 14:30</div>
-                        <div class="timeline-contenido">
-                            <strong>Cosecha en ${sampleSector}</strong>
-                            <div class="timeline-cantidad">45 kg</div>
-                            <div class="timeline-detalles">Por Juan Pérez - Calidad AA</div>
-                        </div>
-                    </div>
-                    <div class="timeline-item">
-                        <div class="timeline-fecha">Ayer, 16:15</div>
-                        <div class="timeline-contenido">
-                            <strong>Cosecha en ${sampleLocation}</strong>
-                            <div class="timeline-cantidad">78 kg</div>
-                            <div class="timeline-detalles">Por María González - Calidad AAA</div>
-                        </div>
-                    </div>
-                `;
-            }
-            
-            const tbody = document.getElementById('tablaProduccionBody');
-            if (tbody) {
-                tbody.innerHTML = `
-                    <tr onclick="mostrarDetalleRegistro('ejemplo1')">
-                        <td>2025-01-10</td>
-                        <td>${sampleLocation}</td>
-                        <td>45 kg</td>
-                        <td><span class="cosecha-badge aa">AA</span></td>
-                        <td>89%</td>
-                        <td>Juan Pérez</td>
-                        <td>
-                            <button class="btn btn-sm btn-primary" onclick="event.stopPropagation(); editarRegistro('ejemplo1')">
-                                <i class="fas fa-edit"></i>
-                            </button>
-                        </td>
-                    </tr>
-                `;
-            }
-            
-            showSamplePredictions();
-        }
-
-
-        function showSamplePredictions() {
-            const container = document.getElementById('prediccionesIA');
-            if (container) {
-                container.innerHTML = `
-                    <div class="prediccion-item">
-                        <div class="prediccion-titulo">Producción Esperada</div>
-                        <div class="prediccion-valor" style="color: #22c55e;">
-                            +15% próximos 7 días
-                        </div>
-                        <div class="prediccion-confianza">
-                            Confianza: 85% | Condiciones favorables detectadas
-                        </div>
-                    </div>
-                    <div class="prediccion-item">
-                        <div class="prediccion-titulo">Calidad Proyectada</div>
-                        <div class="prediccion-valor" style="color: #3b82f6;">
-                            Grado AA promedio
-                        </div>
-                        <div class="prediccion-confianza">
-                            Confianza: 78% | Basado en condiciones climáticas
-                        </div>
-                    </div>
-                `;
-            }
-        }
-
-        function updateKPIs() {
-            if (window.productionManager) {
-                const kpis = window.productionManager.calcularKPIs();
-                document.getElementById('produccionMes').textContent = `${kpis.produccionMes.toLocaleString()} kg`;
-                document.getElementById('rendimientoPromedio').textContent = `${kpis.rendimientoPromedio} kg/árbol`;
-                document.getElementById('calidadPromedio').textContent = `${kpis.calidadPromedio}%`;
-                document.getElementById('ingresosMes').textContent = `Q ${kpis.ingresosMes.toLocaleString()}`;
-            }
-        }
-
-        function updateTimeline() {
-            if (window.productionManager) {
-                const actividades = window.productionManager.obtenerActividadesRecientes();
-                const container = document.getElementById('timelineProduccion');
-                
-                if (container && actividades.length > 0) {
-                    container.innerHTML = actividades.map(actividad => `
-                        <div class="timeline-item">
-                            <div class="timeline-fecha">${formatDate(actividad.fecha)}</div>
-                            <div class="timeline-contenido">
-                                <strong>${actividad.descripcion}</strong>
-                                <div class="timeline-cantidad">${actividad.cantidad} kg</div>
-                                <div class="timeline-detalles">${actividad.detalles}</div>
-                            </div>
-                        </div>
-                    `).join('');
-                }
-            }
-        }
-
-        function updateProductionTable() {
-            if (window.productionManager) {
-                const registros = window.productionManager.obtenerRegistrosFiltrados();
-                const tbody = document.getElementById('tablaProduccionBody');
-                
-                if (tbody && registros.length > 0) {
-                    tbody.innerHTML = registros.map(registro => `
-                        <tr onclick="mostrarDetalleRegistro('${registro.id}')" style="cursor: pointer;">
-                            <td>${formatDate(registro.fecha)}</td>
-                            <td>${registro.arbol || registro.bloque}</td>
-                            <td>${registro.cantidad} kg</td>
-                            <td><span class="cosecha-badge ${registro.tipo}">${registro.tipo.toUpperCase()}</span></td>
-                            <td>${registro.calidad}%</td>
-                            <td>${registro.responsable}</td>
-                            <td>
-                                <button class="btn btn-sm btn-primary" onclick="event.stopPropagation(); editarRegistro('${registro.id}')">
-                                    <i class="fas fa-edit"></i>
-                                </button>
-                            </td>
-                        </tr>
-                    `).join('');
-                }
-            }
-        }
-
-        async function generateAIPredictions() {
-            try {
-                if (window.productionManager) {
-                    const predicciones = await window.productionManager.generarPrediccionesIA();
-                    const container = document.getElementById('prediccionesIA');
-                    
-                    if (container && predicciones.length > 0) {
-                        container.innerHTML = predicciones.map(pred => `
-                            <div class="prediccion-item">
-                                <div class="prediccion-titulo">${pred.titulo}</div>
-                                <div class="prediccion-valor" style="color: ${pred.color};">${pred.valor}</div>
-                                <div class="prediccion-confianza">
-                                    Confianza: ${pred.confianza}% | ${pred.descripcion}
-                                </div>
-                            </div>
-                        `).join('');
-                    }
-                }
-            } catch (error) {
-                console.error('❌ Error generando predicciones:', error);
-                showSamplePredictions();
-            }
-        }
-
-        function initializeCharts() {
-            try {
+                // Gráfico de producción
                 const ctxProd = document.getElementById('graficoProduccion');
                 if (ctxProd) {
                     graficoProduccion = new Chart(ctxProd, {
@@ -1820,50 +1214,69 @@
                             labels: ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'],
                             datasets: [{
                                 label: 'Producción (kg)',
-                                data: [65, 59, 80, 81, 56, 78, 92],
+                                data: [0, 0, 0, 0, 0, 0, 0],
                                 borderColor: '#16a34a',
                                 backgroundColor: 'rgba(22, 163, 74, 0.1)',
                                 tension: 0.4,
                                 fill: true
+                            }, {
+                                label: 'Predicción (kg)',
+                                data: [0, 0, 0, 0, 0, 0, 0],
+                                borderColor: '#3b82f6',
+                                backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                                borderDash: [5, 5],
+                                tension: 0.4
                             }]
                         },
-                        options: {
-                            responsive: true,
-                            maintainAspectRatio: false,
-                            plugins: { legend: { labels: { color: '#374151' } } },
-                            scales: {
-                                x: { ticks: { color: '#6b7280' }, grid: { color: 'rgba(107, 114, 128, 0.2)' } },
-                                y: { ticks: { color: '#6b7280' }, grid: { color: 'rgba(107, 114, 128, 0.2)' } }
-                            }
-                        }
+                        options: getChartOptions()
                     });
                 }
 
+                // Gráfico de rendimiento
                 const ctxRend = document.getElementById('graficoRendimiento');
                 if (ctxRend) {
-                    const labels = sectoresDisponibles.length > 0 ? 
-                        sectoresDisponibles.map(s => s.label) : 
-                        ['Sector A', 'Sector B', 'Sector C'];
-                    
                     graficoRendimiento = new Chart(ctxRend, {
                         type: 'bar',
                         data: {
-                            labels: labels,
+                            labels: ['Cargando...'],
                             datasets: [{
                                 label: 'Rendimiento (kg)',
-                                data: labels.map(() => Math.floor(Math.random() * 50) + 30),
+                                data: [0],
                                 backgroundColor: 'rgba(59, 130, 246, 0.6)',
                                 borderColor: '#3b82f6',
                                 borderWidth: 1
                             }]
                         },
+                        options: getChartOptions()
+                    });
+                }
+
+                // Gráfico de calidad
+                const ctxCalidad = document.getElementById('graficoCalidad');
+                if (ctxCalidad) {
+                    graficoCalidad = new Chart(ctxCalidad, {
+                        type: 'doughnut',
+                        data: {
+                            labels: ['AAA', 'AA', 'A', 'B', 'C'],
+                            datasets: [{
+                                data: [0, 0, 0, 0, 0],
+                                backgroundColor: [
+                                    '#22c55e',
+                                    '#3b82f6', 
+                                    '#f59e0b',
+                                    '#ef4444',
+                                    '#6b7280'
+                                ]
+                            }]
+                        },
                         options: {
                             responsive: true,
                             maintainAspectRatio: false,
-                            plugins: { legend: { labels: { color: '#374151' } } },
-                            scales: {
-                                x: { ticks: { color: '#6b7280' }, grid: { color: 'rgba(107, 114, 128, 0.2)' } },
-                                y: { ticks: { color: '#6b7280' }, grid: { color: 'rgba(107, 114, 128, 0.2)' } }
+                            plugins: {
+                                legend: {
+                                    position: 'bottom',
+                                    labels: { color: '#374151' }
+                                }
                             }
                         }
                     });
@@ -1876,27 +1289,427 @@
             }
         }
 
-        function setCurrentDates() {
-            const hoy = new Date().toISOString().split('T')[0];
-            const ahora = new Date().toISOString().slice(0, 16);
-            
-            const fechaRapida = document.getElementById('fechaRapida');
-            const fechaCompleta = document.getElementById('fechaCompleta');
-            
-            if (fechaRapida) fechaRapida.value = hoy;
-            if (fechaCompleta) fechaCompleta.value = ahora;
+        function getChartOptions() {
+            return {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { 
+                    legend: { 
+                        labels: { color: '#374151' } 
+                    } 
+                },
+                scales: {
+                    x: { 
+                        ticks: { color: '#6b7280' }, 
+                        grid: { color: 'rgba(107, 114, 128, 0.2)' } 
+                    },
+                    y: { 
+                        ticks: { color: '#6b7280' }, 
+                        grid: { color: 'rgba(107, 114, 128, 0.2)' } 
+                    }
+                }
+            };
         }
 
-        // FUNCIONES DE INTERFAZ MANTENIDAS
+        // CARGAR DATOS INICIALES
+        async function loadInitialData() {
+            try {
+                // Cargar opciones de formularios
+                await updateFormOptions();
+                
+                // Actualizar KPIs
+                await updateKPIs();
+                
+                // Actualizar timeline
+                await updateTimeline();
+                
+                // Generar predicciones
+                await updatePredictions();
+                
+                // Actualizar gráficos
+                await updateCharts('semana');
+                
+                console.log('✅ Datos iniciales cargados');
+                
+            } catch (error) {
+                console.error('❌ Error cargando datos:', error);
+                loadFallbackData();
+            }
+        }
+
+        async function updateFormOptions() {
+            try {
+                if (window.productionManager) {
+                    const opciones = await window.productionManager.getOpcionesFormulario();
+                    
+                    // Actualizar select de registro rápido
+                    const selectRapido = document.getElementById('arbolRapido');
+                    if (selectRapido && opciones.opciones) {
+                        selectRapido.innerHTML = '<option value="">Seleccionar...</option>';
+                        opciones.opciones.forEach(opcion => {
+                            const opt = document.createElement('option');
+                            opt.value = opcion.value;
+                            opt.textContent = opcion.label;
+                            selectRapido.appendChild(opt);
+                        });
+                    }
+                    
+                    // Actualizar select de control de calidad
+                    const selectCalidad = document.getElementById('ubicacionCalidad');
+                    if (selectCalidad && opciones.opciones) {
+                        selectCalidad.innerHTML = '<option value="">Seleccionar ubicación...</option>';
+                        opciones.opciones.forEach(opcion => {
+                            const opt = document.createElement('option');
+                            opt.value = opcion.value;
+                            opt.textContent = opcion.label;
+                            selectCalidad.appendChild(opt);
+                        });
+                    }
+                }
+            } catch (error) {
+                console.warn('⚠️ Error actualizando opciones:', error);
+            }
+        }
+
+        async function updateKPIs() {
+            try {
+                if (window.productionManager) {
+                    const kpis = window.productionManager.calcularKPIs();
+                    
+                    document.getElementById('produccionMes').textContent = `${kpis.produccionMes.toLocaleString()} kg`;
+                    document.getElementById('rendimientoPromedio').textContent = `${kpis.rendimientoPromedio} kg/árbol`;
+                    document.getElementById('calidadPromedio').textContent = `${kpis.calidadPromedio}%`;
+                    document.getElementById('ingresosMes').textContent = `Q ${kpis.ingresosMes.toLocaleString()}`;
+                }
+            } catch (error) {
+                console.warn('⚠️ Error actualizando KPIs:', error);
+                loadFallbackKPIs();
+            }
+        }
+
+        async function updateTimeline() {
+            const container = document.getElementById('timelineProduccion');
+            if (!container) return;
+            
+            try {
+                if (window.productionManager) {
+                    const actividades = window.productionManager.obtenerActividadesRecientes();
+                    
+                    if (actividades.length > 0) {
+                        container.innerHTML = actividades.map(actividad => `
+                            <div class="timeline-item">
+                                <div class="timeline-fecha">${formatDate(actividad.fecha)}</div>
+                                <div class="timeline-contenido">
+                                    <strong>${actividad.descripcion}</strong>
+                                    <div class="timeline-cantidad">${actividad.cantidad} kg</div>
+                                    <div style="font-size: 0.75rem; color: #6b7280; margin-top: 0.5rem;">
+                                        ${actividad.detalles}
+                                    </div>
+                                </div>
+                            </div>
+                        `).join('');
+                    } else {
+                        container.innerHTML = '<p style="text-align: center; color: #6b7280;">No hay actividades recientes</p>';
+                    }
+                } else {
+                    loadFallbackTimeline();
+                }
+            } catch (error) {
+                console.warn('⚠️ Error actualizando timeline:', error);
+                loadFallbackTimeline();
+            }
+        }
+
+        async function updatePredictions() {
+            const container = document.getElementById('prediccionesIA');
+            if (!container) return;
+            
+            try {
+                if (window.productionManager) {
+                    const predicciones = await window.productionManager.generarPrediccionesIA();
+                    
+                    container.innerHTML = predicciones.map(pred => `
+                        <div class="prediccion-item">
+                            <div class="prediccion-titulo">${pred.titulo}</div>
+                            <div class="prediccion-valor" style="color: ${pred.color};">
+                                ${pred.valor}
+                            </div>
+                            <div class="prediccion-confianza">
+                                Confianza: ${pred.confianza}% | ${pred.descripcion}
+                            </div>
+                        </div>
+                    `).join('');
+                } else {
+                    loadFallbackPredictions();
+                }
+            } catch (error) {
+                console.warn('⚠️ Error actualizando predicciones:', error);
+                loadFallbackPredictions();
+            }
+        }
+
+        async function updateCharts(periodo) {
+            try {
+                if (window.productionManager) {
+                    const datos = await window.productionManager.obtenerDatosGraficos(periodo);
+                    
+                    // Actualizar gráfico de producción
+                    if (graficoProduccion && datos.labels) {
+                        graficoProduccion.data.labels = datos.labels;
+                        graficoProduccion.data.datasets[0].data = datos.produccion;
+                        if (datos.prediccion) {
+                            graficoProduccion.data.datasets[1].data = datos.prediccion;
+                        }
+                        graficoProduccion.update();
+                    }
+                    
+                    // Actualizar gráfico de rendimiento
+                    if (graficoRendimiento && datos.bloquesLabels) {
+                        graficoRendimiento.data.labels = datos.bloquesLabels;
+                        graficoRendimiento.data.datasets[0].data = datos.rendimiento;
+                        graficoRendimiento.update();
+                    }
+                    
+                    // Actualizar gráfico de calidad
+                    if (graficoCalidad && datos.calidad) {
+                        graficoCalidad.data.datasets[0].data = datos.calidad;
+                        graficoCalidad.update();
+                    }
+                }
+            } catch (error) {
+                console.warn('⚠️ Error actualizando gráficos:', error);
+            }
+        }
+
+        // PROCESAMIENTO DE FORMULARIOS
+        async function procesarRegistroRapido(event) {
+            try {
+                const formData = new FormData(event.target);
+                
+                const datos = {
+                    fecha: document.getElementById('fechaRapida').value,
+                    arbolId: document.getElementById('arbolRapido').value,
+                    cantidad: parseFloat(document.getElementById('cantidadRapida').value),
+                    tipo: document.getElementById('tipoRapido').value
+                };
+                
+                if (!datos.arbolId) {
+                    showNotification('Selecciona una ubicación', 'warning');
+                    return;
+                }
+                
+                showNotification('Guardando registro...', 'info');
+                
+                if (window.productionManager) {
+                    await window.productionManager.registrarProduccion(datos);
+                    showNotification('Registro guardado correctamente', 'success');
+                    
+                    // Actualizar datos
+                    await updateKPIs();
+                    await updateTimeline();
+                    await updateCharts('semana');
+                } else {
+                    showNotification('Registro guardado (modo demo)', 'info');
+                }
+                
+                // Cerrar modal y limpiar formulario
+                cerrarModal('modalRegistroRapido');
+                document.getElementById('formRegistroRapido').reset();
+                setCurrentDate();
+                
+            } catch (error) {
+                console.error('❌ Error en registro:', error);
+                showNotification('Error guardando registro: ' + error.message, 'error');
+            }
+        }
+
+        async function procesarControlCalidad(event) {
+            try {
+                const datos = {
+                    location: document.getElementById('ubicacionCalidad').value,
+                    inspector: document.getElementById('inspectorCalidad').value,
+                    samples: [{
+                        size: parseInt(document.getElementById('tamanoMuestra').value)
+                    }]
+                };
+                
+                if (!datos.location) {
+                    showNotification('Selecciona una ubicación', 'warning');
+                    return;
+                }
+                
+                showNotification('Iniciando análisis de calidad...', 'info');
+                
+                if (window.productionManager && window.productionManager.controlCalidad) {
+                    const resultado = await window.productionManager.controlCalidad(datos);
+                    
+                    showNotification(`Control de calidad completado - Grado: ${resultado.overall.grade}`, 'success');
+                    
+                    // Mostrar resultados detallados
+                    mostrarResultadosCalidad(resultado);
+                } else {
+                    showNotification('Análisis de calidad completado (modo demo)', 'success');
+                    mostrarResultadosCalidadDemo();
+                }
+                
+                cerrarModal('modalControlCalidad');
+                
+            } catch (error) {
+                console.error('❌ Error en control de calidad:', error);
+                showNotification('Error en análisis: ' + error.message, 'error');
+            }
+        }
+
+        async function procesarPlanificacionCosecha(event) {
+            try {
+                const parametros = {
+                    fechaObjetivo: document.getElementById('fechaObjetivo').value,
+                    duracion: parseInt(document.getElementById('duracionCosecha').value),
+                    prioridad: document.getElementById('prioridadCosecha').value,
+                    personal: parseInt(document.getElementById('personalDisponible').value)
+                };
+                
+                showNotification('Generando plan inteligente...', 'info');
+                
+                if (window.productionManager && window.productionManager.planificarCosecha) {
+                    const plan = await window.productionManager.planificarCosecha(parametros);
+                    
+                    showNotification('Plan de cosecha generado exitosamente', 'success');
+                    mostrarPlanCosecha(plan);
+                } else {
+                    showNotification('Plan de cosecha generado (modo demo)', 'success');
+                    mostrarPlanCosechaDemo(parametros);
+                }
+                
+                cerrarModal('modalPlanificarCosecha');
+                
+            } catch (error) {
+                console.error('❌ Error generando plan:', error);
+                showNotification('Error generando plan: ' + error.message, 'error');
+            }
+        }
+
+        // ACCIONES RÁPIDAS
+        async function accionRapida(accion) {
+            switch (accion) {
+                case 'nuevo-corte':
+                    document.getElementById('modalRegistroRapido').classList.add('show');
+                    break;
+                    
+                case 'control-calidad':
+                    document.getElementById('modalControlCalidad').classList.add('show');
+                    break;
+                    
+                case 'planificar-cosecha':
+                    document.getElementById('modalPlanificarCosecha').classList.add('show');
+                    // Establecer fecha por defecto
+                    const tomorrow = new Date();
+                    tomorrow.setDate(tomorrow.getDate() + 1);
+                    document.getElementById('fechaObjetivo').value = tomorrow.toISOString().split('T')[0];
+                    break;
+                    
+                case 'reporte-diario':
+                    await generarReporteDiario();
+                    break;
+                    
+                case 'analizar-rendimiento':
+                    await analizarRendimiento();
+                    break;
+                    
+                case 'gestionar-tratamientos':
+                    await gestionarTratamientos();
+                    break;
+                    
+                case 'registro-completo':
+                    showNotification('Función de registro completo en desarrollo', 'info');
+                    break;
+                    
+                default:
+                    showNotification(`Función ${accion} en desarrollo`, 'info');
+            }
+        }
+
+        async function generarReporteDiario() {
+            try {
+                showNotification('Generando reporte diario...', 'info');
+                
+                if (window.productionManager && window.productionManager.generarReporteDiario) {
+                    const reporte = window.productionManager.generarReporteDiario();
+                    showNotification(`Reporte generado: ${reporte.totalProduccion}kg cosechados hoy`, 'success');
+                } else {
+                    showNotification('Reporte diario generado (modo demo)', 'info');
+                }
+            } catch (error) {
+                showNotification('Error generando reporte: ' + error.message, 'error');
+            }
+        }
+
+        async function analizarRendimiento() {
+            try {
+                showNotification('Analizando rendimiento avanzado...', 'info');
+                
+                if (window.productionManager && window.productionManager.analizarRendimiento) {
+                    const analisis = await window.productionManager.analizarRendimiento({
+                        period: 'last_month',
+                        scope: 'farm'
+                    });
+                    
+                    showNotification('Análisis de rendimiento completado', 'success');
+                    mostrarAnalisisRendimiento(analisis);
+                } else {
+                    showNotification('Análisis de rendimiento completado (modo demo)', 'success');
+                }
+            } catch (error) {
+                showNotification('Error en análisis: ' + error.message, 'error');
+            }
+        }
+
+        async function gestionarTratamientos() {
+            try {
+                showNotification('Abriendo gestión de tratamientos...', 'info');
+                
+                // Aquí se abriría un modal completo para gestión de tratamientos
+                // Por ahora mostramos una notificación
+                if (window.productionManager && window.productionManager.gestionarTratamientos) {
+                    showNotification('Sistema de tratamientos disponible', 'success');
+                } else {
+                    showNotification('Sistema de tratamientos (modo demo)', 'info');
+                }
+            } catch (error) {
+                showNotification('Error accediendo a tratamientos: ' + error.message, 'error');
+            }
+        }
+
+        // FUNCIONES DE INTERFAZ
+        function cambiarPeriodoGrafico(periodo) {
+            // Actualizar botones activos
+            document.querySelectorAll('.periodo-btn').forEach(btn => btn.classList.remove('active'));
+            document.querySelector(`[data-periodo="${periodo}"]`).classList.add('active');
+            
+            // Actualizar gráficos
+            updateCharts(periodo);
+        }
+
+        function cerrarModal(modalId) {
+            document.getElementById(modalId).classList.remove('show');
+        }
+
+        function setCurrentDate() {
+            const hoy = new Date().toISOString().split('T')[0];
+            const fechaRapida = document.getElementById('fechaRapida');
+            if (fechaRapida) fechaRapida.value = hoy;
+        }
+
         function updateIntegrationStatus(status, message) {
             const statusEl = document.getElementById('integrationStatus');
             if (statusEl) {
                 statusEl.className = `integration-status ${status}`;
                 statusEl.innerHTML = status === 'loading' ? 
                     `<i class="fas fa-sync fa-spin"></i> ${message}` : 
+                    status === 'error' ?
+                    `<i class="fas fa-exclamation-triangle"></i> ${message}` :
                     `<i class="fas fa-check"></i> ${message}`;
                 
-                // Ocultar después de 3 segundos si está conectado
                 if (status === 'connected') {
                     setTimeout(() => {
                         statusEl.style.opacity = '0';
@@ -1906,288 +1719,26 @@
             }
         }
 
-        // Mantener todas las funciones originales de formularios, modales, etc.
- async function guardarRegistroRapido(e) {
-            e.preventDefault();
+        function showNotification(mensaje, tipo = 'info') {
+            const notification = document.createElement('div');
+            notification.className = `notification ${tipo}`;
+            notification.textContent = mensaje;
             
-            const datos = {
-                fecha: document.getElementById('fechaRapida').value,
-                arbolId: document.getElementById('arbolRapido').value,
-                cantidad: parseFloat(document.getElementById('cantidadRapida').value),
-                tipo: document.getElementById('tipoRapido').value,
-                responsable: 'Usuario Actual'
-            };
+            document.body.appendChild(notification);
             
-            // Validar que se haya seleccionado una ubicación
-            if (!datos.arbolId) {
-                showNotification('Por favor selecciona un árbol o sector', 'warning');
-                return;
-            }
+            // Mostrar notificación
+            setTimeout(() => notification.classList.add('show'), 100);
             
+            // Ocultar después de 4 segundos
+            setTimeout(() => {
+                notification.classList.remove('show');
+                setTimeout(() => notification.remove(), 300);
+            }, 4000);
+        }
+
+        function formatDate(dateString) {
             try {
-                if (window.productionManager) {
-                    await window.productionManager.registrarProduccion(datos);
-                    showNotification(`Producción registrada correctamente en ${getLocationName(datos.arbolId)}`, 'success');
-                    
-                    // Refrescar datos para mostrar el nuevo registro
-                    await loadInitialData();
-                } else {
-                    showNotification('Registro guardado (modo demo)', 'info');
-                }
-                
-                document.getElementById('formRegistroRapido').reset();
-                setCurrentDates();
-                
-            } catch (error) {
-                console.error('❌ Error guardando registro:', error);
-                showNotification('Error al guardar el registro: ' + error.message, 'error');
-            }
-        }
-
-     // FUNCIÓN MEJORADA DE GUARDAR REGISTRO COMPLETO
-        async function guardarRegistroCompleto(e) {
-            e.preventDefault();
-            
-            const datos = {
-                fecha: document.getElementById('fechaCompleta').value,
-                arbolId: document.getElementById('arbolCompleto').value,
-                tipo: document.getElementById('tipoCompleto').value,
-                responsable: document.getElementById('responsableCompleto').value,
-                cantidad: parseFloat(document.getElementById('cantidadTotal').value),
-                calibres: {
-                    grande: parseFloat(document.getElementById('calibreGrande').value) || 0,
-                    mediano: parseFloat(document.getElementById('calibreMediano').value) || 0,
-                    pequeno: parseFloat(document.getElementById('calibrePequeno').value) || 0
-                },
-                calidad: parseFloat(document.getElementById('calidadCompleta').value) || 0,
-                merma: parseFloat(document.getElementById('merma').value) || 0,
-                ubicacion: coordenadasGPS,
-                fotos: fotosSeleccionadas,
-                observaciones: document.getElementById('observacionesCompletas').value
-            };
-            
-            // Validaciones
-            if (!datos.arbolId) {
-                showNotification('Por favor selecciona un árbol o sector', 'warning');
-                return;
-            }
-            
-            if (!datos.responsable) {
-                showNotification('Por favor selecciona un responsable', 'warning');
-                return;
-            }
-            
-            try {
-                if (window.productionManager) {
-                    await window.productionManager.registrarProduccionCompleta(datos);
-                    showNotification(`Registro completo guardado correctamente en ${getLocationName(datos.arbolId)}`, 'success');
-                    
-                    // Refrescar datos
-                    await loadInitialData();
-                } else {
-                    showNotification('Registro completo guardado (modo demo)', 'info');
-                }
-                
-                cerrarModalFunction();
-                
-            } catch (error) {
-                console.error('❌ Error guardando registro completo:', error);
-                showNotification('Error al guardar el registro: ' + error.message, 'error');
-            }
-        }
-
-        // NUEVA FUNCIÓN: Obtener nombre de ubicación
-        function getLocationName(locationId) {
-            const item = arbolesDisponibles.find(item => item.value === locationId);
-            return item ? item.label : `Ubicación ${locationId}`;
-        }
-
-        // Resto de funciones mantenidas...
-        function mostrarRegistroRapido() {
-            document.querySelector('.registro-rapido').scrollIntoView({ behavior: 'smooth' });
-        }
-
-        function mostrarRegistroCompleto() {
-            document.getElementById('modalRegistroCompleto').classList.add('show');
-        }
-
-        function cerrarModalFunction() {
-            document.getElementById('modalRegistroCompleto').classList.remove('show');
-            document.getElementById('formRegistroCompleto').reset();
-            coordenadasGPS = null;
-            fotosSeleccionadas = [];
-            document.getElementById('fotoPreview').innerHTML = '';
-            document.getElementById('gpsCoords').textContent = '--°, --°';
-            document.getElementById('gpsStatus').textContent = 'Presiona para capturar ubicación';
-        }
-
-        async function capturarUbicacionGPS() {
-            const statusElement = document.getElementById('gpsStatus');
-            const coordsElement = document.getElementById('gpsCoords');
-            
-            statusElement.textContent = 'Obteniendo ubicación...';
-            
-            try {
-                const position = await new Promise((resolve, reject) => {
-                    navigator.geolocation.getCurrentPosition(resolve, reject, {
-                        enableHighAccuracy: true,
-                        timeout: 10000,
-                        maximumAge: 60000
-                    });
-                });
-                
-                coordenadasGPS = {
-                    lat: position.coords.latitude,
-                    lng: position.coords.longitude,
-                    accuracy: position.coords.accuracy,
-                    timestamp: new Date()
-                };
-                
-                statusElement.textContent = 'Ubicación capturada correctamente';
-                coordsElement.textContent = `${coordenadasGPS.lat.toFixed(6)}, ${coordenadasGPS.lng.toFixed(6)}`;
-                
-            } catch (error) {
-                console.error('❌ Error obteniendo GPS:', error);
-                statusElement.textContent = 'Error obteniendo ubicación';
-                showNotification('Error obteniendo ubicación GPS', 'warning');
-            }
-        }
-
-        function manejarFotos(e) {
-            const archivos = Array.from(e.target.files);
-            const preview = document.getElementById('fotoPreview');
-            
-            fotosSeleccionadas = [];
-            preview.innerHTML = '';
-            
-            archivos.forEach((archivo, index) => {
-                if (archivo.type.startsWith('image/')) {
-                    const reader = new FileReader();
-                    
-                    reader.onload = (e) => {
-                        const img = document.createElement('div');
-                        img.className = 'foto-item';
-                        img.innerHTML = `
-                            <img src="${e.target.result}" alt="Foto ${index + 1}">
-                            <button type="button" class="foto-remove" onclick="removerFoto(${index})">
-                                <i class="fas fa-times"></i>
-                            </button>
-                        `;
-                        preview.appendChild(img);
-                    };
-                    
-                    reader.readAsDataURL(archivo);
-                    fotosSeleccionadas.push(archivo);
-                }
-            });
-        }
-
-        function removerFoto(index) {
-            fotosSeleccionadas.splice(index, 1);
-            const preview = document.getElementById('fotoPreview');
-            if (preview.children[index]) {
-                preview.children[index].remove();
-            }
-        }
-
-      // ACTUALIZAR LA FUNCIÓN DE CAMBIO DE PERÍODO EN GRÁFICOS
-        function cambiarPeriodoGrafico(periodo) {
-            document.querySelectorAll('.periodo-btn').forEach(btn => btn.classList.remove('active'));
-            document.querySelector(`[data-periodo="${periodo}"]`).classList.add('active');
-            
-            if (window.productionManager) {
-                window.productionManager.obtenerDatosGraficos(periodo).then(datos => {
-                    if (graficoProduccion && datos.labels) {
-                        graficoProduccion.data.labels = datos.labels;
-                        graficoProduccion.data.datasets[0].data = datos.produccion;
-                        graficoProduccion.update();
-                    }
-                    
-                    if (graficoRendimiento && datos.bloquesLabels) {
-                        graficoRendimiento.data.labels = datos.bloquesLabels;
-                        graficoRendimiento.data.datasets[0].data = datos.rendimiento;
-                        graficoRendimiento.update();
-                    }
-                });
-            } else {
-                // Fallback con datos de ejemplo usando sectores reales
-                const labels = periodo === 'semana' ? 
-                    ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'] :
-                    ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun'];
-                
-                const sectorsLabels = sectoresDisponibles.length > 0 ?
-                    sectoresDisponibles.map(s => s.label) :
-                    ['Sector A', 'Sector B', 'Sector C'];
-                
-                if (graficoProduccion) {
-                    graficoProduccion.data.labels = labels;
-                    graficoProduccion.data.datasets[0].data = labels.map(() => Math.floor(Math.random() * 100) + 50);
-                    graficoProduccion.update();
-                }
-                
-                if (graficoRendimiento) {
-                    graficoRendimiento.data.labels = sectorsLabels;
-                    graficoRendimiento.data.datasets[0].data = sectorsLabels.map(() => Math.floor(Math.random() * 50) + 30);
-                    graficoRendimiento.update();
-                }
-            }
-        }
-
-        function accionRapida(accion) {
-            switch (accion) {
-                case 'nuevo-corte':
-                    mostrarRegistroRapido();
-                    break;
-                case 'control-calidad':
-                    showNotification('Función en desarrollo', 'info');
-                    break;
-                case 'reporte-diario':
-                    if (window.productionManager) {
-                        window.productionManager.generarReporteDiario();
-                    } else {
-                        showNotification('Reporte diario generado (modo demo)', 'info');
-                    }
-                    break;
-                case 'planificar-cosecha':
-                    showNotification('Función en desarrollo', 'info');
-                    break;
-            }
-        }
-
-        function aplicarFiltrosFunction() {
-            if (window.productionManager) {
-                const filtros = {
-                    periodo: document.getElementById('filtroPeriodo').value,
-                    bloque: document.getElementById('filtroBloque').value,
-                    tipo: document.getElementById('filtroTipoCosecha').value,
-                    responsable: document.getElementById('filtroResponsable').value
-                };
-                
-                window.productionManager.aplicarFiltros(filtros);
-                updateProductionTable();
-            }
-            showNotification('Filtros aplicados', 'info');
-        }
-
-        function limpiarFiltrosFunction() {
-            document.getElementById('filtroPeriodo').value = 'mes';
-            document.getElementById('filtroBloque').value = '';
-            document.getElementById('filtroTipoCosecha').value = '';
-            document.getElementById('filtroResponsable').value = '';
-            aplicarFiltrosFunction();
-        }
-
-        function exportarDatos() {
-            if (window.productionManager) {
-                window.productionManager.exportarDatos();
-            } else {
-                showNotification('Datos exportados (modo demo)', 'info');
-            }
-        }
-
-        function formatDate(fecha) {
-            try {
-                return new Date(fecha).toLocaleDateString('es-GT', {
+                return new Date(dateString).toLocaleDateString('es-GT', {
                     year: 'numeric',
                     month: 'short',
                     day: 'numeric',
@@ -2195,65 +1746,171 @@
                     minute: '2-digit'
                 });
             } catch (error) {
-                return fecha;
+                return dateString;
             }
         }
 
-        function showNotification(mensaje, tipo = 'info') {
-            console.log(`${tipo.toUpperCase()}: ${mensaje}`);
-            
-            const notification = document.createElement('div');
-            notification.style.cssText = `
-                position: fixed;
-                top: 20px;
-                right: 20px;
-                padding: 1rem 1.5rem;
-                border-radius: 8px;
-                color: white;
-                font-weight: 600;
-                z-index: 10000;
-                max-width: 300px;
-                box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        // FUNCIONES DE FALLBACK
+        function loadFallbackData() {
+            loadFallbackKPIs();
+            loadFallbackTimeline();
+            loadFallbackPredictions();
+        }
+
+        function loadFallbackKPIs() {
+            document.getElementById('produccionMes').textContent = '3,250 kg';
+            document.getElementById('rendimientoPromedio').textContent = '22.5 kg/árbol';
+            document.getElementById('calidadPromedio').textContent = '87%';
+            document.getElementById('ingresosMes').textContent = 'Q 32,500';
+        }
+
+        function loadFallbackTimeline() {
+            const container = document.getElementById('timelineProduccion');
+            if (container) {
+                container.innerHTML = `
+                    <div class="timeline-item">
+                        <div class="timeline-fecha">Hoy, 14:30</div>
+                        <div class="timeline-contenido">
+                            <strong>Cosecha de demostración</strong>
+                            <div class="timeline-cantidad">45 kg</div>
+                            <div style="font-size: 0.75rem; color: #6b7280; margin-top: 0.5rem;">
+                                Modo demo - Juan Pérez - Calidad AA
+                            </div>
+                        </div>
+                    </div>
+                    <div class="timeline-item">
+                        <div class="timeline-fecha">Ayer, 16:15</div>
+                        <div class="timeline-contenido">
+                            <strong>Control de calidad demo</strong>
+                            <div class="timeline-cantidad">78 kg</div>
+                            <div style="font-size: 0.75rem; color: #6b7280; margin-top: 0.5rem;">
+                                Modo demo - María González - Calidad AAA
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }
+        }
+
+        function loadFallbackPredictions() {
+            const container = document.getElementById('prediccionesIA');
+            if (container) {
+                container.innerHTML = `
+                    <div class="prediccion-item">
+                        <div class="prediccion-titulo">Producción Esperada</div>
+                        <div class="prediccion-valor" style="color: #22c55e;">
+                            +15% próximos 7 días
+                        </div>
+                        <div class="prediccion-confianza">
+                            Confianza: 80% | Estimación basada en datos históricos
+                        </div>
+                    </div>
+                    <div class="prediccion-item">
+                        <div class="prediccion-titulo">Calidad Proyectada</div>
+                        <div class="prediccion-valor" style="color: #3b82f6;">
+                            Grado AA promedio
+                        </div>
+                        <div class="prediccion-confianza">
+                            Confianza: 78% | Basado en condiciones actuales
+                        </div>
+                    </div>
+                `;
+            }
+        }
+
+        // FUNCIONES DE MOSTRAR RESULTADOS
+        function mostrarResultadosCalidad(resultado) {
+            const mensaje = `
+                Análisis completado:
+                • Grado: ${resultado.overall.grade}
+                • Puntuación: ${resultado.overall.score}/100
+                • Visual: ${resultado.results.visual.score}/100
+                • Químico: ${resultado.results.chemical.score}/100
+                • Físico: ${resultado.results.physical.score}/100
+                • Microbiológico: ${resultado.results.microbiological.score}/100
             `;
-            
-            switch (tipo) {
-                case 'success':
-                    notification.style.background = '#16a34a';
-                    break;
-                case 'error':
-                    notification.style.background = '#dc2626';
-                    break;
-                case 'warning':
-                    notification.style.background = '#d97706';
-                    break;
-                default:
-                    notification.style.background = '#3b82f6';
+            alert(mensaje);
+        }
+
+        function mostrarResultadosCalidadDemo() {
+            alert(`Control de Calidad Demo:
+• Grado: AA
+• Puntuación: 87/100
+• Recomendaciones: Mantener prácticas actuales`);
+        }
+
+        function mostrarPlanCosecha(plan) {
+            const mensaje = `
+                Plan de Cosecha Generado:
+                • Rendimiento estimado: ${plan.aiPredictions.yield_forecast} kg
+                • Árboles prioritarios: ${plan.recommendations.tree_priorities.length}
+                • Ventanas climáticas: ${plan.recommendations.weather_windows.length}
+                • Riesgo general: ${plan.aiPredictions.risk_assessment.level || 'Bajo'}
+            `;
+            alert(mensaje);
+        }
+
+        function mostrarPlanCosechaDemo(parametros) {
+            alert(`Plan de Cosecha Demo:
+• Fecha objetivo: ${parametros.fechaObjetivo}
+• Duración: ${parametros.duracion} días
+• Prioridad: ${parametros.prioridad}
+• Personal: ${parametros.personal} trabajadores
+• Estimación: 450 kg proyectados`);
+        }
+
+        function mostrarAnalisisRendimiento(analisis) {
+            alert(`Análisis de Rendimiento:
+• Producción total: ${analisis.metrics.production.total || 'N/A'} kg
+• Eficiencia promedio: ${analisis.metrics.efficiency.average || 85}%
+• Rentabilidad: ${analisis.metrics.profitability.roi || 'N/A'}%`);
+        }
+
+        // EVENTOS DEL SISTEMA
+        function handleProductionManagerReady(event) {
+            console.log('✅ ProductionManager listo:', event.detail);
+            loadInitialData();
+        }
+
+        function handleTreeUpdate(event) {
+            console.log('🌳 Árbol actualizado:', event.detail);
+            updateFormOptions();
+        }
+
+        function handleQualityControlCompleted(event) {
+            console.log('🔬 Control de calidad completado:', event.detail);
+            updateKPIs();
+            updateTimeline();
+        }
+
+        function handleHarvestPlanReady(event) {
+            console.log('📅 Plan de cosecha listo:', event.detail);
+            showNotification('Plan de cosecha generado exitosamente', 'success');
+        }
+
+        // FUNCIÓN DE EXPORTAR
+        async function exportarDatos() {
+            try {
+                showNotification('Exportando datos...', 'info');
+                
+                if (window.productionManager && window.productionManager.exportarDatos) {
+                    window.productionManager.exportarDatos();
+                    showNotification('Datos exportados correctamente', 'success');
+                } else {
+                    showNotification('Datos exportados (modo demo)', 'info');
+                }
+            } catch (error) {
+                showNotification('Error exportando datos: ' + error.message, 'error');
             }
-            
-            notification.textContent = mensaje;
-            document.body.appendChild(notification);
-            
-            setTimeout(() => {
-                notification.remove();
-            }, 4000);
         }
 
-        function mostrarDetalleRegistro(id) {
-            showNotification(`Mostrando detalles de registro: ${id}`, 'info');
-        }
-
-        function editarRegistro(id) {
-            showNotification(`Editando registro: ${id}`, 'info');
-        }
-
-        // Hacer funciones globales disponibles
+        // HACER FUNCIONES GLOBALES
         window.accionRapida = accionRapida;
-        window.removerFoto = removerFoto;
-        window.mostrarDetalleRegistro = mostrarDetalleRegistro;
-        window.editarRegistro = editarRegistro;
-        window.cerrarModal = cerrarModalFunction;
+        window.cambiarPeriodoGrafico = cambiarPeriodoGrafico;
+        window.cerrarModal = cerrarModal;
+        window.exportarDatos = exportarDatos;
         
-        console.log('✅ Script de producción integrado cargado completamente');
+        console.log('🌾 Sistema de producción completo cargado');
     </script>
 </body>
 </html>
