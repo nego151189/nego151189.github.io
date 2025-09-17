@@ -73,7 +73,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         console.log('✅ Sistema de árboles inicializado con Leaflet');
         
     } catch (error) {
-        console.error('❌ Error inicializando:', error);
+        console.error('⚠ Error inicializando:', error);
         showNotification('Error inicializando el sistema', 'error');
     }
 });
@@ -161,7 +161,7 @@ async function initializeLeafletMaps() {
     try {
         // Verificar que Leaflet esté disponible
         if (typeof L === 'undefined') {
-            console.error('❌ Leaflet no está cargado');
+            console.error('⚠ Leaflet no está cargado');
             showNotification('Error: Leaflet no está disponible', 'error');
             return;
         }
@@ -215,7 +215,7 @@ async function initializeLeafletMaps() {
         }
 
     } catch (error) {
-        console.error('❌ Error inicializando Leaflet:', error);
+        console.error('⚠ Error inicializando Leaflet:', error);
         showNotification('Error al inicializar el mapa', 'error');
     }
 }
@@ -335,7 +335,7 @@ function createLeafletTreeMarker(tree, map) {
 
     const marker = L.marker(position, { 
         icon: customIcon,
-        title: `Árbol #${tree.id.split('_').pop()} - Salud: ${health}%`
+        title: `Árbol #${tree.correlative || '00000'} - Salud: ${health}%`
     }).addTo(map);
 
     // Crear popup con información del árbol
@@ -349,7 +349,7 @@ function createLeafletTreeMarker(tree, map) {
 }
 
 function createMarkerPopupContent(tree) {
-    const treeNumber = tree.id.split('_').pop() || tree.id;
+    const treeNumber = tree.correlative || '00000';
     const health = tree.health?.overall || 0;
     const production = tree.production?.currentSeason || 0;
 
@@ -926,7 +926,7 @@ function cambiarVista(vista) {
 
 async function loadInitialData() {
     try {
-        syncCorrelativeCounter(); // Agregar esta línea aquí
+        syncCorrelativeCounter(); // Sincronizar contador de correlativos
         await updateEstadisticas();
         await renderTrees();
         generateAIInsights();
@@ -987,7 +987,7 @@ function renderGridView(trees) {
 function createTreeCard(tree) {
     const estadoBadge = getEstadoBadge(tree.health?.overall || 0);
     const ubicacion = tree.location || {};
-    const treeNumber = tree.correlative || tree.id ? tree.id.split('_').pop() || tree.id : 'N/A';
+    const treeNumber = tree.correlative || '00000';
     
     return `
         <div class="arbol-card" data-id="${tree.id}" onclick="mostrarDetalleArbol('${tree.id}')">
@@ -1054,7 +1054,7 @@ function renderTableView(trees = null) {
 
 function renderTableViewData(trees, tbody) {
     tbody.innerHTML = trees.map(tree => {
-        const treeNumber = tree.id ? tree.id.split('_').pop() || tree.id : 'N/A';
+        const treeNumber = tree.correlative || '00000';
         return `
             <tr onclick="mostrarDetalleArbol('${tree.id}')" style="cursor: pointer;">
                 <td>#${treeNumber}</td>
@@ -1153,7 +1153,7 @@ async function mostrarDetalleArbol(treeId) {
             return;
         }
         
-        const treeNumber = tree.id ? tree.id.split('_').pop() || tree.id : 'N/A';
+        const treeNumber = tree.correlative || '00000';
         showModal(`Árbol #${treeNumber}`, createTreeDetails(tree));
         
     } catch (error) {
@@ -1174,7 +1174,7 @@ async function editarArbol(treeId) {
             return;
         }
         
-        const treeNumber = tree.id ? tree.id.split('_').pop() || tree.id : 'N/A';
+        const treeNumber = tree.correlative || '00000';
         const form = createTreeForm(tree);
         showModal(`Editar Árbol #${treeNumber}`, form);
         
@@ -1480,10 +1480,10 @@ async function createNewTree(treeData) {
         throw new Error('TreeManager no disponible');
     }
 
-    // Agregar correlativo antes de crear
-    treeData.correlative = getNextTreeCorrelative();
-
     try {
+        // Agregar correlativo antes de crear
+        treeData.correlative = getNextTreeCorrelative();
+        
         const newTree = await window.treeManager.createTree(treeData);
         console.log('✅ Nuevo árbol creado:', newTree.id);
         return newTree;
@@ -1538,44 +1538,61 @@ function getCurrentLocationForTree() {
     }
 }
 
-function mostrarHistorial(treeId) {
-    const historialContent = `
-        <div class="historial-container">
-            <div class="historial-tabs">
-                <button class="tab-btn active" onclick="switchHistorialTab('eventos')">Eventos</button>
-                <button class="tab-btn" onclick="switchHistorialTab('tratamientos')">Tratamientos</button>
-                <button class="tab-btn" onclick="switchHistorialTab('riego')">Riego</button>
-            </div>
-            
-            <div class="historial-content">
-                <div id="eventos-tab" class="tab-content active">
-                    <h4>Eventos Recientes</h4>
-                    <div class="timeline">
-                        <div class="timeline-item">
-                            <div class="timeline-date">${formatDate(new Date())}</div>
-                            <div class="timeline-content">
-                                <h5>Árbol revisado</h5>
-                                <p>Revisión general de salud realizada</p>
+async function mostrarHistorial(treeId) {
+    try {
+        let tree;
+        if (window.treeManager && window.treeManager.getTree) {
+            tree = await window.treeManager.getTree(treeId);
+        }
+        
+        if (!tree) {
+            showNotification('Árbol no encontrado', 'error');
+            return;
+        }
+
+        const treeNumber = tree.correlative || '00000';
+        
+        const historialContent = `
+            <div class="historial-container">
+                <div class="historial-tabs">
+                    <button class="tab-btn active" onclick="switchHistorialTab('eventos')">Eventos</button>
+                    <button class="tab-btn" onclick="switchHistorialTab('tratamientos')">Tratamientos</button>
+                    <button class="tab-btn" onclick="switchHistorialTab('riego')">Riego</button>
+                </div>
+                
+                <div class="historial-content">
+                    <div id="eventos-tab" class="tab-content active">
+                        <h4>Eventos Recientes</h4>
+                        <div class="timeline">
+                            <div class="timeline-item">
+                                <div class="timeline-date">${formatDate(new Date())}</div>
+                                <div class="timeline-content">
+                                    <h5>Árbol revisado</h5>
+                                    <p>Revisión general de salud realizada</p>
+                                </div>
                             </div>
                         </div>
                     </div>
-                </div>
-                
-                <div id="tratamientos-tab" class="tab-content">
-                    <h4>Tratamientos Aplicados</h4>
-                    <p>No hay tratamientos registrados</p>
-                </div>
-                
-                <div id="riego-tab" class="tab-content">
-                    <h4>Historial de Riego</h4>
-                    <p>No hay registros de riego</p>
+                    
+                    <div id="tratamientos-tab" class="tab-content">
+                        <h4>Tratamientos Aplicados</h4>
+                        <p>No hay tratamientos registrados</p>
+                    </div>
+                    
+                    <div id="riego-tab" class="tab-content">
+                        <h4>Historial de Riego</h4>
+                        <p>No hay registros de riego</p>
+                    </div>
                 </div>
             </div>
-        </div>
-    `;
-    
-    const treeNumber = treeId.split('_').pop() || treeId;
-    showModal(`Historial - Árbol #${treeNumber}`, historialContent);
+        `;
+        
+        showModal(`Historial - Árbol #${treeNumber}`, historialContent);
+        
+    } catch (error) {
+        console.error('Error mostrando historial:', error);
+        showNotification('Error cargando historial', 'error');
+    }
 }
 
 function switchHistorialTab(tabName) {
@@ -1722,13 +1739,36 @@ function validateGPSCoordinates(lat, lng) {
     return true;
 }
 
-
 function getNextTreeCorrelative() {
     let lastCorrelative = localStorage.getItem('lastTreeCorrelative') || '0';
     let nextNumber = parseInt(lastCorrelative) + 1;
     let correlative = nextNumber.toString().padStart(5, '0');
     localStorage.setItem('lastTreeCorrelative', nextNumber.toString());
     return correlative;
+}
+
+function syncCorrelativeCounter() {
+    if (!localStorage.getItem('lastTreeCorrelative')) {
+        if (window.treeManager) {
+            window.treeManager.getAllTrees().then(trees => {
+                if (trees.length > 0) {
+                    // Encontrar el correlativo más alto existente
+                    const maxCorrelative = Math.max(...trees
+                        .filter(tree => tree.correlative)
+                        .map(tree => parseInt(tree.correlative) || 0)
+                    );
+                    
+                    if (maxCorrelative > 0) {
+                        localStorage.setItem('lastTreeCorrelative', maxCorrelative.toString());
+                    } else {
+                        localStorage.setItem('lastTreeCorrelative', trees.length.toString());
+                    }
+                }
+            }).catch(error => {
+                console.warn('Error sincronizando contador:', error);
+            });
+        }
+    }
 }
 
 function showNotification(message, type = 'info') {
@@ -1741,19 +1781,6 @@ function showNotification(message, type = 'info') {
     setTimeout(() => {
         notification.remove();
     }, 4000);
-}
-
-
-function syncCorrelativeCounter() {
-    if (!localStorage.getItem('lastTreeCorrelative')) {
-        if (window.treeManager) {
-            window.treeManager.getAllTrees().then(trees => {
-                if (trees.length > 0) {
-                    localStorage.setItem('lastTreeCorrelative', trees.length.toString());
-                }
-            });
-        }
-    }
 }
 
 function formatDate(dateString) {
@@ -1862,8 +1889,6 @@ function analyzeTreeData() {
         }
     ];
 }
-
-
 
 // ==========================================
 // EVENTOS DEL SISTEMA
