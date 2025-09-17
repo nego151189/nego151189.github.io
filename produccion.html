@@ -1641,25 +1641,25 @@
         // FUNCIONES DE CONVERSIÓN DE UNIDADES
         function convertirUnidadesAKg() {
             const unidades = parseFloat(document.getElementById('unidadesRapida').value) || 0;
-            const kg = unidades / 50; // 50 limones ≈ 1 kg (promedio)
+            const kg = unidades / 7; // 7 limones ≈ 1 kg (peso real ~140g por limón)
             document.getElementById('cantidadRapida').value = kg > 0 ? kg.toFixed(2) : '';
         }
 
         function convertirKgAUnidades() {
             const kg = parseFloat(document.getElementById('cantidadRapida').value) || 0;
-            const unidades = Math.round(kg * 50); // 1 kg ≈ 50 limones (promedio)
+            const unidades = Math.round(kg * 7); // 1 kg ≈ 7 limones (peso real ~140g por limón)
             document.getElementById('unidadesRapida').value = unidades > 0 ? unidades : '';
         }
-
+        
         function convertirUnidadesCompletaAKg() {
             const unidades = parseFloat(document.getElementById('unidadesCompleta').value) || 0;
-            const kg = unidades / 50;
+            const kg = unidades / 7; // 7 limones ≈ 1 kg (peso real ~140g por limón)
             document.getElementById('cantidadCompleta').value = kg > 0 ? kg.toFixed(2) : '';
         }
 
         function convertirKgCompletaAUnidades() {
             const kg = parseFloat(document.getElementById('cantidadCompleta').value) || 0;
-            const unidades = Math.round(kg * 50);
+            const unidades = Math.round(kg * 7); // 1 kg ≈ 7 limones (peso real ~140g por limón)
             document.getElementById('unidadesCompleta').value = unidades > 0 ? unidades : '';
         }
 
@@ -2567,3 +2567,4 @@ ${datos.ubicacion.lat ? `• GPS: ${datos.ubicacion.lat.toFixed(4)}, ${datos.ubi
     </script>
 </body>
 </html>
+
