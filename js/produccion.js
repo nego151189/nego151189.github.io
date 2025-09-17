@@ -1280,3 +1280,7 @@ if (typeof module !== 'undefined' && module.exports) {
     };
 }
 
+// Hacer función disponible globalmente
+window.abrirRegistroCompleto = abrirRegistroCompleto;
+
+
