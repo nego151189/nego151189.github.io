@@ -1,7 +1,7 @@
 /* ========================================
-   FINCA LA HERRADURA - TREE MANAGER
+   FINCA LA HERRADURA - TREE MANAGER MEJORADO
    Gestor completo de árboles con Firebase Firestore
-   Convertido a funciones JavaScript
+   Convertido a funciones JavaScript - Mejorado para Producción
    ======================================== */
 
 // ==========================================
@@ -44,17 +44,25 @@ async function waitForFirebaseTreeManager() {
 
 async function initializeTreeManager() {
     try {
-        console.log('Inicializando TreeManager...');
+        console.log('🌳 Inicializando TreeManager...');
         
         // Cargar sectores y árboles
         await loadSectorsTreeManager();
         await loadAllTreesFromFirebase();
         
         isTreeManagerInitialized = true;
-        console.log('TreeManager inicializado correctamente');
+        console.log('✅ TreeManager inicializado correctamente');
+        
+        // Notificar que TreeManager está listo
+        window.dispatchEvent(new CustomEvent('treeManagerReady', {
+            detail: { 
+                trees: treesMap.size, 
+                sectors: sectorsMap.size 
+            }
+        }));
         
     } catch (error) {
-        console.error('Error inicializando TreeManager:', error);
+        console.error('❌ Error inicializando TreeManager:', error);
         isTreeManagerInitialized = false;
     }
 }
@@ -80,7 +88,7 @@ async function loadSectorsTreeManager() {
                 sectorsMap.set(doc.id, sectorData);
             });
             
-            console.log(`${sectorsMap.size} sectores cargados desde Firebase`);
+            console.log(`📦 ${sectorsMap.size} sectores cargados desde Firebase`);
         }
         
         // Si no hay sectores en Firebase, cargar desde localStorage
@@ -89,7 +97,7 @@ async function loadSectorsTreeManager() {
         }
         
     } catch (error) {
-        console.error('Error cargando sectores:', error);
+        console.error('❌ Error cargando sectores:', error);
         loadSectorsFromLocalStorageTreeManager();
     }
 }
@@ -102,12 +110,12 @@ function loadSectorsFromLocalStorageTreeManager() {
             sectorsData.forEach(sector => {
                 sectorsMap.set(sector.id, sector);
             });
-            console.log(`${sectorsMap.size} sectores cargados desde localStorage`);
+            console.log(`📦 ${sectorsMap.size} sectores cargados desde localStorage`);
         } else {
             createDefaultSectorsTreeManager();
         }
     } catch (error) {
-        console.error('Error cargando sectores desde localStorage:', error);
+        console.error('❌ Error cargando sectores desde localStorage:', error);
         createDefaultSectorsTreeManager();
     }
 }
@@ -167,12 +175,12 @@ function saveSectorsToLocalStorageTreeManager() {
         const sectorsArray = Array.from(sectorsMap.values());
         localStorage.setItem('finca_sectores', JSON.stringify(sectorsArray));
     } catch (error) {
-        console.error('Error guardando sectores:', error);
+        console.error('❌ Error guardando sectores:', error);
     }
 }
 
 // ==========================================
-// MÉTODOS PARA INTEGRACIÓN CON PRODUCCIÓN
+// MÉTODOS MEJORADOS PARA INTEGRACIÓN CON PRODUCCIÓN
 // ==========================================
 
 function getSectoresParaFormulario() {
@@ -298,17 +306,22 @@ async function createSectorTreeManager(sectorData) {
         sectorsMap.set(savedSector.id, savedSector);
         saveSectorsToLocalStorageTreeManager();
         
-        console.log('Sector creado:', savedSector.id);
+        console.log('✅ Sector creado:', savedSector.id);
         
         // Notificar actualización
         window.dispatchEvent(new CustomEvent('sectorUpdate', {
             detail: { action: 'create', sector: savedSector }
         }));
         
+        // Notificar a producción para actualizar formularios
+        window.dispatchEvent(new CustomEvent('productionFormUpdateNeeded', {
+            detail: { type: 'sector', action: 'create', data: savedSector }
+        }));
+        
         return savedSector;
         
     } catch (error) {
-        console.error('Error creando sector:', error);
+        console.error('❌ Error creando sector:', error);
         throw error;
     }
 }
@@ -337,10 +350,15 @@ async function updateSectorTreeManager(sectorId, updates) {
             detail: { action: 'update', sector: updatedSector }
         }));
         
+        // Notificar a producción
+        window.dispatchEvent(new CustomEvent('productionFormUpdateNeeded', {
+            detail: { type: 'sector', action: 'update', data: updatedSector }
+        }));
+        
         return updatedSector;
         
     } catch (error) {
-        console.error('Error actualizando sector:', error);
+        console.error('❌ Error actualizando sector:', error);
         throw error;
     }
 }
@@ -370,15 +388,20 @@ async function deleteSectorTreeManager(sectorId, reason = 'Eliminado por usuario
         sectorsMap.delete(sectorId);
         saveSectorsToLocalStorageTreeManager();
         
-        console.log('Sector eliminado:', sectorId);
+        console.log('🗑️ Sector eliminado:', sectorId);
         
         // Notificar eliminación
         window.dispatchEvent(new CustomEvent('sectorUpdate', {
             detail: { action: 'delete', sectorId: sectorId }
         }));
         
+        // Notificar a producción
+        window.dispatchEvent(new CustomEvent('productionFormUpdateNeeded', {
+            detail: { type: 'sector', action: 'delete', sectorId: sectorId }
+        }));
+        
     } catch (error) {
-        console.error('Error eliminando sector:', error);
+        console.error('❌ Error eliminando sector:', error);
         throw error;
     }
 }
@@ -398,7 +421,7 @@ function getSectorTreeManager(sectorId) {
 async function loadAllTreesFromFirebase() {
     try {
         if (!firebaseDb) {
-            console.warn('Firebase no disponible, usando datos locales');
+            console.warn('⚠️ Firebase no disponible, usando datos locales');
             return;
         }
         
@@ -417,10 +440,10 @@ async function loadAllTreesFromFirebase() {
             treesMap.set(doc.id, treeData);
         });
         
-        console.log(`${treesMap.size} árboles cargados desde Firebase`);
+        console.log(`🌳 ${treesMap.size} árboles cargados desde Firebase`);
         
     } catch (error) {
-        console.error('Error cargando árboles:', error);
+        console.error('❌ Error cargando árboles:', error);
         throw error;
     }
 }
@@ -514,17 +537,22 @@ async function createTreeFirebase(treeData) {
             await window.offlineManager.saveData('arboles', docRef.id, savedTree);
         }
         
-        console.log('Árbol creado:', docRef.id);
+        console.log('✅ Árbol creado:', docRef.id);
         
         // Notificar actualización
         window.dispatchEvent(new CustomEvent('treeUpdate', {
             detail: { action: 'create', tree: savedTree }
         }));
         
+        // Notificar a producción
+        window.dispatchEvent(new CustomEvent('productionFormUpdateNeeded', {
+            detail: { type: 'tree', action: 'create', data: savedTree }
+        }));
+        
         return savedTree;
         
     } catch (error) {
-        console.error('Error creando árbol:', error);
+        console.error('❌ Error creando árbol:', error);
         throw error;
     }
 }
@@ -561,11 +589,16 @@ async function updateTreeFirebase(treeId, updates) {
                 detail: { action: 'update', tree: updatedTree }
             }));
             
+            // Notificar a producción
+            window.dispatchEvent(new CustomEvent('productionFormUpdateNeeded', {
+                detail: { type: 'tree', action: 'update', data: updatedTree }
+            }));
+            
             return updatedTree;
         }
         
     } catch (error) {
-        console.error('Error actualizando árbol:', error);
+        console.error('❌ Error actualizando árbol:', error);
         throw error;
     }
 }
@@ -598,15 +631,20 @@ async function deleteTreeFirebase(treeId, reason = 'Eliminado por usuario') {
             await window.offlineManager.deleteData('arboles', treeId);
         }
         
-        console.log('Árbol eliminado (soft delete):', treeId);
+        console.log('🗑️ Árbol eliminado (soft delete):', treeId);
         
         // Notificar eliminación
         window.dispatchEvent(new CustomEvent('treeUpdate', {
             detail: { action: 'delete', treeId: treeId }
         }));
         
+        // Notificar a producción
+        window.dispatchEvent(new CustomEvent('productionFormUpdateNeeded', {
+            detail: { type: 'tree', action: 'delete', treeId: treeId }
+        }));
+        
     } catch (error) {
-        console.error('Error eliminando árbol:', error);
+        console.error('❌ Error eliminando árbol:', error);
         throw error;
     }
 }
@@ -623,7 +661,7 @@ async function updateTreeCountInSectorTreeManager(sectorId, increment) {
             await updateSectorTreeManager(sectorId, { currentTrees: newCount });
         }
     } catch (error) {
-        console.error('Error actualizando contador de árboles:', error);
+        console.error('❌ Error actualizando contador de árboles:', error);
     }
 }
 
@@ -665,7 +703,7 @@ async function getAllTreesTreeManager(filters = {}) {
         return trees;
         
     } catch (error) {
-        console.error('Error obteniendo árboles:', error);
+        console.error('❌ Error obteniendo árboles:', error);
         return [];
     }
 }
@@ -698,7 +736,7 @@ async function getTreeTreeManager(treeId) {
         return null;
         
     } catch (error) {
-        console.error('Error obteniendo árbol:', error);
+        console.error('❌ Error obteniendo árbol:', error);
         return null;
     }
 }
@@ -792,7 +830,7 @@ async function getStatisticsTreeManager() {
         return stats;
         
     } catch (error) {
-        console.error('Error calculando estadísticas:', error);
+        console.error('❌ Error calculando estadísticas:', error);
         return {
             totalTrees: 0,
             healthyTrees: 0,
@@ -965,7 +1003,7 @@ async function importDataTreeManager(data) {
             saveSectorsToLocalStorageTreeManager();
         }
         
-        console.log('Datos importados correctamente');
+        console.log('✅ Datos importados correctamente');
         
         // Notificar actualización masiva
         window.dispatchEvent(new CustomEvent('treeUpdate', {
@@ -976,8 +1014,13 @@ async function importDataTreeManager(data) {
             detail: { action: 'import', count: data.sectors?.length || 0 }
         }));
         
+        // Notificar a producción
+        window.dispatchEvent(new CustomEvent('productionFormUpdateNeeded', {
+            detail: { type: 'all', action: 'import' }
+        }));
+        
     } catch (error) {
-        console.error('Error importando datos:', error);
+        console.error('❌ Error importando datos:', error);
         throw error;
     }
 }
@@ -1043,9 +1086,9 @@ document.addEventListener('DOMContentLoaded', async () => {
         // Hacer disponible globalmente
         window.treeManager = treeManager;
         
-        console.log('TreeManager disponible globalmente');
+        console.log('✅ TreeManager disponible globalmente');
     } catch (error) {
-        console.error('Error inicializando TreeManager:', error);
+        console.error('❌ Error inicializando TreeManager:', error);
     }
 });
 
