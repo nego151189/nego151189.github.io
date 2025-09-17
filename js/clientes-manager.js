@@ -3,17 +3,20 @@
    Sistema unificado para gestión de clientes entre módulos
    ======================================== */
 
+// Import de offline.js
+import offlineManager from './offline.js';
+
 // ==========================================
 // VARIABLES GLOBALES
 // ==========================================
 
 // Estado del sistema
-let clientesSystemInitialized = false;
-let clientesOfflineAvailable = false;
+let systemInitialized = false;
+let offlineAvailable = false;
 
 // Datos centralizados
-let clientesMap = new Map();
-let historialClientesMap = new Map();
+let clientes = new Map();
+let historialClientes = new Map();
 
 // Configuración base
 const clientesConfig = {
@@ -111,132 +114,118 @@ const clientesUnificados = [
 ];
 
 // ==========================================
-// FUNCIONES PRINCIPALES
+// CLASE PRINCIPAL
 // ==========================================
 
-function initClientesManager() {
-    console.log('👥 Inicializando ClientesManager...');
-    
-    return new Promise(function(resolve) {
-        waitForOfflineManager()
-            .then(function() {
-                return loadInitialClientesData();
-            })
-            .then(function() {
-                clientesSystemInitialized = true;
-                console.log('✅ ClientesManager inicializado correctamente');
-                
-                dispatchClientesEvent('clientesManagerReady', {
-                    clientesCount: clientesMap.size
-                });
-                
-                resolve();
-            })
-            .catch(function(error) {
-                console.error('❌ Error inicializando ClientesManager:', error);
-                initWithoutOffline();
-                resolve();
-            });
-    });
-}
+class ClientesManager {
+    constructor() {
+        this.eventListeners = new Map();
+        this.syncQueue = [];
+        this.init();
+    }
 
-function waitForOfflineManager() {
-    return new Promise(function(resolve) {
-        var maxWait = 10000;
-        var checkInterval = 100;
-        var elapsed = 0;
-
-        function check() {
-            if (window.offlineManager) {
-                clientesOfflineAvailable = true;
-                resolve();
-            } else if (elapsed < maxWait) {
-                elapsed += checkInterval;
-                setTimeout(check, checkInterval);
-            } else {
-                clientesOfflineAvailable = false;
-                resolve();
-            }
-        }
-
-        check();
-    });
-}
-
-function loadInitialClientesData() {
-    return new Promise(function(resolve) {
-        if (clientesOfflineAvailable) {
-            loadFromOffline()
-                .then(function() {
-                    if (clientesMap.size === 0) {
-                        loadUnifiedClientesData();
-                    }
-                    console.log('📊 Clientes cargados: ' + clientesMap.size);
-                    resolve();
-                })
-                .catch(function(error) {
-                    console.error('❌ Error cargando desde offline:', error);
-                    loadUnifiedClientesData();
-                    resolve();
-                });
-        } else {
-            loadUnifiedClientesData();
-            console.log('📊 Clientes cargados: ' + clientesMap.size);
-            resolve();
-        }
-    });
-}
-
-function initWithoutOffline() {
-    console.log('📱 Inicializando sin persistencia offline');
-    loadUnifiedClientesData();
-    clientesSystemInitialized = true;
-}
-
-function loadUnifiedClientesData() {
-    clientesMap.clear();
-    clientesUnificados.forEach(function(cliente) {
-        clientesMap.set(cliente.id, Object.assign({}, cliente));
-    });
-    console.log('✅ Datos unificados de clientes cargados');
-}
-
-function loadFromOffline() {
-    return new Promise(function(resolve, reject) {
+    async init() {
         try {
-            if (!window.offlineManager) {
-                reject(new Error('OfflineManager no disponible'));
-                return;
+            console.log('👥 Inicializando ClientesManager...');
+            
+            await this.waitForOfflineManager();
+            await this.loadInitialData();
+            
+            systemInitialized = true;
+            console.log('✅ ClientesManager inicializado correctamente');
+            
+            this.dispatchEvent('clientesManagerReady', {
+                clientesCount: clientes.size
+            });
+            
+        } catch (error) {
+            console.error('❌ Error inicializando ClientesManager:', error);
+            await this.initWithoutOffline();
+        }
+    }
+
+    async waitForOfflineManager() {
+        return new Promise((resolve) => {
+            const maxWait = 10000;
+            const checkInterval = 100;
+            let elapsed = 0;
+
+            const check = () => {
+                if (window.offlineManager || offlineManager) {
+                    offlineAvailable = true;
+                    resolve();
+                } else if (elapsed < maxWait) {
+                    elapsed += checkInterval;
+                    setTimeout(check, checkInterval);
+                } else {
+                    offlineAvailable = false;
+                    resolve();
+                }
+            };
+
+            check();
+        });
+    }
+
+    async loadInitialData() {
+        try {
+            if (offlineAvailable) {
+                await this.loadFromOffline();
             }
             
-            window.offlineManager.getAllData('clientes')
-                .then(function(clientesData) {
-                    clientesData.forEach(function(item) {
-                        clientesMap.set(item.id, item.data);
-                    });
-                    
-                    console.log('📱 Clientes cargados desde offline: ' + clientesMap.size);
-                    resolve();
-                })
-                .catch(reject);
-                
+            // Si no hay datos offline, cargar datos unificados
+            if (clientes.size === 0) {
+                this.loadUnifiedData();
+            }
+            
+            console.log(`📊 Clientes cargados: ${clientes.size}`);
+            
+        } catch (error) {
+            console.error('❌ Error cargando datos:', error);
+            this.loadUnifiedData();
+        }
+    }
+
+    async initWithoutOffline() {
+        console.log('📱 Inicializando sin persistencia offline');
+        this.loadUnifiedData();
+        systemInitialized = true;
+    }
+
+    loadUnifiedData() {
+        clientes.clear();
+        clientesUnificados.forEach(cliente => {
+            clientes.set(cliente.id, { ...cliente });
+        });
+        console.log('✅ Datos unificados de clientes cargados');
+    }
+
+    async loadFromOffline() {
+        try {
+            const offlineMgr = window.offlineManager || offlineManager;
+            if (!offlineMgr) return;
+            
+            const clientesData = await offlineMgr.getAllData('clientes');
+            clientesData.forEach(item => {
+                clientes.set(item.id, item.data);
+            });
+            
+            console.log(`📱 Clientes cargados desde offline: ${clientes.size}`);
+            
         } catch (error) {
             console.error('❌ Error cargando desde offline:', error);
-            reject(error);
         }
-    });
-}
+    }
 
-// ==========================================
-// GESTIÓN DE CLIENTES
-// ==========================================
+    // ==========================================
+    // GESTIÓN DE CLIENTES
+    // ==========================================
 
-function crearCliente(datos) {
-    return new Promise(function(resolve, reject) {
+    async crearCliente(datos) {
         try {
-            var id = generateClienteId();
-            var cliente = {
-                id: id,
+            const id = this.generateId();
+            const cliente = {
+                id,
                 nombre: datos.nombre,
                 empresa: datos.empresa || datos.nombre,
                 telefono: datos.telefono || datos.contacto,
@@ -251,330 +240,280 @@ function crearCliente(datos) {
                 totalNegocios: 0,
                 ultimaCompra: null,
                 calificacion: 'B',
-                usuarioId: getCurrentUserId(),
+                usuarioId: this.getCurrentUserId(),
                 createdAt: new Date().toISOString()
             };
 
-            clientesMap.set(id, cliente);
+            clientes.set(id, cliente);
             
             // Guardar offline
-            if (clientesOfflineAvailable && window.offlineManager) {
-                window.offlineManager.saveData('clientes', id, cliente)
-                    .catch(function(error) {
-                        console.warn('Advertencia guardando offline:', error);
-                    });
-            }
-
-            // Sincronizar con Firebase si está disponible
-            if (window.db && window.auth && window.auth.currentUser) {
-                window.db.collection('clientes').add(cliente)
-                    .then(function() {
-                        console.log('Cliente guardado en Firebase');
-                    })
-                    .catch(function(error) {
-                        console.warn('Error guardando en Firebase:', error);
-                    });
+            if (offlineAvailable) {
+                const offlineMgr = window.offlineManager || offlineManager;
+                if (offlineMgr) {
+                    await offlineMgr.saveData('clientes', id, cliente);
+                }
             }
 
             // Sincronizar con otros módulos
-            sincronizarClienteConModulos(cliente, 'created');
+            await this.sincronizarConModulos(cliente, 'created');
             
-            dispatchClientesEvent('clienteCreated', { cliente: cliente });
+            this.dispatchEvent('clienteCreated', { cliente });
             
-            console.log('✅ Cliente creado: ' + cliente.nombre);
-            resolve(cliente);
+            console.log(`✅ Cliente creado: ${cliente.nombre}`);
+            return cliente;
             
         } catch (error) {
             console.error('❌ Error creando cliente:', error);
-            reject(error);
+            throw error;
         }
-    });
-}
+    }
 
-function actualizarCliente(id, datos) {
-    return new Promise(function(resolve, reject) {
+    async actualizarCliente(id, datos) {
         try {
-            var cliente = clientesMap.get(id);
+            const cliente = clientes.get(id);
             if (!cliente) {
-                reject(new Error('Cliente no encontrado: ' + id));
-                return;
+                throw new Error(`Cliente no encontrado: ${id}`);
             }
 
-            var clienteActualizado = Object.assign({}, cliente, datos, {
+            const clienteActualizado = {
+                ...cliente,
+                ...datos,
                 updatedAt: new Date().toISOString()
-            });
+            };
 
-            clientesMap.set(id, clienteActualizado);
+            clientes.set(id, clienteActualizado);
             
             // Guardar offline
-            if (clientesOfflineAvailable && window.offlineManager) {
-                window.offlineManager.saveData('clientes', id, clienteActualizado)
-                    .catch(function(error) {
-                        console.warn('Advertencia guardando offline:', error);
-                    });
+            if (offlineAvailable) {
+                const offlineMgr = window.offlineManager || offlineManager;
+                if (offlineMgr) {
+                    await offlineMgr.saveData('clientes', id, clienteActualizado);
+                }
             }
 
             // Sincronizar con otros módulos
-            sincronizarClienteConModulos(clienteActualizado, 'updated');
+            await this.sincronizarConModulos(clienteActualizado, 'updated');
             
-            dispatchClientesEvent('clienteUpdated', { cliente: clienteActualizado });
+            this.dispatchEvent('clienteUpdated', { cliente: clienteActualizado });
             
-            console.log('✅ Cliente actualizado: ' + clienteActualizado.nombre);
-            resolve(clienteActualizado);
+            console.log(`✅ Cliente actualizado: ${clienteActualizado.nombre}`);
+            return clienteActualizado;
             
         } catch (error) {
             console.error('❌ Error actualizando cliente:', error);
-            reject(error);
+            throw error;
         }
-    });
-}
-
-function obtenerCliente(id) {
-    return clientesMap.get(id) || null;
-}
-
-function obtenerTodosClientes(filtros) {
-    filtros = filtros || {};
-    
-    var clientesList = Array.from(clientesMap.values()).filter(function(c) {
-        return c.activo;
-    });
-    
-    if (filtros.tipo) {
-        clientesList = clientesList.filter(function(c) {
-            return c.tipo === filtros.tipo;
-        });
     }
-    
-    if (filtros.calificacion) {
-        clientesList = clientesList.filter(function(c) {
-            return c.calificacion === filtros.calificacion;
-        });
-    }
-    
-    return clientesList.sort(function(a, b) {
-        return a.nombre.localeCompare(b.nombre);
-    });
-}
 
-function obtenerParaSelectores() {
-    return obtenerTodosClientes().map(function(cliente) {
-        return {
+    obtenerCliente(id) {
+        return clientes.get(id) || null;
+    }
+
+    obtenerTodos(filtros = {}) {
+        let clientesList = Array.from(clientes.values()).filter(c => c.activo);
+        
+        if (filtros.tipo) {
+            clientesList = clientesList.filter(c => c.tipo === filtros.tipo);
+        }
+        
+        if (filtros.calificacion) {
+            clientesList = clientesList.filter(c => c.calificacion === filtros.calificacion);
+        }
+        
+        return clientesList.sort((a, b) => a.nombre.localeCompare(b.nombre));
+    }
+
+    obtenerParaSelectores() {
+        return this.obtenerTodos().map(cliente => ({
             id: cliente.id,
             nombre: cliente.nombre,
             empresa: cliente.empresa,
-            displayName: cliente.nombre + ' - ' + cliente.empresa
-        };
-    });
-}
+            displayName: `${cliente.nombre} - ${cliente.empresa}`
+        }));
+    }
 
-// ==========================================
-// ACTUALIZACIÓN DE MÉTRICAS
-// ==========================================
+    // ==========================================
+    // ACTUALIZACIÓN DE MÉTRICAS
+    // ==========================================
 
-function actualizarMetricasVenta(clienteId, montoVenta) {
-    return new Promise(function(resolve) {
+    async actualizarMetricasVenta(clienteId, montoVenta) {
         try {
-            var cliente = clientesMap.get(clienteId);
-            if (!cliente) {
-                resolve();
-                return;
-            }
+            const cliente = clientes.get(clienteId);
+            if (!cliente) return;
 
             cliente.totalVentas += montoVenta;
             cliente.ultimaCompra = new Date().toISOString().split('T')[0];
             
             // Actualizar calificación
-            cliente.calificacion = calcularCalificacion(cliente);
+            cliente.calificacion = this.calcularCalificacion(cliente);
             
-            actualizarCliente(clienteId, cliente)
-                .then(resolve)
-                .catch(function(error) {
-                    console.error('❌ Error actualizando métricas de venta:', error);
-                    resolve();
-                });
+            await this.actualizarCliente(clienteId, cliente);
             
         } catch (error) {
             console.error('❌ Error actualizando métricas de venta:', error);
-            resolve();
         }
-    });
-}
+    }
 
-function actualizarMetricasNegocio(clienteId, valorNegocio, estado) {
-    return new Promise(function(resolve) {
+    async actualizarMetricasNegocio(clienteId, valorNegocio, estado) {
         try {
-            var cliente = clientesMap.get(clienteId);
-            if (!cliente) {
-                resolve();
-                return;
-            }
+            const cliente = clientes.get(clienteId);
+            if (!cliente) return;
 
             if (estado === 'cerrado') {
                 cliente.totalNegocios += 1;
             }
             
-            cliente.calificacion = calcularCalificacion(cliente);
+            cliente.calificacion = this.calcularCalificacion(cliente);
             
-            actualizarCliente(clienteId, cliente)
-                .then(resolve)
-                .catch(function(error) {
-                    console.error('❌ Error actualizando métricas de negocio:', error);
-                    resolve();
-                });
+            await this.actualizarCliente(clienteId, cliente);
             
         } catch (error) {
             console.error('❌ Error actualizando métricas de negocio:', error);
-            resolve();
         }
-    });
-}
+    }
 
-function calcularCalificacion(cliente) {
-    var puntos = 0;
-    
-    // Puntos por volumen de ventas
-    if (cliente.totalVentas > 150000) puntos += 3;
-    else if (cliente.totalVentas > 75000) puntos += 2;
-    else if (cliente.totalVentas > 25000) puntos += 1;
-    
-    // Puntos por frecuencia
-    if (cliente.totalNegocios > 2) puntos += 2;
-    else if (cliente.totalNegocios > 0) puntos += 1;
-    
-    // Puntos por antigüedad
-    var mesesActivo = calcularMesesActivo(cliente.fechaRegistro);
-    if (mesesActivo > 6) puntos += 1;
-    
-    // Convertir a calificación
-    if (puntos >= 5) return 'AAA';
-    if (puntos >= 3) return 'AA';
-    if (puntos >= 1) return 'A';
-    return 'B';
-}
+    calcularCalificacion(cliente) {
+        let puntos = 0;
+        
+        // Puntos por volumen de ventas
+        if (cliente.totalVentas > 150000) puntos += 3;
+        else if (cliente.totalVentas > 75000) puntos += 2;
+        else if (cliente.totalVentas > 25000) puntos += 1;
+        
+        // Puntos por frecuencia
+        if (cliente.totalNegocios > 2) puntos += 2;
+        else if (cliente.totalNegocios > 0) puntos += 1;
+        
+        // Puntos por antigüedad
+        const mesesActivo = this.calcularMesesActivo(cliente.fechaRegistro);
+        if (mesesActivo > 6) puntos += 1;
+        
+        // Convertir a calificación
+        if (puntos >= 5) return 'AAA';
+        if (puntos >= 3) return 'AA';
+        if (puntos >= 1) return 'A';
+        return 'B';
+    }
 
-function calcularMesesActivo(fechaRegistro) {
-    var hoy = new Date();
-    var registro = new Date(fechaRegistro);
-    return Math.floor((hoy - registro) / (1000 * 60 * 60 * 24 * 30));
-}
+    calcularMesesActivo(fechaRegistro) {
+        const hoy = new Date();
+        const registro = new Date(fechaRegistro);
+        return Math.floor((hoy - registro) / (1000 * 60 * 60 * 24 * 30));
+    }
 
-// ==========================================
-// SINCRONIZACIÓN CON MÓDULOS
-// ==========================================
+    // ==========================================
+    // SINCRONIZACIÓN CON MÓDULOS
+    // ==========================================
 
-function sincronizarClienteConModulos(cliente, accion) {
-    try {
-        // Sincronizar con ventas
-        if (window.ventasManager && window.ventasManager.sincronizarCliente) {
-            window.ventasManager.sincronizarCliente(cliente, accion);
+    async sincronizarConModulos(cliente, accion) {
+        try {
+            // Sincronizar con ventas
+            if (window.ventasManager && window.ventasManager.sincronizarCliente) {
+                await window.ventasManager.sincronizarCliente(cliente, accion);
+            }
+            
+            // Sincronizar con negocios
+            if (window.negociosManager && window.negociosManager.sincronizarCliente) {
+                await window.negociosManager.sincronizarCliente(cliente, accion);
+            }
+            
+            console.log(`🔄 Cliente sincronizado: ${cliente.nombre}`);
+            
+        } catch (error) {
+            console.error('❌ Error sincronizando cliente:', error);
         }
+    }
+
+    validarCoherencia() {
+        const errores = [];
         
-        // Sincronizar con negocios
-        if (window.negociosManager && window.negociosManager.sincronizarCliente) {
-            window.negociosManager.sincronizarCliente(cliente, accion);
+        // Validar datos requeridos
+        clientes.forEach((cliente, id) => {
+            if (!cliente.nombre || !cliente.telefono) {
+                errores.push({
+                    tipo: 'datos_incompletos',
+                    clienteId: id,
+                    mensaje: `Cliente ${id} tiene datos incompletos`
+                });
+            }
+        });
+        
+        return errores;
+    }
+
+    // ==========================================
+    // UTILIDADES
+    // ==========================================
+
+    generateId() {
+        const timestamp = Date.now().toString(36);
+        const random = Math.random().toString(36).substr(2, 5);
+        return `CLI_${timestamp}_${random}`.toUpperCase();
+    }
+
+    getCurrentUserId() {
+        if (window.authManager && window.authManager.currentUser) {
+            return window.authManager.currentUser.uid;
         }
-        
-        console.log('🔄 Cliente sincronizado: ' + cliente.nombre);
-        
-    } catch (error) {
-        console.error('❌ Error sincronizando cliente:', error);
+        return 'anonymous_user';
+    }
+
+    dispatchEvent(eventType, data) {
+        window.dispatchEvent(new CustomEvent(eventType, {
+            detail: {
+                ...data,
+                timestamp: Date.now(),
+                source: 'clientesManager'
+            }
+        }));
+    }
+
+    addEventListener(eventType, callback) {
+        if (!this.eventListeners.has(eventType)) {
+            this.eventListeners.set(eventType, []);
+        }
+        this.eventListeners.get(eventType).push(callback);
+    }
+
+    getStatus() {
+        return {
+            initialized: systemInitialized,
+            offlineAvailable: offlineAvailable,
+            clientesCount: clientes.size,
+            clientesActivos: Array.from(clientes.values()).filter(c => c.activo).length
+        };
     }
 }
 
-function validarCoherencia() {
-    var errores = [];
-    
-    // Validar datos requeridos
-    clientesMap.forEach(function(cliente, id) {
-        if (!cliente.nombre || !cliente.telefono) {
-            errores.push({
-                tipo: 'datos_incompletos',
-                clienteId: id,
-                mensaje: 'Cliente ' + id + ' tiene datos incompletos'
-            });
-        }
-    });
-    
-    return errores;
-}
-
 // ==========================================
-// UTILIDADES
+// INICIALIZACIÓN Y EXPORTACIÓN
 // ==========================================
 
-function generateClienteId() {
-    var timestamp = Date.now().toString(36);
-    var random = Math.random().toString(36).substr(2, 5);
-    return ('CLI_' + timestamp + '_' + random).toUpperCase();
-}
-
-function getCurrentUserId() {
-    if (window.auth && window.auth.currentUser) {
-        return window.auth.currentUser.uid;
-    }
-    return 'anonymous_user';
-}
-
-function dispatchClientesEvent(eventType, data) {
-    window.dispatchEvent(new CustomEvent(eventType, {
-        detail: Object.assign({}, data, {
-            timestamp: Date.now(),
-            source: 'clientesManager'
-        })
-    }));
-}
-
-function getClientesStatus() {
-    return {
-        initialized: clientesSystemInitialized,
-        offlineAvailable: clientesOfflineAvailable,
-        clientesCount: clientesMap.size,
-        clientesActivos: Array.from(clientesMap.values()).filter(function(c) {
-            return c.activo;
-        }).length
-    };
-}
-
-// ==========================================
-// INICIALIZACIÓN Y EXPOSICIÓN GLOBAL
-// ==========================================
-
-// Manager global de clientes
-window.clientesManager = {
-    // Estado
-    getStatus: getClientesStatus,
-    
-    // Gestión de clientes
-    crearCliente: crearCliente,
-    actualizarCliente: actualizarCliente,
-    obtenerCliente: obtenerCliente,
-    obtenerTodos: obtenerTodosClientes,
-    obtenerParaSelectores: obtenerParaSelectores,
-    
-    // Actualización de métricas
-    actualizarMetricasVenta: actualizarMetricasVenta,
-    actualizarMetricasNegocio: actualizarMetricasNegocio,
-    
-    // Utilidades
-    validarCoherencia: validarCoherencia,
-    sincronizarCliente: sincronizarClienteConModulos
-};
-
-// Funciones globales de conveniencia
-window.crearCliente = crearCliente;
-window.obtenerCliente = obtenerCliente;
-window.obtenerTodosClientes = obtenerTodosClientes;
+// Crear instancia global
+let clientesManagerInstance = null;
 
 // Inicializar cuando el DOM esté listo
-document.addEventListener('DOMContentLoaded', function() {
-    initClientesManager()
-        .then(function() {
-            console.log('👥 ClientesManager disponible globalmente');
-        })
-        .catch(function(error) {
-            console.error('Error inicializando ClientesManager:', error);
-        });
+document.addEventListener('DOMContentLoaded', () => {
+    if (!clientesManagerInstance) {
+        clientesManagerInstance = new ClientesManager();
+        window.clientesManager = clientesManagerInstance;
+        
+        console.log('👥 ClientesManager disponible globalmente');
+    }
 });
 
-console.log('👥 Sistema de clientes cargado correctamente');
+// Funciones globales de conveniencia
+window.crearCliente = function(datos) {
+    return window.clientesManager?.crearCliente(datos);
+};
+
+window.obtenerCliente = function(id) {
+    return window.clientesManager?.obtenerCliente(id);
+};
+
+window.obtenerTodosClientes = function(filtros) {
+    return window.clientesManager?.obtenerTodos(filtros);
+};
+
+// Export por defecto para módulos ES6
+export default ClientesManager;
