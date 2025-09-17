@@ -1315,7 +1315,7 @@
             const btnExportarDatos = document.getElementById('btnExportarDatos');
             
             if (btnNuevoCorte) btnNuevoCorte.addEventListener('click', () => accionRapida('nuevo-corte'));
-            if (btnNuevoRegistro) btnNuevoRegistro.addEventListener('click', () => accionRapida('registro-completo'));
+            if (btnNuevoRegistro) btnNuevoRegistro.addEventListener('click', window.abrirRegistroCompleto);
             if (btnExportarDatos) btnExportarDatos.addEventListener('click', exportarDatos);
             
             // Formularios
@@ -2567,4 +2567,5 @@ ${datos.ubicacion.lat ? `• GPS: ${datos.ubicacion.lat.toFixed(4)}, ${datos.ubi
     </script>
 </body>
 </html>
+
 
