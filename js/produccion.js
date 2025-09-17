@@ -1181,6 +1181,87 @@ if (typeof window !== 'undefined') {
 
 console.log('🌾 Sistema de gestión de producción completo integrado cargado');
 
+// FUNCIÓN ESPECÍFICA PARA REGISTRO COMPLETO
+async function abrirRegistroCompleto() {
+    try {
+        console.log('📝 Abriendo registro completo...');
+        
+        // Verificar que el modal existe
+        const modal = document.getElementById('modalRegistroCompleto');
+        if (!modal) {
+            throw new Error('Modal de registro completo no encontrado');
+        }
+        
+        // Abrir el modal
+        modal.classList.add('show');
+        
+        // Establecer fecha y hora actual
+        const ahora = new Date();
+        const fechaHora = ahora.toISOString().slice(0, 16);
+        const fechaInput = document.getElementById('fechaCompleta');
+        if (fechaInput) {
+            fechaInput.value = fechaHora;
+        }
+        
+        // Cargar opciones actualizadas
+        if (window.productionManager && window.productionManager.getOpcionesFormulario) {
+            const opciones = await window.productionManager.getOpcionesFormulario();
+            actualizarSelectCompleto(opciones);
+        }
+        
+        // Limpiar formulario
+        const form = document.getElementById('formRegistroCompleto');
+        if (form) {
+            form.reset();
+            // Restablecer fecha después del reset
+            if (fechaInput) {
+                fechaInput.value = fechaHora;
+            }
+        }
+        
+        // Resetear campos GPS
+        resetearCamposGPS();
+        
+        console.log('✅ Registro completo abierto correctamente');
+        
+        if (window.showNotification) {
+            window.showNotification('Formulario de registro completo listo', 'info');
+        }
+        
+    } catch (error) {
+        console.error('❌ Error abriendo registro completo:', error);
+        if (window.showNotification) {
+            window.showNotification('Error abriendo formulario: ' + error.message, 'error');
+        }
+    }
+}
+
+function actualizarSelectCompleto(opciones) {
+    const select = document.getElementById('arbolCompleto');
+    if (select && opciones && opciones.opciones) {
+        select.innerHTML = '<option value="">Seleccionar ubicación...</option>';
+        opciones.opciones.forEach(opcion => {
+            const option = document.createElement('option');
+            option.value = opcion.value;
+            option.textContent = opcion.label;
+            select.appendChild(option);
+        });
+    }
+}
+
+function resetearCamposGPS() {
+    const latInput = document.getElementById('latitudCompleta');
+    const lngInput = document.getElementById('longitudCompleta');
+    const gpsStatus = document.getElementById('gpsStatus');
+    
+    if (latInput) latInput.value = '';
+    if (lngInput) lngInput.value = '';
+    if (gpsStatus) {
+        gpsStatus.textContent = 'Presiona \'Capturar GPS\' para obtener ubicación actual';
+        gpsStatus.style.color = '#6b7280';
+    }
+}
+
 // Exportar funciones para otros módulos si es necesario
 if (typeof module !== 'undefined' && module.exports) {
     module.exports = {
@@ -1198,3 +1279,4 @@ if (typeof module !== 'undefined' && module.exports) {
         advancedPrediction
     };
 }
+
