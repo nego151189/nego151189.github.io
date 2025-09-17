@@ -926,6 +926,7 @@ function cambiarVista(vista) {
 
 async function loadInitialData() {
     try {
+        syncCorrelativeCounter(); // Agregar esta línea aquí
         await updateEstadisticas();
         await renderTrees();
         generateAIInsights();
@@ -986,7 +987,7 @@ function renderGridView(trees) {
 function createTreeCard(tree) {
     const estadoBadge = getEstadoBadge(tree.health?.overall || 0);
     const ubicacion = tree.location || {};
-    const treeNumber = tree.id ? tree.id.split('_').pop() || tree.id : 'N/A';
+    const treeNumber = tree.correlative || tree.id ? tree.id.split('_').pop() || tree.id : 'N/A';
     
     return `
         <div class="arbol-card" data-id="${tree.id}" onclick="mostrarDetalleArbol('${tree.id}')">
@@ -1479,6 +1480,9 @@ async function createNewTree(treeData) {
         throw new Error('TreeManager no disponible');
     }
 
+    // Agregar correlativo antes de crear
+    treeData.correlative = getNextTreeCorrelative();
+
     try {
         const newTree = await window.treeManager.createTree(treeData);
         console.log('✅ Nuevo árbol creado:', newTree.id);
@@ -1718,6 +1722,15 @@ function validateGPSCoordinates(lat, lng) {
     return true;
 }
 
+
+function getNextTreeCorrelative() {
+    let lastCorrelative = localStorage.getItem('lastTreeCorrelative') || '0';
+    let nextNumber = parseInt(lastCorrelative) + 1;
+    let correlative = nextNumber.toString().padStart(5, '0');
+    localStorage.setItem('lastTreeCorrelative', nextNumber.toString());
+    return correlative;
+}
+
 function showNotification(message, type = 'info') {
     const notification = document.createElement('div');
     notification.className = `notification ${type}`;
@@ -1728,6 +1741,19 @@ function showNotification(message, type = 'info') {
     setTimeout(() => {
         notification.remove();
     }, 4000);
+}
+
+
+function syncCorrelativeCounter() {
+    if (!localStorage.getItem('lastTreeCorrelative')) {
+        if (window.treeManager) {
+            window.treeManager.getAllTrees().then(trees => {
+                if (trees.length > 0) {
+                    localStorage.setItem('lastTreeCorrelative', trees.length.toString());
+                }
+            });
+        }
+    }
 }
 
 function formatDate(dateString) {
@@ -1836,6 +1862,8 @@ function analyzeTreeData() {
         }
     ];
 }
+
+
 
 // ==========================================
 // EVENTOS DEL SISTEMA
