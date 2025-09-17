@@ -876,13 +876,18 @@
                             <div class="form-group">
                                 <label class="form-label">Árbol/Sector</label>
                                 <select class="form-input" id="arbolRapido" required>
-                                    <option value="">Seleccionar...</option>
+                                    <option value="">Cargando opciones...</option>
                                 </select>
                             </div>
                             
                             <div class="form-group">
+                                <label class="form-label">Unidades (limones)</label>
+                                <input type="number" class="form-input" id="unidadesRapida" min="0" oninput="convertirUnidadesAKg()">
+                            </div>
+                            
+                            <div class="form-group">
                                 <label class="form-label">Cantidad (kg)</label>
-                                <input type="number" class="form-input" id="cantidadRapida" step="0.1" min="0" required>
+                                <input type="number" class="form-input" id="cantidadRapida" step="0.1" min="0" required oninput="convertirKgAUnidades()">
                             </div>
                             
                             <div class="form-group">
@@ -903,6 +908,158 @@
                         </button>
                         <button type="submit" class="btn btn-success">
                             <i class="fas fa-save"></i> Guardar
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal para registro completo -->
+    <div class="modal-overlay" id="modalRegistroCompleto">
+        <div class="modal">
+            <div class="modal-header">
+                <h2 class="modal-title">Registro Completo de Producción</h2>
+                <button class="modal-close" onclick="cerrarModal('modalRegistroCompleto')">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <form id="formRegistroCompleto" class="form-sections">
+                    <div class="form-section">
+                        <h4 class="section-title">
+                            <i class="fas fa-info-circle"></i>
+                            Información Básica
+                        </h4>
+                        
+                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem;">
+                            <div class="form-group">
+                                <label class="form-label">Fecha de Cosecha</label>
+                                <input type="datetime-local" class="form-input" id="fechaCompleta" required>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label class="form-label">Árbol/Sector</label>
+                                <select class="form-input" id="arbolCompleto" required>
+                                    <option value="">Cargando opciones...</option>
+                                </select>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label class="form-label">Responsable</label>
+                                <select class="form-input" id="responsableCompleto" required>
+                                    <option value="">Seleccionar...</option>
+                                    <option value="juan_perez">Juan Pérez</option>
+                                    <option value="maria_gonzalez">María González</option>
+                                    <option value="carlos_lopez">Carlos López</option>
+                                </select>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label class="form-label">Tipo de Cosecha</label>
+                                <select class="form-input" id="tipoCompleto" required>
+                                    <option value="">Seleccionar...</option>
+                                    <option value="principal">Principal</option>
+                                    <option value="secundaria">Secundaria</option>
+                                    <option value="extra">Extra</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-section">
+                        <h4 class="section-title">
+                            <i class="fas fa-weight-hanging"></i>
+                            Datos de Producción
+                        </h4>
+                        
+                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 1rem;">
+                            <div class="form-group">
+                                <label class="form-label">Unidades (limones)</label>
+                                <input type="number" class="form-input" id="unidadesCompleta" min="0" oninput="convertirUnidadesCompletaAKg()">
+                            </div>
+                            
+                            <div class="form-group">
+                                <label class="form-label">Cantidad Total (kg)</label>
+                                <input type="number" class="form-input" id="cantidadCompleta" step="0.1" min="0" required oninput="convertirKgCompletaAUnidades()">
+                            </div>
+                            
+                            <div class="form-group">
+                                <label class="form-label">Calibre Grande (%)</label>
+                                <input type="number" class="form-input" id="calibreGrande" step="0.1" min="0" max="100" value="0">
+                            </div>
+                            
+                            <div class="form-group">
+                                <label class="form-label">Calibre Mediano (%)</label>
+                                <input type="number" class="form-input" id="calibreMediano" step="0.1" min="0" max="100" value="0">
+                            </div>
+                            
+                            <div class="form-group">
+                                <label class="form-label">Calibre Pequeño (%)</label>
+                                <input type="number" class="form-input" id="calibrePequeno" step="0.1" min="0" max="100" value="0">
+                            </div>
+                            
+                            <div class="form-group">
+                                <label class="form-label">Calidad (%)</label>
+                                <input type="number" class="form-input" id="calidadCompleta" step="0.1" min="0" max="100" value="85">
+                            </div>
+                            
+                            <div class="form-group">
+                                <label class="form-label">Merma (%)</label>
+                                <input type="number" class="form-input" id="mermaCompleta" step="0.1" min="0" max="100" value="0">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-section">
+                        <h4 class="section-title">
+                            <i class="fas fa-map-marker-alt"></i>
+                            Ubicación GPS
+                        </h4>
+                        
+                        <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 1rem; align-items: end;">
+                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                                <div class="form-group">
+                                    <label class="form-label">Latitud</label>
+                                    <input type="number" class="form-input" id="latitudCompleta" step="0.0001" readonly>
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label class="form-label">Longitud</label>
+                                    <input type="number" class="form-input" id="longitudCompleta" step="0.0001" readonly>
+                                </div>
+                            </div>
+                            
+                            <div class="form-group">
+                                <button type="button" class="btn btn-secondary" id="btnCapturarGPS" onclick="capturarUbicacionGPS()">
+                                    <i class="fas fa-location-arrow"></i> Capturar GPS
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <div id="gpsStatus" style="margin-top: 0.5rem; font-size: 0.75rem; color: #6b7280;">
+                            Presiona 'Capturar GPS' para obtener ubicación actual
+                        </div>
+                    </div>
+
+                    <div class="form-section">
+                        <h4 class="section-title">
+                            <i class="fas fa-sticky-note"></i>
+                            Observaciones
+                        </h4>
+                        
+                        <div class="form-group">
+                            <textarea class="form-input" id="observacionesCompletas" rows="4" 
+                                      placeholder="Observaciones sobre la cosecha, condiciones climáticas, estado del árbol, etc."></textarea>
+                        </div>
+                    </div>
+
+                    <div style="display: flex; gap: 1rem; justify-content: flex-end; margin-top: 2rem;">
+                        <button type="button" class="btn btn-secondary" onclick="cerrarModal('modalRegistroCompleto')">
+                            <i class="fas fa-times"></i> Cancelar
+                        </button>
+                        <button type="submit" class="btn btn-success">
+                            <i class="fas fa-save"></i> Guardar Registro Completo
                         </button>
                     </div>
                 </form>
@@ -1481,45 +1638,403 @@
             }
         }
 
-        // PROCESAMIENTO DE FORMULARIOS
-        async function procesarRegistroRapido(event) {
+        // FUNCIONES DE CONVERSIÓN DE UNIDADES
+        function convertirUnidadesAKg() {
+            const unidades = parseFloat(document.getElementById('unidadesRapida').value) || 0;
+            const kg = unidades / 50; // 50 limones ≈ 1 kg (promedio)
+            document.getElementById('cantidadRapida').value = kg > 0 ? kg.toFixed(2) : '';
+        }
+
+        function convertirKgAUnidades() {
+            const kg = parseFloat(document.getElementById('cantidadRapida').value) || 0;
+            const unidades = Math.round(kg * 50); // 1 kg ≈ 50 limones (promedio)
+            document.getElementById('unidadesRapida').value = unidades > 0 ? unidades : '';
+        }
+
+        function convertirUnidadesCompletaAKg() {
+            const unidades = parseFloat(document.getElementById('unidadesCompleta').value) || 0;
+            const kg = unidades / 50;
+            document.getElementById('cantidadCompleta').value = kg > 0 ? kg.toFixed(2) : '';
+        }
+
+        function convertirKgCompletaAUnidades() {
+            const kg = parseFloat(document.getElementById('cantidadCompleta').value) || 0;
+            const unidades = Math.round(kg * 50);
+            document.getElementById('unidadesCompleta').value = unidades > 0 ? unidades : '';
+        }
+
+        // CAPTURAR GPS
+        async function capturarUbicacionGPS() {
+            const statusEl = document.getElementById('gpsStatus');
+            const latEl = document.getElementById('latitudCompleta');
+            const lngEl = document.getElementById('longitudCompleta');
+            const btnEl = document.getElementById('btnCapturarGPS');
+            
+            if (!navigator.geolocation) {
+                statusEl.textContent = 'GPS no disponible en este navegador';
+                statusEl.style.color = '#ef4444';
+                return;
+            }
+            
+            statusEl.textContent = 'Obteniendo ubicación GPS...';
+            statusEl.style.color = '#3b82f6';
+            btnEl.disabled = true;
+            btnEl.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Obteniendo...';
+            
             try {
-                const formData = new FormData(event.target);
+                const position = await new Promise((resolve, reject) => {
+                    navigator.geolocation.getCurrentPosition(
+                        resolve,
+                        reject,
+                        {
+                            enableHighAccuracy: true,
+                            timeout: 10000,
+                            maximumAge: 60000
+                        }
+                    );
+                });
+                
+                const lat = position.coords.latitude;
+                const lng = position.coords.longitude;
+                const accuracy = position.coords.accuracy;
+                
+                latEl.value = lat.toFixed(6);
+                lngEl.value = lng.toFixed(6);
+                
+                statusEl.textContent = `Ubicación obtenida (±${Math.round(accuracy)}m de precisión)`;
+                statusEl.style.color = '#16a34a';
+                
+                showNotification('Ubicación GPS capturada correctamente', 'success');
+                
+            } catch (error) {
+                console.error('Error obteniendo GPS:', error);
+                statusEl.textContent = `Error: ${error.message}`;
+                statusEl.style.color = '#ef4444';
+                showNotification('Error obteniendo ubicación GPS', 'error');
+            } finally {
+                btnEl.disabled = false;
+                btnEl.innerHTML = '<i class="fas fa-location-arrow"></i> Capturar GPS';
+            }
+        }
+
+        // MEJORAR LA FUNCIÓN DE ACTUALIZAR OPCIONES DE FORMULARIOS
+        async function updateFormOptions() {
+            console.log('🔄 Actualizando opciones de formularios...');
+            
+            try {
+                let opciones = [];
+                
+                // Método 1: Intentar con productionManager
+                if (window.productionManager && window.productionManager.getOpcionesFormulario) {
+                    try {
+                        const resultado = await window.productionManager.getOpcionesFormulario();
+                        if (resultado && resultado.opciones) {
+                            opciones = resultado.opciones;
+                            console.log('✅ Opciones cargadas desde productionManager:', opciones.length);
+                        }
+                    } catch (error) {
+                        console.warn('⚠️ Error con productionManager:', error);
+                    }
+                }
+                
+                // Método 2: Intentar directamente con treeManager
+                if (opciones.length === 0 && window.treeManager) {
+                    try {
+                        const sectores = await window.treeManager.getAllSectors();
+                        const arboles = await window.treeManager.getAllTrees();
+                        
+                        // Agregar sectores
+                        sectores.forEach(sector => {
+                            opciones.push({
+                                value: sector.id,
+                                label: `${sector.name} (Sector completo)`,
+                                type: 'sector'
+                            });
+                        });
+                        
+                        // Agregar árboles
+                        arboles.forEach(arbol => {
+                            if (arbol.active !== false) {
+                                opciones.push({
+                                    value: arbol.id,
+                                    label: `Árbol ${arbol.correlative || arbol.id.substring(0, 8)} - ${arbol.blockId || 'Sin sector'}`,
+                                    type: 'tree'
+                                });
+                            }
+                        });
+                        
+                        console.log('✅ Opciones cargadas desde treeManager:', opciones.length);
+                    } catch (error) {
+                        console.warn('⚠️ Error con treeManager:', error);
+                    }
+                }
+                
+                // Método 3: Fallback con opciones de ejemplo
+                if (opciones.length === 0) {
+                    opciones = [
+                        { value: 'SECTOR_NORTE', label: 'Sector Norte (Sector completo)', type: 'sector' },
+                        { value: 'SECTOR_SUR', label: 'Sector Sur (Sector completo)', type: 'sector' },
+                        { value: 'SECTOR_ESTE', label: 'Sector Este (Sector completo)', type: 'sector' },
+                        { value: 'ARBOL_001', label: 'Árbol 001 - Sector Norte', type: 'tree' },
+                        { value: 'ARBOL_002', label: 'Árbol 002 - Sector Sur', type: 'tree' },
+                        { value: 'ARBOL_003', label: 'Árbol 003 - Sector Este', type: 'tree' }
+                    ];
+                    console.log('⚠️ Usando opciones de fallback');
+                }
+                
+                // Actualizar todos los selects
+                const selects = [
+                    'arbolRapido',
+                    'arbolCompleto', 
+                    'ubicacionCalidad'
+                ];
+                
+                selects.forEach(selectId => {
+                    const select = document.getElementById(selectId);
+                    if (select) {
+                        const valorActual = select.value;
+                        select.innerHTML = '<option value="">Seleccionar ubicación...</option>';
+                        
+                        opciones.forEach(opcion => {
+                            const option = document.createElement('option');
+                            option.value = opcion.value;
+                            option.textContent = opcion.label;
+                            select.appendChild(option);
+                        });
+                        
+                        // Restaurar valor si existía
+                        if (valorActual && [...select.options].some(opt => opt.value === valorActual)) {
+                            select.value = valorActual;
+                        }
+                        
+                        console.log(`✅ Select ${selectId} actualizado con ${opciones.length} opciones`);
+                    }
+                });
+                
+            } catch (error) {
+                console.error('❌ Error actualizando opciones:', error);
+                showNotification('Error cargando opciones de ubicaciones', 'warning');
+            }
+        }
+
+        // MEJORAR FUNCIÓN DE ACCIÓN RÁPIDA
+        async function accionRapida(accion) {
+            switch (accion) {
+                case 'nuevo-corte':
+                    document.getElementById('modalRegistroRapido').classList.add('show');
+                    break;
+                    
+                case 'registro-completo':
+                    document.getElementById('modalRegistroCompleto').classList.add('show');
+                    // Establecer fecha y hora actual
+                    const ahora = new Date();
+                    const fechaHora = ahora.toISOString().slice(0, 16);
+                    document.getElementById('fechaCompleta').value = fechaHora;
+                    break;
+                    
+                case 'control-calidad':
+                    document.getElementById('modalControlCalidad').classList.add('show');
+                    break;
+                    
+                case 'planificar-cosecha':
+                    document.getElementById('modalPlanificarCosecha').classList.add('show');
+                    const tomorrow = new Date();
+                    tomorrow.setDate(tomorrow.getDate() + 1);
+                    document.getElementById('fechaObjetivo').value = tomorrow.toISOString().split('T')[0];
+                    break;
+                    
+                case 'reporte-diario':
+                    await generarReporteDiario();
+                    break;
+                    
+                case 'analizar-rendimiento':
+                    await analizarRendimiento();
+                    break;
+                    
+                case 'gestionar-tratamientos':
+                    await gestionarTratamientos();
+                    break;
+                    
+                default:
+                    showNotification(`Función ${accion} disponible`, 'info');
+            }
+        }
+
+        // AGREGAR PROCESAMIENTO DEL FORMULARIO COMPLETO
+        function setupFormListeners() {
+            // Formulario registro rápido
+            const formRapido = document.getElementById('formRegistroRapido');
+            if (formRapido) {
+                formRapido.addEventListener('submit', async (e) => {
+                    e.preventDefault();
+                    await procesarRegistroRapido(e);
+                });
+            }
+            
+            // Formulario registro completo
+            const formCompleto = document.getElementById('formRegistroCompleto');
+            if (formCompleto) {
+                formCompleto.addEventListener('submit', async (e) => {
+                    e.preventDefault();
+                    await procesarRegistroCompleto(e);
+                });
+            }
+            
+            // Formulario control de calidad
+            const formCalidad = document.getElementById('formControlCalidad');
+            if (formCalidad) {
+                formCalidad.addEventListener('submit', async (e) => {
+                    e.preventDefault();
+                    await procesarControlCalidad(e);
+                });
+            }
+            
+            // Formulario planificación
+            const formPlanificacion = document.getElementById('formPlanificarCosecha');
+            if (formPlanificacion) {
+                formPlanificacion.addEventListener('submit', async (e) => {
+                    e.preventDefault();
+                    await procesarPlanificacionCosecha(e);
+                });
+            }
+        }
+
+        // PROCESAMIENTO DEL REGISTRO COMPLETO
+        async function procesarRegistroCompleto(event) {
+            try {
+                showNotification('Guardando registro completo...', 'info');
                 
                 const datos = {
-                    fecha: document.getElementById('fechaRapida').value,
-                    arbolId: document.getElementById('arbolRapido').value,
-                    cantidad: parseFloat(document.getElementById('cantidadRapida').value),
-                    tipo: document.getElementById('tipoRapido').value
+                    fecha: document.getElementById('fechaCompleta').value,
+                    arbolId: document.getElementById('arbolCompleto').value,
+                    responsable: document.getElementById('responsableCompleto').value,
+                    tipo: document.getElementById('tipoCompleto').value,
+                    unidades: parseInt(document.getElementById('unidadesCompleta').value) || 0,
+                    cantidad: parseFloat(document.getElementById('cantidadCompleta').value) || 0,
+                    calibres: {
+                        grande: parseFloat(document.getElementById('calibreGrande').value) || 0,
+                        mediano: parseFloat(document.getElementById('calibreMediano').value) || 0,
+                        pequeno: parseFloat(document.getElementById('calibrePequeno').value) || 0
+                    },
+                    calidad: parseFloat(document.getElementById('calidadCompleta').value) || 85,
+                    merma: parseFloat(document.getElementById('mermaCompleta').value) || 0,
+                    ubicacion: {
+                        lat: parseFloat(document.getElementById('latitudCompleta').value) || null,
+                        lng: parseFloat(document.getElementById('longitudCompleta').value) || null
+                    },
+                    observaciones: document.getElementById('observacionesCompletas').value || ''
                 };
                 
+                // Validaciones
                 if (!datos.arbolId) {
-                    showNotification('Selecciona una ubicación', 'warning');
+                    showNotification('Selecciona un árbol o sector', 'warning');
                     return;
                 }
                 
-                showNotification('Guardando registro...', 'info');
+                if (!datos.responsable) {
+                    showNotification('Selecciona un responsable', 'warning');
+                    return;
+                }
                 
-                if (window.productionManager) {
-                    await window.productionManager.registrarProduccion(datos);
-                    showNotification('Registro guardado correctamente', 'success');
+                if (!datos.tipo) {
+                    showNotification('Selecciona el tipo de cosecha', 'warning');
+                    return;
+                }
+                
+                if (datos.cantidad <= 0) {
+                    showNotification('La cantidad debe ser mayor a 0', 'warning');
+                    return;
+                }
+                
+                // Validar que los calibres sumen 100% o sean todos 0
+                const totalCalibre = datos.calibres.grande + datos.calibres.mediano + datos.calibres.pequeno;
+                if (totalCalibre > 0 && Math.abs(totalCalibre - 100) > 0.1) {
+                    showNotification('Los calibres deben sumar 100%', 'warning');
+                    return;
+                }
+                
+                if (window.productionManager && window.productionManager.registrarProduccionCompleta) {
+                    const resultado = await window.productionManager.registrarProduccionCompleta(datos);
+                    
+                    showNotification('Registro completo guardado correctamente', 'success');
                     
                     // Actualizar datos
                     await updateKPIs();
                     await updateTimeline();
                     await updateCharts('semana');
+                    
+                    console.log('✅ Registro completo guardado:', resultado);
                 } else {
-                    showNotification('Registro guardado (modo demo)', 'info');
+                    showNotification('Registro completo guardado (modo demo)', 'info');
                 }
                 
-                // Cerrar modal y limpiar formulario
-                cerrarModal('modalRegistroRapido');
-                document.getElementById('formRegistroRapido').reset();
-                setCurrentDate();
+                // Cerrar modal y limpiar
+                cerrarModal('modalRegistroCompleto');
+                document.getElementById('formRegistroCompleto').reset();
                 
             } catch (error) {
-                console.error('❌ Error en registro:', error);
-                showNotification('Error guardando registro: ' + error.message, 'error');
+                console.error('❌ Error guardando registro completo:', error);
+                showNotification('Error: ' + error.message, 'error');
+            }
+        }
+
+        // CARGAR DATOS CON MEJOR MANEJO DE ERRORES  
+        async function loadInitialData() {
+            console.log('🔄 Cargando datos iniciales...');
+            
+            try {
+                // Cargar opciones de formularios primero
+                await updateFormOptions();
+                
+                // Esperar un poco para que los managers estén listos
+                await new Promise(resolve => setTimeout(resolve, 1000));
+                
+                // Actualizar opciones nuevamente después del delay
+                await updateFormOptions();
+                
+                // Actualizar KPIs
+                await updateKPIs();
+                
+                // Actualizar timeline
+                await updateTimeline();
+                
+                // Generar predicciones
+                await updatePredictions();
+                
+                // Actualizar gráficos
+                await updateCharts('semana');
+                
+                console.log('✅ Datos iniciales cargados correctamente');
+                
+            } catch (error) {
+                console.error('❌ Error cargando datos:', error);
+                loadFallbackData();
+                
+                // Reintentar cargar opciones cada 2 segundos hasta 5 veces
+                let reintentos = 0;
+                const intervalo = setInterval(async () => {
+                    reintentos++;
+                    console.log(`🔄 Reintento ${reintentos}/5 cargando opciones...`);
+                    
+                    try {
+                        await updateFormOptions();
+                        
+                        // Si se cargaron opciones, detener reintentos
+                        const select = document.getElementById('arbolRapido');
+                        if (select && select.options.length > 1) {
+                            clearInterval(intervalo);
+                            console.log('✅ Opciones cargadas en reintento');
+                            showNotification('Opciones de ubicaciones cargadas', 'success');
+                        }
+                    } catch (error) {
+                        console.warn(`⚠️ Error en reintento ${reintentos}:`, error);
+                    }
+                    
+                    if (reintentos >= 5) {
+                        clearInterval(intervalo);
+                        console.warn('⚠️ Máximo de reintentos alcanzado');
+                    }
+                }, 2000);
             }
         }
 
