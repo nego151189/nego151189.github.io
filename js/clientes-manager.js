@@ -3,20 +3,17 @@
    Sistema unificado para gestión de clientes entre módulos
    ======================================== */
 
-// Import de offline.js
-import offlineManager from './offline.js';
-
 // ==========================================
 // VARIABLES GLOBALES
 // ==========================================
 
 // Estado del sistema
-let systemInitialized = false;
-let offlineAvailable = false;
+let clientesSystemInitialized = false;
+let clientesOfflineAvailable = false;
 
 // Datos centralizados
-let clientes = new Map();
-let historialClientes = new Map();
+let clientesMap = new Map();
+let historialClientesMap = new Map();
 
 // Configuración base
 const clientesConfig = {
@@ -114,118 +111,132 @@ const clientesUnificados = [
 ];
 
 // ==========================================
-// CLASE PRINCIPAL
+// FUNCIONES PRINCIPALES
 // ==========================================
 
-class ClientesManager {
-    constructor() {
-        this.eventListeners = new Map();
-        this.syncQueue = [];
-        this.init();
-    }
-
-    async init() {
-        try {
-            console.log('👥 Inicializando ClientesManager...');
-            
-            await this.waitForOfflineManager();
-            await this.loadInitialData();
-            
-            systemInitialized = true;
-            console.log('✅ ClientesManager inicializado correctamente');
-            
-            this.dispatchEvent('clientesManagerReady', {
-                clientesCount: clientes.size
+function initClientesManager() {
+    console.log('👥 Inicializando ClientesManager...');
+    
+    return new Promise(function(resolve) {
+        waitForOfflineManager()
+            .then(function() {
+                return loadInitialClientesData();
+            })
+            .then(function() {
+                clientesSystemInitialized = true;
+                console.log('✅ ClientesManager inicializado correctamente');
+                
+                dispatchClientesEvent('clientesManagerReady', {
+                    clientesCount: clientesMap.size
+                });
+                
+                resolve();
+            })
+            .catch(function(error) {
+                console.error('❌ Error inicializando ClientesManager:', error);
+                initWithoutOffline();
+                resolve();
             });
-            
-        } catch (error) {
-            console.error('❌ Error inicializando ClientesManager:', error);
-            await this.initWithoutOffline();
+    });
+}
+
+function waitForOfflineManager() {
+    return new Promise(function(resolve) {
+        var maxWait = 10000;
+        var checkInterval = 100;
+        var elapsed = 0;
+
+        function check() {
+            if (window.offlineManager) {
+                clientesOfflineAvailable = true;
+                resolve();
+            } else if (elapsed < maxWait) {
+                elapsed += checkInterval;
+                setTimeout(check, checkInterval);
+            } else {
+                clientesOfflineAvailable = false;
+                resolve();
+            }
         }
-    }
 
-    async waitForOfflineManager() {
-        return new Promise((resolve) => {
-            const maxWait = 10000;
-            const checkInterval = 100;
-            let elapsed = 0;
+        check();
+    });
+}
 
-            const check = () => {
-                if (window.offlineManager || offlineManager) {
-                    offlineAvailable = true;
+function loadInitialClientesData() {
+    return new Promise(function(resolve) {
+        if (clientesOfflineAvailable) {
+            loadFromOffline()
+                .then(function() {
+                    if (clientesMap.size === 0) {
+                        loadUnifiedClientesData();
+                    }
+                    console.log('📊 Clientes cargados: ' + clientesMap.size);
                     resolve();
-                } else if (elapsed < maxWait) {
-                    elapsed += checkInterval;
-                    setTimeout(check, checkInterval);
-                } else {
-                    offlineAvailable = false;
+                })
+                .catch(function(error) {
+                    console.error('❌ Error cargando desde offline:', error);
+                    loadUnifiedClientesData();
                     resolve();
-                }
-            };
+                });
+        } else {
+            loadUnifiedClientesData();
+            console.log('📊 Clientes cargados: ' + clientesMap.size);
+            resolve();
+        }
+    });
+}
 
-            check();
-        });
-    }
+function initWithoutOffline() {
+    console.log('📱 Inicializando sin persistencia offline');
+    loadUnifiedClientesData();
+    clientesSystemInitialized = true;
+}
 
-    async loadInitialData() {
+function loadUnifiedClientesData() {
+    clientesMap.clear();
+    clientesUnificados.forEach(function(cliente) {
+        clientesMap.set(cliente.id, Object.assign({}, cliente));
+    });
+    console.log('✅ Datos unificados de clientes cargados');
+}
+
+function loadFromOffline() {
+    return new Promise(function(resolve, reject) {
         try {
-            if (offlineAvailable) {
-                await this.loadFromOffline();
+            if (!window.offlineManager) {
+                reject(new Error('OfflineManager no disponible'));
+                return;
             }
             
-            // Si no hay datos offline, cargar datos unificados
-            if (clientes.size === 0) {
-                this.loadUnifiedData();
-            }
-            
-            console.log(`📊 Clientes cargados: ${clientes.size}`);
-            
-        } catch (error) {
-            console.error('❌ Error cargando datos:', error);
-            this.loadUnifiedData();
-        }
-    }
-
-    async initWithoutOffline() {
-        console.log('📱 Inicializando sin persistencia offline');
-        this.loadUnifiedData();
-        systemInitialized = true;
-    }
-
-    loadUnifiedData() {
-        clientes.clear();
-        clientesUnificados.forEach(cliente => {
-            clientes.set(cliente.id, { ...cliente });
-        });
-        console.log('✅ Datos unificados de clientes cargados');
-    }
-
-    async loadFromOffline() {
-        try {
-            const offlineMgr = window.offlineManager || offlineManager;
-            if (!offlineMgr) return;
-            
-            const clientesData = await offlineMgr.getAllData('clientes');
-            clientesData.forEach(item => {
-                clientes.set(item.id, item.data);
-            });
-            
-            console.log(`📱 Clientes cargados desde offline: ${clientes.size}`);
-            
+            window.offlineManager.getAllData('clientes')
+                .then(function(clientesData) {
+                    clientesData.forEach(function(item) {
+                        clientesMap.set(item.id, item.data);
+                    });
+                    
+                    console.log('📱 Clientes cargados desde offline: ' + clientesMap.size);
+                    resolve();
+                })
+                .catch(reject);
+                
         } catch (error) {
             console.error('❌ Error cargando desde offline:', error);
+            reject(error);
         }
-    }
+    });
+}
 
-    // ==========================================
-    // GESTIÓN DE CLIENTES
-    // ==========================================
+// ==========================================
+// GESTIÓN DE CLIENTES
+// ==========================================
 
-    async crearCliente(datos) {
+function crearCliente(datos) {
+    return new Promise(function(resolve, reject) {
         try {
-            const id = this.generateId();
-            const cliente = {
-                id,
+            var id = generateClienteId();
+            var cliente = {
+                id: id,
                 nombre: datos.nombre,
                 empresa: datos.empresa || datos.nombre,
                 telefono: datos.telefono || datos.contacto,
@@ -240,280 +251,330 @@ class ClientesManager {
                 totalNegocios: 0,
                 ultimaCompra: null,
                 calificacion: 'B',
-                usuarioId: this.getCurrentUserId(),
+                usuarioId: getCurrentUserId(),
                 createdAt: new Date().toISOString()
             };
 
-            clientes.set(id, cliente);
+            clientesMap.set(id, cliente);
             
             // Guardar offline
-            if (offlineAvailable) {
-                const offlineMgr = window.offlineManager || offlineManager;
-                if (offlineMgr) {
-                    await offlineMgr.saveData('clientes', id, cliente);
-                }
+            if (clientesOfflineAvailable && window.offlineManager) {
+                window.offlineManager.saveData('clientes', id, cliente)
+                    .catch(function(error) {
+                        console.warn('Advertencia guardando offline:', error);
+                    });
+            }
+
+            // Sincronizar con Firebase si está disponible
+            if (window.db && window.auth && window.auth.currentUser) {
+                window.db.collection('clientes').add(cliente)
+                    .then(function() {
+                        console.log('Cliente guardado en Firebase');
+                    })
+                    .catch(function(error) {
+                        console.warn('Error guardando en Firebase:', error);
+                    });
             }
 
             // Sincronizar con otros módulos
-            await this.sincronizarConModulos(cliente, 'created');
+            sincronizarClienteConModulos(cliente, 'created');
             
-            this.dispatchEvent('clienteCreated', { cliente });
+            dispatchClientesEvent('clienteCreated', { cliente: cliente });
             
-            console.log(`✅ Cliente creado: ${cliente.nombre}`);
-            return cliente;
+            console.log('✅ Cliente creado: ' + cliente.nombre);
+            resolve(cliente);
             
         } catch (error) {
             console.error('❌ Error creando cliente:', error);
-            throw error;
+            reject(error);
         }
-    }
+    });
+}
 
-    async actualizarCliente(id, datos) {
+function actualizarCliente(id, datos) {
+    return new Promise(function(resolve, reject) {
         try {
-            const cliente = clientes.get(id);
+            var cliente = clientesMap.get(id);
             if (!cliente) {
-                throw new Error(`Cliente no encontrado: ${id}`);
+                reject(new Error('Cliente no encontrado: ' + id));
+                return;
             }
 
-            const clienteActualizado = {
-                ...cliente,
-                ...datos,
+            var clienteActualizado = Object.assign({}, cliente, datos, {
                 updatedAt: new Date().toISOString()
-            };
+            });
 
-            clientes.set(id, clienteActualizado);
+            clientesMap.set(id, clienteActualizado);
             
             // Guardar offline
-            if (offlineAvailable) {
-                const offlineMgr = window.offlineManager || offlineManager;
-                if (offlineMgr) {
-                    await offlineMgr.saveData('clientes', id, clienteActualizado);
-                }
+            if (clientesOfflineAvailable && window.offlineManager) {
+                window.offlineManager.saveData('clientes', id, clienteActualizado)
+                    .catch(function(error) {
+                        console.warn('Advertencia guardando offline:', error);
+                    });
             }
 
             // Sincronizar con otros módulos
-            await this.sincronizarConModulos(clienteActualizado, 'updated');
+            sincronizarClienteConModulos(clienteActualizado, 'updated');
             
-            this.dispatchEvent('clienteUpdated', { cliente: clienteActualizado });
+            dispatchClientesEvent('clienteUpdated', { cliente: clienteActualizado });
             
-            console.log(`✅ Cliente actualizado: ${clienteActualizado.nombre}`);
-            return clienteActualizado;
+            console.log('✅ Cliente actualizado: ' + clienteActualizado.nombre);
+            resolve(clienteActualizado);
             
         } catch (error) {
             console.error('❌ Error actualizando cliente:', error);
-            throw error;
+            reject(error);
         }
-    }
+    });
+}
 
-    obtenerCliente(id) {
-        return clientes.get(id) || null;
-    }
+function obtenerCliente(id) {
+    return clientesMap.get(id) || null;
+}
 
-    obtenerTodos(filtros = {}) {
-        let clientesList = Array.from(clientes.values()).filter(c => c.activo);
-        
-        if (filtros.tipo) {
-            clientesList = clientesList.filter(c => c.tipo === filtros.tipo);
-        }
-        
-        if (filtros.calificacion) {
-            clientesList = clientesList.filter(c => c.calificacion === filtros.calificacion);
-        }
-        
-        return clientesList.sort((a, b) => a.nombre.localeCompare(b.nombre));
+function obtenerTodosClientes(filtros) {
+    filtros = filtros || {};
+    
+    var clientesList = Array.from(clientesMap.values()).filter(function(c) {
+        return c.activo;
+    });
+    
+    if (filtros.tipo) {
+        clientesList = clientesList.filter(function(c) {
+            return c.tipo === filtros.tipo;
+        });
     }
+    
+    if (filtros.calificacion) {
+        clientesList = clientesList.filter(function(c) {
+            return c.calificacion === filtros.calificacion;
+        });
+    }
+    
+    return clientesList.sort(function(a, b) {
+        return a.nombre.localeCompare(b.nombre);
+    });
+}
 
-    obtenerParaSelectores() {
-        return this.obtenerTodos().map(cliente => ({
+function obtenerParaSelectores() {
+    return obtenerTodosClientes().map(function(cliente) {
+        return {
             id: cliente.id,
             nombre: cliente.nombre,
             empresa: cliente.empresa,
-            displayName: `${cliente.nombre} - ${cliente.empresa}`
-        }));
-    }
+            displayName: cliente.nombre + ' - ' + cliente.empresa
+        };
+    });
+}
 
-    // ==========================================
-    // ACTUALIZACIÓN DE MÉTRICAS
-    // ==========================================
+// ==========================================
+// ACTUALIZACIÓN DE MÉTRICAS
+// ==========================================
 
-    async actualizarMetricasVenta(clienteId, montoVenta) {
+function actualizarMetricasVenta(clienteId, montoVenta) {
+    return new Promise(function(resolve) {
         try {
-            const cliente = clientes.get(clienteId);
-            if (!cliente) return;
+            var cliente = clientesMap.get(clienteId);
+            if (!cliente) {
+                resolve();
+                return;
+            }
 
             cliente.totalVentas += montoVenta;
             cliente.ultimaCompra = new Date().toISOString().split('T')[0];
             
             // Actualizar calificación
-            cliente.calificacion = this.calcularCalificacion(cliente);
+            cliente.calificacion = calcularCalificacion(cliente);
             
-            await this.actualizarCliente(clienteId, cliente);
+            actualizarCliente(clienteId, cliente)
+                .then(resolve)
+                .catch(function(error) {
+                    console.error('❌ Error actualizando métricas de venta:', error);
+                    resolve();
+                });
             
         } catch (error) {
             console.error('❌ Error actualizando métricas de venta:', error);
+            resolve();
         }
-    }
+    });
+}
 
-    async actualizarMetricasNegocio(clienteId, valorNegocio, estado) {
+function actualizarMetricasNegocio(clienteId, valorNegocio, estado) {
+    return new Promise(function(resolve) {
         try {
-            const cliente = clientes.get(clienteId);
-            if (!cliente) return;
+            var cliente = clientesMap.get(clienteId);
+            if (!cliente) {
+                resolve();
+                return;
+            }
 
             if (estado === 'cerrado') {
                 cliente.totalNegocios += 1;
             }
             
-            cliente.calificacion = this.calcularCalificacion(cliente);
+            cliente.calificacion = calcularCalificacion(cliente);
             
-            await this.actualizarCliente(clienteId, cliente);
+            actualizarCliente(clienteId, cliente)
+                .then(resolve)
+                .catch(function(error) {
+                    console.error('❌ Error actualizando métricas de negocio:', error);
+                    resolve();
+                });
             
         } catch (error) {
             console.error('❌ Error actualizando métricas de negocio:', error);
+            resolve();
         }
-    }
+    });
+}
 
-    calcularCalificacion(cliente) {
-        let puntos = 0;
-        
-        // Puntos por volumen de ventas
-        if (cliente.totalVentas > 150000) puntos += 3;
-        else if (cliente.totalVentas > 75000) puntos += 2;
-        else if (cliente.totalVentas > 25000) puntos += 1;
-        
-        // Puntos por frecuencia
-        if (cliente.totalNegocios > 2) puntos += 2;
-        else if (cliente.totalNegocios > 0) puntos += 1;
-        
-        // Puntos por antigüedad
-        const mesesActivo = this.calcularMesesActivo(cliente.fechaRegistro);
-        if (mesesActivo > 6) puntos += 1;
-        
-        // Convertir a calificación
-        if (puntos >= 5) return 'AAA';
-        if (puntos >= 3) return 'AA';
-        if (puntos >= 1) return 'A';
-        return 'B';
-    }
+function calcularCalificacion(cliente) {
+    var puntos = 0;
+    
+    // Puntos por volumen de ventas
+    if (cliente.totalVentas > 150000) puntos += 3;
+    else if (cliente.totalVentas > 75000) puntos += 2;
+    else if (cliente.totalVentas > 25000) puntos += 1;
+    
+    // Puntos por frecuencia
+    if (cliente.totalNegocios > 2) puntos += 2;
+    else if (cliente.totalNegocios > 0) puntos += 1;
+    
+    // Puntos por antigüedad
+    var mesesActivo = calcularMesesActivo(cliente.fechaRegistro);
+    if (mesesActivo > 6) puntos += 1;
+    
+    // Convertir a calificación
+    if (puntos >= 5) return 'AAA';
+    if (puntos >= 3) return 'AA';
+    if (puntos >= 1) return 'A';
+    return 'B';
+}
 
-    calcularMesesActivo(fechaRegistro) {
-        const hoy = new Date();
-        const registro = new Date(fechaRegistro);
-        return Math.floor((hoy - registro) / (1000 * 60 * 60 * 24 * 30));
-    }
-
-    // ==========================================
-    // SINCRONIZACIÓN CON MÓDULOS
-    // ==========================================
-
-    async sincronizarConModulos(cliente, accion) {
-        try {
-            // Sincronizar con ventas
-            if (window.ventasManager && window.ventasManager.sincronizarCliente) {
-                await window.ventasManager.sincronizarCliente(cliente, accion);
-            }
-            
-            // Sincronizar con negocios
-            if (window.negociosManager && window.negociosManager.sincronizarCliente) {
-                await window.negociosManager.sincronizarCliente(cliente, accion);
-            }
-            
-            console.log(`🔄 Cliente sincronizado: ${cliente.nombre}`);
-            
-        } catch (error) {
-            console.error('❌ Error sincronizando cliente:', error);
-        }
-    }
-
-    validarCoherencia() {
-        const errores = [];
-        
-        // Validar datos requeridos
-        clientes.forEach((cliente, id) => {
-            if (!cliente.nombre || !cliente.telefono) {
-                errores.push({
-                    tipo: 'datos_incompletos',
-                    clienteId: id,
-                    mensaje: `Cliente ${id} tiene datos incompletos`
-                });
-            }
-        });
-        
-        return errores;
-    }
-
-    // ==========================================
-    // UTILIDADES
-    // ==========================================
-
-    generateId() {
-        const timestamp = Date.now().toString(36);
-        const random = Math.random().toString(36).substr(2, 5);
-        return `CLI_${timestamp}_${random}`.toUpperCase();
-    }
-
-    getCurrentUserId() {
-        if (window.authManager && window.authManager.currentUser) {
-            return window.authManager.currentUser.uid;
-        }
-        return 'anonymous_user';
-    }
-
-    dispatchEvent(eventType, data) {
-        window.dispatchEvent(new CustomEvent(eventType, {
-            detail: {
-                ...data,
-                timestamp: Date.now(),
-                source: 'clientesManager'
-            }
-        }));
-    }
-
-    addEventListener(eventType, callback) {
-        if (!this.eventListeners.has(eventType)) {
-            this.eventListeners.set(eventType, []);
-        }
-        this.eventListeners.get(eventType).push(callback);
-    }
-
-    getStatus() {
-        return {
-            initialized: systemInitialized,
-            offlineAvailable: offlineAvailable,
-            clientesCount: clientes.size,
-            clientesActivos: Array.from(clientes.values()).filter(c => c.activo).length
-        };
-    }
+function calcularMesesActivo(fechaRegistro) {
+    var hoy = new Date();
+    var registro = new Date(fechaRegistro);
+    return Math.floor((hoy - registro) / (1000 * 60 * 60 * 24 * 30));
 }
 
 // ==========================================
-// INICIALIZACIÓN Y EXPORTACIÓN
+// SINCRONIZACIÓN CON MÓDULOS
 // ==========================================
 
-// Crear instancia global
-let clientesManagerInstance = null;
-
-// Inicializar cuando el DOM esté listo
-document.addEventListener('DOMContentLoaded', () => {
-    if (!clientesManagerInstance) {
-        clientesManagerInstance = new ClientesManager();
-        window.clientesManager = clientesManagerInstance;
+function sincronizarClienteConModulos(cliente, accion) {
+    try {
+        // Sincronizar con ventas
+        if (window.ventasManager && window.ventasManager.sincronizarCliente) {
+            window.ventasManager.sincronizarCliente(cliente, accion);
+        }
         
-        console.log('👥 ClientesManager disponible globalmente');
+        // Sincronizar con negocios
+        if (window.negociosManager && window.negociosManager.sincronizarCliente) {
+            window.negociosManager.sincronizarCliente(cliente, accion);
+        }
+        
+        console.log('🔄 Cliente sincronizado: ' + cliente.nombre);
+        
+    } catch (error) {
+        console.error('❌ Error sincronizando cliente:', error);
     }
-});
+}
+
+function validarCoherencia() {
+    var errores = [];
+    
+    // Validar datos requeridos
+    clientesMap.forEach(function(cliente, id) {
+        if (!cliente.nombre || !cliente.telefono) {
+            errores.push({
+                tipo: 'datos_incompletos',
+                clienteId: id,
+                mensaje: 'Cliente ' + id + ' tiene datos incompletos'
+            });
+        }
+    });
+    
+    return errores;
+}
+
+// ==========================================
+// UTILIDADES
+// ==========================================
+
+function generateClienteId() {
+    var timestamp = Date.now().toString(36);
+    var random = Math.random().toString(36).substr(2, 5);
+    return ('CLI_' + timestamp + '_' + random).toUpperCase();
+}
+
+function getCurrentUserId() {
+    if (window.auth && window.auth.currentUser) {
+        return window.auth.currentUser.uid;
+    }
+    return 'anonymous_user';
+}
+
+function dispatchClientesEvent(eventType, data) {
+    window.dispatchEvent(new CustomEvent(eventType, {
+        detail: Object.assign({}, data, {
+            timestamp: Date.now(),
+            source: 'clientesManager'
+        })
+    }));
+}
+
+function getClientesStatus() {
+    return {
+        initialized: clientesSystemInitialized,
+        offlineAvailable: clientesOfflineAvailable,
+        clientesCount: clientesMap.size,
+        clientesActivos: Array.from(clientesMap.values()).filter(function(c) {
+            return c.activo;
+        }).length
+    };
+}
+
+// ==========================================
+// INICIALIZACIÓN Y EXPOSICIÓN GLOBAL
+// ==========================================
+
+// Manager global de clientes
+window.clientesManager = {
+    // Estado
+    getStatus: getClientesStatus,
+    
+    // Gestión de clientes
+    crearCliente: crearCliente,
+    actualizarCliente: actualizarCliente,
+    obtenerCliente: obtenerCliente,
+    obtenerTodos: obtenerTodosClientes,
+    obtenerParaSelectores: obtenerParaSelectores,
+    
+    // Actualización de métricas
+    actualizarMetricasVenta: actualizarMetricasVenta,
+    actualizarMetricasNegocio: actualizarMetricasNegocio,
+    
+    // Utilidades
+    validarCoherencia: validarCoherencia,
+    sincronizarCliente: sincronizarClienteConModulos
+};
 
 // Funciones globales de conveniencia
-window.crearCliente = function(datos) {
-    return window.clientesManager?.crearCliente(datos);
-};
+window.crearCliente = crearCliente;
+window.obtenerCliente = obtenerCliente;
+window.obtenerTodosClientes = obtenerTodosClientes;
 
-window.obtenerCliente = function(id) {
-    return window.clientesManager?.obtenerCliente(id);
-};
+// Inicializar cuando el DOM esté listo
+document.addEventListener('DOMContentLoaded', function() {
+    initClientesManager()
+        .then(function() {
+            console.log('👥 ClientesManager disponible globalmente');
+        })
+        .catch(function(error) {
+            console.error('Error inicializando ClientesManager:', error);
+        });
+});
 
-window.obtenerTodosClientes = function(filtros) {
-    return window.clientesManager?.obtenerTodos(filtros);
-};
-
-// Export por defecto para módulos ES6
-export default ClientesManager;
+console.log('👥 Sistema de clientes cargado correctamente');
