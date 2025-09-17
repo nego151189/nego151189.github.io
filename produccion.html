@@ -1717,50 +1717,54 @@
             }
         }
 
-        // MEJORAR LA FUNCIÓN DE ACTUALIZAR OPCIONES DE FORMULARIOS
+        // FUNCIÓN MEJORADA SIN DUPLICADOS Y CON NOMBRES LEGIBLES
         async function updateFormOptions() {
             console.log('🔄 Actualizando opciones de formularios...');
             
             try {
                 let opciones = [];
+                const opcionesUnicas = new Set(); // Para evitar duplicados
                 
-                // Método 1: Intentar con productionManager
-                if (window.productionManager && window.productionManager.getOpcionesFormulario) {
-                    try {
-                        const resultado = await window.productionManager.getOpcionesFormulario();
-                        if (resultado && resultado.opciones) {
-                            opciones = resultado.opciones;
-                            console.log('✅ Opciones cargadas desde productionManager:', opciones.length);
-                        }
-                    } catch (error) {
-                        console.warn('⚠️ Error con productionManager:', error);
-                    }
-                }
-                
-                // Método 2: Intentar directamente con treeManager
-                if (opciones.length === 0 && window.treeManager) {
+                // Método 1: Intentar directamente con treeManager
+                if (window.treeManager) {
                     try {
                         const sectores = await window.treeManager.getAllSectors();
                         const arboles = await window.treeManager.getAllTrees();
                         
-                        // Agregar sectores
-                        sectores.forEach(sector => {
-                            opciones.push({
-                                value: sector.id,
-                                label: `${sector.name} (Sector completo)`,
-                                type: 'sector'
-                            });
-                        });
+                        console.log('📦 Sectores encontrados:', sectores.length);
+                        console.log('🌳 Árboles encontrados:', arboles.length);
                         
-                        // Agregar árboles
-                        arboles.forEach(arbol => {
-                            if (arbol.active !== false) {
+                        // Agregar sectores primero con nombres legibles
+                        sectores.forEach(sector => {
+                            const opcionId = `sector_${sector.id}`;
+                            if (!opcionesUnicas.has(opcionId)) {
+                                opcionesUnicas.add(opcionId);
                                 opciones.push({
-                                    value: arbol.id,
-                                    label: `Árbol ${arbol.correlative || arbol.id.substring(0, 8)} - ${arbol.blockId || 'Sin sector'}`,
-                                    type: 'tree'
+                                    value: sector.id,
+                                    label: `📦 ${sector.name} (Sector completo)`,
+                                    type: 'sector'
                                 });
                             }
+                        });
+                        
+                        // Agregar árboles sin duplicados
+                        const arbolesUnicos = new Map();
+                        arboles.forEach(arbol => {
+                            if (arbol.active !== false && !arbolesUnicos.has(arbol.id)) {
+                                arbolesUnicos.set(arbol.id, arbol);
+                            }
+                        });
+                        
+                        arbolesUnicos.forEach(arbol => {
+                            // Obtener nombre del sector
+                            const sector = sectores.find(s => s.id === arbol.blockId);
+                            const nombreSector = sector ? sector.name : 'Sin sector';
+                            
+                            opciones.push({
+                                value: arbol.id,
+                                label: `🌳 Árbol ${arbol.correlative || arbol.id.substring(0, 8)} - ${nombreSector}`,
+                                type: 'tree'
+                            });
                         });
                         
                         console.log('✅ Opciones cargadas desde treeManager:', opciones.length);
@@ -1769,31 +1773,54 @@
                     }
                 }
                 
+                // Método 2: Intentar con productionManager como fallback
+                if (opciones.length === 0 && window.productionManager && window.productionManager.getOpcionesFormulario) {
+                    try {
+                        const resultado = await window.productionManager.getOpcionesFormulario();
+                        if (resultado && resultado.opciones) {
+                            opciones = resultado.opciones.map(opcion => ({
+                                ...opcion,
+                                label: opcion.type === 'sector' ? `📦 ${opcion.label}` : `🌳 ${opcion.label}`
+                            }));
+                            console.log('✅ Opciones cargadas desde productionManager:', opciones.length);
+                        }
+                    } catch (error) {
+                        console.warn('⚠️ Error con productionManager:', error);
+                    }
+                }
+                
                 // Método 3: Fallback con opciones de ejemplo
                 if (opciones.length === 0) {
                     opciones = [
-                        { value: 'SECTOR_NORTE', label: 'Sector Norte (Sector completo)', type: 'sector' },
-                        { value: 'SECTOR_SUR', label: 'Sector Sur (Sector completo)', type: 'sector' },
-                        { value: 'SECTOR_ESTE', label: 'Sector Este (Sector completo)', type: 'sector' },
-                        { value: 'ARBOL_001', label: 'Árbol 001 - Sector Norte', type: 'tree' },
-                        { value: 'ARBOL_002', label: 'Árbol 002 - Sector Sur', type: 'tree' },
-                        { value: 'ARBOL_003', label: 'Árbol 003 - Sector Este', type: 'tree' }
+                        { value: 'SECTOR_NORTE', label: '📦 Sector Norte (Sector completo)', type: 'sector' },
+                        { value: 'SECTOR_SUR', label: '📦 Sector Sur (Sector completo)', type: 'sector' },
+                        { value: 'SECTOR_ESTE', label: '📦 Sector Este (Sector completo)', type: 'sector' },
+                        { value: 'ARBOL_001', label: '🌳 Árbol 001 - Sector Norte', type: 'tree' },
+                        { value: 'ARBOL_002', label: '🌳 Árbol 002 - Sector Sur', type: 'tree' },
+                        { value: 'ARBOL_003', label: '🌳 Árbol 003 - Sector Este', type: 'tree' }
                     ];
                     console.log('⚠️ Usando opciones de fallback');
                 }
                 
+                // Ordenar opciones: sectores primero, luego árboles
+                opciones.sort((a, b) => {
+                    if (a.type === 'sector' && b.type === 'tree') return -1;
+                    if (a.type === 'tree' && b.type === 'sector') return 1;
+                    return a.label.localeCompare(b.label);
+                });
+                
                 // Actualizar todos los selects
                 const selects = [
-                    'arbolRapido',
-                    'arbolCompleto', 
-                    'ubicacionCalidad'
+                    { id: 'arbolRapido', placeholder: 'Seleccionar ubicación...' },
+                    { id: 'arbolCompleto', placeholder: 'Seleccionar ubicación...' },
+                    { id: 'ubicacionCalidad', placeholder: 'Seleccionar ubicación para análisis...' }
                 ];
                 
-                selects.forEach(selectId => {
-                    const select = document.getElementById(selectId);
+                selects.forEach(selectConfig => {
+                    const select = document.getElementById(selectConfig.id);
                     if (select) {
                         const valorActual = select.value;
-                        select.innerHTML = '<option value="">Seleccionar ubicación...</option>';
+                        select.innerHTML = `<option value="">${selectConfig.placeholder}</option>`;
                         
                         opciones.forEach(opcion => {
                             const option = document.createElement('option');
@@ -1802,14 +1829,18 @@
                             select.appendChild(option);
                         });
                         
-                        // Restaurar valor si existía
-                        if (valorActual && [...select.options].some(opt => opt.value === valorActual)) {
+                        // Restaurar valor si existía y sigue siendo válido
+                        if (valorActual && opciones.some(opt => opt.value === valorActual)) {
                             select.value = valorActual;
                         }
                         
-                        console.log(`✅ Select ${selectId} actualizado con ${opciones.length} opciones`);
+                        console.log(`✅ Select ${selectConfig.id} actualizado con ${opciones.length} opciones`);
                     }
                 });
+                
+                if (opciones.length > 0) {
+                    showNotification(`${opciones.length} ubicaciones cargadas correctamente`, 'success');
+                }
                 
             } catch (error) {
                 console.error('❌ Error actualizando opciones:', error);
@@ -1817,7 +1848,7 @@
             }
         }
 
-        // MEJORAR FUNCIÓN DE ACCIÓN RÁPIDA
+        // FUNCIÓN CORREGIDA DE ACCIÓN RÁPIDA 
         async function accionRapida(accion) {
             switch (accion) {
                 case 'nuevo-corte':
@@ -1825,15 +1856,26 @@
                     break;
                     
                 case 'registro-completo':
+                    // CORREGIDO: Abrir el modal del registro completo
                     document.getElementById('modalRegistroCompleto').classList.add('show');
+                    
                     // Establecer fecha y hora actual
                     const ahora = new Date();
                     const fechaHora = ahora.toISOString().slice(0, 16);
-                    document.getElementById('fechaCompleta').value = fechaHora;
+                    const fechaCompletaInput = document.getElementById('fechaCompleta');
+                    if (fechaCompletaInput) {
+                        fechaCompletaInput.value = fechaHora;
+                    }
+                    
+                    // Asegurar que las opciones estén cargadas
+                    await updateFormOptions();
+                    
+                    showNotification('Formulario de registro completo abierto', 'info');
                     break;
                     
                 case 'control-calidad':
                     document.getElementById('modalControlCalidad').classList.add('show');
+                    await updateFormOptions(); // Asegurar opciones cargadas
                     break;
                     
                 case 'planificar-cosecha':
@@ -1858,6 +1900,29 @@
                 default:
                     showNotification(`Función ${accion} disponible`, 'info');
             }
+        }
+
+        // CONFIGURAR LISTENERS DE FORMULARIOS MEJORADO
+        function setupEventListeners() {
+            // Botones principales
+            const btnNuevoCorte = document.getElementById('btnNuevoCorte');
+            const btnNuevoRegistro = document.getElementById('btnNuevoRegistro');
+            const btnExportarDatos = document.getElementById('btnExportarDatos');
+            
+            if (btnNuevoCorte) btnNuevoCorte.addEventListener('click', () => accionRapida('nuevo-corte'));
+            if (btnNuevoRegistro) btnNuevoRegistro.addEventListener('click', () => accionRapida('registro-completo')); // CORREGIDO
+            if (btnExportarDatos) btnExportarDatos.addEventListener('click', exportarDatos);
+            
+            // Formularios
+            setupFormListeners();
+            
+            // Eventos del sistema
+            window.addEventListener('productionManagerReady', handleProductionManagerReady);
+            window.addEventListener('treeUpdate', handleTreeUpdate);
+            window.addEventListener('qualityControlCompleted', handleQualityControlCompleted);
+            window.addEventListener('harvestPlanReady', handleHarvestPlanReady);
+            
+            console.log('✅ Event listeners configurados');
         }
 
         // AGREGAR PROCESAMIENTO DEL FORMULARIO COMPLETO
@@ -1899,11 +1964,12 @@
             }
         }
 
-        // PROCESAMIENTO DEL REGISTRO COMPLETO
+        // PROCESAMIENTO MEJORADO DEL REGISTRO COMPLETO
         async function procesarRegistroCompleto(event) {
             try {
-                showNotification('Guardando registro completo...', 'info');
+                showNotification('Procesando registro completo...', 'info');
                 
+                // Recopilar todos los datos del formulario
                 const datos = {
                     fecha: document.getElementById('fechaCompleta').value,
                     arbolId: document.getElementById('arbolCompleto').value,
@@ -1925,57 +1991,129 @@
                     observaciones: document.getElementById('observacionesCompletas').value || ''
                 };
                 
-                // Validaciones
+                console.log('📋 Datos del formulario completo:', datos);
+                
+                // VALIDACIONES DETALLADAS
+                const errores = [];
+                
+                if (!datos.fecha) {
+                    errores.push('La fecha es obligatoria');
+                }
+                
                 if (!datos.arbolId) {
-                    showNotification('Selecciona un árbol o sector', 'warning');
-                    return;
+                    errores.push('Debe seleccionar un árbol o sector');
                 }
                 
                 if (!datos.responsable) {
-                    showNotification('Selecciona un responsable', 'warning');
-                    return;
+                    errores.push('Debe seleccionar un responsable');
                 }
                 
                 if (!datos.tipo) {
-                    showNotification('Selecciona el tipo de cosecha', 'warning');
-                    return;
+                    errores.push('Debe seleccionar el tipo de cosecha');
                 }
                 
                 if (datos.cantidad <= 0) {
-                    showNotification('La cantidad debe ser mayor a 0', 'warning');
-                    return;
+                    errores.push('La cantidad debe ser mayor a 0 kg');
                 }
                 
-                // Validar que los calibres sumen 100% o sean todos 0
+                if (datos.calidad < 0 || datos.calidad > 100) {
+                    errores.push('La calidad debe estar entre 0% y 100%');
+                }
+                
+                if (datos.merma < 0 || datos.merma > 100) {
+                    errores.push('La merma debe estar entre 0% y 100%');
+                }
+                
+                // Validar calibres si están especificados
                 const totalCalibre = datos.calibres.grande + datos.calibres.mediano + datos.calibres.pequeno;
                 if (totalCalibre > 0 && Math.abs(totalCalibre - 100) > 0.1) {
-                    showNotification('Los calibres deben sumar 100%', 'warning');
+                    errores.push('Los calibres deben sumar exactamente 100%');
+                }
+                
+                // Mostrar errores si los hay
+                if (errores.length > 0) {
+                    showNotification(`Errores en el formulario:\n• ${errores.join('\n• ')}`, 'error');
                     return;
                 }
                 
+                // PROCESAR EL REGISTRO
+                showNotification('Guardando registro completo...', 'info');
+                
                 if (window.productionManager && window.productionManager.registrarProduccionCompleta) {
-                    const resultado = await window.productionManager.registrarProduccionCompleta(datos);
-                    
-                    showNotification('Registro completo guardado correctamente', 'success');
-                    
-                    // Actualizar datos
-                    await updateKPIs();
-                    await updateTimeline();
-                    await updateCharts('semana');
-                    
-                    console.log('✅ Registro completo guardado:', resultado);
+                    try {
+                        const resultado = await window.productionManager.registrarProduccionCompleta(datos);
+                        
+                        showNotification('✅ Registro completo guardado exitosamente', 'success');
+                        console.log('✅ Resultado del registro completo:', resultado);
+                        
+                        // Mostrar resumen del registro
+                        const resumen = `
+Registro guardado exitosamente:
+• Cantidad: ${datos.cantidad} kg (${datos.unidades} unidades)
+• Ubicación: ${getSelectedLocationName()}
+• Responsable: ${getResponsableName(datos.responsable)}
+• Tipo: ${datos.tipo}
+• Calidad: ${datos.calidad}%
+${datos.ubicacion.lat ? `• GPS: ${datos.ubicacion.lat.toFixed(4)}, ${datos.ubicacion.lng.toFixed(4)}` : ''}
+                        `;
+                        
+                        alert(resumen.trim());
+                        
+                    } catch (error) {
+                        console.error('❌ Error en productionManager:', error);
+                        showNotification('Error guardando en el sistema: ' + error.message, 'error');
+                        return;
+                    }
                 } else {
-                    showNotification('Registro completo guardado (modo demo)', 'info');
+                    // Modo demo - simular guardado exitoso
+                    showNotification('✅ Registro completo guardado (modo demo)', 'success');
+                    console.log('📝 Registro completo (modo demo):', datos);
                 }
                 
-                // Cerrar modal y limpiar
+                // ACTUALIZAR LA INTERFAZ
+                try {
+                    await Promise.all([
+                        updateKPIs(),
+                        updateTimeline(), 
+                        updateCharts('semana'),
+                        updatePredictions()
+                    ]);
+                    console.log('✅ Interfaz actualizada después del registro');
+                } catch (error) {
+                    console.warn('⚠️ Error actualizando interfaz:', error);
+                }
+                
+                // CERRAR MODAL Y LIMPIAR FORMULARIO
                 cerrarModal('modalRegistroCompleto');
                 document.getElementById('formRegistroCompleto').reset();
                 
+                // Limpiar campos GPS
+                document.getElementById('latitudCompleta').value = '';
+                document.getElementById('longitudCompleta').value = '';
+                document.getElementById('gpsStatus').textContent = 'Presiona \'Capturar GPS\' para obtener ubicación actual';
+                document.getElementById('gpsStatus').style.color = '#6b7280';
+                
+                console.log('✅ Registro completo procesado exitosamente');
+                
             } catch (error) {
-                console.error('❌ Error guardando registro completo:', error);
-                showNotification('Error: ' + error.message, 'error');
+                console.error('❌ Error procesando registro completo:', error);
+                showNotification('Error procesando el registro: ' + error.message, 'error');
             }
+        }
+        
+        // FUNCIONES AUXILIARES PARA EL REGISTRO COMPLETO
+        function getSelectedLocationName() {
+            const select = document.getElementById('arbolCompleto');
+            return select.selectedOptions[0]?.textContent || 'Ubicación no especificada';
+        }
+        
+        function getResponsableName(responsableId) {
+            const responsables = {
+                'juan_perez': 'Juan Pérez',
+                'maria_gonzalez': 'María González', 
+                'carlos_lopez': 'Carlos López'
+            };
+            return responsables[responsableId] || responsableId;
         }
 
         // CARGAR DATOS CON MEJOR MANEJO DE ERRORES  
