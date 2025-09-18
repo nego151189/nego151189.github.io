@@ -163,28 +163,15 @@ async function loadExpensesFromFirebase(filters = {}) {
       throw new Error('Firebase no está inicializado');
     }
     
+    // Consulta simple sin índices compuestos
     let query = window.db.collection(firebaseDataManager.collections.expenses)
-      .where('fincaId', '==', 'finca_la_herradura')
-      .where('active', '==', true);
+      .where('fincaId', '==', 'finca_la_herradura');
     
-    // Aplicar filtros
-    if (filters.category) {
-      query = query.where('category', '==', filters.category);
-    }
-    if (filters.status) {
-      query = query.where('status', '==', filters.status);
-    }
-    if (filters.startDate && filters.endDate) {
-      query = query.where('date', '>=', filters.startDate)
-        .where('date', '<=', filters.endDate);
-    }
-    
-    // Ordenar por fecha
-    query = query.orderBy('createdAt', 'desc');
-    
-    // Limitar resultados si se especifica
+    // Limitar resultados
     if (filters.limit) {
       query = query.limit(filters.limit);
+    } else {
+      query = query.limit(50); // Límite por defecto
     }
     
     const snapshot = await query.get();
@@ -192,14 +179,43 @@ async function loadExpensesFromFirebase(filters = {}) {
     
     snapshot.forEach(doc => {
       const data = doc.data();
-      const expense = {
-        id: doc.id,
-        ...data,
-        // Convertir timestamps de Firebase a fechas
-        createdAt: data.createdAt ? data.createdAt.toDate().toISOString() : new Date().toISOString(),
-        updatedAt: data.updatedAt ? data.updatedAt.toDate().toISOString() : new Date().toISOString()
-      };
-      expenses.push(expense);
+      // Filtrar solo gastos activos en el cliente
+      if (data.active === true) {
+        const expense = {
+          id: doc.id,
+          ...data,
+          // Convertir timestamps de Firebase a fechas
+          createdAt: data.createdAt ? data.createdAt.toDate().toISOString() : new Date().toISOString(),
+          updatedAt: data.updatedAt ? data.updatedAt.toDate().toISOString() : new Date().toISOString()
+        };
+        
+        // Aplicar filtros adicionales en el cliente
+        let includeExpense = true;
+        
+        if (filters.category && expense.category !== filters.category) {
+          includeExpense = false;
+        }
+        if (filters.status && expense.status !== filters.status) {
+          includeExpense = false;
+        }
+        if (filters.startDate && expense.date < filters.startDate) {
+          includeExpense = false;
+        }
+        if (filters.endDate && expense.date > filters.endDate) {
+          includeExpense = false;
+        }
+        
+        if (includeExpense) {
+          expenses.push(expense);
+        }
+      }
+    });
+    
+    // Ordenar por fecha en el cliente
+    expenses.sort((a, b) => {
+      const dateA = new Date(a.createdAt || a.date);
+      const dateB = new Date(b.createdAt || b.date);
+      return dateB - dateA;
     });
     
     console.log(`Cargados ${expenses.length} gastos desde Firebase`);
@@ -236,45 +252,48 @@ async function calculateStatisticsFromFirebase() {
     const currentMonth = new Date().getMonth();
     const currentYear = new Date().getFullYear();
     
-    // Obtener gastos del mes actual
-    const monthlyQuery = await window.db.collection(firebaseDataManager.collections.expenses)
+    // Obtener todos los gastos y filtrar en el cliente para evitar índices compuestos
+    const allExpensesQuery = await window.db.collection(firebaseDataManager.collections.expenses)
       .where('fincaId', '==', 'finca_la_herradura')
-      .where('active', '==', true)
-      .where('month', '==', currentMonth)
-      .where('year', '==', currentYear)
-      .get();
-    
-    // Obtener gastos del año actual
-    const yearlyQuery = await window.db.collection(firebaseDataManager.collections.expenses)
-      .where('fincaId', '==', 'finca_la_herradura')
-      .where('active', '==', true)
-      .where('year', '==', currentYear)
+      .limit(200) // Límite razonable
       .get();
     
     let monthlyTotal = 0;
     let yearlyTotal = 0;
     const categoriesBreakdown = {};
     
-    // Procesar gastos mensuales
-    monthlyQuery.forEach(doc => {
+    // Procesar gastos filtrando en el cliente
+    allExpensesQuery.forEach(doc => {
       const expense = doc.data();
-      monthlyTotal += expense.amount || 0;
       
-      if (!categoriesBreakdown[expense.category]) {
-        categoriesBreakdown[expense.category] = {
-          total: 0,
-          count: 0,
-          category: expense.category
-        };
+      // Solo gastos activos
+      if (expense.active !== true) return;
+      
+      const amount = expense.amount || 0;
+      const expenseMonth = expense.month;
+      const expenseYear = expense.year;
+      
+      // Gastos del año actual
+      if (expenseYear === currentYear) {
+        yearlyTotal += amount;
+        
+        // Gastos del mes actual
+        if (expenseMonth === currentMonth) {
+          monthlyTotal += amount;
+          
+          // Breakdown por categorías (solo mes actual)
+          const category = expense.category;
+          if (!categoriesBreakdown[category]) {
+            categoriesBreakdown[category] = {
+              total: 0,
+              count: 0,
+              category: category
+            };
+          }
+          categoriesBreakdown[category].total += amount;
+          categoriesBreakdown[category].count += 1;
+        }
       }
-      categoriesBreakdown[expense.category].total += expense.amount || 0;
-      categoriesBreakdown[expense.category].count += 1;
-    });
-    
-    // Procesar gastos anuales
-    yearlyQuery.forEach(doc => {
-      const expense = doc.data();
-      yearlyTotal += expense.amount || 0;
     });
     
     // Calcular porcentajes
