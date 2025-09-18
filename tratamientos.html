@@ -3,11 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gestión de Ventas - Finca La Herradura</title>
+    <title>Sistema de Tratamientos - Finca La Herradura</title>
     
     <!-- Meta tags -->
-    <meta name="description" content="Control de ventas inteligente con análisis de clientes, facturación y predicciones de ingresos">
-    <meta name="keywords" content="ventas, clientes, facturación, ingresos, análisis comercial, predicciones">
+    <meta name="description" content="Gestión inteligente de tratamientos fitosanitarios con IA y análisis predictivo">
+    <meta name="keywords" content="tratamientos, fitosanitarios, enfermedades, plagas, IA, agricultura">
     
     <!-- Favicon y PWA -->
     <link rel="icon" type="image/x-icon" href="/icons/favicon.ico">
@@ -24,187 +24,7 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
     
     <style>
-        /* Asegurar que el contenido se vea bien en móviles */
-        @media (max-width: 768px) {
-            .main-content-wrapper {
-                padding: 1rem;
-                margin-left: 0 !important;
-                width: 100%;
-                padding-top: 80px;
-            }
-            
-            .ventas-header {
-                flex-direction: column;
-                gap: 1rem;
-                margin-bottom: 1rem;
-            }
-            
-            .header-actions {
-                display: flex;
-                flex-wrap: wrap;
-                gap: 0.5rem;
-                width: 100%;
-            }
-            
-            .metricas-ventas {
-                grid-template-columns: 1fr;
-                gap: 1rem;
-            }
-            
-            .contenido-principal {
-                grid-template-columns: 1fr;
-                gap: 1rem;
-            }
-            
-            .filtros-grid {
-                grid-template-columns: 1fr;
-            }
-            
-            .form-venta {
-                grid-template-columns: 1fr;
-            }
-            
-            .acciones-ventas {
-                flex-direction: column;
-            }
-            
-            .accion-venta {
-                min-width: 100%;
-            }
-            
-            /* Modal responsive */
-            .modal {
-                width: 95%;
-                max-width: 95%;
-                margin: 1rem;
-                max-height: 85vh;
-            }
-            
-            .modal-header {
-                padding: 1rem;
-                flex-direction: column;
-                align-items: flex-start;
-                gap: 1rem;
-            }
-            
-            .modal-title {
-                font-size: 1.125rem;
-            }
-            
-            .modal-body {
-                padding: 1rem;
-            }
-            
-            /* Formulario en columna única */
-            .form-sections .form-section {
-                margin-bottom: 1.5rem;
-            }
-            
-            .form-section > div[style*="grid"] {
-                display: grid !important;
-                grid-template-columns: 1fr !important;
-                gap: 1rem !important;
-            }
-            
-            /* Inputs más grandes en móvil */
-            .form-input {
-                padding: 1rem;
-                font-size: 1rem;
-                min-height: 50px;
-            }
-            
-            /* Títulos de sección */
-            .section-title {
-                font-size: 1rem;
-                margin-bottom: 1rem;
-            }
-            
-            /* Botones del formulario */
-            .modal-body div[style*="flex"][style*="justify-content: flex-end"] {
-                display: flex !important;
-                flex-direction: column !important;
-                gap: 1rem !important;
-                margin-top: 2rem !important;
-            }
-            
-            .modal-body .btn {
-                width: 100%;
-                padding: 1rem;
-                font-size: 1rem;
-                justify-content: center;
-            }
-            
-            .grafico-header {
-                flex-direction: column;
-                align-items: flex-start;
-                gap: 1rem;
-            }
-            
-            .periodo-selector {
-                width: 100%;
-                justify-content: center;
-            }
-            
-            .periodo-btn {
-                flex: 1;
-                text-align: center;
-            }
-            
-            .grafico-card {
-                padding: 1.5rem;
-                margin-bottom: 1rem;
-            }
-            
-            .canvas-container {
-                height: 300px;
-            }
-            
-            .grafico-card {
-                padding: 1rem;
-                max-height: 500px;
-            }
-        }
-
-        /* Mejorar formulario en general */
-        .form-sections {
-            display: flex;
-            flex-direction: column;
-            gap: 2rem;
-        }
-
-        .form-section {
-            background: #f8f9fa;
-            padding: 1.5rem;
-            border-radius: 12px;
-            border: 1px solid #dee2e6;
-        }
-
-        .section-title {
-            font-size: 1.125rem;
-            font-weight: 600;
-            color: #2d5016;
-            margin-bottom: 1rem;
-            display: flex;
-            align-items: center;
-            gap: 0.75rem;
-            border-bottom: 2px solid #e9ecef;
-            padding-bottom: 0.5rem;
-        }
-
-        /* Ajustar espaciado de campos */
-        .form-group {
-            margin-bottom: 1rem;
-        }
-
-        .form-label {
-            display: block;
-            font-weight: 600;
-            color: #495057;
-            margin-bottom: 0.5rem;
-            font-size: 0.9rem;
-        }
-
-        .ventas-header {
+        .tratamientos-header {
             display: flex;
             justify-content: space-between;
             align-items: center;
@@ -222,7 +42,7 @@
         .title-icon {
             width: 60px;
             height: 60px;
-            background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%);
+            background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
             border-radius: 16px;
             display: flex;
             align-items: center;
@@ -231,392 +51,123 @@
             font-size: 1.5rem;
         }
 
-        .estado-ventas {
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-            padding: 0.75rem 1.5rem;
+        .estado-sistema {
+            background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
+            color: white;
             border-radius: 20px;
-            font-weight: 600;
-        }
-
-        .estado-ventas.excelente {
-            background: rgba(34, 197, 94, 0.2);
-            color: #16a34a;
-            border: 1px solid rgba(34, 197, 94, 0.3);
-        }
-
-        .estado-ventas.bueno {
-            background: rgba(245, 158, 11, 0.2);
-            color: #d97706;
-            border: 1px solid rgba(245, 158, 11, 0.3);
-        }
-
-        .estado-ventas.bajo {
-            background: rgba(239, 68, 68, 0.2);
-            color: #dc2626;
-            border: 1px solid rgba(239, 68, 68, 0.3);
-        }
-
-        .metricas-ventas {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-            gap: 1.5rem;
+            padding: 2rem;
             margin-bottom: 2rem;
-        }
-
-        .metrica-card {
-            background: var(--bg-card);
-            border-radius: 16px;
-            padding: 1.5rem;
             position: relative;
             overflow: hidden;
-            transition: transform 0.3s ease;
         }
 
-        .metrica-card:hover {
-            transform: translateY(-2px);
-        }
-
-        .metrica-card::before {
+        .estado-sistema::before {
             content: '';
             position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            height: 4px;
+            top: -50%;
+            right: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(255, 255, 255, 0.1) 0%, transparent 70%);
+            animation: float 8s ease-in-out infinite;
         }
 
-        .metrica-card.ingresos::before {
-            background: linear-gradient(90deg, #22c55e, #16a34a);
-        }
-
-        .metrica-card.cantidad::before {
-            background: linear-gradient(90deg, #3b82f6, #1d4ed8);
-        }
-
-        .metrica-card.promedio::before {
-            background: linear-gradient(90deg, #f59e0b, #d97706);
-        }
-
-        .metrica-card.margen::before {
-            background: linear-gradient(90deg, #8b5cf6, #7c3aed);
-        }
-
-        .metrica-header {
+        .sistema-header {
             display: flex;
             justify-content: space-between;
-            align-items: flex-start;
-            margin-bottom: 1rem;
-        }
-
-        .metrica-icon {
-            width: 50px;
-            height: 50px;
-            border-radius: 12px;
-            display: flex;
             align-items: center;
-            justify-content: center;
-            color: white;
-            font-size: 1.25rem;
+            margin-bottom: 2rem;
+            position: relative;
+            z-index: 1;
         }
 
-        .metrica-tendencia {
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-            font-size: 0.875rem;
-            font-weight: 600;
-        }
-
-        .metrica-tendencia.positiva {
-            color: #22c55e;
-        }
-
-        .metrica-tendencia.negativa {
-            color: #ef4444;
-        }
-
-        .metrica-valor {
+        .sistema-titulo {
             font-size: 2rem;
             font-weight: 700;
-            color: var(--text-primary);
-            margin-bottom: 0.5rem;
-        }
-
-        .metrica-label {
-            color: var(--text-secondary);
-            font-size: 0.875rem;
-        }
-
-        .metrica-meta {
-            margin-top: 0.5rem;
-            font-size: 0.75rem;
-            color: var(--text-secondary);
-        }
-
-        .oportunidades-venta {
-            background: linear-gradient(135deg, rgba(34, 197, 94, 0.1), rgba(22, 163, 74, 0.1));
-            border: 1px solid rgba(34, 197, 94, 0.2);
-            border-radius: 16px;
-            padding: 1.5rem;
-            margin-bottom: 2rem;
-        }
-
-        .oportunidad-item {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 1rem;
-            margin-bottom: 1rem;
-            background: rgba(255, 255, 255, 0.05);
-            border-radius: 12px;
-            transition: all 0.3s ease;
-        }
-
-        .oportunidad-item:hover {
-            background: rgba(255, 255, 255, 0.1);
-            transform: translateY(-1px);
-        }
-
-        .oportunidad-info {
+            margin: 0;
             display: flex;
             align-items: center;
             gap: 1rem;
         }
 
-        .oportunidad-icon {
-            width: 40px;
-            height: 40px;
-            background: var(--success);
-            border-radius: 8px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: white;
-        }
-
-        .filtros-ventas {
-            background: var(--bg-card);
-            border-radius: 16px;
-            padding: 1.5rem;
-            margin-bottom: 2rem;
-        }
-
-        .filtros-grid {
+        .alertas-tratamientos {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
             gap: 1rem;
-            align-items: end;
-        }
-
-        .acciones-ventas {
-            display: flex;
-            gap: 1rem;
-            margin-bottom: 2rem;
-            flex-wrap: wrap;
-        }
-
-        .accion-venta {
-            background: var(--bg-card);
-            border-radius: 12px;
-            padding: 1rem 1.5rem;
-            display: flex;
-            align-items: center;
-            gap: 0.75rem;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            border: 2px solid transparent;
-            min-width: 200px;
-        }
-
-        .accion-venta:hover {
-            border-color: var(--primary);
-            transform: translateY(-2px);
-        }
-
-        .accion-icon {
-            width: 40px;
-            height: 40px;
-            border-radius: 8px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: white;
-            font-size: 1rem;
-        }
-
-        .contenido-principal {
-            display: grid;
-            grid-template-columns: 2fr 1fr;
-            gap: 2rem;
-            margin-bottom: 2rem;
-        }
-
-        .registro-venta {
-            background: var(--bg-card);
-            border-radius: 16px;
-            padding: 2rem;
-            margin-bottom: 2rem;
-        }
-
-        .form-venta {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 1rem;
-            align-items: end;
-        }
-
-        .graficos-ventas {
-            display: grid;
-            gap: 2rem;
-        }
-
-        .grafico-card {
-            background: #ffffff;
-            border-radius: 16px;
-            padding: 2rem;
-            border: 2px solid #e9ecef;
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
-            margin-bottom: 2rem;
-            overflow: hidden;
-            max-height: 600px;
-        }
-
-        .grafico-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 1.5rem;
-            flex-wrap: wrap;
-            gap: 1rem;
-        }
-
-        .grafico-titulo {
-            font-size: 1.25rem;
-            font-weight: 600;
-            color: #2d5016;
-            display: flex;
-            align-items: center;
-            gap: 0.75rem;
-        }
-
-        .periodo-selector {
-            display: flex;
-            gap: 0.5rem;
-            background: #f8f9fa;
-            padding: 0.5rem;
-            border-radius: 25px;
-            border: 1px solid #dee2e6;
-        }
-
-        .periodo-btn {
-            padding: 0.5rem 1rem;
-            border: none;
-            background: transparent;
-            border-radius: 20px;
-            cursor: pointer;
-            font-size: 0.875rem;
-            font-weight: 500;
-            transition: all 0.3s ease;
-            color: #6c757d;
-            min-width: 80px;
-        }
-
-        .periodo-btn:hover {
-            background: #e9ecef;
-            color: #495057;
-        }
-
-        .periodo-btn.active {
-            background: #2d5016;
-            color: white;
-            box-shadow: 0 2px 8px rgba(45, 80, 22, 0.3);
-        }
-
-        .canvas-container {
             position: relative;
-            height: 400px;
-            width: 100%;
-            margin-top: 1rem;
+            z-index: 1;
         }
 
-        .canvas-container canvas {
-            width: 100% !important;
-            height: 100% !important;
-        }
-
-        .clientes-recientes {
-            background: var(--bg-card);
-            border-radius: 16px;
-            padding: 1.5rem;
-        }
-
-        .cliente-item {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 1rem;
-            margin-bottom: 1rem;
-            background: rgba(255, 255, 255, 0.05);
-            border-radius: 12px;
-            transition: all 0.3s ease;
-        }
-
-        .cliente-item:hover {
-            background: rgba(255, 255, 255, 0.1);
-            transform: translateX(4px);
-        }
-
-        .cliente-info {
+        .alerta-item {
             display: flex;
             align-items: center;
             gap: 1rem;
+            padding: 1rem;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
         }
 
-        .cliente-avatar {
+        .alerta-icon {
             width: 40px;
             height: 40px;
-            background: var(--primary);
+            background: rgba(255, 255, 255, 0.2);
             border-radius: 50%;
             display: flex;
             align-items: center;
             justify-content: center;
-            color: white;
-            font-weight: 600;
+            font-size: 1.25rem;
         }
 
-        .cliente-datos {
-            display: flex;
-            flex-direction: column;
-            align-items: flex-end;
+        .control-panel {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
         }
 
-        .cliente-total {
-            font-weight: 700;
-            color: var(--success);
-        }
-
-        .cliente-fecha {
-            font-size: 0.75rem;
-            color: var(--text-secondary);
-        }
-
-        .tabla-ventas {
+        .tratamiento-card {
             background: var(--bg-card);
             border-radius: 16px;
             padding: 1.5rem;
-            margin-top: 2rem;
+            position: relative;
+            border-left: 4px solid transparent;
+            transition: all 0.3s ease;
+            cursor: pointer;
         }
 
-        .tabla-header {
+        .tratamiento-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+        }
+
+        .tratamiento-card.urgente {
+            border-left-color: #ef4444;
+        }
+
+        .tratamiento-card.programado {
+            border-left-color: #f59e0b;
+        }
+
+        .tratamiento-card.completado {
+            border-left-color: #22c55e;
+        }
+
+        .tratamiento-header {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 1.5rem;
+            margin-bottom: 1rem;
         }
 
-        .estado-venta-badge {
+        .tratamiento-titulo {
+            font-size: 1.125rem;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .tratamiento-estado {
             padding: 0.25rem 0.75rem;
             border-radius: 20px;
             font-size: 0.75rem;
@@ -624,237 +175,195 @@
             text-transform: uppercase;
         }
 
-        .estado-venta-badge.completada {
-            background: rgba(34, 197, 94, 0.2);
-            color: #16a34a;
-        }
-
-        .estado-venta-badge.pendiente {
-            background: rgba(245, 158, 11, 0.2);
-            color: #d97706;
-        }
-
-        .estado-venta-badge.cancelada {
+        .estado-urgente {
             background: rgba(239, 68, 68, 0.2);
-            color: #dc2626;
+            color: #ef4444;
         }
 
-        .metodo-pago-badge {
-            padding: 0.25rem 0.75rem;
-            border-radius: 20px;
-            font-size: 0.75rem;
-            font-weight: 600;
-        }
-
-        .metodo-pago-badge.efectivo {
-            background: rgba(34, 197, 94, 0.2);
-            color: #16a34a;
-        }
-
-        .metodo-pago-badge.transferencia {
-            background: rgba(59, 130, 246, 0.2);
-            color: #2563eb;
-        }
-
-        .metodo-pago-badge.credito {
+        .estado-programado {
             background: rgba(245, 158, 11, 0.2);
-            color: #d97706;
+            color: #f59e0b;
         }
 
-        .factura-badge {
-            display: inline-flex;
-            align-items: center;
-            gap: 0.5rem;
-            padding: 0.25rem 0.75rem;
-            background: rgba(139, 92, 246, 0.2);
-            color: #8b5cf6;
-            border-radius: 20px;
-            font-size: 0.75rem;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.3s ease;
+        .estado-completado {
+            background: rgba(34, 197, 94, 0.2);
+            color: #22c55e;
         }
 
-        .factura-badge:hover {
-            background: rgba(139, 92, 246, 0.3);
-        }
-
-        .predicciones-ventas {
-            background: linear-gradient(135deg, rgba(139, 92, 246, 0.1), rgba(167, 139, 250, 0.1));
-            border: 1px solid rgba(139, 92, 246, 0.2);
-            border-radius: 16px;
-            padding: 1.5rem;
-            margin-top: 1.5rem;
-        }
-
-        .ia-header {
-            display: flex;
-            align-items: center;
-            gap: 1rem;
-            margin-bottom: 1.5rem;
-        }
-
-        .ia-icon {
-            width: 50px;
-            height: 50px;
-            background: linear-gradient(135deg, #8b5cf6, #a855f7);
-            border-radius: 12px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: white;
-            font-size: 1.25rem;
-        }
-
-        .prediccion-item {
-            background: rgba(255, 255, 255, 0.05);
-            border-radius: 12px;
-            padding: 1rem;
-            margin-bottom: 1rem;
-        }
-
-        .calculadora-precio {
-            background: var(--bg-card);
-            border-radius: 16px;
-            padding: 1.5rem;
-            margin-bottom: 2rem;
-        }
-
-        .calc-grid {
+        .tratamiento-info {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            grid-template-columns: 1fr 1fr;
             gap: 1rem;
             margin-bottom: 1rem;
         }
 
-        .calc-resultado {
-            background: rgba(34, 197, 94, 0.1);
-            border: 1px solid rgba(34, 197, 94, 0.3);
-            border-radius: 12px;
-            padding: 1rem;
+        .info-item {
             text-align: center;
         }
 
-        .calc-valor {
-            font-size: 1.5rem;
+        .info-valor {
+            font-size: 1.125rem;
             font-weight: 700;
-            color: var(--success);
+            color: var(--text-primary);
         }
 
-        /* Botones mejorados */
-        .btn {
-            display: inline-flex;
-            align-items: center;
-            gap: 0.5rem;
-            padding: 0.75rem 1.5rem;
-            border: none;
-            border-radius: 8px;
-            font-weight: 600;
-            font-size: 0.9rem;
-            text-decoration: none;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            min-height: 44px;
+        .info-label {
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+            text-transform: uppercase;
         }
 
-        .btn-primary {
-            background: #28a745;
-            color: white;
-            border: 2px solid #28a745;
-        }
-
-        .btn-primary:hover {
-            background: #218838;
-            transform: translateY(-2px);
-            box-shadow: 0 4px 15px rgba(40, 167, 69, 0.3);
-        }
-
-        .btn-success {
-            background: #28a745;
-            color: white;
-            border: 2px solid #28a745;
-        }
-
-        .btn-success:hover {
-            background: #218838;
-            transform: translateY(-2px);
-            box-shadow: 0 4px 15px rgba(40, 167, 69, 0.3);
-        }
-
-        .btn-secondary {
-            background: #6c757d;
-            color: white;
-            border: 2px solid #6c757d;
-        }
-
-        .btn-secondary:hover {
-            background: #545b62;
-            transform: translateY(-2px);
-        }
-
-        .btn-sm {
-            padding: 0.375rem 0.75rem;
-            font-size: 0.8rem;
-            border-radius: 6px;
-            min-width: 40px;
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .btn-sm i {
-            font-size: 0.9rem;
-        }
-
-        /* Sistema de notificaciones */
-        .notification-container {
-            position: fixed;
-            top: 1rem;
-            right: 1rem;
-            z-index: 9999;
-            pointer-events: none;
-        }
-
-        .notification {
-            background: white;
-            border-radius: 12px;
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
-            padding: 1rem 1.5rem;
-            margin-bottom: 1rem;
+        .tratamiento-ubicacion {
             display: flex;
             align-items: center;
+            gap: 0.5rem;
+            margin-bottom: 1rem;
+            color: var(--text-secondary);
+            font-size: 0.875rem;
+        }
+
+        .tratamiento-acciones {
+            display: flex;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+        }
+
+        .btn-control {
+            flex: 1;
+            padding: 0.5rem 1rem;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 0.875rem;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .btn-aplicar {
+            background: #22c55e;
+            color: white;
+        }
+
+        .btn-aplicar:hover {
+            background: #16a34a;
+        }
+
+        .btn-editar {
+            background: #f59e0b;
+            color: white;
+        }
+
+        .btn-editar:hover {
+            background: #d97706;
+        }
+
+        .btn-historial {
+            background: #3b82f6;
+            color: white;
+        }
+
+        .btn-historial:hover {
+            background: #2563eb;
+        }
+
+        .contenido-principal {
+            display: grid;
+            grid-template-columns: 1fr 350px;
+            gap: 2rem;
+            margin-bottom: 2rem;
+        }
+
+        .lista-tratamientos {
+            background: var(--bg-card);
+            border-radius: 16px;
+            padding: 1.5rem;
+        }
+
+        .sidebar-tratamientos {
+            display: grid;
+            gap: 1.5rem;
+        }
+
+        .productos-disponibles {
+            background: var(--bg-card);
+            border-radius: 16px;
+            padding: 1.5rem;
+        }
+
+        .producto-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem;
+            margin-bottom: 1rem;
+            background: var(--bg-secondary);
+            border-radius: 12px;
+            border-left: 4px solid #22c55e;
+        }
+
+        .producto-info {
+            flex: 1;
+        }
+
+        .producto-nombre {
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 0.25rem;
+        }
+
+        .producto-tipo {
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+        }
+
+        .producto-stock {
+            text-align: right;
+        }
+
+        .stock-cantidad {
+            font-weight: 700;
+            color: var(--text-primary);
+        }
+
+        .stock-unidad {
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+        }
+
+        .enfermedades-detectadas {
+            background: var(--bg-card);
+            border-radius: 16px;
+            padding: 1.5rem;
+        }
+
+        .enfermedad-item {
+            display: flex;
+            align-items: flex-start;
             gap: 1rem;
-            min-width: 300px;
-            max-width: 400px;
-            pointer-events: all;
-            transform: translateX(450px);
-            transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.3s ease;
-            border-left: 4px solid;
+            padding: 1rem;
+            margin-bottom: 1rem;
+            border-radius: 12px;
+            border-left: 4px solid transparent;
         }
 
-        .notification.show {
-            transform: translateX(0);
+        .enfermedad-item.critica {
+            background: rgba(239, 68, 68, 0.1);
+            border-left-color: #ef4444;
         }
 
-        .notification.success {
-            border-left-color: #28a745;
+        .enfermedad-item.moderada {
+            background: rgba(245, 158, 11, 0.1);
+            border-left-color: #f59e0b;
         }
 
-        .notification.error {
-            border-left-color: #dc3545;
+        .enfermedad-item.leve {
+            background: rgba(59, 130, 246, 0.1);
+            border-left-color: #3b82f6;
         }
 
-        .notification.warning {
-            border-left-color: #ffc107;
-        }
-
-        .notification.info {
-            border-left-color: #17a2b8;
-        }
-
-        .notification-icon {
-            width: 24px;
-            height: 24px;
+        .enfermedad-icon {
+            width: 32px;
+            height: 32px;
             border-radius: 50%;
             display: flex;
             align-items: center;
@@ -864,108 +373,173 @@
             flex-shrink: 0;
         }
 
-        .notification.success .notification-icon {
-            background: #28a745;
+        .enfermedad-critica .enfermedad-icon {
+            background: #ef4444;
         }
 
-        .notification.error .notification-icon {
-            background: #dc3545;
+        .enfermedad-moderada .enfermedad-icon {
+            background: #f59e0b;
         }
 
-        .notification.warning .notification-icon {
-            background: #ffc107;
+        .enfermedad-leve .enfermedad-icon {
+            background: #3b82f6;
         }
 
-        .notification.info .notification-icon {
-            background: #17a2b8;
-        }
-
-        .notification-content {
+        .enfermedad-contenido {
             flex: 1;
         }
 
-        .notification-title {
+        .enfermedad-nombre {
             font-weight: 600;
-            font-size: 0.9rem;
+            color: var(--text-primary);
             margin-bottom: 0.25rem;
-            color: #2c3e50;
         }
 
-        .notification-message {
-            font-size: 0.8rem;
-            color: #6c757d;
+        .enfermedad-descripcion {
+            font-size: 0.875rem;
+            color: var(--text-secondary);
         }
 
-        .notification-close {
+        .modal-programar {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.7);
+            z-index: 1000;
+            padding: 2rem;
+        }
+
+        .modal-content {
+            background: var(--bg-card);
+            border-radius: 16px;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 2rem;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+        }
+
+        .modal-close {
             background: none;
             border: none;
-            color: #6c757d;
+            font-size: 1.5rem;
             cursor: pointer;
-            font-size: 1.2rem;
-            padding: 0;
-            width: 24px;
-            height: 24px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            border-radius: 50%;
-            transition: all 0.2s ease;
+            color: var(--text-secondary);
         }
 
-        .notification-close:hover {
-            background: #f8f9fa;
-            color: #495057;
+        .form-programar {
+            display: grid;
+            gap: 1rem;
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+        }
+
+        .ubicacion-selector {
+            background: var(--bg-secondary);
+            border-radius: 12px;
+            padding: 1rem;
+        }
+
+        .ubicacion-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            gap: 0.5rem;
+        }
+
+        .ubicacion-item {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.5rem;
+            background: var(--bg-card);
+            border-radius: 6px;
+            font-size: 0.875rem;
+        }
+
+        .graficos-tratamientos {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2rem;
+            margin-bottom: 2rem;
+        }
+
+        .grafico-card {
+            background: var(--bg-card);
+            border-radius: 16px;
+            padding: 1.5rem;
+        }
+
+        .grafico-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+        }
+
+        .grafico-titulo {
+            font-size: 1.125rem;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .historial-tratamientos {
+            background: var(--bg-card);
+            border-radius: 16px;
+            padding: 1.5rem;
+            margin-bottom: 2rem;
         }
 
         @media (max-width: 1024px) {
             .contenido-principal {
                 grid-template-columns: 1fr;
             }
+            
+            .sidebar-tratamientos {
+                order: -1;
+            }
+            
+            .graficos-tratamientos {
+                grid-template-columns: 1fr;
+            }
         }
 
         @media (max-width: 768px) {
-            .ventas-header {
+            .tratamientos-header {
                 flex-direction: column;
                 align-items: stretch;
             }
             
-            .metricas-ventas {
-                grid-template-columns: repeat(2, 1fr);
-            }
-            
-            .acciones-ventas {
-                justify-content: center;
-            }
-            
-            .filtros-grid {
+            .alertas-tratamientos {
                 grid-template-columns: 1fr;
             }
             
-            .form-venta {
+            .control-panel {
                 grid-template-columns: 1fr;
             }
-
-            .btn {
-                padding: 1rem 1.5rem;
-                font-size: 1rem;
-                width: 100%;
-                justify-content: center;
+            
+            .form-row {
+                grid-template-columns: 1fr;
             }
+        }
 
-            .btn-sm {
-                padding: 0.5rem;
-                margin: 0.2rem;
-            }
-
-            .notification-container {
-                left: 1rem;
-                right: 1rem;
-            }
-
-            .notification {
-                min-width: auto;
-                max-width: none;
-            }
+        .chart-container {
+            position: relative;
+            height: 250px;
+            width: 100%;
         }
     </style>
 </head>
@@ -973,395 +547,156 @@
     <!-- Navegación -->
     <nav id="navbar"></nav>
 
-    <!-- Contenedor de notificaciones -->
-    <div class="notification-container" id="notificationContainer"></div>
-
     <!-- Contenido principal -->
     <main class="main-content-wrapper">
         <!-- Header de la página -->
-        <header class="ventas-header">
+        <header class="tratamientos-header">
             <div class="page-title">
                 <div class="title-icon">
-                    <i class="fas fa-shopping-cart"></i>
+                    <i class="fas fa-stethoscope"></i>
                 </div>
                 <div>
-                    <h1>Gestión de Ventas</h1>
-                    <p>Control comercial y análisis de ingresos</p>
+                    <h1>Sistema de Tratamientos</h1>
+                    <p>Gestión inteligente de tratamientos fitosanitarios</p>
                 </div>
             </div>
             
             <div class="header-actions">
-                <div class="estado-ventas excelente" id="estadoVentas">
-                    <i class="fas fa-trending-up"></i>
-                    <span>Ventas en alza</span>
-                </div>
-                
-                <button class="btn btn-success" id="btnNuevaVenta">
-                    <i class="fas fa-plus"></i> Nueva Venta
-                </button>
-                <button class="btn btn-primary" id="btnNuevoCliente">
-                    <i class="fas fa-user-plus"></i> Nuevo Cliente
+                <button class="btn btn-danger" id="btnTratamientoUrgente">
+                    <i class="fas fa-exclamation-triangle"></i> Urgente
                 </button>
                 
-                <button class="btn btn-primary" id="btnGenerarFactura">
-                    <i class="fas fa-file-invoice"></i> Facturar
+                <button class="btn btn-success" id="btnNuevoTratamiento">
+                    <i class="fas fa-plus"></i> Nuevo Tratamiento
                 </button>
                 
-                <button class="btn btn-secondary" id="btnExportarVentas">
-                    <i class="fas fa-download"></i> Exportar
+                <button class="btn btn-primary" id="btnConfiguracion">
+                    <i class="fas fa-cog"></i> Configuración
+                </button>
+                
+                <button class="btn btn-secondary" id="btnReporteTratamientos">
+                    <i class="fas fa-chart-bar"></i> Reportes
                 </button>
             </div>
         </header>
 
-        <!-- Métricas de ventas -->
-        <section class="metricas-ventas">
-            <div class="metrica-card ingresos">
-                <div class="metrica-header">
-                    <div class="metrica-icon" style="background: #22c55e;">
-                        <i class="fas fa-dollar-sign"></i>
-                    </div>
-                    <div class="metrica-tendencia positiva">
-                        <i class="fas fa-arrow-up"></i>
-                        <span>+18%</span>
-                    </div>
-                </div>
-                <div class="metrica-valor" id="ingresosDelMes">Q 0</div>
-                <div class="metrica-label">Ingresos del Mes</div>
-                <div class="metrica-meta">Meta: <span id="metaIngresos">Q 50,000</span></div>
+        <!-- Estado del sistema -->
+        <section class="estado-sistema">
+            <div class="sistema-header">
+                <h2 class="sistema-titulo">
+                    <i class="fas fa-shield-alt"></i>
+                    Estado del Sistema de Tratamientos
+                </h2>
             </div>
             
-            <div class="metrica-card cantidad">
-                <div class="metrica-header">
-                    <div class="metrica-icon" style="background: #3b82f6;">
-                        <i class="fas fa-box"></i>
-                    </div>
-                    <div class="metrica-tendencia positiva">
-                        <i class="fas fa-arrow-up"></i>
-                        <span>+12%</span>
-                    </div>
-                </div>
-                <div class="metrica-valor" id="cantidadVendida">0 kg</div>
-                <div class="metrica-label">Cantidad Vendida</div>
-                <div class="metrica-meta">Objetivo: <span id="objetivoCantidad">4,500 kg</span></div>
-            </div>
-            
-            <div class="metrica-card promedio">
-                <div class="metrica-header">
-                    <div class="metrica-icon" style="background: #f59e0b;">
-                        <i class="fas fa-chart-bar"></i>
-                    </div>
-                    <div class="metrica-tendencia positiva">
-                        <i class="fas fa-arrow-up"></i>
-                        <span>+5%</span>
-                    </div>
-                </div>
-                <div class="metrica-valor" id="precioPromedio">Q 0</div>
-                <div class="metrica-label">Precio Promedio</div>
-                <div class="metrica-meta">Mercado: <span id="precioMercado">Q 12.50</span></div>
-            </div>
-            
-            <div class="metrica-card margen">
-                <div class="metrica-header">
-                    <div class="metrica-icon" style="background: #8b5cf6;">
-                        <i class="fas fa-percentage"></i>
-                    </div>
-                    <div class="metrica-tendencia positiva">
-                        <i class="fas fa-arrow-up"></i>
-                        <span>+2%</span>
-                    </div>
-                </div>
-                <div class="metrica-valor" id="margenGanancia">0%</div>
-                <div class="metrica-label">Margen de Ganancia</div>
-                <div class="metrica-meta">Objetivo: <span id="margenObjetivo">35%</span></div>
+            <div class="alertas-tratamientos" id="alertasTratamientos">
+                <!-- Las alertas se cargarán dinámicamente -->
             </div>
         </section>
 
-        <!-- Oportunidades de venta -->
-        <section class="oportunidades-venta">
-            <h3 style="margin-bottom: 1.5rem;">
-                <i class="fas fa-lightbulb"></i> Oportunidades de Venta
-            </h3>
-            
-            <div id="listaOportunidades">
-                <!-- Se cargarán dinámicamente -->
-            </div>
+        <!-- Panel de control de tratamientos -->
+        <section class="control-panel" id="panelTratamientos">
+            <!-- Los tratamientos se cargarán dinámicamente -->
         </section>
 
-        <!-- Filtros -->
-        <section class="filtros-ventas">
-            <h3 style="margin-bottom: 1rem;">
-                <i class="fas fa-filter"></i> Filtros de Ventas
-            </h3>
-            
-            <div class="filtros-grid">
-                <div class="filtro-grupo">
-                    <label class="form-label">Período</label>
-                    <select class="form-input" id="filtroPeriodo">
-                        <option value="hoy">Hoy</option>
-                        <option value="semana">Esta Semana</option>
-                        <option value="mes" selected>Este Mes</option>
-                        <option value="trimestre">Este Trimestre</option>
-                        <option value="ano">Este Año</option>
-                    </select>
+        <!-- Gráficos de tratamientos -->
+        <div class="graficos-tratamientos">
+            <div class="grafico-card">
+                <div class="grafico-header">
+                    <h3 class="grafico-titulo">
+                        <i class="fas fa-chart-line"></i>
+                        Efectividad de Tratamientos
+                    </h3>
                 </div>
-                
-                <div class="filtro-grupo">
-                    <label class="form-label">Cliente</label>
-                    <select class="form-input" id="filtroCliente">
-                        <option value="">Todos los clientes</option>
-                    </select>
-                </div>
-                
-                <div class="filtro-grupo">
-                    <label class="form-label">Estado</label>
-                    <select class="form-input" id="filtroEstado">
-                        <option value="">Todos los estados</option>
-                        <option value="completada">Completada</option>
-                        <option value="pendiente">Pendiente</option>
-                        <option value="cancelada">Cancelada</option>
-                    </select>
-                </div>
-                
-                <div class="filtro-grupo">
-                    <label class="form-label">Método de Pago</label>
-                    <select class="form-input" id="filtroMetodoPago">
-                        <option value="">Todos los métodos</option>
-                        <option value="efectivo">Efectivo</option>
-                        <option value="transferencia">Transferencia</option>
-                        <option value="credito">Crédito</option>
-                    </select>
-                </div>
-                
-                <div class="filtro-grupo">
-                    <button class="btn btn-primary" id="aplicarFiltros">
-                        <i class="fas fa-search"></i> Aplicar
-                    </button>
-                    <button class="btn btn-secondary" id="limpiarFiltros">
-                        <i class="fas fa-times"></i> Limpiar
-                    </button>
-                </div>
-            </div>
-        </section>
-
-        <!-- Acciones de ventas -->
-        <section class="acciones-ventas">
-            <div class="accion-venta" onclick="accionVenta('nueva-venta')">
-                <div class="accion-icon" style="background: #22c55e;">
-                    <i class="fas fa-plus"></i>
-                </div>
-                <div>
-                    <div style="font-weight: 600;">Nueva Venta</div>
-                    <div style="font-size: 0.75rem; color: var(--text-secondary);">Registrar venta</div>
+                <div class="chart-container">
+                    <canvas id="graficoEfectividad"></canvas>
                 </div>
             </div>
             
-            <div class="accion-venta" onclick="accionVenta('cotizacion')">
-                <div class="accion-icon" style="background: #3b82f6;">
-                    <i class="fas fa-calculator"></i>
+            <div class="grafico-card">
+                <div class="grafico-header">
+                    <h3 class="grafico-titulo">
+                        <i class="fas fa-chart-pie"></i>
+                        Tipos de Enfermedades
+                    </h3>
                 </div>
-                <div>
-                    <div style="font-weight: 600;">Generar Cotización</div>
-                    <div style="font-size: 0.75rem; color: var(--text-secondary);">Presupuesto cliente</div>
-                </div>
-            </div>
-            
-            <div class="accion-venta" onclick="accionVenta('facturacion')">
-                <div class="accion-icon" style="background: #f59e0b;">
-                    <i class="fas fa-file-invoice"></i>
-                </div>
-                <div>
-                    <div style="font-weight: 600;">Facturación</div>
-                    <div style="font-size: 0.75rem; color: var(--text-secondary);">Generar facturas</div>
+                <div class="chart-container">
+                    <canvas id="graficoEnfermedades"></canvas>
                 </div>
             </div>
-            
-            <div class="accion-venta" onclick="accionVenta('reportes')">
-                <div class="accion-icon" style="background: #8b5cf6;">
-                    <i class="fas fa-chart-line"></i>
-                </div>
-                <div>
-                    <div style="font-weight: 600;">Reportes de Ventas</div>
-                    <div style="font-size: 0.75rem; color: var(--text-secondary);">Análisis detallado</div>
-                </div>
-            </div>
-        </section>
-
-        <!-- Calculadora de precios -->
-        <section class="calculadora-precio">
-            <h3 style="margin-bottom: 1.5rem;">
-                <i class="fas fa-calculator"></i> Calculadora de Precios
-            </h3>
-            
-            <div class="calc-grid">
-                <div class="form-group">
-                    <label class="form-label">Cantidad (kg)</label>
-                    <input type="number" class="form-input" id="calcCantidad" step="0.1" min="0" placeholder="0">
-                </div>
-                
-                <div class="form-group">
-                    <label class="form-label">Precio por kg (Q)</label>
-                    <input type="number" class="form-input" id="calcPrecio" step="0.01" min="0" placeholder="0.00">
-                </div>
-                
-                <div class="form-group">
-                    <label class="form-label">Descuento (%)</label>
-                    <input type="number" class="form-input" id="calcDescuento" step="0.1" min="0" max="100" placeholder="0">
-                </div>
-                
-                <div class="form-group">
-                    <label class="form-label">Transporte (Q)</label>
-                    <input type="number" class="form-input" id="calcTransporte" step="0.01" min="0" placeholder="0.00">
-                </div>
-            </div>
-            
-            <div class="calc-resultado">
-                <div style="font-size: 0.875rem; margin-bottom: 0.5rem;">Total a Cobrar</div>
-                <div class="calc-valor" id="calcTotal">Q 0.00</div>
-            </div>
-        </section>
-
-        <!-- Registro rápido de venta -->
-        <section class="registro-venta">
-            <h3 style="margin-bottom: 1.5rem;">
-                <i class="fas fa-bolt"></i> Registro Rápido de Venta
-            </h3>
-            
-            <form class="form-venta" id="formVentaRapida">
-                <div class="form-group">
-                    <label class="form-label">Fecha</label>
-                    <input type="date" class="form-input" id="fechaVenta" required>
-                </div>
-                
-                <div class="form-group">
-                    <label class="form-label">Cliente</label>
-                    <select class="form-input" id="clienteVenta" required>
-                        <option value="">Seleccionar cliente...</option>
-                    </select>
-                </div>
-                
-                <div class="form-group">
-                    <label class="form-label">Cantidad (kg)</label>
-                    <input type="number" class="form-input" id="cantidadVenta" step="0.1" min="0" required>
-                </div>
-                
-                <div class="form-group">
-                    <label class="form-label">Precio por kg (Q)</label>
-                    <input type="number" class="form-input" id="precioVenta" step="0.01" min="0" required>
-                </div>
-                
-                <div class="form-group">
-                    <label class="form-label">Método de Pago</label>
-                    <select class="form-input" id="metodoPagoVenta" required>
-                        <option value="">Seleccionar...</option>
-                        <option value="efectivo">Efectivo</option>
-                        <option value="transferencia">Transferencia</option>
-                        <option value="credito">Crédito</option>
-                        <option value="cheque">Cheque</option>
-                    </select>
-                </div>
-                
-                <div class="form-group">
-                    <button type="submit" class="btn btn-success">
-                        <i class="fas fa-save"></i> Registrar Venta
-                    </button>
-                </div>
-            </form>
-        </section>
+        </div>
 
         <!-- Contenido principal -->
         <div class="contenido-principal">
-            <!-- Gráficos -->
-            <div class="graficos-ventas">
-                <!-- Gráfico de evolución de ventas -->
-                <div class="grafico-card">
-                    <div class="grafico-header">
-                        <h3 class="grafico-titulo">
-                            <i class="fas fa-chart-line"></i>
-                            Evolución de Ventas
-                        </h3>
-                        <div class="periodo-selector">
-                            <button class="periodo-btn active" data-periodo="semana">Semana</button>
-                            <button class="periodo-btn" data-periodo="mes">Mes</button>
-                            <button class="periodo-btn" data-periodo="trimestre">Trimestre</button>
-                        </div>
-                    </div>
-                    <div class="canvas-container">
-                        <canvas id="graficoVentas"></canvas>
-                    </div>
-                </div>
+            <!-- Lista de tratamientos -->
+            <div class="lista-tratamientos">
+                <h3 style="margin-bottom: 1.5rem;">
+                    <i class="fas fa-list"></i>
+                    Tratamientos Activos
+                </h3>
                 
-                <!-- Gráfico de ventas por cliente -->
-                <div class="grafico-card">
-                    <div class="grafico-header">
-                        <h3 class="grafico-titulo">
-                            <i class="fas fa-chart-pie"></i>
-                            Ventas por Cliente
-                        </h3>
-                    </div>
-                    <canvas id="graficoClientes" height="250"></canvas>
+                <div id="listaTratamientosActivos">
+                    <!-- Los tratamientos se cargarán dinámicamente -->
                 </div>
             </div>
 
-            <!-- Panel lateral -->
-            <div>
-                <!-- Clientes recientes -->
-                <div class="clientes-recientes">
-                    <h3 style="margin-bottom: 1.5rem;">
-                        <i class="fas fa-users"></i>
-                        Clientes Recientes
-                    </h3>
+            <!-- Sidebar -->
+            <div class="sidebar-tratamientos">
+                <!-- Productos disponibles -->
+                <div class="productos-disponibles">
+                    <h4 style="margin-bottom: 1rem;">
+                        <i class="fas fa-flask"></i>
+                        Productos Disponibles
+                    </h4>
                     
-                    <div id="listaClientesRecientes">
-                        <!-- Se cargarán dinámicamente -->
+                    <div id="listaProductos">
+                        <!-- Los productos se cargarán dinámicamente -->
                     </div>
                 </div>
 
-                <!-- Predicciones de ventas -->
-                <div class="predicciones-ventas">
-                    <div class="ia-header">
-                        <div class="ia-icon">
-                            <i class="fas fa-robot"></i>
-                        </div>
-                        <h3>Predicciones de Ventas</h3>
-                    </div>
+                <!-- Enfermedades detectadas -->
+                <div class="enfermedades-detectadas">
+                    <h4 style="margin-bottom: 1rem;">
+                        <i class="fas fa-bug"></i>
+                        Enfermedades Detectadas
+                    </h4>
                     
-                    <div id="prediccionesVentas">
-                        <!-- Se cargarán dinámicamente -->
+                    <div id="listaEnfermedades">
+                        <!-- Las enfermedades se cargarán dinámicamente -->
                     </div>
                 </div>
             </div>
         </div>
 
-        <!-- Tabla de ventas -->
-        <section class="tabla-ventas">
-            <div class="tabla-header">
+        <!-- Historial de tratamientos -->
+        <section class="historial-tratamientos">
+            <div class="historial-header">
                 <h3>
-                    <i class="fas fa-table"></i>
-                    Registro de Ventas
+                    <i class="fas fa-history"></i>
+                    Historial de Tratamientos
                 </h3>
                 <div>
-                    <button class="btn btn-sm btn-secondary" id="btnVistaDetallada">
-                        <i class="fas fa-expand"></i> Vista Detallada
+                    <button class="btn btn-sm btn-secondary" id="btnExportarHistorialTratamientos">
+                        <i class="fas fa-download"></i> Exportar
                     </button>
                 </div>
             </div>
             
             <div class="table-container">
-                <table class="table" id="tablaVentas">
+                <table class="table" id="tablaTratamientos">
                     <thead>
                         <tr>
-                            <th>Fecha</th>
-                            <th>Cliente</th>
-                            <th>Cantidad</th>
-                            <th>Precio/kg</th>
-                            <th>Total</th>
-                            <th>Método Pago</th>
+                            <th>Fecha/Hora</th>
+                            <th>Ubicación</th>
+                            <th>Enfermedad</th>
+                            <th>Producto</th>
+                            <th>Dosis</th>
+                            <th>Responsable</th>
+                            <th>Efectividad</th>
                             <th>Estado</th>
-                            <th>Factura</th>
-                            <th>Acciones</th>
                         </tr>
                     </thead>
-                    <tbody id="tablaVentasBody">
+                    <tbody id="tablaTratamientosBody">
                         <!-- Los datos se cargarán dinámicamente -->
                     </tbody>
                 </table>
@@ -1369,287 +704,215 @@
         </section>
     </main>
 
-    <!-- Modal para venta detallada -->
-    <div class="modal-overlay" id="modalVentaDetallada">
-        <div class="modal" style="max-width: 800px;">
+    <!-- Modal para nuevo tratamiento -->
+    <div class="modal-programar" id="modalTratamiento">
+        <div class="modal-content">
             <div class="modal-header">
-                <h2 class="modal-title">Registro Detallado de Venta</h2>
-                <button class="modal-close" id="cerrarModalVenta">
+                <h3 id="modalTitulo">Nuevo Tratamiento</h3>
+                <button class="modal-close" id="cerrarModalTratamiento">
                     <i class="fas fa-times"></i>
                 </button>
             </div>
-            <div class="modal-body">
-                <form id="formVentaDetallada">
-                    <div class="form-sections">
-                        <!-- Información del cliente -->
-                        <div class="form-section">
-                            <h4 class="section-title">
-                                <i class="fas fa-user"></i>
-                                Información del Cliente
-                            </h4>
-                            
-                            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem;">
-                                <div class="form-group">
-                                    <label class="form-label">Cliente</label>
-                                    <select class="form-input" id="clienteDetallado" required>
-                                        <option value="">Seleccionar cliente...</option>
-                                    </select>
-                                </div>
-                                
-                                <div class="form-group">
-                                    <label class="form-label">Contacto</label>
-                                    <input type="text" class="form-input" id="contactoCliente" readonly>
-                                </div>
-                                
-                                <div class="form-group">
-                                    <label class="form-label">Dirección de Entrega</label>
-                                    <input type="text" class="form-input" id="direccionEntrega">
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Detalles de la venta -->
-                        <div class="form-section">
-                            <h4 class="section-title">
-                                <i class="fas fa-shopping-cart"></i>
-                                Detalles de la Venta
-                            </h4>
-                            
-                            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 1rem;">
-                                <div class="form-group">
-                                    <label class="form-label">Fecha de Venta</label>
-                                    <input type="date" class="form-input" id="fechaDetallada" required>
-                                </div>
-                                
-                                <div class="form-group">
-                                    <label class="form-label">Cantidad (kg)</label>
-                                    <input type="number" class="form-input" id="cantidadDetallada" step="0.1" min="0" required>
-                                </div>
-                                
-                                <div class="form-group">
-                                    <label class="form-label">Precio por kg (Q)</label>
-                                    <input type="number" class="form-input" id="precioDetallado" step="0.01" min="0" required>
-                                </div>
-                                
-                                <div class="form-group">
-                                    <label class="form-label">Descuento (%)</label>
-                                    <input type="number" class="form-input" id="descuentoDetallado" step="0.1" min="0" max="100" value="0">
-                                </div>
-                                
-                                <div class="form-group">
-                                    <label class="form-label">Costo Transporte (Q)</label>
-                                    <input type="number" class="form-input" id="transporteDetallado" step="0.01" min="0" value="0">
-                                </div>
-                                
-                                <div class="form-group">
-                                    <label class="form-label">Total (Q)</label>
-                                    <input type="number" class="form-input" id="totalDetallado" readonly>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Información de pago -->
-                        <div class="form-section">
-                            <h4 class="section-title">
-                                <i class="fas fa-credit-card"></i>
-                                Información de Pago
-                            </h4>
-                            
-                            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem;">
-                                <div class="form-group">
-                                    <label class="form-label">Método de Pago</label>
-                                    <select class="form-input" id="metodoPagoDetallado" required>
-                                        <option value="">Seleccionar...</option>
-                                        <option value="efectivo">Efectivo</option>
-                                        <option value="transferencia">Transferencia Bancaria</option>
-                                        <option value="credito">Crédito</option>
-                                        <option value="cheque">Cheque</option>
-                                    </select>
-                                </div>
-                                
-                                <div class="form-group">
-                                    <label class="form-label">Fecha de Pago</label>
-                                    <input type="date" class="form-input" id="fechaPago">
-                                </div>
-                                
-                                <div class="form-group">
-                                    <label class="form-label">Referencia/Comprobante</label>
-                                    <input type="text" class="form-input" id="referenciaVenta" placeholder="Número de transferencia, cheque, etc.">
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Observaciones -->
-                        <div class="form-section">
-                            <h4 class="section-title">
-                                <i class="fas fa-sticky-note"></i>
-                                Observaciones
-                            </h4>
-                            
-                            <div class="form-group">
-                                <textarea class="form-input form-textarea" id="observacionesVenta" 
-                                          placeholder="Observaciones sobre la venta, condiciones especiales, etc."></textarea>
-                            </div>
+            
+            <form class="form-programar" id="formTratamiento">
+                <div class="form-group">
+                    <label class="form-label">Nombre del Tratamiento</label>
+                    <input type="text" class="form-input" id="nombreTratamiento" required>
+                </div>
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="form-label">Enfermedad/Plaga</label>
+                        <select class="form-input" id="enfermedadTratamiento" required>
+                            <option value="">Seleccionar...</option>
+                            <option value="hongo">Hongo</option>
+                            <option value="bacteria">Bacteria</option>
+                            <option value="virus">Virus</option>
+                            <option value="plaga">Plaga</option>
+                            <option value="deficiencia">Deficiencia Nutricional</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label">Producto</label>
+                        <select class="form-input" id="productoTratamiento" required>
+                            <option value="">Seleccionar producto...</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="form-label">Dosis (ml/L)</label>
+                        <input type="number" class="form-input" id="dosisTratamiento" step="0.1" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label">Método de Aplicación</label>
+                        <select class="form-input" id="metodoAplicacion" required>
+                            <option value="foliar">Foliar</option>
+                            <option value="drench">Drench (suelo)</option>
+                            <option value="inyeccion">Inyección</option>
+                            <option value="espolvoreo">Espolvoreo</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">Ubicación</label>
+                    <div class="ubicacion-selector">
+                        <div class="ubicacion-grid" id="ubicacionSelector">
+                            <!-- Las ubicaciones se cargarán dinámicamente -->
                         </div>
                     </div>
-
-                    <!-- Botones de acción -->
-                    <div style="display: flex; gap: 1rem; justify-content: flex-end; margin-top: 2rem;">
-                        <button type="button" class="btn btn-secondary" id="cancelarVenta">
-                            <i class="fas fa-times"></i> Cancelar
-                        </button>
-                        <button type="submit" class="btn btn-success">
-                            <i class="fas fa-save"></i> Registrar Venta
-                        </button>
+                </div>
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="form-label">Fecha de Aplicación</label>
+                        <input type="date" class="form-input" id="fechaAplicacion" required>
                     </div>
-                </form>
-            </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label">Hora de Aplicación</label>
+                        <input type="time" class="form-input" id="horaAplicacion" required>
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">Observaciones</label>
+                    <textarea class="form-input" id="observacionesTratamiento" rows="3"></textarea>
+                </div>
+                
+                <div class="form-group" style="display: flex; gap: 1rem; justify-content: flex-end;">
+                    <button type="button" class="btn btn-secondary" id="cancelarTratamiento">
+                        Cancelar
+                    </button>
+                    <button type="submit" class="btn btn-success">
+                        <i class="fas fa-save"></i> Programar Tratamiento
+                    </button>
+                </div>
+            </form>
         </div>
     </div>
 
-    <!-- Modal para nuevo cliente -->
-    <div class="modal-overlay" id="modalNuevoCliente">
-        <div class="modal" style="max-width: 500px;">
-            <div class="modal-header">
-                <h2 class="modal-title">Agregar Nuevo Cliente</h2>
-                <button class="modal-close" id="cerrarModalCliente">
-                    <i class="fas fa-times"></i>
-                </button>
-            </div>
-            <div class="modal-body">
-                <form id="formNuevoCliente">
-                    <div class="form-group">
-                        <label class="form-label">Nombre Completo</label>
-                        <input type="text" class="form-input" id="nombreCliente" required>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label class="form-label">Teléfono</label>
-                        <input type="tel" class="form-input" id="telefonoCliente" required>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label class="form-label">Email</label>
-                        <input type="email" class="form-input" id="emailCliente">
-                    </div>
-                    
-                    <div class="form-group">
-                        <label class="form-label">Dirección</label>
-                        <textarea class="form-input form-textarea" id="direccionCliente"></textarea>
-                    </div>
-                    
-                    <div style="display: flex; gap: 1rem; justify-content: flex-end; margin-top: 2rem;">
-                        <button type="button" class="btn btn-secondary" id="cancelarCliente">
-                            <i class="fas fa-times"></i> Cancelar
-                        </button>
-                        <button type="submit" class="btn btn-success">
-                            <i class="fas fa-save"></i> Guardar Cliente
-                        </button>
-                    </div>
-                </form>
-            </div>
-        </div>
-    </div>
-
-    <!-- Firebase SDK -->
+    <!-- Scripts Firebase (deben cargarse primero) -->
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-storage.js"></script>
 
-    <!-- Scripts -->
-    <script src="/js/firebase-config.js"></script>
-    <script src="/js/auth.js"></script>
-    <script src="/js/nav.js"></script>
+    <!-- Scripts de aplicación -->
+    <script type="module" src="/js/firebase-config.js"></script>
+    <script type="module" src="/js/auth.js"></script>
+    <script type="module" src="/js/nav.js"></script>
+    <script type="module" src="/js/offline.js"></script>
+    <script type="module" src="/js/tree-manager.js"></script>
+    <script type="module" src="/js/tratamientos.js"></script>
     
     <script>
         // Variables globales
-        let graficoVentas, graficoClientes;
-        let editandoVentaId = null;
-
-        // Sistema de notificaciones
-        function mostrarNotificacion(mensaje, tipo = 'info', titulo = '') {
-            const container = document.getElementById('notificationContainer');
-            const notificationId = 'notification-' + Date.now();
-            
-            const iconos = {
-                success: 'fas fa-check',
-                error: 'fas fa-times',
-                warning: 'fas fa-exclamation-triangle',
-                info: 'fas fa-info-circle'
-            };
-
-            const titulos = {
-                success: titulo || 'Éxito',
-                error: titulo || 'Error',
-                warning: titulo || 'Advertencia',
-                info: titulo || 'Información'
-            };
-
-            const notification = document.createElement('div');
-            notification.className = `notification ${tipo}`;
-            notification.id = notificationId;
-            
-            notification.innerHTML = `
-                <div class="notification-icon">
-                    <i class="${iconos[tipo]}"></i>
-                </div>
-                <div class="notification-content">
-                    <div class="notification-title">${titulos[tipo]}</div>
-                    <div class="notification-message">${mensaje}</div>
-                </div>
-                <button class="notification-close" onclick="cerrarNotificacion('${notificationId}')">
-                    <i class="fas fa-times"></i>
-                </button>
-            `;
-
-            container.appendChild(notification);
-
-            // Mostrar la notificación
-            setTimeout(() => {
-                notification.classList.add('show');
-            }, 100);
-
-            // Auto-remover después de 5 segundos
-            setTimeout(() => {
-                cerrarNotificacion(notificationId);
-            }, 5000);
-        }
-
-        function cerrarNotificacion(notificationId) {
-            const notification = document.getElementById(notificationId);
-            if (notification) {
-                notification.classList.remove('show');
-                setTimeout(() => {
-                    notification.remove();
-                }, 300);
-            }
-        }
+        let graficoEfectividad, graficoEnfermedades;
+        let tratamientosManager;
+        let sistemaInicializado = false;
 
         // Inicialización de la página
         document.addEventListener('DOMContentLoaded', async () => {
-            // Verificar autenticación
-            if (!await verificarAutenticacion()) {
-                window.location.href = '/login.html';
-                return;
-            }
+            try {
+                console.log('🩺 Iniciando sistema de tratamientos...');
+                
+                // Verificar autenticación
+                const autenticado = await verificarAutenticacion();
+                if (!autenticado) {
+                    console.log('❌ Usuario no autenticado, redirigiendo...');
+                    window.location.href = '/login.html';
+                    return;
+                }
 
-            // Inicializar componentes
-            await inicializarPagina();
+                // Esperar a que TreeManager esté disponible
+                await esperarTreeManager();
+                
+                // Esperar a que TratamientosManager esté disponible
+                await esperarTratamientosManager();
+                
+                // Inicializar página
+                await inicializarPagina();
+
+                sistemaInicializado = true;
+                console.log('🎉 Sistema de tratamientos completamente inicializado');
+
+            } catch (error) {
+                console.error('❌ Error fatal en inicialización:', error);
+                mostrarError('Error crítico iniciando la aplicación');
+            }
         });
 
         async function verificarAutenticacion() {
             return new Promise((resolve) => {
-                firebase.auth().onAuthStateChanged((user) => {
-                    resolve(!!user);
-                });
+                const checkAuth = () => {
+                    if (window.firebase && window.firebase.auth) {
+                        window.firebase.auth().onAuthStateChanged((user) => {
+                            resolve(!!user);
+                        });
+                    } else {
+                        setTimeout(checkAuth, 100);
+                    }
+                };
+                checkAuth();
+                setTimeout(() => resolve(false), 5000);
+            });
+        }
+
+        function esperarTreeManager() {
+            return new Promise((resolve, reject) => {
+                const maxAttempts = 100;
+                let attempts = 0;
+                
+                const checkTreeManager = () => {
+                    attempts++;
+                    
+                    if (window.treeManager && window.treeManager.isInitialized) {
+                        console.log('✅ TreeManager disponible para tratamientos');
+                        resolve();
+                    } else if (attempts < maxAttempts) {
+                        setTimeout(checkTreeManager, 100);
+                    } else {
+                        console.warn('⚠️ Timeout esperando TreeManager');
+                        resolve(); // Continuar sin TreeManager
+                    }
+                };
+                
+                checkTreeManager();
+            });
+        }
+
+        function esperarTratamientosManager() {
+            return new Promise((resolve) => {
+                const maxAttempts = 100;
+                let attempts = 0;
+                
+                const checkTratamientosManager = () => {
+                    attempts++;
+                    
+                    if (window.tratamientosManager) {
+                        tratamientosManager = window.tratamientosManager;
+                        console.log('✅ TratamientosManager disponible');
+                        resolve();
+                    } else if (attempts < maxAttempts) {
+                        setTimeout(checkTratamientosManager, 100);
+                    } else {
+                        console.warn('⚠️ Timeout esperando TratamientosManager');
+                        resolve(); // Continuar sin TratamientosManager
+                    }
+                };
+                
+                checkTratamientosManager();
             });
         }
 
         async function inicializarPagina() {
             try {
-                // Cargar navegación
-                await getMenuConfiguration();
+                console.log('⚙️ Inicializando componentes de la página...');
                 
                 // Configurar event listeners
                 configurarEventListeners();
@@ -1660,426 +923,385 @@
                 // Inicializar gráficos
                 inicializarGraficos();
                 
-                // Configurar calculadora
-                configurarCalculadora();
+                // Cargar ubicaciones para formulario
+                cargarUbicacionesFormulario();
                 
-                // Configurar fecha actual
-                document.getElementById('fechaVenta').value = new Date().toISOString().split('T')[0];
-                document.getElementById('fechaDetallada').value = new Date().toISOString().split('T')[0];
-                
-                console.log('Página de ventas inicializada correctamente');
-                mostrarNotificacion('Sistema de ventas cargado correctamente', 'success');
+                console.log('✅ Página de tratamientos inicializada correctamente');
                 
             } catch (error) {
-                console.error('Error inicializando página:', error);
-                mostrarNotificacion('Error cargando la página', 'error');
+                console.error('❌ Error inicializando página:', error);
+                mostrarError('Error cargando los datos de tratamientos');
             }
         }
 
         function configurarEventListeners() {
             // Botones principales
-            document.getElementById('btnNuevaVenta')?.addEventListener('click', mostrarModalVenta);
-            document.getElementById('btnNuevoCliente')?.addEventListener('click', mostrarModalCliente);
-            document.getElementById('cerrarModalCliente')?.addEventListener('click', cerrarModalCliente);
-            document.getElementById('cancelarCliente')?.addEventListener('click', cerrarModalCliente);
-            document.getElementById('formNuevoCliente')?.addEventListener('submit', guardarNuevoCliente);
-            document.getElementById('btnGenerarFactura')?.addEventListener('click', generarFactura);
-            document.getElementById('btnExportarVentas')?.addEventListener('click', exportarVentas);
+            document.getElementById('btnNuevoTratamiento')?.addEventListener('click', mostrarModalTratamiento);
+            document.getElementById('btnTratamientoUrgente')?.addEventListener('click', crearTratamientoUrgente);
+            document.getElementById('btnConfiguracion')?.addEventListener('click', mostrarConfiguracion);
+            document.getElementById('btnReporteTratamientos')?.addEventListener('click', generarReporte);
             
-            // Formularios
-            document.getElementById('formVentaRapida')?.addEventListener('submit', guardarVentaRapida);
-            document.getElementById('formVentaDetallada')?.addEventListener('submit', guardarVentaDetallada);
+            // Modal
+            document.getElementById('cerrarModalTratamiento')?.addEventListener('click', cerrarModal);
+            document.getElementById('cancelarTratamiento')?.addEventListener('click', cerrarModal);
+            document.getElementById('formTratamiento')?.addEventListener('submit', guardarTratamiento);
             
-            // Modales
-            document.getElementById('cerrarModalVenta')?.addEventListener('click', cerrarModal);
-            document.getElementById('cancelarVenta')?.addEventListener('click', cerrarModal);
+            // Otros botones
+            document.getElementById('btnExportarHistorialTratamientos')?.addEventListener('click', exportarHistorial);
             
-            // Filtros
-            document.getElementById('aplicarFiltros')?.addEventListener('click', aplicarFiltros);
-            document.getElementById('limpiarFiltros')?.addEventListener('click', limpiarFiltros);
-            
-            // Selectores de período
-            document.querySelectorAll('.periodo-btn').forEach(btn => {
-                btn.addEventListener('click', (e) => cambiarPeriodoGrafico(e.target.dataset.periodo));
-            });
-
-            // Cambio de cliente en formulario detallado
-            document.getElementById('clienteDetallado')?.addEventListener('change', cargarDatosCliente);
-            
-            // Cálculo automático en formulario detallado
-            ['cantidadDetallada', 'precioDetallado', 'descuentoDetallado', 'transporteDetallado'].forEach(id => {
-                document.getElementById(id)?.addEventListener('input', calcularTotalDetallado);
-            });
+            console.log('✅ Event listeners configurados');
         }
 
         async function cargarDatosIniciales() {
             try {
-                await cargarVentas();
-                await cargarClientesEnSelectores();
-                console.log('Datos cargados correctamente');
+                // Cargar tratamientos activos
+                await cargarTratamientosActivos();
+                
+                // Cargar productos disponibles
+                await cargarProductosDisponibles();
+                
+                // Cargar enfermedades detectadas
+                await cargarEnfermedadesDetectadas();
+                
+                // Cargar historial
+                await cargarHistorialTratamientos();
+                
+                // Generar alertas
+                await generarAlertas();
                 
             } catch (error) {
                 console.error('Error cargando datos:', error);
-                mostrarNotificacion('Error cargando datos', 'error');
             }
         }
 
-        // REGISTRAR VENTA RÁPIDA
-        async function guardarVentaRapida(e) {
-            e.preventDefault();
-            
-            const datos = {
-                fecha: document.getElementById('fechaVenta').value,
-                cliente: document.getElementById('clienteVenta').value,
-                cantidad: parseFloat(document.getElementById('cantidadVenta').value),
-                precioKg: parseFloat(document.getElementById('precioVenta').value),
-                metodoPago: document.getElementById('metodoPagoVenta').value,
-                estado: 'completada',
-                factura: null,
-                fechaCreacion: new Date().toISOString(),
-                usuarioId: firebase.auth().currentUser?.uid
-            };
-            
-            datos.total = datos.cantidad * datos.precioKg;
-            
-            try {
-                await firebase.firestore().collection('ventas').add(datos);
-                
-                document.getElementById('formVentaRapida').reset();
-                document.getElementById('fechaVenta').value = new Date().toISOString().split('T')[0];
-                
-                await cargarVentas();
-                mostrarNotificacion('Venta registrada correctamente', 'success');
-                
-            } catch (error) {
-                console.error('Error registrando venta:', error);
-                mostrarNotificacion('Error al registrar la venta', 'error');
-            }
-        }
+        async function cargarTratamientosActivos() {
+            const container = document.getElementById('panelTratamientos');
+            if (!container) return;
 
-        // GUARDAR O ACTUALIZAR VENTA DETALLADA
-        async function guardarVentaDetallada(e) {
-            e.preventDefault();
-            
-            const datos = {
-                fecha: document.getElementById('fechaDetallada').value,
-                cliente: document.getElementById('clienteDetallado').value,
-                cantidad: parseFloat(document.getElementById('cantidadDetallada').value),
-                precioKg: parseFloat(document.getElementById('precioDetallado').value),
-                descuento: parseFloat(document.getElementById('descuentoDetallado').value) || 0,
-                transporte: parseFloat(document.getElementById('transporteDetallado').value) || 0,
-                total: parseFloat(document.getElementById('totalDetallado').value),
-                metodoPago: document.getElementById('metodoPagoDetallado').value,
-                fechaPago: document.getElementById('fechaPago').value || null,
-                referencia: document.getElementById('referenciaVenta').value || null,
-                direccionEntrega: document.getElementById('direccionEntrega').value || null,
-                observaciones: document.getElementById('observacionesVenta').value || null,
-                estado: 'completada',
-                factura: null,
-                usuarioId: firebase.auth().currentUser?.uid
-            };
-            
             try {
-                if (editandoVentaId) {
-                    datos.fechaModificacion = new Date().toISOString();
-                    await firebase.firestore().collection('ventas').doc(editandoVentaId).update(datos);
-                    mostrarNotificacion('Venta actualizada correctamente', 'success');
-                } else {
-                    datos.fechaCreacion = new Date().toISOString();
-                    await firebase.firestore().collection('ventas').add(datos);
-                    mostrarNotificacion('Venta registrada correctamente', 'success');
+                // Obtener tratamientos desde el manager si existe
+                let tratamientos = [];
+                if (tratamientosManager && tratamientosManager.tratamientos) {
+                    tratamientos = tratamientosManager.tratamientos
+                        .filter(t => t.estado === 'programado' || t.estado === 'en_proceso')
+                        .sort((a, b) => new Date(b.fecha) - new Date(a.fecha));
                 }
-                
-                cerrarModal();
-                await cargarVentas();
-                
+
+                if (tratamientos.length === 0) {
+                    container.innerHTML = `
+                        <div class="tratamiento-card">
+                            <div class="tratamiento-header">
+                                <h3 class="tratamiento-titulo">No hay tratamientos activos</h3>
+                            </div>
+                            <p>No se encontraron tratamientos programados o en proceso.</p>
+                            <button class="btn btn-primary" onclick="mostrarModalTratamiento()">
+                                <i class="fas fa-plus"></i> Crear Primer Tratamiento
+                            </button>
+                        </div>
+                    `;
+                    return;
+                }
+
+                container.innerHTML = tratamientos.map(tratamiento => crearTarjetaTratamiento(tratamiento)).join('');
+
             } catch (error) {
-                console.error('Error guardando venta:', error);
-                mostrarNotificacion('Error al guardar la venta', 'error');
+                console.error('Error cargando tratamientos activos:', error);
+                container.innerHTML = '<div class="error-message">Error cargando tratamientos</div>';
             }
         }
 
-        // CARGAR VENTAS DESDE FIREBASE (VERSIÓN CORREGIDA)
-        async function cargarVentas() {
+        function crearTarjetaTratamiento(tratamiento) {
+            const estadoClass = tratamiento.prioridad === 'alta' ? 'urgente' : 
+                              tratamiento.estado === 'programado' ? 'programado' : 'completado';
+            
+            return `
+                <div class="tratamiento-card ${estadoClass}">
+                    <div class="tratamiento-header">
+                        <h3 class="tratamiento-titulo">${tratamiento.enfermedad || 'Tratamiento'}</h3>
+                        <div class="tratamiento-estado estado-${estadoClass}">
+                            ${tratamiento.estado || 'Programado'}
+                        </div>
+                    </div>
+                    
+                    <div class="tratamiento-ubicacion">
+                        <i class="fas fa-map-marker-alt"></i>
+                        <span>${tratamiento.ubicacion || 'Ubicación no especificada'}</span>
+                    </div>
+                    
+                    <div class="tratamiento-info">
+                        <div class="info-item">
+                            <div class="info-valor">${tratamiento.producto || 'N/A'}</div>
+                            <div class="info-label">Producto</div>
+                        </div>
+                        <div class="info-item">
+                            <div class="info-valor">${tratamiento.dosis || 'N/A'}</div>
+                            <div class="info-label">Dosis</div>
+                        </div>
+                    </div>
+                    
+                    <div class="tratamiento-acciones">
+                        <button class="btn-control btn-aplicar" onclick="aplicarTratamiento('${tratamiento.id}')">
+                            <i class="fas fa-play"></i> Aplicar
+                        </button>
+                        <button class="btn-control btn-editar" onclick="editarTratamiento('${tratamiento.id}')">
+                            <i class="fas fa-edit"></i> Editar
+                        </button>
+                        <button class="btn-control btn-historial" onclick="verHistorialTratamiento('${tratamiento.id}')">
+                            <i class="fas fa-history"></i> Historial
+                        </button>
+                    </div>
+                </div>
+            `;
+        }
+
+        async function cargarProductosDisponibles() {
+            const container = document.getElementById('listaProductos');
+            if (!container) return;
+
+            // Productos de ejemplo mientras se conecta con la base de datos real
+            const productos = [
+                { nombre: 'Fungicida Cúprico', tipo: 'Fungicida', stock: 15, unidad: 'L' },
+                { nombre: 'Insecticida Sistémico', tipo: 'Insecticida', stock: 8, unidad: 'L' },
+                { nombre: 'Fertilizante Foliar', tipo: 'Fertilizante', stock: 25, unidad: 'L' },
+                { nombre: 'Bactericida', tipo: 'Bactericida', stock: 12, unidad: 'L' }
+            ];
+
+            container.innerHTML = productos.map(producto => `
+                <div class="producto-item">
+                    <div class="producto-info">
+                        <div class="producto-nombre">${producto.nombre}</div>
+                        <div class="producto-tipo">${producto.tipo}</div>
+                    </div>
+                    <div class="producto-stock">
+                        <div class="stock-cantidad">${producto.stock}</div>
+                        <div class="stock-unidad">${producto.unidad}</div>
+                    </div>
+                </div>
+            `).join('');
+
+            // También cargar en el select del formulario
+            const selectProducto = document.getElementById('productoTratamiento');
+            if (selectProducto) {
+                selectProducto.innerHTML = '<option value="">Seleccionar producto...</option>' +
+                    productos.map(p => `<option value="${p.nombre}">${p.nombre} (${p.stock}${p.unidad})</option>`).join('');
+            }
+        }
+
+        async function cargarEnfermedadesDetectadas() {
+            const container = document.getElementById('listaEnfermedades');
+            if (!container) return;
+
+            // Simular detección de enfermedades basada en árboles del TreeManager
+            let enfermedades = [];
+
             try {
-                const userId = firebase.auth().currentUser?.uid;
-                if (!userId) return;
-                
-                const ventasSnapshot = await firebase.firestore()
-                    .collection('ventas')
-                    .where('usuarioId', '==', userId)
-                    .limit(50)
-                    .get();
-                
-                // Convertir a array y ordenar por fecha
-                const ventas = [];
-                ventasSnapshot.forEach(doc => {
-                    ventas.push({
-                        id: doc.id,
-                        ...doc.data()
+                if (window.treeManager) {
+                    const arboles = await window.treeManager.getAllTrees();
+                    
+                    // Analizar salud de árboles para detectar posibles enfermedades
+                    arboles.forEach(arbol => {
+                        if (arbol.health && arbol.health.overall < 80) {
+                            const severidad = arbol.health.overall < 50 ? 'critica' : 
+                                            arbol.health.overall < 70 ? 'moderada' : 'leve';
+                            
+                            enfermedades.push({
+                                nombre: `Posible enfermedad - Árbol #${arbol.correlative || arbol.id}`,
+                                descripcion: `Salud al ${arbol.health.overall}% en ${arbol.blockId}`,
+                                severidad: severidad,
+                                ubicacion: arbol.blockId
+                            });
+                        }
                     });
-                });
-                
-                // Ordenar por fecha (más reciente primero)
-                ventas.sort((a, b) => new Date(b.fecha) - new Date(a.fecha));
-                
-                const tbody = document.getElementById('tablaVentasBody');
-                if (!tbody) return;
-                
-                tbody.innerHTML = '';
-                
-                ventas.forEach(venta => {
-                    const row = `
+                }
+
+                if (enfermedades.length === 0) {
+                    enfermedades = [
+                        {
+                            nombre: 'Sistema saludable',
+                            descripcion: 'No se detectaron enfermedades críticas',
+                            severidad: 'leve'
+                        }
+                    ];
+                }
+
+                container.innerHTML = enfermedades.map(enfermedad => `
+                    <div class="enfermedad-item enfermedad-${enfermedad.severidad}">
+                        <div class="enfermedad-icon">
+                            <i class="fas ${enfermedad.severidad === 'critica' ? 'fa-exclamation-triangle' : 
+                                           enfermedad.severidad === 'moderada' ? 'fa-exclamation-circle' : 'fa-check'}"></i>
+                        </div>
+                        <div class="enfermedad-contenido">
+                            <div class="enfermedad-nombre">${enfermedad.nombre}</div>
+                            <div class="enfermedad-descripcion">${enfermedad.descripcion}</div>
+                        </div>
+                    </div>
+                `).join('');
+
+            } catch (error) {
+                console.error('Error cargando enfermedades:', error);
+                container.innerHTML = '<div class="error-message">Error analizando enfermedades</div>';
+            }
+        }
+
+        async function cargarHistorialTratamientos() {
+            const tbody = document.getElementById('tablaTratamientosBody');
+            if (!tbody) return;
+
+            try {
+                let historial = [];
+                if (tratamientosManager && tratamientosManager.historialTratamientos) {
+                    historial = tratamientosManager.historialTratamientos
+                        .sort((a, b) => new Date(b.fecha) - new Date(a.fecha))
+                        .slice(0, 10); // Mostrar solo los últimos 10
+                }
+
+                if (historial.length === 0) {
+                    tbody.innerHTML = `
                         <tr>
-                            <td>${formatearFecha(venta.fecha)}</td>
-                            <td>${venta.cliente}</td>
-                            <td>${venta.cantidad} kg</td>
-                            <td>Q ${venta.precioKg.toFixed(2)}</td>
-                            <td>Q ${venta.total.toLocaleString()}</td>
-                            <td>
-                                <span class="metodo-pago-badge ${venta.metodoPago}">
-                                    ${venta.metodoPago}
-                                </span>
-                            </td>
-                            <td>
-                                <span class="estado-venta-badge ${venta.estado}">
-                                    ${venta.estado}
-                                </span>
-                            </td>
-                            <td>
-                                ${venta.factura ? `
-                                <span class="factura-badge">
-                                    <i class="fas fa-file-pdf"></i> ${venta.factura}
-                                </span>
-                                ` : '<span style="color: var(--text-secondary);">Sin factura</span>'}
-                            </td>
-                            <td>
-                                <button class="btn btn-sm btn-primary" onclick="editarVenta('${venta.id}')" style="margin-right: 0.5rem;">
-                                    <i class="fas fa-edit"></i>
-                                </button>
-                                <button class="btn btn-sm btn-danger" onclick="eliminarVenta('${venta.id}')">
-                                    <i class="fas fa-trash"></i>
-                                </button>
+                            <td colspan="8" style="text-align: center; color: var(--text-secondary);">
+                                No hay historial de tratamientos
                             </td>
                         </tr>
                     `;
-                    tbody.innerHTML += row;
-                });
-                
-                actualizarMetricas();
-                
-            } catch (error) {
-                console.error('Error cargando ventas:', error);
-                mostrarNotificacion('Error cargando ventas', 'error');
-            }
-        }
-
-        // ACTUALIZAR MÉTRICAS EN TIEMPO REAL
-        async function actualizarMetricas() {
-            try {
-                const userId = firebase.auth().currentUser?.uid;
-                if (!userId) return;
-                
-                const ventasSnapshot = await firebase.firestore()
-                    .collection('ventas')
-                    .where('usuarioId', '==', userId)
-                    .get();
-                
-                let ingresos = 0;
-                let cantidad = 0;
-                let totalVentas = 0;
-                
-                ventasSnapshot.forEach(doc => {
-                    const venta = doc.data();
-                    ingresos += venta.total;
-                    cantidad += venta.cantidad;
-                    totalVentas++;
-                });
-                
-                const precioPromedio = totalVentas > 0 ? ingresos / cantidad : 0;
-                
-                document.getElementById('ingresosDelMes').textContent = `Q ${ingresos.toLocaleString()}`;
-                document.getElementById('cantidadVendida').textContent = `${cantidad.toLocaleString()} kg`;
-                document.getElementById('precioPromedio').textContent = `Q ${precioPromedio.toFixed(2)}`;
-                
-            } catch (error) {
-                console.error('Error actualizando métricas:', error);
-            }
-        }
-
-        // ELIMINAR VENTA
-        async function eliminarVenta(ventaId) {
-            if (confirm('¿Estás seguro de que quieres eliminar esta venta?')) {
-                try {
-                    await firebase.firestore().collection('ventas').doc(ventaId).delete();
-                    await cargarVentas();
-                    mostrarNotificacion('Venta eliminada correctamente', 'success');
-                } catch (error) {
-                    console.error('Error eliminando venta:', error);
-                    mostrarNotificacion('Error al eliminar la venta', 'error');
-                }
-            }
-        }
-
-        // EDITAR VENTA EXISTENTE
-        async function editarVenta(ventaId) {
-            try {
-                const ventaDoc = await firebase.firestore().collection('ventas').doc(ventaId).get();
-                
-                if (!ventaDoc.exists) {
-                    mostrarNotificacion('Venta no encontrada', 'error');
                     return;
                 }
-                
-                const venta = ventaDoc.data();
-                editandoVentaId = ventaId;
-                
-                // Llenar el formulario
-                document.getElementById('fechaDetallada').value = venta.fecha;
-                document.getElementById('clienteDetallado').value = venta.cliente;
-                document.getElementById('cantidadDetallada').value = venta.cantidad;
-                document.getElementById('precioDetallado').value = venta.precioKg;
-                document.getElementById('descuentoDetallado').value = venta.descuento || 0;
-                document.getElementById('transporteDetallado').value = venta.transporte || 0;
-                document.getElementById('totalDetallado').value = venta.total;
-                document.getElementById('metodoPagoDetallado').value = venta.metodoPago;
-                document.getElementById('fechaPago').value = venta.fechaPago || '';
-                document.getElementById('referenciaVenta').value = venta.referencia || '';
-                document.getElementById('direccionEntrega').value = venta.direccionEntrega || '';
-                document.getElementById('observacionesVenta').value = venta.observaciones || '';
-                
-                // Cambiar título del modal
-                document.querySelector('#modalVentaDetallada .modal-title').textContent = 'Editar Venta';
-                
-                // Cambiar texto del botón
-                const btnSubmit = document.querySelector('#formVentaDetallada button[type="submit"]');
-                btnSubmit.innerHTML = '<i class="fas fa-save"></i> Actualizar Venta';
-                
-                mostrarModalVenta();
-                
+
+                tbody.innerHTML = historial.map(tratamiento => `
+                    <tr>
+                        <td>${formatearFecha(tratamiento.fechaHora || tratamiento.fecha)}</td>
+                        <td>${tratamiento.ubicacion || 'N/A'}</td>
+                        <td>${tratamiento.enfermedad || 'N/A'}</td>
+                        <td>${tratamiento.producto || 'N/A'}</td>
+                        <td>${tratamiento.dosis || 'N/A'}</td>
+                        <td>${tratamiento.responsable || 'Sistema'}</td>
+                        <td>${tratamiento.efectividad ? `${tratamiento.efectividad}%` : 'Pendiente'}</td>
+                        <td>
+                            <span class="estado-badge ${tratamiento.estado || 'completado'}">
+                                ${tratamiento.estado || 'Completado'}
+                            </span>
+                        </td>
+                    </tr>
+                `).join('');
+
             } catch (error) {
-                console.error('Error cargando venta para editar:', error);
-                mostrarNotificacion('Error al cargar los datos de la venta', 'error');
+                console.error('Error cargando historial:', error);
+                tbody.innerHTML = '<tr><td colspan="8">Error cargando historial</td></tr>';
             }
         }
 
-        // CARGAR CLIENTES EN LOS SELECTORES - VERSIÓN CORREGIDA
-        async function cargarClientesEnSelectores() {
+        async function generarAlertas() {
+            const container = document.getElementById('alertasTratamientos');
+            if (!container) return;
+
+            const alertas = [];
+
             try {
-                const userId = firebase.auth().currentUser?.uid;
-                if (!userId) return;
-                
-                const clientesSnapshot = await firebase.firestore()
-                    .collection('clientes')
-                    .where('usuarioId', '==', userId)
-                    .get();
-                
-                // Convertir a array y ordenar por nombre
-                const clientes = [];
-                clientesSnapshot.forEach(doc => {
-                    clientes.push(doc.data());
-                });
-                
-                clientes.sort((a, b) => a.nombre.localeCompare(b.nombre));
-                
-                const selectores = ['clienteVenta', 'clienteDetallado'];
-                
-                selectores.forEach(selectorId => {
-                    const selector = document.getElementById(selectorId);
-                    if (selector) {
-                        selector.innerHTML = '<option value="">Seleccionar cliente...</option>';
-                        
-                        clientes.forEach(cliente => {
-                            const option = document.createElement('option');
-                            option.value = cliente.nombre;
-                            option.textContent = cliente.nombre;
-                            selector.appendChild(option);
+                // Generar alertas basadas en estado de árboles
+                if (window.treeManager) {
+                    const stats = await window.treeManager.getStatistics();
+                    
+                    if (stats.sickTrees > 0) {
+                        alertas.push({
+                            tipo: 'urgente',
+                            icono: 'fa-exclamation-triangle',
+                            titulo: 'Árboles Enfermos Detectados',
+                            descripcion: `${stats.sickTrees} árboles requieren tratamiento inmediato`
                         });
                     }
-                });
-                
-            } catch (error) {
-                console.error('Error cargando clientes:', error);
-                if (!error.message.includes('permission-denied')) {
-                    mostrarNotificacion('Error cargando clientes', 'error');
+
+                    if (stats.treatmentTrees > 0) {
+                        alertas.push({
+                            tipo: 'advertencia',
+                            icono: 'fa-stethoscope',
+                            titulo: 'Tratamientos en Proceso',
+                            descripcion: `${stats.treatmentTrees} árboles en tratamiento activo`
+                        });
+                    }
+
+                    if (stats.healthyTrees === stats.totalTrees) {
+                        alertas.push({
+                            tipo: 'exito',
+                            icono: 'fa-check-circle',
+                            titulo: 'Sistema Saludable',
+                            descripcion: `Todos los ${stats.totalTrees} árboles en estado óptimo`
+                        });
+                    }
                 }
+
+                if (alertas.length === 0) {
+                    alertas.push({
+                        tipo: 'info',
+                        icono: 'fa-info-circle',
+                        titulo: 'Sistema Monitorizado',
+                        descripcion: 'Monitoreo continuo de salud de cultivos activo'
+                    });
+                }
+
+                container.innerHTML = alertas.map(alerta => `
+                    <div class="alerta-item">
+                        <div class="alerta-icon">
+                            <i class="fas ${alerta.icono}"></i>
+                        </div>
+                        <div>
+                            <h4>${alerta.titulo}</h4>
+                            <p>${alerta.descripcion}</p>
+                        </div>
+                    </div>
+                `).join('');
+
+            } catch (error) {
+                console.error('Error generando alertas:', error);
             }
         }
 
-        function mostrarModalVenta() {
-            document.getElementById('modalVentaDetallada').classList.add('show');
-        }
+        function cargarUbicacionesFormulario() {
+            const container = document.getElementById('ubicacionSelector');
+            if (!container) return;
 
-        function cerrarModal() {
-            editandoVentaId = null;
-            
-            document.querySelector('#modalVentaDetallada .modal-title').textContent = 'Registro Detallado de Venta';
-            
-            const btnSubmit = document.querySelector('#formVentaDetallada button[type="submit"]');
-            btnSubmit.innerHTML = '<i class="fas fa-save"></i> Registrar Venta';
-            
-            document.getElementById('modalVentaDetallada').classList.remove('show');
-            document.getElementById('formVentaDetallada').reset();
-        }
-
-        function mostrarModalCliente() {
-            document.getElementById('modalNuevoCliente').classList.add('show');
-        }
-
-        function cerrarModalCliente() {
-            document.getElementById('modalNuevoCliente').classList.remove('show');
-            document.getElementById('formNuevoCliente').reset();
-        }
-
-        async function guardarNuevoCliente(e) {
-            e.preventDefault();
-            
-            const cliente = {
-                nombre: document.getElementById('nombreCliente').value,
-                telefono: document.getElementById('telefonoCliente').value,
-                email: document.getElementById('emailCliente').value,
-                direccion: document.getElementById('direccionCliente').value,
-                fechaRegistro: new Date().toISOString(),
-                usuarioId: firebase.auth().currentUser?.uid
-            };
-            
             try {
-                await firebase.firestore().collection('clientes').add(cliente);
-                
-                agregarClienteASelectores(cliente);
-                mostrarNotificacion('Cliente agregado correctamente', 'success');
-                cerrarModalCliente();
-                
-            } catch (error) {
-                console.error('Error guardando cliente:', error);
-                mostrarNotificacion('Error al guardar cliente', 'error');
-            }
-        }
+                let ubicaciones = [];
 
-        function agregarClienteASelectores(cliente) {
-            const selectores = ['clienteVenta', 'clienteDetallado'];
-            
-            selectores.forEach(selectorId => {
-                const selector = document.getElementById(selectorId);
-                if (selector) {
-                    const option = document.createElement('option');
-                    option.value = cliente.nombre;
-                    option.textContent = cliente.nombre;
-                    selector.appendChild(option);
+                // Cargar sectores del TreeManager
+                if (window.treeManager && window.treeManager.getAllSectors) {
+                    const sectores = window.treeManager.getAllSectors();
+                    ubicaciones = sectores.map(sector => ({
+                        id: sector.id,
+                        nombre: sector.name,
+                        tipo: 'sector'
+                    }));
                 }
-            });
+
+                if (ubicaciones.length === 0) {
+                    ubicaciones = [
+                        { id: 'sector_norte', nombre: 'Sector Norte', tipo: 'sector' },
+                        { id: 'sector_sur', nombre: 'Sector Sur', tipo: 'sector' },
+                        { id: 'sector_este', nombre: 'Sector Este', tipo: 'sector' }
+                    ];
+                }
+
+                container.innerHTML = ubicaciones.map(ubicacion => `
+                    <div class="ubicacion-item">
+                        <input type="checkbox" value="${ubicacion.id}" id="ubicacion_${ubicacion.id}">
+                        <label for="ubicacion_${ubicacion.id}">${ubicacion.nombre}</label>
+                    </div>
+                `).join('');
+
+            } catch (error) {
+                console.error('Error cargando ubicaciones:', error);
+            }
         }
 
         function inicializarGraficos() {
-            const ctxVentas = document.getElementById('graficoVentas');
-            if (ctxVentas) {
-                graficoVentas = new Chart(ctxVentas, {
+            // Gráfico de efectividad
+            const ctxEfectividad = document.getElementById('graficoEfectividad');
+            if (ctxEfectividad) {
+                graficoEfectividad = new Chart(ctxEfectividad, {
                     type: 'line',
                     data: {
-                        labels: [],
+                        labels: ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun'],
                         datasets: [{
-                            label: 'Ingresos (Q)',
-                            data: [],
+                            label: 'Efectividad %',
+                            data: [85, 89, 92, 88, 94, 91],
                             borderColor: '#22c55e',
                             backgroundColor: 'rgba(34, 197, 94, 0.1)',
                             tension: 0.4,
@@ -2091,35 +1313,42 @@
                         maintainAspectRatio: false,
                         plugins: {
                             legend: {
-                                labels: { color: '#2c3e50' }
+                                labels: { color: 'rgba(255, 255, 255, 0.8)' }
                             }
                         },
                         scales: {
                             x: {
-                                ticks: { color: '#6c757d' },
-                                grid: { color: 'rgba(0, 0, 0, 0.1)' }
+                                ticks: { color: 'rgba(255, 255, 255, 0.6)' },
+                                grid: { color: 'rgba(255, 255, 255, 0.1)' }
                             },
                             y: {
-                                ticks: { color: '#6c757d' },
-                                grid: { color: 'rgba(0, 0, 0, 0.1)' }
+                                ticks: { color: 'rgba(255, 255, 255, 0.6)' },
+                                grid: { color: 'rgba(255, 255, 255, 0.1)' },
+                                min: 0,
+                                max: 100
                             }
                         }
                     }
                 });
             }
 
-            const ctxClientes = document.getElementById('graficoClientes');
-            if (ctxClientes) {
-                graficoClientes = new Chart(ctxClientes, {
+            // Gráfico de enfermedades
+            const ctxEnfermedades = document.getElementById('graficoEnfermedades');
+            if (ctxEnfermedades) {
+                graficoEnfermedades = new Chart(ctxEnfermedades, {
                     type: 'doughnut',
                     data: {
-                        labels: [],
+                        labels: ['Hongos', 'Bacterias', 'Plagas', 'Deficiencias'],
                         datasets: [{
-                            data: [],
+                            data: [45, 25, 20, 10],
                             backgroundColor: [
-                                '#22c55e', '#3b82f6', '#f59e0b', '#8b5cf6', '#ef4444'
+                                '#ef4444',
+                                '#f59e0b', 
+                                '#3b82f6',
+                                '#8b5cf6'
                             ],
-                            borderWidth: 0
+                            borderWidth: 2,
+                            borderColor: '#ffffff'
                         }]
                     },
                     options: {
@@ -2128,135 +1357,162 @@
                         plugins: {
                             legend: {
                                 position: 'bottom',
-                                labels: { color: '#2c3e50' }
+                                labels: { 
+                                    color: 'rgba(255, 255, 255, 0.8)',
+                                    padding: 20
+                                }
                             }
                         }
                     }
                 });
             }
-
-            cargarDatosGraficos('semana');
         }
 
-        async function cargarDatosGraficos(periodo) {
-            // Simulación de datos para demo
-            const labels = periodo === 'semana' ? 
-                ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'] :
-                ['Sem 1', 'Sem 2', 'Sem 3', 'Sem 4'];
+        // Funciones de modal y formularios
+        function mostrarModalTratamiento() {
+            const modal = document.getElementById('modalTratamiento');
+            const form = document.getElementById('formTratamiento');
             
-            const data = labels.map(() => Math.random() * 5000 + 2000);
+            // Limpiar formulario
+            form.reset();
             
-            if (graficoVentas) {
-                graficoVentas.data.labels = labels;
-                graficoVentas.data.datasets[0].data = data;
-                graficoVentas.update();
+            // Establecer fecha y hora actuales
+            const ahora = new Date();
+            document.getElementById('fechaAplicacion').value = ahora.toISOString().split('T')[0];
+            document.getElementById('horaAplicacion').value = ahora.toTimeString().slice(0,5);
+            
+            modal.style.display = 'block';
+        }
+
+        function cerrarModal() {
+            document.getElementById('modalTratamiento').style.display = 'none';
+        }
+
+        async function guardarTratamiento(e) {
+            e.preventDefault();
+            
+            const datos = obtenerDatosFormulario();
+            
+            try {
+                if (tratamientosManager && tratamientosManager.registrarTratamiento) {
+                    await tratamientosManager.registrarTratamiento(datos);
+                } else {
+                    console.log('Guardando tratamiento:', datos);
+                    // Aquí se guardaría en la base de datos real
+                }
+                
+                mostrarNotificacion('Tratamiento programado correctamente', 'success');
+                cerrarModal();
+                await cargarTratamientosActivos();
+                await cargarHistorialTratamientos();
+                
+            } catch (error) {
+                console.error('Error guardando tratamiento:', error);
+                mostrarNotificacion('Error al programar tratamiento', 'error');
             }
-            
-            if (graficoClientes) {
-                graficoClientes.data.labels = ['Cliente A', 'Cliente B', 'Cliente C'];
-                graficoClientes.data.datasets[0].data = [30, 45, 25];
-                graficoClientes.update();
-            }
         }
 
-        function cambiarPeriodoGrafico(periodo) {
-            document.querySelectorAll('.periodo-btn').forEach(btn => btn.classList.remove('active'));
-            document.querySelector(`[data-periodo="${periodo}"]`).classList.add('active');
-            cargarDatosGraficos(periodo);
-        }
-
-        function configurarCalculadora() {
-            ['calcCantidad', 'calcPrecio', 'calcDescuento', 'calcTransporte'].forEach(id => {
-                document.getElementById(id)?.addEventListener('input', calcularPrecio);
+        function obtenerDatosFormulario() {
+            // Obtener ubicaciones seleccionadas
+            const ubicacionesSeleccionadas = [];
+            document.querySelectorAll('#ubicacionSelector input[type="checkbox"]:checked').forEach(checkbox => {
+                ubicacionesSeleccionadas.push(checkbox.value);
             });
+            
+            return {
+                nombre: document.getElementById('nombreTratamiento').value,
+                enfermedad: document.getElementById('enfermedadTratamiento').value,
+                producto: document.getElementById('productoTratamiento').value,
+                dosis: document.getElementById('dosisTratamiento').value,
+                metodo: document.getElementById('metodoAplicacion').value,
+                ubicaciones: ubicacionesSeleccionadas,
+                fecha: document.getElementById('fechaAplicacion').value,
+                hora: document.getElementById('horaAplicacion').value,
+                observaciones: document.getElementById('observacionesTratamiento').value,
+                responsable: 'Usuario actual'
+            };
         }
 
-        function calcularPrecio() {
-            const cantidad = parseFloat(document.getElementById('calcCantidad').value) || 0;
-            const precio = parseFloat(document.getElementById('calcPrecio').value) || 0;
-            const descuento = parseFloat(document.getElementById('calcDescuento').value) || 0;
-            const transporte = parseFloat(document.getElementById('calcTransporte').value) || 0;
-            
-            const subtotal = cantidad * precio;
-            const descuentoMonto = subtotal * (descuento / 100);
-            const total = subtotal - descuentoMonto + transporte;
-            
-            document.getElementById('calcTotal').textContent = `Q ${total.toFixed(2)}`;
+        // Funciones globales para botones
+        function aplicarTratamiento(id) {
+            if (tratamientosManager && tratamientosManager.aplicarTratamiento) {
+                tratamientosManager.aplicarTratamiento(id);
+            }
+            mostrarNotificacion('Tratamiento aplicado', 'success');
         }
 
-        function calcularTotalDetallado() {
-            const cantidad = parseFloat(document.getElementById('cantidadDetallada').value) || 0;
-            const precio = parseFloat(document.getElementById('precioDetallado').value) || 0;
-            const descuento = parseFloat(document.getElementById('descuentoDetallado').value) || 0;
-            const transporte = parseFloat(document.getElementById('transporteDetallado').value) || 0;
-            
-            const subtotal = cantidad * precio;
-            const descuentoMonto = subtotal * (descuento / 100);
-            const total = subtotal - descuentoMonto + transporte;
-            
-            document.getElementById('totalDetallado').value = total.toFixed(2);
+        function editarTratamiento(id) {
+            mostrarModalTratamiento();
+            // Cargar datos del tratamiento para editar
         }
 
-        function cargarDatosCliente() {
-            // Implementar si es necesario
+        function verHistorialTratamiento(id) {
+            console.log('Ver historial del tratamiento:', id);
         }
 
-        function accionVenta(accion) {
-            switch (accion) {
-                case 'nueva-venta':
-                    mostrarModalVenta();
-                    break;
-                case 'cotizacion':
-                    mostrarNotificacion('Función en desarrollo', 'info');
-                    break;
-                case 'facturacion':
-                    generarFactura();
-                    break;
-                case 'reportes':
-                    mostrarNotificacion('Función en desarrollo', 'info');
-                    break;
+        function crearTratamientoUrgente() {
+            mostrarModalTratamiento();
+            // Pre-llenar como urgente
+            document.getElementById('nombreTratamiento').value = 'Tratamiento Urgente';
+        }
+
+        function mostrarConfiguracion() {
+            mostrarNotificacion('Función de configuración en desarrollo', 'info');
+        }
+
+        function generarReporte() {
+            mostrarNotificacion('Generando reporte de tratamientos...', 'info');
+        }
+
+        function exportarHistorial() {
+            mostrarNotificacion('Exportando historial...', 'info');
+        }
+
+        // Utilidades
+        function formatearFecha(fechaString) {
+            if (!fechaString) return 'N/A';
+            
+            try {
+                const fecha = new Date(fechaString);
+                return fecha.toLocaleDateString('es-GT', {
+                    year: 'numeric',
+                    month: 'short',
+                    day: 'numeric',
+                    hour: '2-digit',
+                    minute: '2-digit'
+                });
+            } catch (error) {
+                return 'Fecha inválida';
             }
         }
 
-        function aplicarFiltros() {
-            mostrarNotificacion('Filtros aplicados', 'info');
-        }
-
-        function limpiarFiltros() {
-            document.getElementById('filtroPeriodo').value = 'mes';
-            document.getElementById('filtroCliente').value = '';
-            document.getElementById('filtroEstado').value = '';
-            document.getElementById('filtroMetodoPago').value = '';
-            mostrarNotificacion('Filtros limpiados', 'info');
-        }
-
-        function generarFactura() {
-            mostrarNotificacion('Generando factura...', 'info');
+        function mostrarNotificacion(mensaje, tipo = 'info') {
+            const notification = document.createElement('div');
+            notification.className = `notification ${tipo}`;
+            notification.textContent = mensaje;
+            
+            document.body.appendChild(notification);
+            
             setTimeout(() => {
-                mostrarNotificacion('Factura generada correctamente', 'success');
-            }, 2000);
+                notification.remove();
+            }, 4000);
+            
+            console.log(`${tipo.toUpperCase()}: ${mensaje}`);
         }
 
-        function exportarVentas() {
-            mostrarNotificacion('Exportando ventas...', 'info');
-            setTimeout(() => {
-                mostrarNotificacion('Ventas exportadas correctamente', 'success');
-            }, 2000);
+        function mostrarError(mensaje) {
+            mostrarNotificacion(mensaje, 'error');
         }
 
-        function formatearFecha(fecha) {
-            return new Date(fecha).toLocaleDateString('es-GT', {
-                year: 'numeric',
-                month: 'short',
-                day: 'numeric'
-            });
-        }
-
-        // Hacer funciones globales
-        window.accionVenta = accionVenta;
-        window.editarVenta = editarVenta;
-        window.eliminarVenta = eliminarVenta;
-        window.cerrarNotificacion = cerrarNotificacion;
+        // Hacer funciones disponibles globalmente
+        window.mostrarModalTratamiento = mostrarModalTratamiento;
+        window.aplicarTratamiento = aplicarTratamiento;
+        window.editarTratamiento = editarTratamiento;
+        window.verHistorialTratamiento = verHistorialTratamiento;
+        window.crearTratamientoUrgente = crearTratamientoUrgente;
+        window.mostrarConfiguracion = mostrarConfiguracion;
+        window.generarReporte = generarReporte;
+        window.exportarHistorial = exportarHistorial;
     </script>
 </body>
 </html>
