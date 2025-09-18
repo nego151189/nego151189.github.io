@@ -1212,9 +1212,12 @@ function createTreeForm(tree = null) {
                 <div class="form-group">
                     <label class="form-label">Variedad</label>
                     <select class="form-input" name="variety" required>
-                        <option value="Lima Persa" ${tree?.variety === 'Lima Persa' ? 'selected' : ''}>Lima Persa</option>
-                        <option value="Limón Eureka" ${tree?.variety === 'Limón Eureka' ? 'selected' : ''}>Limón Eureka</option>
-                        <option value="Limón Meyer" ${tree?.variety === 'Limón Meyer' ? 'selected' : ''}>Limón Meyer</option>
+                        <option value="Limón Persa" ${tree?.variety === 'Limón Persa' ? 'selected' : ''}>Limón Persa</option>
+                        <option value="Mango Tommy" ${tree?.variety === 'Mango Tommy' ? 'selected' : ''}>Mango Tommy</option>
+                        <option value="Jocote Corona" ${tree?.variety === 'Jocote Corona' ? 'selected' : ''}>Jocote Corona</option>
+                        <option value="Aguacate Hass" ${tree?.variety === 'Aguacate Hass' ? 'selected' : ''}>Aguacate Hass</option>
+                        <option value="Aguacate Grande" ${tree?.variety === 'Aguacate Grande' ? 'selected' : ''}>Aguacate Grande</option>
+                        <option value="Coco" ${tree?.variety === 'Coco' ? 'selected' : ''}>Coco</option>
                     </select>
                 </div>
                 
@@ -1936,3 +1939,4 @@ window.toggleMapLayers = toggleMapLayers;
 window.toggleFullscreenMap = toggleFullscreenMap;
 
 console.log('🌳 Sistema de árboles con Leaflet Maps cargado - Versión completa');
+
