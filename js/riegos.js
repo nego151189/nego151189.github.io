@@ -1,6 +1,6 @@
 // ========================================
-// SISTEMA INTELIGENTE DE RIEGO
-// Finca La Herradura - Integración con TreeManager
+// SISTEMA DE RIEGO - COMPATIBLE CON TU ESTRUCTURA
+// Finca La Herradura - Integrado con arboles.js
 // ========================================
 
 class RiegoManager {
@@ -9,79 +9,207 @@ class RiegoManager {
         this.arboles = [];
         this.programasRiego = [];
         this.riegosActivos = new Map();
-        this.db = firebase.firestore();
+        this.db = null;
         this.timers = new Map();
         this.sensores = new Map();
+        this.inicializando = false;
+        this.inicializado = false;
         this.estadoGeneral = {
             presion: 2.5,
             caudal: 0,
             caudalPromedio: 45,
             sistemaActivo: false
         };
+        
         this.init();
     }
 
     async init() {
-        console.log('💧 Iniciando sistema de riego...');
+        if (this.inicializando) return;
+        this.inicializando = true;
         
-        // Esperar a que TreeManager esté listo
-        if (typeof window.treeManager !== 'undefined') {
-            await this.cargarDatosDeTreeManager();
-        } else {
-            setTimeout(() => this.init(), 1000);
-            return;
+        console.log('💧 Iniciando sistema de riego compatible...');
+        
+        try {
+            // Esperar a Firebase (usando tu configuración)
+            await this.esperarFirebase();
+            
+            // Esperar a TreeManager (compatible con tu estructura)
+            await this.esperarTreeManagerCompatible();
+            
+            // Inicializar el resto del sistema
+            await this.inicializarSistema();
+            
+        } catch (error) {
+            console.error('❌ Error en inicialización de riegos:', error);
+            await this.inicializarConDatosDeRespaldo();
         }
+    }
+
+    async esperarFirebase() {
+        return new Promise((resolve, reject) => {
+            let attempts = 0;
+            const maxAttempts = 50;
+            
+            const checkFirebase = () => {
+                attempts++;
+                
+                // Verificar múltiples formas de acceso (compatible con tu firebase-config.js)
+                if (typeof firebase !== 'undefined' && firebase.firestore) {
+                    this.db = firebase.firestore();
+                    console.log('✅ Firebase disponible para riegos');
+                    resolve(true);
+                } else if (window.firebase && window.firebase.firestore) {
+                    this.db = window.firebase.firestore();
+                    resolve(true);
+                } else if (window.db) {
+                    this.db = window.db;
+                    resolve(true);
+                } else if (attempts >= maxAttempts) {
+                    console.warn('⚠️ Firebase no disponible para riegos');
+                    resolve(false);
+                } else {
+                    setTimeout(checkFirebase, 100);
+                }
+            };
+            
+            checkFirebase();
+        });
+    }
+
+    async esperarTreeManagerCompatible() {
+        return new Promise((resolve, reject) => {
+            let attempts = 0;
+            const maxAttempts = 100;
+            
+            const checkTreeManager = async () => {
+                attempts++;
+                
+                if (window.treeManager && window.treeManager.inicializado()) {
+                    try {
+                        // Usar los métodos compatibles con tu estructura
+                        this.sectores = await window.treeManager.getSectoresParaFormulario();
+                        this.arboles = await window.treeManager.getArbolesParaFormulario();
+                        console.log(`✅ TreeManager compatible para riego: ${this.sectores.length} sectores, ${this.arboles.length} árboles`);
+                        resolve(true);
+                    } catch (error) {
+                        console.error('Error obteniendo datos de TreeManager:', error);
+                        await this.cargarDatosDeRespaldo();
+                        resolve(false);
+                    }
+                } else if (attempts >= maxAttempts) {
+                    console.warn('⚠️ TreeManager no disponible, usando datos de respaldo');
+                    await this.cargarDatosDeRespaldo();
+                    resolve(false);
+                } else {
+                    setTimeout(checkTreeManager, 100);
+                }
+            };
+            
+            checkTreeManager();
+        });
         
+        // También escuchar eventos de TreeManager (compatible con tu arboles.js)
+        window.addEventListener('treeManagerReady', async (event) => {
+            console.log('🔄 TreeManager listo, actualizando riegos');
+            try {
+                this.sectores = event.detail.sectores || await window.treeManager.getSectoresParaFormulario();
+                this.arboles = event.detail.arboles || await window.treeManager.getArbolesParaFormulario();
+                this.inicializarEstadoRiegoPorSector();
+                this.poblarSelectores();
+                this.renderizarSectores();
+            } catch (error) {
+                console.error('Error actualizando datos desde TreeManager:', error);
+            }
+        });
+
+        // Escuchar actualizaciones específicas (compatible con tus eventos)
+        window.addEventListener('sectorUpdate', () => {
+            setTimeout(async () => {
+                if (window.treeManager) {
+                    this.sectores = await window.treeManager.getSectoresParaFormulario();
+                    this.inicializarEstadoRiegoPorSector();
+                    this.poblarSelectores();
+                    this.renderizarSectores();
+                }
+            }, 100);
+        });
+    }
+
+    async inicializarSistema() {
+        this.inicializarEstadoRiegoPorSector();
         await this.cargarProgramasRiego();
         await this.cargarEstadoSensores();
         this.configurarEventListeners();
+        this.poblarSelectores();
         this.renderizarSectores();
         this.actualizarEstadisticas();
         this.iniciarMonitoreo();
         this.cargarProximosRiegos();
         this.cargarHistorialReciente();
         
-        console.log('✅ Sistema de riego inicializado');
+        this.inicializado = true;
+        this.inicializando = false;
+        
+        console.log('✅ Sistema de riego inicializado correctamente');
+        console.log(`📊 Datos: ${this.sectores.length} sectores, ${this.arboles.length} árboles, ${this.programasRiego.length} programas`);
     }
 
-    // ==================== CARGA DE DATOS ====================
-    async cargarDatosDeTreeManager() {
-        try {
-            if (window.treeManager) {
-                this.sectores = await window.treeManager.getSectoresParaFormulario();
-                this.arboles = await window.treeManager.getArbolesParaFormulario();
-                this.poblarSelectores();
-                console.log(`💧 Cargados ${this.sectores.length} sectores para riego`);
-                
-                // Inicializar estado de riego para cada sector
-                this.sectores.forEach(sector => {
-                    if (!this.riegosActivos.has(sector.id)) {
-                        this.riegosActivos.set(sector.id, {
-                            activo: false,
-                            inicio: null,
-                            duracion: 0,
-                            progreso: 0,
-                            caudal: 0,
-                            programa: null
-                        });
-                    }
+    async inicializarConDatosDeRespaldo() {
+        await this.cargarDatosDeRespaldo();
+        this.inicializarEstadoRiegoPorSector();
+        await this.cargarProgramasRiego();
+        this.configurarEventListeners();
+        this.poblarSelectores();
+        this.renderizarSectores();
+        this.actualizarEstadisticas();
+        this.iniciarMonitoreo();
+        
+        this.inicializado = true;
+        this.inicializando = false;
+        
+        console.log('⚠️ Sistema de riego inicializado con datos de respaldo');
+    }
+
+    async cargarDatosDeRespaldo() {
+        // Usar estructura compatible con tu sistema
+        this.sectores = [
+            { id: 'SECTOR_NORTE', nombre: 'Sector Norte', codigo: 'SEC-N', area: 2.5, estado: 'activo' },
+            { id: 'SECTOR_SUR', nombre: 'Sector Sur', codigo: 'SEC-S', area: 3.0, estado: 'activo' },
+            { id: 'SECTOR_ESTE', nombre: 'Sector Este', codigo: 'SEC-E', area: 1.8, estado: 'activo' }
+        ];
+        
+        this.arboles = [
+            { id: 'arbol-1', codigo: 'A-001', sectorId: 'SECTOR_NORTE', sector: 'Sector Norte' },
+            { id: 'arbol-2', codigo: 'A-002', sectorId: 'SECTOR_NORTE', sector: 'Sector Norte' },
+            { id: 'arbol-3', codigo: 'A-003', sectorId: 'SECTOR_SUR', sector: 'Sector Sur' }
+        ];
+    }
+
+    inicializarEstadoRiegoPorSector() {
+        console.log('🔄 Inicializando estado de riego por sectores...');
+        
+        this.sectores.forEach(sector => {
+            if (!this.riegosActivos.has(sector.id)) {
+                this.riegosActivos.set(sector.id, {
+                    activo: false,
+                    inicio: null,
+                    duracion: 0,
+                    progreso: 0,
+                    caudal: 0,
+                    programa: null
                 });
             }
-        } catch (error) {
-            console.error('Error cargando datos del TreeManager:', error);
-            // Datos de respaldo
-            this.sectores = [
-                { id: 'sector1', nombre: 'Sector A Norte', codigo: 'SEC-AN', arboles: 45 },
-                { id: 'sector2', nombre: 'Sector B Sur', codigo: 'SEC-BS', arboles: 38 },
-                { id: 'sector3', nombre: 'Sector C Centro', codigo: 'SEC-CC', arboles: 52 }
-            ];
-            this.poblarSelectores();
-        }
+        });
+        
+        console.log(`✅ Estado de riego inicializado para ${this.sectores.length} sectores`);
     }
 
     poblarSelectores() {
+        console.log('🔄 Poblando selectores de riego...');
+        
         const selectorSector = document.querySelector('select[name="sector"]');
-        if (selectorSector) {
+        if (selectorSector && this.sectores.length > 0) {
             selectorSector.innerHTML = '<option value="">Seleccionar sector</option>';
             this.sectores.forEach(sector => {
                 const option = document.createElement('option');
@@ -89,25 +217,37 @@ class RiegoManager {
                 option.textContent = `${sector.nombre || sector.codigo} (${this.contarArbolesSector(sector.id)} árboles)`;
                 selectorSector.appendChild(option);
             });
+            console.log(`✅ Selector poblado con ${this.sectores.length} sectores`);
         }
     }
 
     contarArbolesSector(sectorId) {
-        return this.arboles.filter(a => a.sectorId === sectorId).length || 0;
+        return this.arboles.filter(a => a.sectorId === sectorId || a.sector === sectorId).length;
+    }
+
+    getSectorName(sectorId) {
+        const sector = this.sectores.find(s => s.id === sectorId);
+        return sector ? (sector.nombre || sector.codigo) : sectorId || 'Sector';
     }
 
     async cargarProgramasRiego() {
         try {
-            const snapshot = await this.db.collection('programas-riego')
-                .orderBy('fechaCreacion', 'desc')
-                .get();
-            
-            this.programasRiego = snapshot.docs.map(doc => ({
-                id: doc.id,
-                ...doc.data(),
-                fechaProgramada: doc.data().fechaProgramada?.toDate(),
-                fechaCreacion: doc.data().fechaCreacion?.toDate()
-            }));
+            if (this.db) {
+                const snapshot = await this.db.collection('programas-riego')
+                    .orderBy('fechaCreacion', 'desc')
+                    .get();
+                
+                this.programasRiego = snapshot.docs.map(doc => ({
+                    id: doc.id,
+                    ...doc.data(),
+                    fechaProgramada: doc.data().fechaProgramada?.toDate(),
+                    fechaCreacion: doc.data().fechaCreacion?.toDate()
+                }));
+                
+                console.log(`✅ ${this.programasRiego.length} programas de riego cargados desde Firebase`);
+            } else {
+                this.programasRiego = this.generarProgramasEjemplo();
+            }
         } catch (error) {
             console.error('Error cargando programas de riego:', error);
             this.programasRiego = this.generarProgramasEjemplo();
@@ -116,30 +256,36 @@ class RiegoManager {
 
     async cargarEstadoSensores() {
         try {
-            const snapshot = await this.db.collection('sensores-riego').get();
-            snapshot.docs.forEach(doc => {
-                this.sensores.set(doc.id, {
-                    id: doc.id,
-                    ...doc.data(),
-                    ultimaActualizacion: doc.data().ultimaActualizacion?.toDate()
+            if (this.db) {
+                const snapshot = await this.db.collection('sensores-riego').get();
+                snapshot.docs.forEach(doc => {
+                    this.sensores.set(doc.id, {
+                        id: doc.id,
+                        ...doc.data(),
+                        ultimaActualizacion: doc.data().ultimaActualizacion?.toDate()
+                    });
                 });
-            });
+                console.log(`✅ ${this.sensores.size} sensores de riego cargados`);
+            }
         } catch (error) {
             console.error('Error cargando sensores:', error);
-            // Sensores de ejemplo
-            this.sectores.forEach(sector => {
+        }
+        
+        // Generar sensores de ejemplo para cada sector
+        this.sectores.forEach(sector => {
+            if (!this.sensores.has(sector.id)) {
                 this.sensores.set(sector.id, {
                     id: sector.id,
                     humedad: Math.random() * 100,
                     temperatura: 20 + Math.random() * 15,
                     presion: 2.0 + Math.random() * 1.5,
-                    activo: true
+                    activo: true,
+                    ultimaActualizacion: new Date()
                 });
-            });
-        }
+            }
+        });
     }
 
-    // ==================== INTERFAZ DE USUARIO ====================
     configurarEventListeners() {
         // Tipo de programación
         const tipoProgramacion = document.querySelector('select[name="tipoProgramacion"]');
@@ -166,8 +312,12 @@ class RiegoManager {
         opcionesAutomatico.style.display = tipo === 'automatico' ? 'block' : 'none';
     }
 
-    // ==================== GESTIÓN DE RIEGOS ====================
     async guardarNuevoRiego() {
+        if (!this.db) {
+            this.mostrarAlerta('Firebase no disponible', 'error');
+            return;
+        }
+
         const form = document.getElementById('formNuevoRiego');
         const formData = new FormData(form);
         
@@ -228,7 +378,7 @@ class RiegoManager {
     }
 
     async ejecutarRiego(programaId, programa) {
-        console.log(`💧 Iniciando riego: ${programa.nombre} en ${programa.sector}`);
+        console.log(`💧 Iniciando riego: ${programa.nombre} en ${this.getSectorName(programa.sector)}`);
         
         try {
             const estadoRiego = {
@@ -244,20 +394,22 @@ class RiegoManager {
             this.riegosActivos.set(programa.sector, estadoRiego);
             
             // Actualizar estado en Firebase
-            await this.db.collection('programas-riego').doc(programaId).update({
-                estado: 'ejecutando',
-                fechaInicio: firebase.firestore.Timestamp.now()
-            });
+            if (this.db) {
+                await this.db.collection('programas-riego').doc(programaId).update({
+                    estado: 'ejecutando',
+                    fechaInicio: firebase.firestore.Timestamp.now()
+                });
 
-            // Registrar inicio en historial
-            await this.db.collection('historial-riego').add({
-                programaId,
-                sector: programa.sector,
-                tipo: 'inicio',
-                timestamp: firebase.firestore.Timestamp.now(),
-                duracionProgramada: programa.duracion,
-                caudal: programa.caudal
-            });
+                // Registrar inicio en historial
+                await this.db.collection('historial-riego').add({
+                    programaId,
+                    sector: programa.sector,
+                    tipo: 'inicio',
+                    timestamp: firebase.firestore.Timestamp.now(),
+                    duracionProgramada: programa.duracion,
+                    caudal: programa.caudal
+                });
+            }
 
             // Iniciar timer
             this.iniciarTimerRiego(programa.sector, programa.duracion);
@@ -303,28 +455,30 @@ class RiegoManager {
         const estadoRiego = this.riegosActivos.get(sectorId);
         if (!estadoRiego) return;
 
-        console.log(`💧 Finalizando riego en ${sectorId}`);
+        console.log(`💧 Finalizando riego en ${this.getSectorName(sectorId)}`);
         
         try {
             const duracionReal = (Date.now() - estadoRiego.inicio.getTime()) / (1000 * 60); // en minutos
             
             // Registrar finalización
-            await this.db.collection('historial-riego').add({
-                programaId: estadoRiego.programaId,
-                sector: sectorId,
-                tipo: 'fin',
-                timestamp: firebase.firestore.Timestamp.now(),
-                duracionReal: Math.round(duracionReal),
-                litrosAplicados: Math.round(duracionReal * estadoRiego.caudal)
-            });
-
-            // Actualizar programa
-            if (estadoRiego.programaId) {
-                await this.db.collection('programas-riego').doc(estadoRiego.programaId).update({
-                    estado: 'completado',
-                    fechaFinalizacion: firebase.firestore.Timestamp.now(),
-                    duracionReal: Math.round(duracionReal)
+            if (this.db) {
+                await this.db.collection('historial-riego').add({
+                    programaId: estadoRiego.programaId,
+                    sector: sectorId,
+                    tipo: 'fin',
+                    timestamp: firebase.firestore.Timestamp.now(),
+                    duracionReal: Math.round(duracionReal),
+                    litrosAplicados: Math.round(duracionReal * estadoRiego.caudal)
                 });
+
+                // Actualizar programa
+                if (estadoRiego.programaId) {
+                    await this.db.collection('programas-riego').doc(estadoRiego.programaId).update({
+                        estado: 'completado',
+                        fechaFinalizacion: firebase.firestore.Timestamp.now(),
+                        duracionReal: Math.round(duracionReal)
+                    });
+                }
             }
 
             // Limpiar estado local
@@ -350,14 +504,13 @@ class RiegoManager {
             this.actualizarEstadoGeneral();
             this.cargarHistorialReciente();
 
-            this.mostrarAlerta(`Riego completado en ${sectorId}`, 'success');
+            this.mostrarAlerta(`Riego completado en ${this.getSectorName(sectorId)}`, 'success');
 
         } catch (error) {
             console.error('Error finalizando riego:', error);
         }
     }
 
-    // ==================== CONTROL MANUAL ====================
     mostrarControlManual(sectorId) {
         const sector = this.sectores.find(s => s.id === sectorId);
         const estadoRiego = this.riegosActivos.get(sectorId);
@@ -365,7 +518,7 @@ class RiegoManager {
         if (!sector) return;
 
         document.getElementById('sectorControlManual').textContent = `Sector: ${sector.nombre || sector.codigo}`;
-        document.getElementById('estadoControlManual').textContent = estadoRiego.activo ? 'Activo' : 'Inactivo';
+        document.getElementById('estadoControlManual').textContent = estadoRiego?.activo ? 'Activo' : 'Inactivo';
         
         const modal = new bootstrap.Modal(document.getElementById('modalControlManual'));
         modal._sectorId = sectorId;
@@ -389,12 +542,17 @@ class RiegoManager {
         };
 
         try {
-            const docRef = await this.db.collection('programas-riego').add({
-                ...programa,
-                fechaCreacion: firebase.firestore.Timestamp.now()
-            });
-
-            await this.ejecutarRiego(docRef.id, programa);
+            if (this.db) {
+                const docRef = await this.db.collection('programas-riego').add({
+                    ...programa,
+                    fechaCreacion: firebase.firestore.Timestamp.now()
+                });
+                await this.ejecutarRiego(docRef.id, programa);
+            } else {
+                // Ejecutar sin Firebase
+                await this.ejecutarRiego('manual-' + Date.now(), programa);
+            }
+            
             modal.hide();
 
         } catch (error) {
@@ -417,7 +575,7 @@ class RiegoManager {
         const estadoRiego = this.riegosActivos.get(sectorId);
         if (!estadoRiego || !estadoRiego.activo) return;
 
-        console.log(`💧 Deteniendo riego en ${sectorId}`);
+        console.log(`💧 Deteniendo riego en ${this.getSectorName(sectorId)}`);
         
         // Limpiar timer
         const timer = this.timers.get(sectorId);
@@ -429,10 +587,20 @@ class RiegoManager {
         await this.finalizarRiego(sectorId);
     }
 
-    // ==================== RENDERIZADO ====================
     renderizarSectores() {
         const container = document.getElementById('listaSectores');
         if (!container) return;
+
+        if (this.sectores.length === 0) {
+            container.innerHTML = `
+                <div class="text-center text-muted p-4">
+                    <i class="fas fa-tint fa-3x mb-3"></i>
+                    <p>No hay sectores disponibles</p>
+                    <small>Los sectores aparecerán aquí cuando se carguen desde TreeManager</small>
+                </div>
+            `;
+            return;
+        }
 
         const sectoresHTML = this.sectores.map(sector => {
             const estadoRiego = this.riegosActivos.get(sector.id);
@@ -533,7 +701,6 @@ class RiegoManager {
         container.innerHTML = controlesHTML;
     }
 
-    // ==================== ESTADÍSTICAS ====================
     actualizarEstadisticas() {
         const riegosActivosCount = Array.from(this.riegosActivos.values()).filter(r => r.activo).length;
         const caudalTotalActivo = Array.from(this.riegosActivos.values())
@@ -574,13 +741,12 @@ class RiegoManager {
         this.actualizarEstadisticas();
     }
 
-    // ==================== CRONÓMETRO ====================
     mostrarCronometro(sectorId, programa) {
         const cronometro = document.getElementById('cronometroRiego');
         const sectorTexto = document.getElementById('sectorEnRiego');
         
         cronometro.style.display = 'block';
-        sectorTexto.textContent = `Sector: ${programa.sector}`;
+        sectorTexto.textContent = `Sector: ${this.getSectorName(programa.sector)}`;
         
         this.iniciarActualizacionCronometro();
     }
@@ -620,7 +786,6 @@ class RiegoManager {
         }
     }
 
-    // ==================== MONITOREO AUTOMÁTICO ====================
     iniciarMonitoreo() {
         // Verificar programas automáticos cada minuto
         setInterval(() => {
@@ -679,8 +844,6 @@ class RiegoManager {
         if (condiciones.temperatura && sensor.temperatura <= 28) {
             cumpleCondiciones = false;
         }
-
-        // TODO: Integrar con datos de lluvia del clima
         
         return cumpleCondiciones;
     }
@@ -710,7 +873,6 @@ class RiegoManager {
         }
     }
 
-    // ==================== UTILIDADES ====================
     async toggleRiegoRapido(sectorId) {
         const estadoRiego = this.riegosActivos.get(sectorId);
         
@@ -726,12 +888,20 @@ class RiegoManager {
                 tipoProgramacion: 'rapido'
             };
 
-            const docRef = await this.db.collection('programas-riego').add({
-                ...programa,
-                fechaCreacion: firebase.firestore.Timestamp.now()
-            });
-
-            await this.ejecutarRiego(docRef.id, programa);
+            try {
+                if (this.db) {
+                    const docRef = await this.db.collection('programas-riego').add({
+                        ...programa,
+                        fechaCreacion: firebase.firestore.Timestamp.now()
+                    });
+                    await this.ejecutarRiego(docRef.id, programa);
+                } else {
+                    await this.ejecutarRiego('rapido-' + Date.now(), programa);
+                }
+            } catch (error) {
+                console.error('Error iniciando riego rápido:', error);
+                this.mostrarAlerta('Error al iniciar riego rápido', 'error');
+            }
         }
     }
 
@@ -772,7 +942,7 @@ class RiegoManager {
             <div class="horario-item">
                 <strong>${programa.nombre}</strong><br>
                 <small class="text-muted">
-                    <i class="fas fa-map-marker-alt me-1"></i>${programa.sector}<br>
+                    <i class="fas fa-map-marker-alt me-1"></i>${this.getSectorName(programa.sector)}<br>
                     <i class="fas fa-clock me-1"></i>${this.formatearFecha(programa.fechaProgramada)}<br>
                     <i class="fas fa-tint me-1"></i>${programa.duracion} min
                 </small>
@@ -782,28 +952,30 @@ class RiegoManager {
 
     async cargarHistorialReciente() {
         try {
-            const snapshot = await this.db.collection('historial-riego')
-                .orderBy('timestamp', 'desc')
-                .limit(10)
-                .get();
+            if (this.db) {
+                const snapshot = await this.db.collection('historial-riego')
+                    .orderBy('timestamp', 'desc')
+                    .limit(10)
+                    .get();
 
-            const historial = snapshot.docs.map(doc => ({
-                id: doc.id,
-                ...doc.data(),
-                timestamp: doc.data().timestamp.toDate()
-            }));
+                const historial = snapshot.docs.map(doc => ({
+                    id: doc.id,
+                    ...doc.data(),
+                    timestamp: doc.data().timestamp.toDate()
+                }));
 
-            const container = document.getElementById('historialReciente');
-            if (container && historial.length > 0) {
-                container.innerHTML = historial.map(item => `
-                    <div class="horario-item">
-                        <small>
-                            <strong>${item.tipo === 'inicio' ? 'Iniciado' : 'Finalizado'}</strong> - ${item.sector}<br>
-                            <i class="fas fa-clock me-1"></i>${this.formatearFecha(item.timestamp)}
-                            ${item.litrosAplicados ? `<br><i class="fas fa-tint me-1"></i>${item.litrosAplicados}L aplicados` : ''}
-                        </small>
-                    </div>
-                `).join('');
+                const container = document.getElementById('historialReciente');
+                if (container && historial.length > 0) {
+                    container.innerHTML = historial.map(item => `
+                        <div class="horario-item">
+                            <small>
+                                <strong>${item.tipo === 'inicio' ? 'Iniciado' : 'Finalizado'}</strong> - ${this.getSectorName(item.sector)}<br>
+                                <i class="fas fa-clock me-1"></i>${this.formatearFecha(item.timestamp)}
+                                ${item.litrosAplicados ? `<br><i class="fas fa-tint me-1"></i>${item.litrosAplicados}L aplicados` : ''}
+                            </small>
+                        </div>
+                    `).join('');
+                }
             }
         } catch (error) {
             console.error('Error cargando historial:', error);
@@ -837,11 +1009,14 @@ class RiegoManager {
     }
 
     generarProgramasEjemplo() {
+        if (this.sectores.length === 0) return [];
+        
+        const sector = this.sectores[0];
         return [
             {
                 id: 'prog1',
-                nombre: 'Riego Matutino Sector A',
-                sector: 'sector1',
+                nombre: `Riego Matutino ${this.getSectorName(sector.id)}`,
+                sector: sector.id,
                 duracion: 30,
                 caudal: 45,
                 tipoProgramacion: 'programado',
@@ -850,6 +1025,11 @@ class RiegoManager {
                 fechaCreacion: new Date()
             }
         ];
+    }
+
+    verHistorialSector(sectorId) {
+        console.log('Ver historial del sector:', sectorId);
+        // Implementar modal de historial específico del sector
     }
 }
 
@@ -911,4 +1091,4 @@ document.addEventListener('DOMContentLoaded', () => {
     window.riegoManager = new RiegoManager();
 });
 
-console.log('💧 Sistema de riego cargado - Versión integrada con TreeManager');
+console.log('💧 Sistema de riego compatible cargado - Versión integrada con estructura existente');
