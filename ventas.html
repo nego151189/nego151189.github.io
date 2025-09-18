@@ -24,171 +24,173 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
     
     <style>
+        /* ===== SISTEMA DE NOTIFICACIONES ===== */
+        .notification-container {
+            position: fixed;
+            top: 1rem;
+            right: 1rem;
+            z-index: 10000;
+            pointer-events: none;
+        }
 
+        .notification {
+            background: #ffffff;
+            border-radius: 12px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            border-left: 4px solid;
+            padding: 1rem;
+            margin-bottom: 0.5rem;
+            min-width: 300px;
+            max-width: 400px;
+            opacity: 0;
+            transform: translateX(100%);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            overflow: hidden;
+            pointer-events: auto;
+        }
 
-    /* Asegurar que el contenido se vea bien en móviles */
-    @media (max-width: 768px) {
-    /* EXISTING CODE... mantén lo que ya tienes y agrega esto: */
-    
-    /* Modal responsive */
-    .modal {
-        width: 95%;
-        max-width: 95%;
-        margin: 1rem;
-        max-height: 85vh;
-    }
-    
-    .modal-header {
-        padding: 1rem;
-        flex-direction: column;
-        align-items: flex-start;
-        gap: 1rem;
-    }
-    
-    .modal-title {
-        font-size: 1.125rem;
-    }
-    
-    .modal-body {
-        padding: 1rem;
-    }
-    
-    /* Formulario en columna única */
-    .form-sections .form-section {
-        margin-bottom: 1.5rem;
-    }
-    
-    .form-section > div[style*="grid"] {
-        display: grid !important;
-        grid-template-columns: 1fr !important;
-        gap: 1rem !important;
-    }
-    
-    /* Inputs más grandes en móvil */
-    .form-input {
-        padding: 1rem;
-        font-size: 1rem;
-        min-height: 50px;
-    }
-    
-    /* Títulos de sección */
-    .section-title {
-        font-size: 1rem;
-        margin-bottom: 1rem;
-    }
-    
-    /* Botones del formulario */
-    .modal-body div[style*="flex"][style*="justify-content: flex-end"] {
-        display: flex !important;
-        flex-direction: column !important;
-        gap: 1rem !important;
-        margin-top: 2rem !important;
-    }
-    
-    .modal-body .btn {
-        width: 100%;
-        padding: 1rem;
-        font-size: 1rem;
-        justify-content: center;
-    }
-}
+        .notification.show {
+            opacity: 1;
+            transform: translateX(0);
+        }
 
-/* Mejorar formulario en general */
-.form-sections {
-    display: flex;
-    flex-direction: column;
-    gap: 2rem;
-}
+        .notification-success { border-left-color: #22c55e; background: linear-gradient(135deg, #f0f9ff 0%, #ecfdf5 100%); }
+        .notification-error { border-left-color: #ef4444; background: linear-gradient(135deg, #fef2f2 0%, #fef2f2 100%); }
+        .notification-warning { border-left-color: #f59e0b; background: linear-gradient(135deg, #fffbeb 0%, #fefce8 100%); }
+        .notification-info { border-left-color: #3b82f6; background: linear-gradient(135deg, #eff6ff 0%, #f0f9ff 100%); }
 
-.form-section {
-    background: #f8f9fa;
-    padding: 1.5rem;
-    border-radius: 12px;
-    border: 1px solid #dee2e6;
-}
-
-.section-title {
-    font-size: 1.125rem;
-    font-weight: 600;
-    color: #2d5016;
-    margin-bottom: 1rem;
-    display: flex;
-    align-items: center;
-    gap: 0.75rem;
-    border-bottom: 2px solid #e9ecef;
-    padding-bottom: 0.5rem;
-}
-
-/* Ajustar espaciado de campos */
-.form-group {
-    margin-bottom: 1rem;
-}
-
-.form-label {
-    display: block;
-    font-weight: 600;
-    color: #495057;
-    margin-bottom: 0.5rem;
-    font-size: 0.9rem;
-}
-
-    @media (max-width: 768px) {
-    .main-content-wrapper {
-        padding: 1rem;
-        margin-left: 0 !important;
-        width: 100%;
-    }
-    
-    .ventas-header {
-        flex-direction: column;
-        gap: 1rem;
-    }
-    
-    .header-actions {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 0.5rem;
-    }
-    
-    .metricas-ventas {
-        grid-template-columns: 1fr;
-    }
-    
-    .contenido-principal {
-        grid-template-columns: 1fr;
-    }
-    
-    /* Ajustar botones para móviles */
-    .btn {
-        padding: 0.6rem 1rem;
-        font-size: 0.8rem;
-    }
-    }
-        .ventas-header {
+        .notification-header {
             display: flex;
             justify-content: space-between;
             align-items: center;
+            margin-bottom: 0.5rem;
+        }
+
+        .notification-title {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-weight: 600;
+            font-size: 0.9rem;
+            color: #1f2937;
+        }
+
+        .notification-close {
+            background: none;
+            border: none;
+            color: #6b7280;
+            cursor: pointer;
+            font-size: 1rem;
+            opacity: 0.7;
+            transition: opacity 0.2s;
+            padding: 0.25rem;
+            border-radius: 4px;
+        }
+
+        .notification-close:hover {
+            opacity: 1;
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .notification-body {
+            font-size: 0.85rem;
+            line-height: 1.4;
+            color: #4b5563;
+        }
+
+        /* ===== INTERFAZ PRINCIPAL ===== */
+        .ventas-header {
+            background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%);
+            color: white;
+            border-radius: 24px;
+            padding: 2.5rem;
             margin-bottom: 2rem;
-            flex-wrap: wrap;
-            gap: 1rem;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .ventas-header::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            right: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(255, 255, 255, 0.1) 0%, transparent 70%);
+            animation: float 8s ease-in-out infinite;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translate(-20px, -20px) rotate(0deg); }
+            50% { transform: translate(20px, 20px) rotate(180deg); }
+        }
+
+        .header-content {
+            position: relative;
+            z-index: 1;
+            display: grid;
+            grid-template-columns: 1fr auto;
+            gap: 2rem;
+            align-items: center;
         }
 
         .page-title {
             display: flex;
             align-items: center;
-            gap: 1rem;
+            gap: 1.5rem;
         }
 
         .title-icon {
-            width: 60px;
-            height: 60px;
-            background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%);
-            border-radius: 16px;
+            width: 80px;
+            height: 80px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 20px;
             display: flex;
             align-items: center;
             justify-content: center;
             color: white;
-            font-size: 1.5rem;
+            font-size: 2rem;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+        }
+
+        .title-text h1 {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin: 0 0 0.5rem 0;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .title-text p {
+            font-size: 1.1rem;
+            opacity: 0.9;
+            margin: 0;
+        }
+
+        .header-actions {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .header-actions .btn {
+            backdrop-filter: blur(10px);
+            background: rgba(255, 255, 255, 0.2);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            color: white;
+            padding: 0.75rem 1.5rem;
+            border-radius: 12px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            min-width: 180px;
+            cursor: pointer;
+        }
+
+        .header-actions .btn:hover {
+            background: rgba(255, 255, 255, 0.3);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
         }
 
         .estado-ventas {
@@ -218,6 +220,7 @@
             border: 1px solid rgba(239, 68, 68, 0.3);
         }
 
+        /* ===== MÉTRICAS ===== */
         .metricas-ventas {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
@@ -226,16 +229,19 @@
         }
 
         .metrica-card {
-            background: var(--bg-card);
-            border-radius: 16px;
-            padding: 1.5rem;
+            background: #ffffff;
+            border-radius: 20px;
+            padding: 2rem;
             position: relative;
             overflow: hidden;
-            transition: transform 0.3s ease;
+            transition: all 0.3s ease;
+            border: 1px solid #e5e7eb;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
         }
 
         .metrica-card:hover {
-            transform: translateY(-2px);
+            transform: translateY(-5px);
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
         }
 
         .metrica-card::before {
@@ -247,38 +253,27 @@
             height: 4px;
         }
 
-        .metrica-card.ingresos::before {
-            background: linear-gradient(90deg, #22c55e, #16a34a);
-        }
-
-        .metrica-card.cantidad::before {
-            background: linear-gradient(90deg, #3b82f6, #1d4ed8);
-        }
-
-        .metrica-card.promedio::before {
-            background: linear-gradient(90deg, #f59e0b, #d97706);
-        }
-
-        .metrica-card.margen::before {
-            background: linear-gradient(90deg, #8b5cf6, #7c3aed);
-        }
+        .metrica-card.ingresos::before { background: linear-gradient(90deg, #22c55e, #16a34a); }
+        .metrica-card.cantidad::before { background: linear-gradient(90deg, #3b82f6, #1d4ed8); }
+        .metrica-card.promedio::before { background: linear-gradient(90deg, #f59e0b, #d97706); }
+        .metrica-card.margen::before { background: linear-gradient(90deg, #8b5cf6, #7c3aed); }
 
         .metrica-header {
             display: flex;
             justify-content: space-between;
             align-items: flex-start;
-            margin-bottom: 1rem;
+            margin-bottom: 1.5rem;
         }
 
         .metrica-icon {
-            width: 50px;
-            height: 50px;
-            border-radius: 12px;
+            width: 60px;
+            height: 60px;
+            border-radius: 16px;
             display: flex;
             align-items: center;
             justify-content: center;
             color: white;
-            font-size: 1.25rem;
+            font-size: 1.5rem;
         }
 
         .metrica-tendencia {
@@ -287,125 +282,44 @@
             gap: 0.5rem;
             font-size: 0.875rem;
             font-weight: 600;
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
         }
 
         .metrica-tendencia.positiva {
-            color: #22c55e;
+            color: #16a34a;
+            background: rgba(34, 197, 94, 0.1);
         }
 
         .metrica-tendencia.negativa {
-            color: #ef4444;
+            color: #dc2626;
+            background: rgba(239, 68, 68, 0.1);
         }
 
         .metrica-valor {
-            font-size: 2rem;
+            font-size: 2.5rem;
             font-weight: 700;
-            color: var(--text-primary);
+            color: #1f2937;
             margin-bottom: 0.5rem;
+            background: linear-gradient(135deg, #22c55e, #16a34a);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
         }
 
         .metrica-label {
-            color: var(--text-secondary);
-            font-size: 0.875rem;
-        }
-
-        .metrica-meta {
-            margin-top: 0.5rem;
-            font-size: 0.75rem;
-            color: var(--text-secondary);
-        }
-
-        .oportunidades-venta {
-            background: linear-gradient(135deg, rgba(34, 197, 94, 0.1), rgba(22, 163, 74, 0.1));
-            border: 1px solid rgba(34, 197, 94, 0.2);
-            border-radius: 16px;
-            padding: 1.5rem;
-            margin-bottom: 2rem;
-        }
-
-        .oportunidad-item {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 1rem;
-            margin-bottom: 1rem;
-            background: rgba(255, 255, 255, 0.05);
-            border-radius: 12px;
-            transition: all 0.3s ease;
-        }
-
-        .oportunidad-item:hover {
-            background: rgba(255, 255, 255, 0.1);
-            transform: translateY(-1px);
-        }
-
-        .oportunidad-info {
-            display: flex;
-            align-items: center;
-            gap: 1rem;
-        }
-
-        .oportunidad-icon {
-            width: 40px;
-            height: 40px;
-            background: var(--success);
-            border-radius: 8px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: white;
-        }
-
-        .filtros-ventas {
-            background: var(--bg-card);
-            border-radius: 16px;
-            padding: 1.5rem;
-            margin-bottom: 2rem;
-        }
-
-        .filtros-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-            gap: 1rem;
-            align-items: end;
-        }
-
-        .acciones-ventas {
-            display: flex;
-            gap: 1rem;
-            margin-bottom: 2rem;
-            flex-wrap: wrap;
-        }
-
-        .accion-venta {
-            background: var(--bg-card);
-            border-radius: 12px;
-            padding: 1rem 1.5rem;
-            display: flex;
-            align-items: center;
-            gap: 0.75rem;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            border: 2px solid transparent;
-            min-width: 200px;
-        }
-
-        .accion-venta:hover {
-            border-color: var(--primary);
-            transform: translateY(-2px);
-        }
-
-        .accion-icon {
-            width: 40px;
-            height: 40px;
-            border-radius: 8px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: white;
+            color: #6b7280;
             font-size: 1rem;
+            font-weight: 500;
         }
 
+        .metrica-descripcion {
+            margin-top: 1rem;
+            font-size: 0.875rem;
+            color: #9ca3af;
+        }
+
+        /* ===== CONTENIDO PRINCIPAL ===== */
         .contenido-principal {
             display: grid;
             grid-template-columns: 2fr 1fr;
@@ -413,10 +327,18 @@
             margin-bottom: 2rem;
         }
 
-        .registro-venta {
-            background: var(--bg-card);
-            border-radius: 16px;
+        .registro-venta,
+        .filtros-ventas,
+        .clientes-recientes,
+        .oportunidades-venta,
+        .calculadora-precio,
+        .grafico-card,
+        .tabla-ventas {
+            background: #ffffff;
+            border-radius: 20px;
             padding: 2rem;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+            border: 1px solid #e5e7eb;
             margin-bottom: 2rem;
         }
 
@@ -427,19 +349,104 @@
             align-items: end;
         }
 
-        .graficos-ventas {
-            display: grid;
-            gap: 2rem;
+        .form-group {
+            margin-bottom: 1.5rem;
         }
 
-    .grafico-card {
-        background: #ffffff;
-        border-radius: 16px;
-        padding: 2rem;
-        border: 2px solid #e9ecef;
-        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
-        margin-bottom: 2rem;
-    }
+        .form-label {
+            display: block;
+            font-weight: 600;
+            color: #374151;
+            margin-bottom: 0.5rem;
+            font-size: 0.875rem;
+        }
+
+        .form-input,
+        .form-select,
+        .form-textarea {
+            width: 100%;
+            padding: 0.75rem 1rem;
+            border: 2px solid #e5e7eb;
+            border-radius: 12px;
+            font-size: 0.875rem;
+            transition: all 0.3s ease;
+            background: white;
+        }
+
+        .form-input:focus,
+        .form-select:focus,
+        .form-textarea:focus {
+            outline: none;
+            border-color: #22c55e;
+            box-shadow: 0 0 0 3px rgba(34, 197, 94, 0.1);
+        }
+
+        .form-textarea {
+            resize: vertical;
+            min-height: 80px;
+        }
+
+        .btn {
+            padding: 0.75rem 1.5rem;
+            border: none;
+            border-radius: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .btn-primary {
+            background: #22c55e;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #16a34a;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 15px rgba(34, 197, 94, 0.4);
+        }
+
+        .btn-success {
+            background: #22c55e;
+            color: white;
+        }
+
+        .btn-success:hover {
+            background: #16a34a;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 15px rgba(34, 197, 94, 0.4);
+        }
+
+        .btn-secondary {
+            background: #f3f4f6;
+            color: #374151;
+        }
+
+        .btn-secondary:hover {
+            background: #e5e7eb;
+            transform: translateY(-1px);
+        }
+
+        .btn-sm {
+            padding: 0.5rem 1rem;
+            font-size: 0.875rem;
+        }
+
+        /* ===== GRÁFICOS ===== */
+        .canvas-container {
+            position: relative;
+            height: 400px;
+            width: 100%;
+            margin-top: 1rem;
+        }
+
+        .canvas-container canvas {
+            width: 100% !important;
+            height: 100% !important;
+        }
 
         .grafico-header {
             display: flex;
@@ -451,13 +458,12 @@
         .grafico-titulo {
             font-size: 1.125rem;
             font-weight: 600;
-            color: var(--text-primary);
+            color: #1f2937;
             display: flex;
             align-items: center;
             gap: 0.75rem;
         }
 
-        /* ESTILOS PARA LOS BOTONES DE PERÍODO - AGREGAR AQUÍ */
         .periodo-selector {
             display: flex;
             gap: 0.5rem;
@@ -480,179 +486,65 @@
             min-width: 80px;
         }
 
-        /* CONTROLAR ALTURA DEL GRÁFICO */
-            .canvas-container {
-                position: relative;
-                height: 400px;
-                width: 100%;
-                margin-top: 1rem;
-            }
-
-            .canvas-container canvas {
-                width: 100% !important;
-                height: 100% !important;
-            }
-
-            /* Asegurar que el gráfico no se desborde */
-            .grafico-card {
-                background: #ffffff;
-                border-radius: 16px;
-                padding: 2rem;
-                border: 2px solid #e9ecef;
-                box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
-                margin-bottom: 2rem;
-                overflow: hidden; /* IMPORTANTE: esto corta el desbordamiento */
-                max-height: 600px; /* Altura máxima del contenedor */
-            }
-
-            /* Responsive para móviles */
-            @media (max-width: 768px) {
-                .canvas-container {
-                    height: 300px; /* Más pequeño en móvil */
-                }
-                
-                .grafico-card {
-                    padding: 1rem;
-                    max-height: 500px;
-                }
-}
-
         .periodo-btn:hover {
             background: #e9ecef;
             color: #495057;
         }
 
         .periodo-btn.active {
-            background: #2d5016;
+            background: #22c55e;
             color: white;
-            box-shadow: 0 2px 8px rgba(45, 80, 22, 0.3);
+            box-shadow: 0 2px 8px rgba(34, 197, 94, 0.3);
         }
 
-        .clientes-recientes {
-            background: var(--bg-card);
-            border-radius: 16px;
-            padding: 1.5rem;
+        /* ===== TABLA ===== */
+        .table-container {
+            overflow-x: auto;
         }
 
-        .cliente-item {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
+        .table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .table th,
+        .table td {
             padding: 1rem;
-            margin-bottom: 1rem;
-            background: rgba(255, 255, 255, 0.05);
-            border-radius: 12px;
-            transition: all 0.3s ease;
+            text-align: left;
+            border-bottom: 1px solid #e5e7eb;
         }
 
-        .cliente-item:hover {
-            background: rgba(255, 255, 255, 0.1);
-            transform: translateX(4px);
-        }
-
-        .cliente-info {
-            display: flex;
-            align-items: center;
-            gap: 1rem;
-        }
-
-        .cliente-avatar {
-            width: 40px;
-            height: 40px;
-            background: var(--primary);
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: white;
+        .table th {
+            background: #f8f9fa;
             font-weight: 600;
+            color: #374151;
         }
 
-        .cliente-datos {
-            display: flex;
-            flex-direction: column;
-            align-items: flex-end;
+        .table tr:hover {
+            background: #f8f9fa;
         }
 
-        .cliente-total {
-            font-weight: 700;
-            color: var(--success);
-        }
-
-        .cliente-fecha {
-            font-size: 0.75rem;
-            color: var(--text-secondary);
-        }
-
-        .tabla-ventas {
-            background: var(--bg-card);
-            border-radius: 16px;
-            padding: 1.5rem;
-            margin-top: 2rem;
-        }
-
-        .tabla-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 1.5rem;
-        }
-
-        .estado-venta-badge {
-            padding: 0.25rem 0.75rem;
-            border-radius: 20px;
-            font-size: 0.75rem;
-            font-weight: 600;
-            text-transform: uppercase;
-        }
-
-        .estado-venta-badge.completada {
-            background: rgba(34, 197, 94, 0.2);
-            color: #16a34a;
-        }
-
-        .estado-venta-badge.pendiente {
-            background: rgba(245, 158, 11, 0.2);
-            color: #d97706;
-        }
-
-        .estado-venta-badge.cancelada {
-            background: rgba(239, 68, 68, 0.2);
-            color: #dc2626;
-        }
-
-        .metodo-pago-badge {
+        /* ===== BADGES ===== */
+        .estado-venta-badge,
+        .metodo-pago-badge,
+        .factura-badge {
             padding: 0.25rem 0.75rem;
             border-radius: 20px;
             font-size: 0.75rem;
             font-weight: 600;
         }
 
-        .metodo-pago-badge.efectivo {
-            background: rgba(34, 197, 94, 0.2);
-            color: #16a34a;
-        }
+        .estado-venta-badge.completada { background: rgba(34, 197, 94, 0.2); color: #16a34a; }
+        .estado-venta-badge.pendiente { background: rgba(245, 158, 11, 0.2); color: #d97706; }
+        .estado-venta-badge.cancelada { background: rgba(239, 68, 68, 0.2); color: #dc2626; }
 
-        .metodo-pago-badge.transferencia {
-            background: rgba(59, 130, 246, 0.2);
-            color: #2563eb;
-        }
-
-        .metodo-pago-badge.credito {
-            background: rgba(245, 158, 11, 0.2);
-            color: #d97706;
-        }
+        .metodo-pago-badge.efectivo { background: rgba(34, 197, 94, 0.2); color: #16a34a; }
+        .metodo-pago-badge.transferencia { background: rgba(59, 130, 246, 0.2); color: #2563eb; }
+        .metodo-pago-badge.credito { background: rgba(245, 158, 11, 0.2); color: #d97706; }
 
         .factura-badge {
-            display: inline-flex;
-            align-items: center;
-            gap: 0.5rem;
-            padding: 0.25rem 0.75rem;
             background: rgba(139, 92, 246, 0.2);
             color: #8b5cf6;
-            border-radius: 20px;
-            font-size: 0.75rem;
-            font-weight: 600;
             cursor: pointer;
             transition: all 0.3s ease;
         }
@@ -661,68 +553,159 @@
             background: rgba(139, 92, 246, 0.3);
         }
 
-        .predicciones-ventas {
-            background: linear-gradient(135deg, rgba(139, 92, 246, 0.1), rgba(167, 139, 250, 0.1));
-            border: 1px solid rgba(139, 92, 246, 0.2);
-            border-radius: 16px;
-            padding: 1.5rem;
-            margin-top: 1.5rem;
-        }
-
-        .ia-header {
-            display: flex;
+        /* ===== MODAL ===== */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.7);
+            z-index: 1000;
+            padding: 2rem;
+            backdrop-filter: blur(4px);
             align-items: center;
-            gap: 1rem;
-            margin-bottom: 1.5rem;
+            justify-content: center;
         }
 
-        .ia-icon {
-            width: 50px;
-            height: 50px;
-            background: linear-gradient(135deg, #8b5cf6, #a855f7);
-            border-radius: 12px;
+        .modal-overlay.show {
+            display: flex;
+        }
+
+        .modal {
+            background: #ffffff;
+            border-radius: 20px;
+            max-width: 900px;
+            width: 100%;
+            max-height: 90vh;
+            overflow-y: auto;
+            position: relative;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            animation: modalSlideIn 0.3s ease-out;
+        }
+
+        @keyframes modalSlideIn {
+            from {
+                opacity: 0;
+                transform: scale(0.9) translateY(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: scale(1) translateY(0);
+            }
+        }
+
+        .modal-header {
+            padding: 2rem 2rem 1rem 2rem;
+            border-bottom: 1px solid #e5e7eb;
+            position: relative;
+        }
+
+        .modal-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #1f2937;
+            margin: 0;
+        }
+
+        .modal-close {
+            position: absolute;
+            top: 1rem;
+            right: 1rem;
+            background: #f3f4f6;
+            border: none;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
             display: flex;
             align-items: center;
             justify-content: center;
-            color: white;
-            font-size: 1.25rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
         }
 
-        .prediccion-item {
-            background: rgba(255, 255, 255, 0.05);
-            border-radius: 12px;
-            padding: 1rem;
-            margin-bottom: 1rem;
+        .modal-close:hover {
+            background: #e5e7eb;
+            transform: rotate(90deg);
         }
 
-        .calculadora-precio {
-            background: var(--bg-card);
-            border-radius: 16px;
+        .modal-body {
+            padding: 2rem;
+        }
+
+        .form-sections {
+            display: flex;
+            flex-direction: column;
+            gap: 2rem;
+        }
+
+        .form-section {
+            background: #f8f9fa;
             padding: 1.5rem;
-            margin-bottom: 2rem;
-        }
-
-        .calc-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-            gap: 1rem;
-            margin-bottom: 1rem;
-        }
-
-        .calc-resultado {
-            background: rgba(34, 197, 94, 0.1);
-            border: 1px solid rgba(34, 197, 94, 0.3);
             border-radius: 12px;
-            padding: 1rem;
+            border: 1px solid #dee2e6;
+        }
+
+        .section-title {
+            font-size: 1.125rem;
+            font-weight: 600;
+            color: #22c55e;
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            border-bottom: 2px solid #e9ecef;
+            padding-bottom: 0.5rem;
+        }
+
+        .form-actions {
+            display: flex;
+            gap: 1rem;
+            justify-content: flex-end;
+            padding-top: 2rem;
+            border-top: 1px solid #e5e7eb;
+        }
+
+        /* ===== ELEMENTOS ADICIONALES ===== */
+        .loading-spinner {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            border-top-color: white;
+            animation: spin 1s ease-in-out infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .empty-state {
             text-align: center;
+            padding: 3rem 1rem;
+            color: #6b7280;
         }
 
-        .calc-valor {
-            font-size: 1.5rem;
-            font-weight: 700;
-            color: var(--success);
+        .empty-state i {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+            opacity: 0.5;
         }
 
+        .empty-state h4 {
+            font-size: 1.125rem;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            color: #374151;
+        }
+
+        .empty-state p {
+            margin-bottom: 1.5rem;
+        }
+
+        /* ===== RESPONSIVE ===== */
         @media (max-width: 1024px) {
             .contenido-principal {
                 grid-template-columns: 1fr;
@@ -730,67 +713,102 @@
         }
 
         @media (max-width: 768px) {
+            .header-content {
+                grid-template-columns: 1fr;
+                text-align: center;
+            }
+            
             .ventas-header {
-                flex-direction: column;
-                align-items: stretch;
+                padding: 2rem 1rem;
+            }
+            
+            .title-icon {
+                width: 60px;
+                height: 60px;
+                font-size: 1.5rem;
+            }
+            
+            .title-text h1 {
+                font-size: 1.75rem;
             }
             
             .metricas-ventas {
-                grid-template-columns: repeat(2, 1fr);
-            }
-            
-            .acciones-ventas {
-                justify-content: center;
-            }
-            
-            .filtros-grid {
                 grid-template-columns: 1fr;
+            }
+            
+            .modal {
+                margin: 1rem;
+                max-height: 95vh;
+            }
+            
+            .modal-header,
+            .modal-body {
+                padding: 1rem;
             }
             
             .form-venta {
                 grid-template-columns: 1fr;
             }
+
+            .canvas-container {
+                height: 300px;
+            }
+                
+            .grafico-card {
+                padding: 1rem;
+                max-height: 500px;
+            }
         }
     </style>
 </head>
 <body>
-    <!-- Navegación -->
+    <!-- Contenedor de notificaciones -->
+    <div class="notification-container" id="notification-container"></div>
+
+    <!-- NavegaciÃ³n -->
     <nav id="navbar"></nav>
 
     <!-- Contenido principal -->
     <main class="main-content-wrapper">
         <!-- Header de la página -->
         <header class="ventas-header">
-            <div class="page-title">
-                <div class="title-icon">
-                    <i class="fas fa-shopping-cart"></i>
-                </div>
-                <div>
-                    <h1>Gestión de Ventas</h1>
-                    <p>Control comercial y análisis de ingresos</p>
-                </div>
-            </div>
-            
-            <div class="header-actions">
-                <div class="estado-ventas excelente" id="estadoVentas">
-                    <i class="fas fa-trending-up"></i>
-                    <span>Ventas en alza</span>
+            <div class="header-content">
+                <div class="page-title">
+                    <div class="title-icon">
+                        <i class="fas fa-shopping-cart"></i>
+                    </div>
+                    <div class="title-text">
+                        <h1>Gestión de Ventas</h1>
+                        <p>Control comercial y análisis de ingresos</p>
+                    </div>
                 </div>
                 
-                <button class="btn btn-success" id="btnNuevaVenta">
-                    <i class="fas fa-plus"></i> Nueva Venta
-                </button>
-                <button class="btn btn-primary" id="btnNuevoCliente">
-                    <i class="fas fa-user-plus"></i> Nuevo Cliente
-                </button>
-                
-                <button class="btn btn-primary" id="btnGenerarFactura">
-                    <i class="fas fa-file-invoice"></i> Facturar
-                </button>
-                
-                <button class="btn btn-secondary" id="btnExportarVentas">
-                    <i class="fas fa-download"></i> Exportar
-                </button>
+                <div class="header-actions">
+                    <div class="estado-ventas excelente" id="estadoVentas">
+                        <i class="fas fa-trending-up"></i>
+                        <span>Ventas en alza</span>
+                    </div>
+                    
+                    <button class="btn" id="btnNuevaVenta">
+                        <i class="fas fa-plus"></i> Nueva Venta
+                    </button>
+                    
+                    <button class="btn" id="btnNuevoCliente">
+                        <i class="fas fa-user-plus"></i> Nuevo Cliente
+                    </button>
+                    
+                    <button class="btn" id="btnGenerarFactura">
+                        <i class="fas fa-file-invoice"></i> Facturar
+                    </button>
+
+                    <button class="btn" id="btnIrNegocios">
+                        <i class="fas fa-handshake"></i> Ir a Negocios
+                    </button>
+                    
+                    <button class="btn" id="btnExportarVentas">
+                        <i class="fas fa-download"></i> Exportar
+                    </button>
+                </div>
             </div>
         </header>
 
@@ -801,14 +819,14 @@
                     <div class="metrica-icon" style="background: #22c55e;">
                         <i class="fas fa-dollar-sign"></i>
                     </div>
-                    <div class="metrica-tendencia positiva">
+                    <div class="metrica-tendencia positiva" id="tendenciaIngresos">
                         <i class="fas fa-arrow-up"></i>
                         <span>+18%</span>
                     </div>
                 </div>
                 <div class="metrica-valor" id="ingresosDelMes">Q 0</div>
                 <div class="metrica-label">Ingresos del Mes</div>
-                <div class="metrica-meta">Meta: <span id="metaIngresos">Q 50,000</span></div>
+                <div class="metrica-descripcion">Meta: <span id="metaIngresos">Q 50,000</span></div>
             </div>
             
             <div class="metrica-card cantidad">
@@ -816,14 +834,14 @@
                     <div class="metrica-icon" style="background: #3b82f6;">
                         <i class="fas fa-box"></i>
                     </div>
-                    <div class="metrica-tendencia positiva">
+                    <div class="metrica-tendencia positiva" id="tendenciaCantidad">
                         <i class="fas fa-arrow-up"></i>
                         <span>+12%</span>
                     </div>
                 </div>
                 <div class="metrica-valor" id="cantidadVendida">0 kg</div>
                 <div class="metrica-label">Cantidad Vendida</div>
-                <div class="metrica-meta">Objetivo: <span id="objetivoCantidad">4,500 kg</span></div>
+                <div class="metrica-descripcion">Objetivo: <span id="objetivoCantidad">4,500 kg</span></div>
             </div>
             
             <div class="metrica-card promedio">
@@ -831,14 +849,14 @@
                     <div class="metrica-icon" style="background: #f59e0b;">
                         <i class="fas fa-chart-bar"></i>
                     </div>
-                    <div class="metrica-tendencia positiva">
+                    <div class="metrica-tendencia positiva" id="tendenciaPromedio">
                         <i class="fas fa-arrow-up"></i>
                         <span>+5%</span>
                     </div>
                 </div>
                 <div class="metrica-valor" id="precioPromedio">Q 0</div>
                 <div class="metrica-label">Precio Promedio</div>
-                <div class="metrica-meta">Mercado: <span id="precioMercado">Q 12.50</span></div>
+                <div class="metrica-descripcion">Mercado: <span id="precioMercado">Q 12.50</span></div>
             </div>
             
             <div class="metrica-card margen">
@@ -846,14 +864,14 @@
                     <div class="metrica-icon" style="background: #8b5cf6;">
                         <i class="fas fa-percentage"></i>
                     </div>
-                    <div class="metrica-tendencia positiva">
+                    <div class="metrica-tendencia positiva" id="tendenciaMargen">
                         <i class="fas fa-arrow-up"></i>
                         <span>+2%</span>
                     </div>
                 </div>
                 <div class="metrica-valor" id="margenGanancia">0%</div>
                 <div class="metrica-label">Margen de Ganancia</div>
-                <div class="metrica-meta">Objetivo: <span id="margenObjetivo">35%</span></div>
+                <div class="metrica-descripcion">Objetivo: <span id="margenObjetivo">35%</span></div>
             </div>
         </section>
 
@@ -865,139 +883,6 @@
             
             <div id="listaOportunidades">
                 <!-- Se cargarán dinámicamente -->
-            </div>
-        </section>
-
-        <!-- Filtros -->
-        <section class="filtros-ventas">
-            <h3 style="margin-bottom: 1rem;">
-                <i class="fas fa-filter"></i> Filtros de Ventas
-            </h3>
-            
-            <div class="filtros-grid">
-                <div class="filtro-grupo">
-                    <label class="form-label">Período</label>
-                    <select class="form-input" id="filtroPeriodo">
-                        <option value="hoy">Hoy</option>
-                        <option value="semana">Esta Semana</option>
-                        <option value="mes" selected>Este Mes</option>
-                        <option value="trimestre">Este Trimestre</option>
-                        <option value="ano">Este Año</option>
-                    </select>
-                </div>
-                
-                <div class="filtro-grupo">
-                    <label class="form-label">Cliente</label>
-                    <select class="form-input" id="filtroCliente">
-                        <option value="">Todos los clientes</option>
-                    </select>
-                </div>
-                
-                <div class="filtro-grupo">
-                    <label class="form-label">Estado</label>
-                    <select class="form-input" id="filtroEstado">
-                        <option value="">Todos los estados</option>
-                        <option value="completada">Completada</option>
-                        <option value="pendiente">Pendiente</option>
-                        <option value="cancelada">Cancelada</option>
-                    </select>
-                </div>
-                
-                <div class="filtro-grupo">
-                    <label class="form-label">Método de Pago</label>
-                    <select class="form-input" id="filtroMetodoPago">
-                        <option value="">Todos los métodos</option>
-                        <option value="efectivo">Efectivo</option>
-                        <option value="transferencia">Transferencia</option>
-                        <option value="credito">Crédito</option>
-                    </select>
-                </div>
-                
-                <div class="filtro-grupo">
-                    <button class="btn btn-primary" id="aplicarFiltros">
-                        <i class="fas fa-search"></i> Aplicar
-                    </button>
-                    <button class="btn btn-secondary" id="limpiarFiltros">
-                        <i class="fas fa-times"></i> Limpiar
-                    </button>
-                </div>
-            </div>
-        </section>
-
-        <!-- Acciones de ventas -->
-        <section class="acciones-ventas">
-            <div class="accion-venta" onclick="accionVenta('nueva-venta')">
-                <div class="accion-icon" style="background: #22c55e;">
-                    <i class="fas fa-plus"></i>
-                </div>
-                <div>
-                    <div style="font-weight: 600;">Nueva Venta</div>
-                    <div style="font-size: 0.75rem; color: var(--text-secondary);">Registrar venta</div>
-                </div>
-            </div>
-            
-            <div class="accion-venta" onclick="accionVenta('cotizacion')">
-                <div class="accion-icon" style="background: #3b82f6;">
-                    <i class="fas fa-calculator"></i>
-                </div>
-                <div>
-                    <div style="font-weight: 600;">Generar Cotización</div>
-                    <div style="font-size: 0.75rem; color: var(--text-secondary);">Presupuesto cliente</div>
-                </div>
-            </div>
-            
-            <div class="accion-venta" onclick="accionVenta('facturacion')">
-                <div class="accion-icon" style="background: #f59e0b;">
-                    <i class="fas fa-file-invoice"></i>
-                </div>
-                <div>
-                    <div style="font-weight: 600;">Facturación</div>
-                    <div style="font-size: 0.75rem; color: var(--text-secondary);">Generar facturas</div>
-                </div>
-            </div>
-            
-            <div class="accion-venta" onclick="accionVenta('reportes')">
-                <div class="accion-icon" style="background: #8b5cf6;">
-                    <i class="fas fa-chart-line"></i>
-                </div>
-                <div>
-                    <div style="font-weight: 600;">Reportes de Ventas</div>
-                    <div style="font-size: 0.75rem; color: var(--text-secondary);">Análisis detallado</div>
-                </div>
-            </div>
-        </section>
-
-        <!-- Calculadora de precios -->
-        <section class="calculadora-precio">
-            <h3 style="margin-bottom: 1.5rem;">
-                <i class="fas fa-calculator"></i> Calculadora de Precios
-            </h3>
-            
-            <div class="calc-grid">
-                <div class="form-group">
-                    <label class="form-label">Cantidad (kg)</label>
-                    <input type="number" class="form-input" id="calcCantidad" step="0.1" min="0" placeholder="0">
-                </div>
-                
-                <div class="form-group">
-                    <label class="form-label">Precio por kg (Q)</label>
-                    <input type="number" class="form-input" id="calcPrecio" step="0.01" min="0" placeholder="0.00">
-                </div>
-                
-                <div class="form-group">
-                    <label class="form-label">Descuento (%)</label>
-                    <input type="number" class="form-input" id="calcDescuento" step="0.1" min="0" max="100" placeholder="0">
-                </div>
-                
-                <div class="form-group">
-                    <label class="form-label">Transporte (Q)</label>
-                    <input type="number" class="form-input" id="calcTransporte" step="0.01" min="0" placeholder="0.00">
-                </div>
-            </div>
-            
-            <div class="calc-resultado">
-                <div style="font-size: 0.875rem; margin-bottom: 0.5rem;">Total a Cobrar</div>
-                <div class="calc-valor" id="calcTotal">Q 0.00</div>
             </div>
         </section>
 
@@ -1079,7 +964,9 @@
                             Ventas por Cliente
                         </h3>
                     </div>
-                    <canvas id="graficoClientes" height="250"></canvas>
+                    <div class="canvas-container" style="height: 300px;">
+                        <canvas id="graficoClientes"></canvas>
+                    </div>
                 </div>
             </div>
 
@@ -1097,17 +984,32 @@
                     </div>
                 </div>
 
-                <!-- Predicciones de ventas -->
-                <div class="predicciones-ventas">
-                    <div class="ia-header">
-                        <div class="ia-icon">
-                            <i class="fas fa-robot"></i>
+                <!-- Calculadora de precios -->
+                <div class="calculadora-precio">
+                    <h3 style="margin-bottom: 1.5rem;">
+                        <i class="fas fa-calculator"></i> Calculadora de Precios
+                    </h3>
+                    
+                    <div style="display: grid; grid-template-columns: 1fr; gap: 1rem; margin-bottom: 1rem;">
+                        <div class="form-group">
+                            <label class="form-label">Cantidad (kg)</label>
+                            <input type="number" class="form-input" id="calcCantidad" step="0.1" min="0" placeholder="0">
                         </div>
-                        <h3>Predicciones de Ventas</h3>
+                        
+                        <div class="form-group">
+                            <label class="form-label">Precio por kg (Q)</label>
+                            <input type="number" class="form-input" id="calcPrecio" step="0.01" min="0" placeholder="0.00">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label class="form-label">Descuento (%)</label>
+                            <input type="number" class="form-input" id="calcDescuento" step="0.1" min="0" max="100" placeholder="0">
+                        </div>
                     </div>
                     
-                    <div id="prediccionesVentas">
-                        <!-- Se cargarán dinámicamente -->
+                    <div style="background: rgba(34, 197, 94, 0.1); border: 1px solid rgba(34, 197, 94, 0.3); border-radius: 12px; padding: 1rem; text-align: center;">
+                        <div style="font-size: 0.875rem; margin-bottom: 0.5rem;">Total a Cobrar</div>
+                        <div style="font-size: 1.5rem; font-weight: 700; color: #22c55e;" id="calcTotal">Q 0.00</div>
                     </div>
                 </div>
             </div>
@@ -1115,7 +1017,7 @@
 
         <!-- Tabla de ventas -->
         <section class="tabla-ventas">
-            <div class="tabla-header">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
                 <h3>
                     <i class="fas fa-table"></i>
                     Registro de Ventas
@@ -1138,7 +1040,6 @@
                             <th>Total</th>
                             <th>Método Pago</th>
                             <th>Estado</th>
-                            <th>Factura</th>
                             <th>Acciones</th>
                         </tr>
                     </thead>
@@ -1152,9 +1053,9 @@
 
     <!-- Modal para venta detallada -->
     <div class="modal-overlay" id="modalVentaDetallada">
-        <div class="modal" style="max-width: 800px;">
+        <div class="modal">
             <div class="modal-header">
-                <h2 class="modal-title">Registro Detallado de Venta</h2>
+                <h2 class="modal-title" id="modalVentaTitulo">Registro Detallado de Venta</h2>
                 <button class="modal-close" id="cerrarModalVenta">
                     <i class="fas fa-times"></i>
                 </button>
@@ -1218,11 +1119,6 @@
                                 </div>
                                 
                                 <div class="form-group">
-                                    <label class="form-label">Costo Transporte (Q)</label>
-                                    <input type="number" class="form-input" id="transporteDetallado" step="0.01" min="0" value="0">
-                                </div>
-                                
-                                <div class="form-group">
                                     <label class="form-label">Total (Q)</label>
                                     <input type="number" class="form-input" id="totalDetallado" readonly>
                                 </div>
@@ -1249,11 +1145,6 @@
                                 </div>
                                 
                                 <div class="form-group">
-                                    <label class="form-label">Fecha de Pago</label>
-                                    <input type="date" class="form-input" id="fechaPago">
-                                </div>
-                                
-                                <div class="form-group">
                                     <label class="form-label">Referencia/Comprobante</label>
                                     <input type="text" class="form-input" id="referenciaVenta" placeholder="Número de transferencia, cheque, etc.">
                                 </div>
@@ -1268,14 +1159,14 @@
                             </h4>
                             
                             <div class="form-group">
-                                <textarea class="form-input form-textarea" id="observacionesVenta" 
+                                <textarea class="form-textarea" id="observacionesVenta" 
                                           placeholder="Observaciones sobre la venta, condiciones especiales, etc."></textarea>
                             </div>
                         </div>
                     </div>
 
                     <!-- Botones de acción -->
-                    <div style="display: flex; gap: 1rem; justify-content: flex-end; margin-top: 2rem;">
+                    <div class="form-actions">
                         <button type="button" class="btn btn-secondary" id="cancelarVenta">
                             <i class="fas fa-times"></i> Cancelar
                         </button>
@@ -1288,99 +1179,295 @@
         </div>
     </div>
 
-    <!-- Firebase SDK -->
-<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
-<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
-<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
-<!-- Agregar ANTES del firebase-config.js -->
-<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-storage.js"></script>
+    <!-- Modal para nuevo cliente -->
+    <div class="modal-overlay" id="modalNuevoCliente">
+        <div class="modal" style="max-width: 600px;">
+            <div class="modal-header">
+                <h2 class="modal-title">Agregar Nuevo Cliente</h2>
+                <button class="modal-close" id="cerrarModalCliente">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <form id="formNuevoCliente">
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1rem;">
+                        <div class="form-group">
+                            <label class="form-label">Nombre Completo *</label>
+                            <input type="text" class="form-input" id="nombreClienteNuevo" required>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label class="form-label">Empresa</label>
+                            <input type="text" class="form-input" id="empresaClienteNuevo">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label class="form-label">Teléfono *</label>
+                            <input type="tel" class="form-input" id="telefonoClienteNuevo" required>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label class="form-label">Email</label>
+                            <input type="email" class="form-input" id="emailClienteNuevo">
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label">Dirección</label>
+                        <textarea class="form-textarea" id="direccionClienteNuevo"></textarea>
+                    </div>
+                    
+                    <div class="form-actions">
+                        <button type="button" class="btn btn-secondary" id="cancelarClienteNuevo">
+                            <i class="fas fa-times"></i> Cancelar
+                        </button>
+                        <button type="submit" class="btn btn-success">
+                            <i class="fas fa-save"></i> Guardar Cliente
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
 
-<!-- Scripts -->
-<script src="/js/firebase-config.js"></script>
-<script src="/js/auth.js"></script>
-<script src="/js/nav.js"></script>
+    <!-- Scripts Firebase -->
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-storage-compat.js"></script>
 
-
-
-
+    <!-- Scripts de aplicación -->
+    <script src="/js/firebase-config.js"></script>
+    <script src="/js/auth.js"></script>
+    <script src="/js/nav.js"></script>
+    <script src="/js/offline.js"></script>
+    <script src="/js/data-sync.js"></script>
+    <script src="/js/clientes-manager.js"></script>
+    <script src="/js/ventas.js"></script>
     
     <script>
-        // Variables globales
-        let graficoVentas, graficoClientes;
-        // Variable para controlar si estamos editando
+        // Variables globales mejoradas
+        let ventasSystemReady = false;
         let editandoVentaId = null;
+        let graficoVentas, graficoClientes;
 
-        // Inicialización de la página
-        document.addEventListener('DOMContentLoaded', async () => {
-            // Verificar autenticación
-            if (!await verificarAutenticacion()) {
-                window.location.href = '/login.html';
-                return;
+        // ==========================================
+        // SISTEMA DE NOTIFICACIONES INTEGRADO
+        // ==========================================
+        
+        class VentasNotificationManager {
+            constructor() {
+                this.notifications = [];
+                this.container = null;
+                this.init();
             }
 
-            // Inicializar componentes
-            await inicializarPagina();
-        });
+            init() {
+                this.createContainer();
+            }
 
-        async function verificarAutenticacion() {
-            return new Promise((resolve) => {
-                firebase.auth().onAuthStateChanged((user) => {
-                    resolve(!!user);
-                });
-            });
+            createContainer() {
+                if (!this.container) {
+                    this.container = document.getElementById('notification-container');
+                    if (!this.container) {
+                        this.container = document.createElement('div');
+                        this.container.className = 'notification-container';
+                        document.body.appendChild(this.container);
+                    }
+                }
+            }
+
+            show(message, type = 'info', duration = 5000) {
+                const id = Date.now().toString();
+                const notification = this.createNotification(id, message, type, duration);
+                
+                this.notifications.push({ id, element: notification });
+                this.container.appendChild(notification);
+                
+                setTimeout(() => {
+                    notification.classList.add('show');
+                }, 100);
+                
+                if (duration > 0) {
+                    setTimeout(() => {
+                        this.hide(id);
+                    }, duration);
+                }
+                
+                return id;
+            }
+
+            createNotification(id, message, type, duration) {
+                const notification = document.createElement('div');
+                notification.className = `notification notification-${type}`;
+                notification.setAttribute('data-id', id);
+                
+                const icons = {
+                    success: 'fa-check-circle',
+                    error: 'fa-exclamation-circle',
+                    warning: 'fa-exclamation-triangle',
+                    info: 'fa-info-circle'
+                };
+                
+                const titles = {
+                    success: 'Éxito',
+                    error: 'Error',
+                    warning: 'Advertencia',
+                    info: 'Información'
+                };
+                
+                notification.innerHTML = `
+                    <div class="notification-header">
+                        <div class="notification-title">
+                            <i class="fas ${icons[type]}"></i>
+                            ${titles[type]}
+                        </div>
+                        <button class="notification-close" onclick="ventasNotificationManager.hide('${id}')">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    </div>
+                    <div class="notification-body">
+                        ${message}
+                    </div>
+                `;
+                
+                return notification;
+            }
+
+            hide(id) {
+                const notificationData = this.notifications.find(n => n.id === id);
+                if (!notificationData) return;
+                
+                const { element } = notificationData;
+                element.classList.remove('show');
+                
+                setTimeout(() => {
+                    if (element.parentNode) {
+                        element.parentNode.removeChild(element);
+                    }
+                    this.notifications = this.notifications.filter(n => n.id !== id);
+                }, 300);
+            }
+
+            success(message, duration = 5000) {
+                return this.show(message, 'success', duration);
+            }
+
+            error(message, duration = 8000) {
+                return this.show(message, 'error', duration);
+            }
+
+            warning(message, duration = 6000) {
+                return this.show(message, 'warning', duration);
+            }
+
+            info(message, duration = 5000) {
+                return this.show(message, 'info', duration);
+            }
         }
 
-        async function inicializarPagina() {
+        // Crear instancia global de notificaciones
+        const ventasNotificationManager = new VentasNotificationManager();
+        window.ventasNotificationManager = ventasNotificationManager;
+
+        // ==========================================
+        // INICIALIZACIÓN MEJORADA
+        // ==========================================
+
+        document.addEventListener('DOMContentLoaded', async () => {
             try {
-                // Cargar navegación
-                await getMenuConfiguration();
+                console.log('🛒 Iniciando aplicación de ventas mejorada...');
                 
-                // Configurar event listeners
+                // Verificar autenticación
+                const isAuthenticated = await verificarAutenticacion();
+                if (!isAuthenticated) {
+                    window.location.href = '/login.html';
+                    return;
+                }
+                
+                // Esperar sistemas
+                await esperarSistemas();
+                
+                // Configurar interfaz
                 configurarEventListeners();
-                
-                // Cargar datos iniciales
-                await cargarDatosIniciales();
                 
                 // Inicializar gráficos
                 inicializarGraficos();
                 
+                // Cargar datos
+                await cargarDatosIniciales();
+                
                 // Configurar calculadora
                 configurarCalculadora();
                 
-                // Configurar fecha actual
-                document.getElementById('fechaVenta').value = new Date().toISOString().split('T')[0];
-                document.getElementById('fechaDetallada').value = new Date().toISOString().split('T')[0];
+                // Configurar fechas
+                configurarFechas();
                 
-                console.log('Página de ventas inicializada correctamente');
+                ventasSystemReady = true;
+                ventasNotificationManager.success('Sistema de ventas listo');
+                console.log('✅ Sistema de ventas completamente listo');
                 
             } catch (error) {
-                console.error('Error inicializando página:', error);
-                mostrarNotificacion('Error cargando la página', 'error');
+                console.error('⚠️ Error crítico en inicialización:', error);
+                ventasNotificationManager.error('Error crítico iniciando la aplicación');
+            }
+        });
+
+        async function verificarAutenticacion() {
+            return new Promise(function(resolve) {
+                if (window.firebase && window.firebase.auth) {
+                    window.firebase.auth().onAuthStateChanged(function(user) {
+                        resolve(!!user);
+                    });
+                } else {
+                    setTimeout(function() { resolve(false); }, 2000);
+                }
+            });
+        }
+
+        async function esperarSistemas() {
+            const sistemas = [
+                { nombre: 'Firebase', check: function() { return window.firebase && window.db; } },
+                { nombre: 'ClientesManager', check: function() { return window.clientesManager; } },
+                { nombre: 'VentasManager', check: function() { return window.ventasManager; } },
+                { nombre: 'DataSync', check: function() { return window.dataSyncManager; } }
+            ];
+            
+            for (const sistema of sistemas) {
+                let intentos = 0;
+                while (!sistema.check() && intentos < 50) {
+                    await new Promise(resolve => setTimeout(resolve, 200));
+                    intentos++;
+                }
+                
+                if (sistema.check()) {
+                    console.log(`✅ ${sistema.nombre} disponible`);
+                } else {
+                    console.warn(`⚠️ ${sistema.nombre} no disponible`);
+                }
             }
         }
 
         function configurarEventListeners() {
             // Botones principales
             document.getElementById('btnNuevaVenta')?.addEventListener('click', mostrarModalVenta);
-            // Event listeners para clientes
             document.getElementById('btnNuevoCliente')?.addEventListener('click', mostrarModalCliente);
-            document.getElementById('cerrarModalCliente')?.addEventListener('click', cerrarModalCliente);
-            document.getElementById('cancelarCliente')?.addEventListener('click', cerrarModalCliente);
-            document.getElementById('formNuevoCliente')?.addEventListener('submit', guardarNuevoCliente);
             document.getElementById('btnGenerarFactura')?.addEventListener('click', generarFactura);
             document.getElementById('btnExportarVentas')?.addEventListener('click', exportarVentas);
+            document.getElementById('btnIrNegocios')?.addEventListener('click', () => {
+                window.location.href = '/negocios.html';
+            });
             
             // Formularios
             document.getElementById('formVentaRapida')?.addEventListener('submit', guardarVentaRapida);
             document.getElementById('formVentaDetallada')?.addEventListener('submit', guardarVentaDetallada);
+            document.getElementById('formNuevoCliente')?.addEventListener('submit', guardarNuevoCliente);
             
             // Modales
-            document.getElementById('cerrarModalVenta')?.addEventListener('click', cerrarModal);
-            document.getElementById('cancelarVenta')?.addEventListener('click', cerrarModal);
-            
-            // Filtros
-            document.getElementById('aplicarFiltros')?.addEventListener('click', aplicarFiltros);
-            document.getElementById('limpiarFiltros')?.addEventListener('click', limpiarFiltros);
+            document.getElementById('cerrarModalVenta')?.addEventListener('click', cerrarModalVenta);
+            document.getElementById('cancelarVenta')?.addEventListener('click', cerrarModalVenta);
+            document.getElementById('cerrarModalCliente')?.addEventListener('click', cerrarModalCliente);
+            document.getElementById('cancelarClienteNuevo')?.addEventListener('click', cerrarModalCliente);
             
             // Selectores de período
             document.querySelectorAll('.periodo-btn').forEach(btn => {
@@ -1391,534 +1478,451 @@
             document.getElementById('clienteDetallado')?.addEventListener('change', cargarDatosCliente);
             
             // Cálculo automático en formulario detallado
-            ['cantidadDetallada', 'precioDetallado', 'descuentoDetallado', 'transporteDetallado'].forEach(id => {
+            ['cantidadDetallada', 'precioDetallado', 'descuentoDetallado'].forEach(id => {
                 document.getElementById(id)?.addEventListener('input', calcularTotalDetallado);
             });
+
+            // Cerrar modales al hacer click fuera
+            document.querySelectorAll('.modal-overlay').forEach(function(modal) {
+                modal.addEventListener('click', function(e) {
+                    if (e.target === modal) {
+                        cerrarModalVenta();
+                        cerrarModalCliente();
+                    }
+                });
+            });
+
+            console.log('✅ Event listeners configurados');
         }
 
         async function cargarDatosIniciales() {
             try {
-                // Cargar ventas desde Firebase
-                await cargarVentas();
-                
-                // Cargar clientes para los selectores
+                await actualizarMetricas();
                 await cargarClientesEnSelectores();
-                
-                console.log('Datos cargados correctamente');
+                await cargarVentas();
+                await cargarOportunidades();
+                await cargarClientesRecientes();
+                await cargarDatosGraficos('semana');
                 
             } catch (error) {
                 console.error('Error cargando datos:', error);
-                mostrarNotificacion('Error cargando datos', 'error');
+                ventasNotificationManager.error('Error cargando datos');
             }
         }
 
-        function actualizarMetricasVentas() {
-            if (!window.ventasManager) return;
-            
-            const metricas = window.ventasManager.calcularMetricas();
-            
-            document.getElementById('ingresosDelMes').textContent = `Q ${metricas.ingresosDelMes.toLocaleString()}`;
-            document.getElementById('cantidadVendida').textContent = `${metricas.cantidadVendida.toLocaleString()} kg`;
-            document.getElementById('precioPromedio').textContent = `Q ${metricas.precioPromedio.toFixed(2)}`;
-            document.getElementById('margenGanancia').textContent = `${metricas.margenGanancia}%`;
-            
-            // Actualizar estado de ventas
-            actualizarEstadoVentas(metricas.tendencia);
+        function configurarCalculadora() {
+            ['calcCantidad', 'calcPrecio', 'calcDescuento'].forEach(id => {
+                document.getElementById(id)?.addEventListener('input', calcularPrecio);
+            });
         }
 
-        function actualizarEstadoVentas(tendencia) {
-            const estadoElement = document.getElementById('estadoVentas');
-            
-            if (tendencia > 15) {
-                estadoElement.className = 'estado-ventas excelente';
-                estadoElement.innerHTML = '<i class="fas fa-trending-up"></i><span>Ventas en alza</span>';
-            } else if (tendencia > 0) {
-                estadoElement.className = 'estado-ventas bueno';
-                estadoElement.innerHTML = '<i class="fas fa-chart-line"></i><span>Ventas estables</span>';
+        function configurarFechas() {
+            const fechaHoy = new Date().toISOString().split('T')[0];
+            document.getElementById('fechaVenta').value = fechaHoy;
+            document.getElementById('fechaDetallada').value = fechaHoy;
+        }
+
+        // ==========================================
+        // FUNCIONES DE DATOS
+        // ==========================================
+
+        async function actualizarMetricas() {
+            if (window.ventasManager) {
+                const metricas = window.ventasManager.calcularMetricas();
+                
+                document.getElementById('ingresosDelMes').textContent = `Q ${metricas.ingresosDelMes.toLocaleString()}`;
+                document.getElementById('cantidadVendida').textContent = `${metricas.cantidadVendida.toLocaleString()} kg`;
+                document.getElementById('precioPromedio').textContent = `Q ${metricas.precioPromedio.toFixed(2)}`;
+                document.getElementById('margenGanancia').textContent = `${metricas.margenGanancia}%`;
+                
+                // Actualizar tendencias
+                actualizarTendencia('tendenciaIngresos', metricas.tendencia);
             } else {
-                estadoElement.className = 'estado-ventas bajo';
-                estadoElement.innerHTML = '<i class="fas fa-trending-down"></i><span>Ventas bajas</span>';
+                // Valores por defecto mientras se carga
+                document.getElementById('ingresosDelMes').textContent = 'Q 0';
+                document.getElementById('cantidadVendida').textContent = '0 kg';
+                document.getElementById('precioPromedio').textContent = 'Q 0.00';
+                document.getElementById('margenGanancia').textContent = '0%';
+            }
+        }
+
+        function actualizarTendencia(elementId, valor) {
+            const elemento = document.getElementById(elementId);
+            if (!elemento) return;
+            
+            const isPositive = valor >= 0;
+            elemento.className = `metrica-tendencia ${isPositive ? 'positiva' : 'negativa'}`;
+            elemento.innerHTML = `
+                <i class="fas fa-arrow-${isPositive ? 'up' : 'down'}"></i>
+                <span>${isPositive ? '+' : ''}${valor}%</span>
+            `;
+        }
+
+        async function cargarClientesEnSelectores() {
+            try {
+                let clientes = [];
+                
+                if (window.clientesManager) {
+                    clientes = window.clientesManager.obtenerParaSelectores();
+                }
+                
+                const selectores = ['clienteVenta', 'clienteDetallado'];
+                selectores.forEach(selectorId => {
+                    const selector = document.getElementById(selectorId);
+                    if (selector) {
+                        selector.innerHTML = '<option value="">Seleccionar cliente...</option>' +
+                            clientes.map(cliente => `<option value="${cliente.id}">${cliente.displayName || cliente.nombre}</option>`).join('');
+                    }
+                });
+                
+                console.log(`Clientes cargados en selectores: ${clientes.length}`);
+                
+            } catch (error) {
+                console.error('Error cargando clientes:', error);
+            }
+        }
+
+        async function cargarVentas() {
+            try {
+                if (window.ventasManager) {
+                    const ventas = window.ventasManager.obtenerVentasFiltradas();
+                    const tbody = document.getElementById('tablaVentasBody');
+                    
+                    if (tbody) {
+                        tbody.innerHTML = ventas.map(venta => `
+                            <tr onclick="editarVenta('${venta.id}')" style="cursor: pointer;">
+                                <td>${formatearFecha(venta.fecha)}</td>
+                                <td>${venta.cliente}</td>
+                                <td>${venta.cantidad} kg</td>
+                                <td>Q ${venta.precioKg.toFixed(2)}</td>
+                                <td>Q ${venta.total.toLocaleString()}</td>
+                                <td>
+                                    <span class="metodo-pago-badge ${venta.metodoPago}">
+                                        ${venta.metodoPago}
+                                    </span>
+                                </td>
+                                <td>
+                                    <span class="estado-venta-badge ${venta.estado}">
+                                        ${venta.estado}
+                                    </span>
+                                </td>
+                                <td>
+                                    <button class="btn btn-sm btn-primary" onclick="event.stopPropagation(); editarVenta('${venta.id}')">
+                                        <i class="fas fa-edit"></i>
+                                    </button>
+                                </td>
+                            </tr>
+                        `).join('');
+                    }
+                }
+                
+            } catch (error) {
+                console.error('Error cargando ventas:', error);
             }
         }
 
         async function cargarOportunidades() {
             try {
                 const container = document.getElementById('listaOportunidades');
+                if (!container) return;
                 
                 if (window.ventasManager) {
                     const oportunidades = await window.ventasManager.identificarOportunidades();
                     
                     container.innerHTML = oportunidades.map(op => `
-                        <div class="oportunidad-item">
-                            <div class="oportunidad-info">
-                                <div class="oportunidad-icon">
+                        <div style="display: flex; justify-content: space-between; align-items: center; padding: 1rem; margin-bottom: 1rem; background: rgba(255, 255, 255, 0.05); border-radius: 12px; transition: all 0.3s ease; cursor: pointer;" onmouseover="this.style.background='rgba(255, 255, 255, 0.1)'; this.style.transform='translateY(-1px)'" onmouseout="this.style.background='rgba(255, 255, 255, 0.05)'; this.style.transform='translateY(0)'">
+                            <div style="display: flex; align-items: center; gap: 1rem;">
+                                <div style="width: 40px; height: 40px; background: #22c55e; border-radius: 8px; display: flex; align-items: center; justify-content: center; color: white;">
                                     <i class="fas ${op.icono}"></i>
                                 </div>
                                 <div>
-                                    <div style="font-weight: 600; color: var(--text-primary);">${op.titulo}</div>
-                                    <div style="font-size: 0.875rem; color: var(--text-secondary);">${op.descripcion}</div>
+                                    <div style="font-weight: 600; color: #1f2937;">${op.titulo}</div>
+                                    <div style="font-size: 0.875rem; color: #6b7280;">${op.descripcion}</div>
                                 </div>
                             </div>
                             <div style="text-align: right;">
-                                <div style="font-weight: 700; color: var(--success);">Q ${op.valorPotencial.toLocaleString()}</div>
-                                <div style="font-size: 0.75rem; color: var(--text-secondary);">Potencial</div>
+                                <div style="font-weight: 700; color: #22c55e;">Q ${op.valorPotencial.toLocaleString()}</div>
+                                <div style="font-size: 0.75rem; color: #6b7280;">Potencial</div>
                             </div>
                         </div>
                     `).join('');
+                } else {
+                    container.innerHTML = `
+                        <div class="empty-state">
+                            <i class="fas fa-lightbulb"></i>
+                            <h4>Cargando oportunidades...</h4>
+                            <p>Analizando datos para encontrar oportunidades de venta</p>
+                        </div>
+                    `;
                 }
             } catch (error) {
                 console.error('Error cargando oportunidades:', error);
             }
         }
 
-        function actualizarClientesRecientes() {
-            if (!window.ventasManager) return;
-            
-            const clientes = window.ventasManager.obtenerClientesRecientes();
-            const container = document.getElementById('listaClientesRecientes');
-            
-            container.innerHTML = clientes.map(cliente => `
-                <div class="cliente-item">
-                    <div class="cliente-info">
-                        <div class="cliente-avatar">
-                            ${cliente.nombre.charAt(0).toUpperCase()}
-                        </div>
-                        <div>
-                            <div style="font-weight: 600; color: var(--text-primary);">${cliente.nombre}</div>
-                            <div style="font-size: 0.875rem; color: var(--text-secondary);">${cliente.ultimaCompra}</div>
-                        </div>
-                    </div>
-                    <div class="cliente-datos">
-                        <div class="cliente-total">Q ${cliente.totalCompras.toLocaleString()}</div>
-                        <div class="cliente-fecha">${formatearFecha(cliente.fechaUltimaCompra)}</div>
-                    </div>
-                </div>
-            `).join('');
-        }
-
-        function actualizarTablaVentas() {
-            if (!window.ventasManager) return;
-            
-            const ventas = window.ventasManager.obtenerVentasFiltradas();
-            const tbody = document.getElementById('tablaVentasBody');
-            
-            tbody.innerHTML = ventas.map(venta => `
-                <tr onclick="verDetalleVenta('${venta.id}')" style="cursor: pointer;">
-                    <td>${formatearFecha(venta.fecha)}</td>
-                    <td>${venta.cliente}</td>
-                    <td>${venta.cantidad} kg</td>
-                    <td>Q ${venta.precioKg.toFixed(2)}</td>
-                    <td>Q ${venta.total.toLocaleString()}</td>
-                    <td>
-                        <span class="metodo-pago-badge ${venta.metodoPago}">
-                            ${venta.metodoPago}
-                        </span>
-                    </td>
-                    <td>
-                        <span class="estado-venta-badge ${venta.estado}">
-                            ${venta.estado}
-                        </span>
-                    </td>
-                    <td>
-                        ${venta.factura ? `
-                        <span class="factura-badge" onclick="event.stopPropagation(); descargarFactura('${venta.factura}')">
-                            <i class="fas fa-file-pdf"></i> ${venta.factura}
-                        </span>
-                        ` : '<span style="color: var(--text-secondary);">Sin factura</span>'}
-                    </td>
-                    <td>
-                        <button class="btn btn-sm btn-primary" onclick="event.stopPropagation(); editarVenta('${venta.id}')">
-                            <i class="fas fa-edit"></i>
-                        </button>
-                    </td>
-                </tr>
-            `).join('');
-        }
-
-        async function generarPrediccionesVentas() {
+        async function cargarClientesRecientes() {
             try {
-                const container = document.getElementById('prediccionesVentas');
-                container.innerHTML = '<div class="loading-spinner"><i class="fas fa-spinner fa-spin"></i></div>';
+                const container = document.getElementById('listaClientesRecientes');
+                if (!container) return;
                 
                 if (window.ventasManager) {
-                    const predicciones = await window.ventasManager.generarPrediccionesIA();
+                    const clientes = window.ventasManager.obtenerClientesRecientes();
                     
-                    container.innerHTML = predicciones.map(pred => `
-                        <div class="prediccion-item">
-                            <div style="font-weight: 600; margin-bottom: 0.5rem;">${pred.titulo}</div>
-                            <div style="font-size: 1.25rem; font-weight: 700; color: ${pred.color}; margin-bottom: 0.5rem;">
-                                ${pred.valor}
+                    container.innerHTML = clientes.map(cliente => `
+                        <div style="display: flex; justify-content: space-between; align-items: center; padding: 1rem; margin-bottom: 1rem; background: #f8fafc; border-radius: 12px; transition: all 0.3s ease; cursor: pointer;" onmouseover="this.style.background='#e0e7ff'; this.style.transform='translateX(4px)'" onmouseout="this.style.background='#f8fafc'; this.style.transform='translateX(0)'">
+                            <div style="display: flex; align-items: center; gap: 1rem;">
+                                <div style="width: 40px; height: 40px; background: #22c55e; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-weight: 600;">
+                                    ${cliente.nombre.charAt(0).toUpperCase()}
+                                </div>
+                                <div>
+                                    <div style="font-weight: 600; color: #1f2937;">${cliente.nombre}</div>
+                                    <div style="font-size: 0.875rem; color: #6b7280;">${cliente.ultimaCompra}</div>
+                                </div>
                             </div>
-                            <div style="font-size: 0.875rem; color: var(--text-secondary);">
-                                Confianza: ${pred.confianza}% | ${pred.descripcion}
+                            <div style="text-align: right;">
+                                <div style="font-weight: 700; color: #22c55e;">Q ${cliente.totalCompras.toLocaleString()}</div>
+                                <div style="font-size: 0.75rem; color: #6b7280;">${formatearFecha(cliente.fechaUltimaCompra)}</div>
                             </div>
                         </div>
                     `).join('');
+                } else {
+                    container.innerHTML = `
+                        <div class="empty-state">
+                            <i class="fas fa-users"></i>
+                            <h4>Cargando clientes...</h4>
+                            <p>Obteniendo información de clientes recientes</p>
+                        </div>
+                    `;
                 }
             } catch (error) {
-                console.error('Error generando predicciones:', error);
-                document.getElementById('prediccionesVentas').innerHTML = 
-                    '<div class="error-message">Error generando predicciones</div>';
+                console.error('Error cargando clientes recientes:', error);
             }
         }
 
-            // 1. FUNCIÓN MEJORADA PARA INICIALIZAR GRÁFICOS
-            function inicializarGraficos() {
-                console.log('Inicializando gráficos...');
-                
-                // Gráfico de evolución de ventas
-                const ctxVentas = document.getElementById('graficoVentas');
-                if (ctxVentas) {
-                    graficoVentas = new Chart(ctxVentas, {
-                        type: 'line',
-                        data: {
-                            labels: [],
-                            datasets: [{
-                                label: 'Ingresos (Q)',
-                                data: [],
-                                borderColor: '#22c55e',
-                                backgroundColor: 'rgba(34, 197, 94, 0.1)',
-                                tension: 0.4,
-                                fill: true,
-                                pointBackgroundColor: '#22c55e',
-                                pointBorderColor: '#ffffff',
-                                pointBorderWidth: 2,
-                                pointRadius: 5
-                            }]
-                        },
-                        options: {
-                            responsive: true,
-                            maintainAspectRatio: false,
-                            plugins: {
-                                legend: {
-                                    labels: { 
-                                        color: '#374151',
-                                        font: { size: 12 }
-                                    }
-                                }
-                            },
-                            scales: {
-                                x: {
-                                    ticks: { 
-                                        color: '#6b7280',
-                                        font: { size: 11 }
-                                    },
-                                    grid: { color: 'rgba(107, 114, 128, 0.1)' }
-                                },
-                                y: {
-                                    ticks: { 
-                                        color: '#6b7280',
-                                        font: { size: 11 },
-                                        callback: function(value) {
-                                            return 'Q ' + value.toLocaleString();
-                                        }
-                                    },
-                                    grid: { color: 'rgba(107, 114, 128, 0.1)' }
-                                }
-                            },
-                            interaction: {
-                                intersect: false,
-                                mode: 'index'
-                            }
-                        }
-                    });
-                }
+        // ==========================================
+        // FUNCIONES DE GRÁFICOS
+        // ==========================================
 
-                // Gráfico de ventas por cliente  
-                const ctxClientes = document.getElementById('graficoClientes');
-                if (ctxClientes) {
-                    graficoClientes = new Chart(ctxClientes, {
-                        type: 'doughnut',
-                        data: {
-                            labels: [],
-                            datasets: [{
-                                data: [],
-                                backgroundColor: [
-                                    '#22c55e', '#3b82f6', '#f59e0b', '#8b5cf6', '#ef4444',
-                                    '#06b6d4', '#84cc16', '#f97316', '#ec4899', '#6366f1'
-                                ],
-                                borderColor: '#ffffff',
-                                borderWidth: 2
-                            }]
-                        },
-                        options: {
-                            responsive: true,
-                            maintainAspectRatio: false,
-                            plugins: {
-                                legend: {
-                                    position: 'bottom',
-                                    labels: { 
-                                        color: '#374151',
-                                        font: { size: 11 },
-                                        padding: 15,
-                                        usePointStyle: true
-                                    }
-                                },
-                                tooltip: {
-                                    callbacks: {
-                                        label: function(context) {
-                                            const total = context.dataset.data.reduce((a, b) => a + b, 0);
-                                            const percentage = ((context.parsed / total) * 100).toFixed(1);
-                                            return context.label + ': Q' + context.parsed.toLocaleString() + ' (' + percentage + '%)';
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    });
-                }
-
-                // Cargar datos iniciales
-                cargarDatosGraficos('semana');
-            }
-
-
-
-            // 2. FUNCIÓN PARA OBTENER DATOS REALES DE VENTAS
-        function obtenerVentasReales() {
-            const ventas = [];
+        function inicializarGraficos() {
+            console.log('Inicializando gráficos...');
             
-            // Obtener de la tabla visible
-            const tabla = document.getElementById('tablaVentasBody');
-            if (tabla) {
-                const filas = tabla.querySelectorAll('tr');
-                filas.forEach(fila => {
-                    const celdas = fila.querySelectorAll('td');
-                    if (celdas.length >= 5) {
-                        try {
-                            const fecha = celdas[0].textContent.trim();
-                            const cliente = celdas[1].textContent.trim();
-                            const cantidad = parseFloat(celdas[2].textContent.replace('kg', '').trim());
-                            const precioKg = parseFloat(celdas[3].textContent.replace('Q', '').trim());
-                            const total = parseFloat(celdas[4].textContent.replace('Q', '').replace(',', '').trim());
-                            
-                            ventas.push({
-                                fecha: new Date(fecha),
-                                cliente,
-                                cantidad,
-                                precioKg,
-                                total
-                            });
-                        } catch (error) {
-                            console.warn('Error procesando fila de venta:', error);
+            const ctxVentas = document.getElementById('graficoVentas');
+            if (ctxVentas) {
+                graficoVentas = new Chart(ctxVentas, {
+                    type: 'line',
+                    data: {
+                        labels: [],
+                        datasets: [{
+                            label: 'Ingresos (Q)',
+                            data: [],
+                            borderColor: '#22c55e',
+                            backgroundColor: 'rgba(34, 197, 94, 0.1)',
+                            tension: 0.4,
+                            fill: true,
+                            pointBackgroundColor: '#22c55e',
+                            pointBorderColor: '#ffffff',
+                            pointBorderWidth: 2,
+                            pointRadius: 5
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                labels: { 
+                                    color: '#374151',
+                                    font: { size: 12 }
+                                }
+                            }
+                        },
+                        scales: {
+                            x: {
+                                ticks: { 
+                                    color: '#6b7280',
+                                    font: { size: 11 }
+                                },
+                                grid: { color: 'rgba(107, 114, 128, 0.1)' }
+                            },
+                            y: {
+                                ticks: { 
+                                    color: '#6b7280',
+                                    font: { size: 11 },
+                                    callback: function(value) {
+                                        return 'Q ' + value.toLocaleString();
+                                    }
+                                },
+                                grid: { color: 'rgba(107, 114, 128, 0.1)' }
+                            }
                         }
                     }
                 });
             }
-            
-            // Si no hay datos en la tabla, usar datos de ejemplo
-            if (ventas.length === 0) {
-                console.log('No hay ventas reales, generando datos de ejemplo para gráficos');
-                return generarDatosEjemploGraficos();
+
+            const ctxClientes = document.getElementById('graficoClientes');
+            if (ctxClientes) {
+                graficoClientes = new Chart(ctxClientes, {
+                    type: 'doughnut',
+                    data: {
+                        labels: [],
+                        datasets: [{
+                            data: [],
+                            backgroundColor: [
+                                '#22c55e', '#3b82f6', '#f59e0b', '#8b5cf6', '#ef4444',
+                                '#06b6d4', '#84cc16', '#f97316', '#ec4899', '#6366f1'
+                            ],
+                            borderColor: '#ffffff',
+                            borderWidth: 2
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                position: 'bottom',
+                                labels: { 
+                                    color: '#374151',
+                                    font: { size: 11 },
+                                    padding: 15,
+                                    usePointStyle: true
+                                }
+                            }
+                        }
+                    }
+                });
             }
-            
-            console.log(`Ventas obtenidas para gráficos: ${ventas.length}`);
-            return ventas;
         }
 
         async function cargarDatosGraficos(periodo) {
             try {
                 console.log(`Cargando datos para período: ${periodo}`);
                 
-                const ventasReales = obtenerVentasReales();
-                
-                // Datos para gráfico de evolución
-                const datosEvolucion = generarDatosEvolucion(ventasReales, periodo);
-                
-                if (graficoVentas && datosEvolucion) {
-                    graficoVentas.data.labels = datosEvolucion.labels;
-                    graficoVentas.data.datasets[0].data = datosEvolucion.data;
-                    graficoVentas.update('none'); // Animación suave
+                if (window.ventasManager) {
+                    const ventas = window.ventasManager.obtenerVentasFiltradas();
+                    
+                    // Datos para gráfico de evolución
+                    const datosEvolucion = generarDatosEvolucion(ventas, periodo);
+                    
+                    if (graficoVentas && datosEvolucion) {
+                        graficoVentas.data.labels = datosEvolucion.labels;
+                        graficoVentas.data.datasets[0].data = datosEvolucion.data;
+                        graficoVentas.update('none');
+                    }
+                    
+                    // Datos para gráfico de clientes
+                    const datosClientes = generarDatosClientes(ventas);
+                    
+                    if (graficoClientes && datosClientes) {
+                        graficoClientes.data.labels = datosClientes.labels;
+                        graficoClientes.data.datasets[0].data = datosClientes.data;
+                        graficoClientes.update('none');
+                    }
                 }
-                
-                // Datos para gráfico de clientes
-                const datosClientes = generarDatosClientes(ventasReales);
-                
-                if (graficoClientes && datosClientes) {
-                    graficoClientes.data.labels = datosClientes.labels;
-                    graficoClientes.data.datasets[0].data = datosClientes.data;
-                    graficoClientes.update('none');
-                }
-                
-                console.log('Gráficos actualizados correctamente');
                 
             } catch (error) {
                 console.error('Error cargando datos de gráficos:', error);
             }
         }
 
-        // 6. FUNCIÓN PARA GENERAR DATOS DE CLIENTES  
-function generarDatosClientes(ventas) {
-    const clientesMap = new Map();
-    
-    // Agrupar ventas por cliente
-    ventas.forEach(venta => {
-        if (clientesMap.has(venta.cliente)) {
-            clientesMap.set(venta.cliente, clientesMap.get(venta.cliente) + venta.total);
-        } else {
-            clientesMap.set(venta.cliente, venta.total);
-        }
-    });
-    
-    // Convertir a arrays y ordenar
-    const clientesArray = Array.from(clientesMap.entries())
-        .sort((a, b) => b[1] - a[1])
-        .slice(0, 5); // Top 5 clientes
-    
-    return {
-        labels: clientesArray.map(item => item[0]),
-        data: clientesArray.map(item => Math.round(item[1]))
-    };
-}
-
-// 7. FUNCIÓN PARA CAMBIAR PERÍODO
-function cambiarPeriodoGrafico(periodo) {
-    // Actualizar botones activos
-    document.querySelectorAll('.periodo-btn').forEach(btn => {
-        btn.classList.remove('active');
-    });
-    document.querySelector(`[data-periodo="${periodo}"]`)?.classList.add('active');
-    
-    // Cargar nuevos datos
-    cargarDatosGraficos(periodo);
-}
-
-// 8. FUNCIÓN PARA ACTUALIZAR GRÁFICOS CUANDO SE AGREGAN VENTAS
-function actualizarGraficosConNuevaVenta() {
-    // Obtener período activo
-    const periodoActivo = document.querySelector('.periodo-btn.active')?.dataset.periodo || 'semana';
-    
-    // Recargar datos
-    cargarDatosGraficos(periodoActivo);
-    
-    console.log('Gráficos actualizados con nueva venta');
-}
-
-// 9. ACTUALIZAR LA FUNCIÓN actualizarMetricas PARA INCLUIR GRÁFICOS
-function actualizarMetricas() {
-    console.log('Actualizando métricas y gráficos...');
-    
-    // Aquí puedes calcular métricas reales si tienes acceso a los datos
-    const ventas = obtenerVentasReales();
-    
-    if (ventas.length > 0) {
-        const totalIngresos = ventas.reduce((sum, v) => sum + v.total, 0);
-        const totalCantidad = ventas.reduce((sum, v) => sum + v.cantidad, 0);
-        const precioPromedio = ventas.reduce((sum, v) => sum + v.precioKg, 0) / ventas.length;
-        
-        // Actualizar elementos del DOM si existen
-        const elementos = {
-            'ingresosDelMes': `Q ${totalIngresos.toLocaleString()}`,
-            'cantidadVendida': `${totalCantidad.toFixed(1)} kg`,
-            'precioPromedio': `Q ${precioPromedio.toFixed(2)}`,
-            'margenGanancia': '35%' // Placeholder
-        };
-        
-        Object.entries(elementos).forEach(([id, valor]) => {
-            const elemento = document.getElementById(id);
-            if (elemento) {
-                elemento.textContent = valor;
-            }
-        });
-    }
-    
-    // Actualizar gráficos también
-    actualizarGraficosConNuevaVenta();
-}
-
-
-
-
-
-        
         function generarDatosEvolucion(ventas, periodo) {
-    const ahora = new Date();
-    const labels = [];
-    const data = [];
-    
-    if (periodo === 'semana') {
-        // Últimos 7 días
-        for (let i = 6; i >= 0; i--) {
-            const fecha = new Date(ahora);
-            fecha.setDate(fecha.getDate() - i);
+            const ahora = new Date();
+            const labels = [];
+            const data = [];
             
-            const fechaStr = fecha.toLocaleDateString('es', { weekday: 'short' });
-            labels.push(fechaStr);
+            if (periodo === 'semana') {
+                for (let i = 6; i >= 0; i--) {
+                    const fecha = new Date(ahora);
+                    fecha.setDate(fecha.getDate() - i);
+                    
+                    const fechaStr = fecha.toLocaleDateString('es', { weekday: 'short' });
+                    labels.push(fechaStr);
+                    
+                    const ventasDelDia = ventas.filter(venta => {
+                        const fechaVenta = new Date(venta.fecha);
+                        return fechaVenta.toDateString() === fecha.toDateString();
+                    });
+                    
+                    const totalDia = ventasDelDia.reduce((sum, venta) => sum + venta.total, 0);
+                    data.push(totalDia);
+                }
+            } else if (periodo === 'mes') {
+                for (let i = 3; i >= 0; i--) {
+                    const inicioSemana = new Date(ahora);
+                    inicioSemana.setDate(inicioSemana.getDate() - (i * 7) - 7);
+                    const finSemana = new Date(inicioSemana);
+                    finSemana.setDate(finSemana.getDate() + 6);
+                    
+                    labels.push(`Sem ${4-i}`);
+                    
+                    const ventasSemana = ventas.filter(venta => {
+                        const fechaVenta = new Date(venta.fecha);
+                        return fechaVenta >= inicioSemana && fechaVenta <= finSemana;
+                    });
+                    
+                    const totalSemana = ventasSemana.reduce((sum, venta) => sum + venta.total, 0);
+                    data.push(totalSemana);
+                }
+            } else if (periodo === 'trimestre') {
+                for (let i = 2; i >= 0; i--) {
+                    const fecha = new Date(ahora);
+                    fecha.setMonth(fecha.getMonth() - i);
+                    
+                    labels.push(fecha.toLocaleDateString('es', { month: 'short' }));
+                    
+                    const ventasMes = ventas.filter(venta => {
+                        const fechaVenta = new Date(venta.fecha);
+                        return fechaVenta.getMonth() === fecha.getMonth() && 
+                               fechaVenta.getFullYear() === fecha.getFullYear();
+                    });
+                    
+                    const totalMes = ventasMes.reduce((sum, venta) => sum + venta.total, 0);
+                    data.push(totalMes);
+                }
+            }
             
-            // Calcular ventas de ese día
-            const ventasDelDia = ventas.filter(venta => {
-                const fechaVenta = new Date(venta.fecha);
-                return fechaVenta.toDateString() === fecha.toDateString();
+            return { labels, data };
+        }
+
+        function generarDatosClientes(ventas) {
+            const clientesMap = new Map();
+            
+            ventas.forEach(venta => {
+                if (clientesMap.has(venta.cliente)) {
+                    clientesMap.set(venta.cliente, clientesMap.get(venta.cliente) + venta.total);
+                } else {
+                    clientesMap.set(venta.cliente, venta.total);
+                }
             });
             
-            const totalDia = ventasDelDia.reduce((sum, venta) => sum + venta.total, 0);
-            data.push(totalDia);
+            const clientesArray = Array.from(clientesMap.entries())
+                .sort((a, b) => b[1] - a[1])
+                .slice(0, 5);
+            
+            return {
+                labels: clientesArray.map(item => item[0]),
+                data: clientesArray.map(item => Math.round(item[1]))
+            };
         }
-    } else if (periodo === 'mes') {
-        // Últimas 4 semanas
-        for (let i = 3; i >= 0; i--) {
-            const inicioSemana = new Date(ahora);
-            inicioSemana.setDate(inicioSemana.getDate() - (i * 7) - 7);
-            const finSemana = new Date(inicioSemana);
-            finSemana.setDate(finSemana.getDate() + 6);
-            
-            labels.push(`Sem ${4-i}`);
-            
-            const ventasSemana = ventas.filter(venta => {
-                const fechaVenta = new Date(venta.fecha);
-                return fechaVenta >= inicioSemana && fechaVenta <= finSemana;
-            });
-            
-            const totalSemana = ventasSemana.reduce((sum, venta) => sum + venta.total, 0);
-            data.push(totalSemana);
-        }
-    } else if (periodo === 'trimestre') {
-        // Últimos 3 meses
-        for (let i = 2; i >= 0; i--) {
-            const fecha = new Date(ahora);
-            fecha.setMonth(fecha.getMonth() - i);
-            
-            labels.push(fecha.toLocaleDateString('es', { month: 'short' }));
-            
-            const ventasMes = ventas.filter(venta => {
-                const fechaVenta = new Date(venta.fecha);
-                return fechaVenta.getMonth() === fecha.getMonth() && 
-                       fechaVenta.getFullYear() === fecha.getFullYear();
-            });
-            
-            const totalMes = ventasMes.reduce((sum, venta) => sum + venta.total, 0);
-            data.push(totalMes);
-        }
-    }
-    
-    return { labels, data };
-}
-
-
-
-
 
         function cambiarPeriodoGrafico(periodo) {
             document.querySelectorAll('.periodo-btn').forEach(btn => btn.classList.remove('active'));
-            document.querySelector(`[data-periodo="${periodo}"]`).classList.add('active');
+            document.querySelector(`[data-periodo="${periodo}"]`)?.classList.add('active');
             cargarDatosGraficos(periodo);
         }
 
-        function configurarCalculadora() {
-            ['calcCantidad', 'calcPrecio', 'calcDescuento', 'calcTransporte'].forEach(id => {
-                document.getElementById(id)?.addEventListener('input', calcularPrecio);
-            });
-        }
+        // ==========================================
+        // FUNCIONES DE CALCULADORA
+        // ==========================================
 
         function calcularPrecio() {
             const cantidad = parseFloat(document.getElementById('calcCantidad').value) || 0;
             const precio = parseFloat(document.getElementById('calcPrecio').value) || 0;
             const descuento = parseFloat(document.getElementById('calcDescuento').value) || 0;
-            const transporte = parseFloat(document.getElementById('calcTransporte').value) || 0;
             
             const subtotal = cantidad * precio;
             const descuentoMonto = subtotal * (descuento / 100);
-            const total = subtotal - descuentoMonto + transporte;
+            const total = subtotal - descuentoMonto;
             
             document.getElementById('calcTotal').textContent = `Q ${total.toFixed(2)}`;
         }
@@ -1927,355 +1931,212 @@ function actualizarMetricas() {
             const cantidad = parseFloat(document.getElementById('cantidadDetallada').value) || 0;
             const precio = parseFloat(document.getElementById('precioDetallado').value) || 0;
             const descuento = parseFloat(document.getElementById('descuentoDetallado').value) || 0;
-            const transporte = parseFloat(document.getElementById('transporteDetallado').value) || 0;
             
             const subtotal = cantidad * precio;
             const descuentoMonto = subtotal * (descuento / 100);
-            const total = subtotal - descuentoMonto + transporte;
+            const total = subtotal - descuentoMonto;
             
             document.getElementById('totalDetallado').value = total.toFixed(2);
         }
 
-        function cargarOpcionesFormularios() {
-            // Cargar clientes
-            if (window.ventasManager) {
-                const clientes = window.ventasManager.obtenerListaClientes();
-                const selectores = ['clienteVenta', 'clienteDetallado'];
-                
-                selectores.forEach(selectorId => {
-                    const selector = document.getElementById(selectorId);
-                    if (selector) {
-                        selector.innerHTML = '<option value="">Seleccionar cliente...</option>' +
-                            clientes.map(cliente => `<option value="${cliente.id}">${cliente.nombre}</option>`).join('');
-                    }
-                });
-            }
+        // ==========================================
+        // FUNCIONES DE MODAL
+        // ==========================================
+
+        function mostrarModalVenta() {
+            editandoVentaId = null;
+            document.getElementById('modalVentaTitulo').textContent = 'Registro Detallado de Venta';
+            document.getElementById('formVentaDetallada').reset();
+            document.getElementById('fechaDetallada').value = new Date().toISOString().split('T')[0];
+            document.getElementById('modalVentaDetallada').classList.add('show');
+        }
+
+        function cerrarModalVenta() {
+            document.getElementById('modalVentaDetallada').classList.remove('show');
+            editandoVentaId = null;
+        }
+
+        function mostrarModalCliente() {
+            document.getElementById('formNuevoCliente').reset();
+            document.getElementById('modalNuevoCliente').classList.add('show');
+        }
+
+        function cerrarModalCliente() {
+            document.getElementById('modalNuevoCliente').classList.remove('show');
         }
 
         function cargarDatosCliente() {
             const clienteId = document.getElementById('clienteDetallado').value;
-            if (clienteId && window.ventasManager) {
-                const cliente = window.ventasManager.obtenerCliente(clienteId);
+            if (clienteId && window.clientesManager) {
+                const cliente = window.clientesManager.obtenerCliente(clienteId);
                 if (cliente) {
-                    document.getElementById('contactoCliente').value = cliente.contacto || '';
+                    document.getElementById('contactoCliente').value = cliente.telefono || '';
                     document.getElementById('direccionEntrega').value = cliente.direccion || '';
                 }
             }
         }
 
-        // REGISTRAR VENTA RÁPIDA
+        // ==========================================
+        // FUNCIONES DE GUARDADO
+        // ==========================================
+
         async function guardarVentaRapida(e) {
             e.preventDefault();
             
-            const datos = {
-                fecha: document.getElementById('fechaVenta').value,
-                cliente: document.getElementById('clienteVenta').value,
-                cantidad: parseFloat(document.getElementById('cantidadVenta').value),
-                precioKg: parseFloat(document.getElementById('precioVenta').value),
-                metodoPago: document.getElementById('metodoPagoVenta').value,
-                estado: 'completada',
-                factura: null,
-                fechaCreacion: new Date().toISOString(),
-                usuarioId: firebase.auth().currentUser?.uid
-            };
-            
-            // Calcular total
-            datos.total = datos.cantidad * datos.precioKg;
+            const submitBtn = e.target.querySelector('button[type="submit"]');
+            const originalText = submitBtn.innerHTML;
             
             try {
-                // Guardar en Firebase
-                await firebase.firestore().collection('ventas').add(datos);
+                submitBtn.innerHTML = '<span class="loading-spinner"></span> Guardando...';
+                submitBtn.disabled = true;
                 
-                // Limpiar formulario
-                document.getElementById('formVentaRapida').reset();
-                document.getElementById('fechaVenta').value = new Date().toISOString().split('T')[0];
+                const datos = {
+                    fecha: document.getElementById('fechaVenta').value,
+                    clienteId: document.getElementById('clienteVenta').value,
+                    cantidad: parseFloat(document.getElementById('cantidadVenta').value),
+                    precioKg: parseFloat(document.getElementById('precioVenta').value),
+                    metodoPago: document.getElementById('metodoPagoVenta').value
+                };
                 
-                // Actualizar tabla
-                await cargarVentas();
-                
-                mostrarNotificacion('Venta registrada correctamente', 'success');
+                if (window.ventasManager) {
+                    await window.ventasManager.registrarVenta(datos);
+                    document.getElementById('formVentaRapida').reset();
+                    document.getElementById('fechaVenta').value = new Date().toISOString().split('T')[0];
+                    await cargarDatosIniciales();
+                    ventasNotificationManager.success('Venta registrada correctamente');
+                } else {
+                    throw new Error('Sistema de ventas no disponible');
+                }
                 
             } catch (error) {
                 console.error('Error registrando venta:', error);
-                mostrarNotificacion('Error al registrar la venta', 'error');
+                ventasNotificationManager.error('Error al registrar la venta');
+            } finally {
+                submitBtn.innerHTML = originalText;
+                submitBtn.disabled = false;
             }
         }
 
-        // REGISTRAR VENTA DETALLADA
-        // GUARDAR O ACTUALIZAR VENTA DETALLADA
-async function guardarVentaDetallada(e) {
-    e.preventDefault();
-    
-    const datos = {
-        fecha: document.getElementById('fechaDetallada').value,
-        cliente: document.getElementById('clienteDetallado').value,
-        cantidad: parseFloat(document.getElementById('cantidadDetallada').value),
-        precioKg: parseFloat(document.getElementById('precioDetallado').value),
-        descuento: parseFloat(document.getElementById('descuentoDetallado').value) || 0,
-        transporte: parseFloat(document.getElementById('transporteDetallado').value) || 0,
-        total: parseFloat(document.getElementById('totalDetallado').value),
-        metodoPago: document.getElementById('metodoPagoDetallado').value,
-        fechaPago: document.getElementById('fechaPago').value || null,
-        referencia: document.getElementById('referenciaVenta').value || null,
-        direccionEntrega: document.getElementById('direccionEntrega').value || null,
-        observaciones: document.getElementById('observacionesVenta').value || null,
-        estado: 'completada',
-        factura: null,
-        usuarioId: firebase.auth().currentUser?.uid
-    };
-    
-    try {
-        if (editandoVentaId) {
-            // ACTUALIZAR venta existente
-            datos.fechaModificacion = new Date().toISOString();
-            await firebase.firestore().collection('ventas').doc(editandoVentaId).update(datos);
-            mostrarNotificacion('Venta actualizada correctamente', 'success');
-        } else {
-            // CREAR nueva venta
-            datos.fechaCreacion = new Date().toISOString();
-            await firebase.firestore().collection('ventas').add(datos);
-            mostrarNotificacion('Venta registrada correctamente', 'success');
-        }
-        
-        // Limpiar y cerrar
-        cerrarModal();
-        
-        // Actualizar tabla
-        await cargarVentas();
-        
-    } catch (error) {
-        console.error('Error guardando venta:', error);
-        mostrarNotificacion('Error al guardar la venta', 'error');
-    }
-}
-
-
-        // CARGAR VENTAS DESDE FIREBASE
-        async function cargarVentas() {
+        async function guardarVentaDetallada(e) {
+            e.preventDefault();
+            
+            const submitBtn = e.target.querySelector('button[type="submit"]');
+            const originalText = submitBtn.innerHTML;
+            
             try {
-                const userId = firebase.auth().currentUser?.uid;
-                if (!userId) return;
+                submitBtn.innerHTML = '<span class="loading-spinner"></span> Guardando...';
+                submitBtn.disabled = true;
                 
-                console.log('Cargando ventas con consulta simple...');
-                
-                // CONSULTA SIMPLE - Solo por usuarioId
-                const ventasSnapshot = await firebase.firestore()
-                    .collection('ventas')
-                    .where('usuarioId', '==', userId)
-                    .limit(100)
-                    .get();
-                
-                const tbody = document.getElementById('tablaVentasBody');
-                if (!tbody) return;
-                
-                tbody.innerHTML = '';
-                
-                // Convertir a array y ordenar en memoria
-                const ventasArray = [];
-                ventasSnapshot.forEach(doc => {
-                    const venta = doc.data();
-                    ventasArray.push({
-                        id: doc.id,
-                        ...venta
-                    });
-                });
-                
-                // Ordenar por fecha en memoria (más recientes primero)
-                ventasArray.sort((a, b) => new Date(b.fecha) - new Date(a.fecha));
-                
-                // Mostrar solo las más recientes (50)
-                const ventasRecientes = ventasArray.slice(0, 50);
-                
-                ventasRecientes.forEach(venta => {
-                    const row = `
-                        <tr>
-                            <td>${formatearFecha(venta.fecha)}</td>
-                            <td>${venta.cliente}</td>
-                            <td>${venta.cantidad} kg</td>
-                            <td>Q ${venta.precioKg.toFixed(2)}</td>
-                            <td>Q ${venta.total.toLocaleString()}</td>
-                            <td>
-                                <span class="metodo-pago-badge ${venta.metodoPago}">
-                                    ${venta.metodoPago}
-                                </span>
-                            </td>
-                            <td>
-                                <span class="estado-venta-badge ${venta.estado}">
-                                    ${venta.estado}
-                                </span>
-                            </td>
-                            <td>
-                                ${venta.factura ? `
-                                <span class="factura-badge">
-                                    <i class="fas fa-file-pdf"></i> ${venta.factura}
-                                </span>
-                                ` : '<span style="color: var(--text-secondary);">Sin factura</span>'}
-                            </td>
-                            <td>
-                                <button class="btn btn-sm btn-primary" onclick="editarVenta('${venta.id}')" style="margin-right: 0.5rem;">
-                                    <i class="fas fa-edit"></i>
-                                </button>
-                                <button class="btn btn-sm btn-danger" onclick="eliminarVenta('${venta.id}')">
-                                    <i class="fas fa-trash"></i>
-                                </button>
-                            </td>
-                        </tr>
-                    `;
-                    tbody.innerHTML += row;
-                });
-                
-                // Actualizar métricas
-                actualizarMetricas();
-                
-                console.log(`Ventas cargadas: ${ventasRecientes.length}`);
-                
-            } catch (error) {
-                console.error('Error cargando ventas:', error);
-                mostrarNotificacion('Error cargando ventas. Trabajando offline.', 'warning');
-                
-                // Fallback: usar datos locales o de ejemplo
-                if (window.ventasManager) {
-                    window.ventasManager.generarDatosEjemplo();
-                }
-            }
-        }
-
-
-                // ELIMINAR VENTA
-            async function eliminarVenta(ventaId) {
-            if (confirm('¿Estás seguro de que quieres eliminar esta venta?')) {
-                try {
-                    await firebase.firestore().collection('ventas').doc(ventaId).delete();
-                    await cargarVentas();
-                    mostrarNotificacion('Venta eliminada correctamente', 'success');
-                } catch (error) {
-                    console.error('Error eliminando venta:', error);
-                    mostrarNotificacion('Error al eliminar la venta', 'error');
-                }
-            }
-        }
-
-
-        // EDITAR VENTA EXISTENTE
-async function editarVenta(ventaId) {
-    try {
-        // Obtener datos de la venta
-        const ventaDoc = await firebase.firestore().collection('ventas').doc(ventaId).get();
-        
-        if (!ventaDoc.exists) {
-            mostrarNotificacion('Venta no encontrada', 'error');
-            return;
-        }
-        
-        const venta = ventaDoc.data();
-        editandoVentaId = ventaId;
-        
-        // Llenar el formulario con los datos existentes
-        document.getElementById('fechaDetallada').value = venta.fecha;
-        document.getElementById('clienteDetallado').value = venta.cliente;
-        document.getElementById('cantidadDetallada').value = venta.cantidad;
-        document.getElementById('precioDetallado').value = venta.precioKg;
-        document.getElementById('descuentoDetallado').value = venta.descuento || 0;
-        document.getElementById('transporteDetallado').value = venta.transporte || 0;
-        document.getElementById('totalDetallado').value = venta.total;
-        document.getElementById('metodoPagoDetallado').value = venta.metodoPago;
-        document.getElementById('fechaPago').value = venta.fechaPago || '';
-        document.getElementById('referenciaVenta').value = venta.referencia || '';
-        document.getElementById('direccionEntrega').value = venta.direccionEntrega || '';
-        document.getElementById('observacionesVenta').value = venta.observaciones || '';
-        
-        // Cambiar título del modal
-        document.querySelector('#modalVentaDetallada .modal-title').textContent = 'Editar Venta';
-        
-        // Cambiar texto del botón
-        const btnSubmit = document.querySelector('#formVentaDetallada button[type="submit"]');
-        btnSubmit.innerHTML = '<i class="fas fa-save"></i> Actualizar Venta';
-        
-        // Mostrar modal
-        mostrarModalVenta();
-        
-    } catch (error) {
-        console.error('Error cargando venta para editar:', error);
-        mostrarNotificacion('Error al cargar los datos de la venta', 'error');
-    }
-}
-
-
-
-
-        function mostrarModalVenta() {
-            document.getElementById('modalVentaDetallada').classList.add('show');
-        }
-
-        function cerrarModal() {
-            // Limpiar variables de edición
-            editandoVentaId = null;
-            
-            // Restaurar título original
-            document.querySelector('#modalVentaDetallada .modal-title').textContent = 'Registro Detallado de Venta';
-            
-            // Restaurar texto del botón
-            const btnSubmit = document.querySelector('#formVentaDetallada button[type="submit"]');
-            btnSubmit.innerHTML = '<i class="fas fa-save"></i> Registrar Venta';
-            
-            // Cerrar modal y limpiar formulario
-            document.getElementById('modalVentaDetallada').classList.remove('show');
-            document.getElementById('formVentaDetallada').reset();
-        }
-
-        function accionVenta(accion) {
-            switch (accion) {
-                case 'nueva-venta':
-                    mostrarModalVenta();
-                    break;
-                case 'cotizacion':
-                    // Implementar generación de cotización
-                    mostrarNotificacion('Función en desarrollo', 'info');
-                    break;
-                case 'facturacion':
-                    generarFactura();
-                    break;
-                case 'reportes':
-                    if (window.ventasManager) {
-                        window.ventasManager.generarReporte();
-                    }
-                    break;
-            }
-        }
-
-        function aplicarFiltros() {
-            if (window.ventasManager) {
-                const filtros = {
-                    periodo: document.getElementById('filtroPeriodo').value,
-                    cliente: document.getElementById('filtroCliente').value,
-                    estado: document.getElementById('filtroEstado').value,
-                    metodoPago: document.getElementById('filtroMetodoPago').value
+                const datos = {
+                    fecha: document.getElementById('fechaDetallada').value,
+                    clienteId: document.getElementById('clienteDetallado').value,
+                    cantidad: parseFloat(document.getElementById('cantidadDetallada').value),
+                    precioKg: parseFloat(document.getElementById('precioDetallado').value),
+                    metodoPago: document.getElementById('metodoPagoDetallado').value,
+                    descuento: parseFloat(document.getElementById('descuentoDetallado').value) || 0,
+                    referencia: document.getElementById('referenciaVenta').value,
+                    direccionEntrega: document.getElementById('direccionEntrega').value,
+                    observaciones: document.getElementById('observacionesVenta').value
                 };
                 
-                window.ventasManager.aplicarFiltros(filtros);
-                actualizarTablaVentas();
+                if (editandoVentaId) {
+                    datos.id = editandoVentaId;
+                }
+                
+                if (window.ventasManager) {
+                    await window.ventasManager.registrarVenta(datos);
+                    cerrarModalVenta();
+                    await cargarDatosIniciales();
+                    ventasNotificationManager.success(editandoVentaId ? 'Venta actualizada correctamente' : 'Venta registrada correctamente');
+                } else {
+                    throw new Error('Sistema de ventas no disponible');
+                }
+                
+            } catch (error) {
+                console.error('Error guardando venta:', error);
+                ventasNotificationManager.error('Error al guardar la venta');
+            } finally {
+                submitBtn.innerHTML = originalText;
+                submitBtn.disabled = false;
             }
         }
 
-        function limpiarFiltros() {
-            document.getElementById('filtroPeriodo').value = 'mes';
-            document.getElementById('filtroCliente').value = '';
-            document.getElementById('filtroEstado').value = '';
-            document.getElementById('filtroMetodoPago').value = '';
-            aplicarFiltros();
+        async function guardarNuevoCliente(e) {
+            e.preventDefault();
+            
+            const submitBtn = e.target.querySelector('button[type="submit"]');
+            const originalText = submitBtn.innerHTML;
+            
+            try {
+                submitBtn.innerHTML = '<span class="loading-spinner"></span> Guardando...';
+                submitBtn.disabled = true;
+                
+                const datos = {
+                    nombre: document.getElementById('nombreClienteNuevo').value,
+                    empresa: document.getElementById('empresaClienteNuevo').value,
+                    telefono: document.getElementById('telefonoClienteNuevo').value,
+                    email: document.getElementById('emailClienteNuevo').value,
+                    direccion: document.getElementById('direccionClienteNuevo').value
+                };
+                
+                if (window.clientesManager) {
+                    await window.clientesManager.crearCliente(datos);
+                    cerrarModalCliente();
+                    await cargarClientesEnSelectores();
+                    await cargarClientesRecientes();
+                    ventasNotificationManager.success('Cliente creado correctamente');
+                } else {
+                    throw new Error('Sistema de clientes no disponible');
+                }
+                
+            } catch (error) {
+                console.error('Error guardando cliente:', error);
+                ventasNotificationManager.error('Error al guardar el cliente');
+            } finally {
+                submitBtn.innerHTML = originalText;
+                submitBtn.disabled = false;
+            }
+        }
+
+        // ==========================================
+        // FUNCIONES DE ACCIONES
+        // ==========================================
+
+        function editarVenta(ventaId) {
+            if (window.ventasManager) {
+                const venta = window.ventasManager.obtenerVenta(ventaId);
+                if (venta) {
+                    editandoVentaId = ventaId;
+                    document.getElementById('modalVentaTitulo').textContent = 'Editar Venta';
+                    
+                    // Llenar formulario
+                    document.getElementById('fechaDetallada').value = venta.fecha;
+                    document.getElementById('clienteDetallado').value = venta.clienteId;
+                    document.getElementById('cantidadDetallada').value = venta.cantidad;
+                    document.getElementById('precioDetallado').value = venta.precioKg;
+                    document.getElementById('metodoPagoDetallado').value = venta.metodoPago;
+                    document.getElementById('descuentoDetallado').value = venta.descuento || 0;
+                    document.getElementById('referenciaVenta').value = venta.referencia || '';
+                    document.getElementById('direccionEntrega').value = venta.direccionEntrega || '';
+                    document.getElementById('observacionesVenta').value = venta.observaciones || '';
+                    
+                    calcularTotalDetallado();
+                    mostrarModalVenta();
+                }
+            }
         }
 
         function generarFactura() {
-            if (window.ventasManager) {
-                window.ventasManager.generarFactura();
-            }
+            ventasNotificationManager.info('Función de facturación en desarrollo');
         }
 
         function exportarVentas() {
-            if (window.ventasManager) {
-                window.ventasManager.exportarVentas();
-            }
+            ventasNotificationManager.info('Función de exportación en desarrollo');
         }
+
+        // ==========================================
+        // UTILIDADES
+        // ==========================================
 
         function formatearFecha(fecha) {
             if (!fecha) return 'N/A';
@@ -2290,203 +2151,19 @@ async function editarVenta(ventaId) {
             }
         }
 
-                // FUNCIÓN AUXILIAR para actualizar métricas (simplificada)
-        function actualizarMetricas() {
-            // Esta función puede quedar vacía por ahora o calcular métricas básicas
-            console.log('Métricas actualizadas');
-        }
+        // Hacer funciones globales para compatibilidad
+        window.editarVenta = editarVenta;
+        window.mostrarModalVenta = mostrarModalVenta;
+        window.mostrarModalCliente = mostrarModalCliente;
 
-        function mostrarNotificacion(mensaje, tipo) {
-            console.log(`${tipo.toUpperCase()}: ${mensaje}`);
-        }
-
-        // Hacer funciones globales
-        window.accionVenta = accionVenta;
-        window.descargarFactura = function(numeroFactura) {
-            // Implementar descarga de factura
-            mostrarNotificacion('Descargando factura...', 'info');
-        };
-
-
-        function mostrarModalCliente() {
-    document.getElementById('modalNuevoCliente').classList.add('show');
-}
-
-function cerrarModalCliente() {
-    document.getElementById('modalNuevoCliente').classList.remove('show');
-    document.getElementById('formNuevoCliente').reset();
-}
-
-async function guardarNuevoCliente(e) {
-    e.preventDefault();
-    
-    const cliente = {
-        nombre: document.getElementById('nombreCliente').value,
-        telefono: document.getElementById('telefonoCliente').value,
-        email: document.getElementById('emailCliente').value,
-        direccion: document.getElementById('direccionCliente').value,
-        fechaRegistro: new Date().toISOString()
-    };
-    
-    try {
-        // Aquí guardarías en Firebase
-        console.log('Guardando cliente:', cliente);
-        
-        // Agregar a los selectores
-        agregarClienteASelectores(cliente);
-        
-        mostrarNotificacion('Cliente agregado correctamente', 'success');
-        cerrarModalCliente();
-        
-    } catch (error) {
-        console.error('Error guardando cliente:', error);
-        mostrarNotificacion('Error al guardar cliente', 'error');
-    }
-}
-
-function agregarClienteASelectores(cliente) {
-    const selectores = ['clienteVenta', 'clienteDetallado'];
-    
-    selectores.forEach(selectorId => {
-        const selector = document.getElementById(selectorId);
-        if (selector) {
-            const option = document.createElement('option');
-            option.value = cliente.nombre;
-            option.textContent = cliente.nombre;
-            selector.appendChild(option);
-        }
-    });
-
-}
-
-// Hacer función global
-window.eliminarVenta = eliminarVenta;
-// Hacer funciones globales
-window.editarVenta = editarVenta;
-window.eliminarVenta = eliminarVenta;
-
-
-// CARGAR CLIENTES EN LOS SELECTORES
-async function cargarClientesEnSelectores() {
-    try {
-        const userId = firebase.auth().currentUser?.uid;
-        if (!userId) return;
-        
-        console.log('Cargando clientes con consulta simple...');
-        
-        // CONSULTA SIMPLE - Solo por usuarioId
-        const clientesSnapshot = await firebase.firestore()
-            .collection('clientes')
-            .where('usuarioId', '==', userId)
-            .limit(50)
-            .get();
-        
-        const selectores = ['clienteVenta', 'clienteDetallado'];
-        
-        selectores.forEach(selectorId => {
-            const selector = document.getElementById(selectorId);
-            if (selector) {
-                // Limpiar opciones existentes excepto la primera
-                selector.innerHTML = '<option value="">Seleccionar cliente...</option>';
-                
-                // Convertir a array y ordenar en memoria
-                const clientesArray = [];
-                clientesSnapshot.forEach(doc => {
-                    const cliente = doc.data();
-                    clientesArray.push({
-                        id: doc.id,
-                        nombre: cliente.nombre
-                    });
-                });
-                
-                // Ordenar por nombre en memoria
-                clientesArray.sort((a, b) => a.nombre.localeCompare(b.nombre));
-                
-                // Agregar opciones ordenadas
-                clientesArray.forEach(cliente => {
-                    const option = document.createElement('option');
-                    option.value = cliente.nombre;
-                    option.textContent = cliente.nombre;
-                    selector.appendChild(option);
-                });
-            }
+        // Manejo de errores globales
+        window.addEventListener('error', function(event) {
+            console.error('⚠️ Error global:', event.error);
         });
-        
-        console.log(`Clientes cargados en selectores`);
-        
-    } catch (error) {
-        console.error('Error cargando clientes:', error);
-        mostrarNotificacion('Error cargando clientes. Usando lista local.', 'warning');
-        
-        // Fallback: agregar algunos clientes de ejemplo
-        const clientesEjemplo = [
-            'Supermercado Central',
-            'Frutas del Valle', 
-            'Mercado San Juan',
-            'Distribuidora López',
-            'Exportadora Maya'
-        ];
-        
-        const selectores = ['clienteVenta', 'clienteDetallado'];
-        selectores.forEach(selectorId => {
-            const selector = document.getElementById(selectorId);
-            if (selector) {
-                selector.innerHTML = '<option value="">Seleccionar cliente...</option>';
-                clientesEjemplo.forEach(nombre => {
-                    const option = document.createElement('option');
-                    option.value = nombre;
-                    option.textContent = nombre;
-                    selector.appendChild(option);
-                });
-            }
-        });
-    }
-}
 
+        window.addEventListener('unhandledrejection', function(event) {
+            console.error('⚠️ Promesa rechazada:', event.reason);
+        });
     </script>
-
-    <!-- Modal para nuevo cliente -->
-<div class="modal-overlay" id="modalNuevoCliente">
-    <div class="modal" style="max-width: 500px;">
-        <div class="modal-header">
-            <h2 class="modal-title">Agregar Nuevo Cliente</h2>
-            <button class="modal-close" id="cerrarModalCliente">
-                <i class="fas fa-times"></i>
-            </button>
-        </div>
-        <div class="modal-body">
-            <form id="formNuevoCliente">
-                <div class="form-group">
-                    <label class="form-label">Nombre Completo</label>
-                    <input type="text" class="form-input" id="nombreCliente" required>
-                </div>
-                
-                <div class="form-group">
-                    <label class="form-label">Teléfono</label>
-                    <input type="tel" class="form-input" id="telefonoCliente" required>
-                </div>
-                
-                <div class="form-group">
-                    <label class="form-label">Email</label>
-                    <input type="email" class="form-input" id="emailCliente">
-                </div>
-                
-                <div class="form-group">
-                    <label class="form-label">Dirección</label>
-                    <textarea class="form-input form-textarea" id="direccionCliente"></textarea>
-                </div>
-                
-                <div style="display: flex; gap: 1rem; justify-content: flex-end; margin-top: 2rem;">
-                    <button type="button" class="btn btn-secondary" id="cancelarCliente">
-                        <i class="fas fa-times"></i> Cancelar
-                    </button>
-                    <button type="submit" class="btn btn-success">
-                        <i class="fas fa-save"></i> Guardar Cliente
-                    </button>
-                </div>
-            </form>
-        </div>
-    </div>
-</div>
 </body>
 </html>
