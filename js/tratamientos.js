@@ -1,399 +1,604 @@
-// tratamientos.js - Sistema Inteligente de Tratamientos Finca La Herradura
+// ========================================
+// SISTEMA DE TRATAMIENTOS FITOSANITARIOS
+// Finca La Herradura - Integración con TreeManager
+// ========================================
+
 class TratamientosManager {
     constructor() {
         this.tratamientos = [];
-        this.enfermedades = [];
+        this.aplicaciones = [];
         this.productos = [];
-        this.historialTratamientos = [];
-        this.prediccionesIA = [];
+        this.db = firebase.firestore();
+        this.sectores = [];
+        this.arboles = [];
+        this.vistaTratamientos = 'tarjetas'; // 'tarjetas' o 'tabla'
         this.init();
     }
 
     async init() {
-        await this.cargarDatos();
+        console.log('🌿 Iniciando sistema de tratamientos...');
+        
+        // Esperar a que TreeManager esté listo
+        if (typeof window.treeManager !== 'undefined') {
+            await this.cargarDatosDeTreeManager();
+        } else {
+            setTimeout(() => this.init(), 1000);
+            return;
+        }
+        
+        await this.cargarTratamientos();
+        await this.cargarProductos();
         this.configurarEventListeners();
-        this.inicializarMLPredicciones();
-        this.configurarGeolocation();
+        this.renderizarTratamientos();
+        this.actualizarEstadisticas();
+        this.cargarProximosTratamientos();
+        this.inicializarGraficos();
+        
+        console.log('✅ Sistema de tratamientos inicializado');
     }
 
-    // ==================== MACHINE LEARNING & IA ====================
-    async analizarEfectividadTratamientos() {
+    // ==================== CARGA DE DATOS ====================
+    async cargarDatosDeTreeManager() {
         try {
-            const datosEntrenamiento = this.historialTratamientos.map(t => ({
-                enfermedad: t.enfermedad,
-                producto: t.producto,
-                dosis: t.dosis,
-                clima: t.climaAplicacion,
-                efectividad: t.resultadoEfectividad,
-                tiempoRecuperacion: t.tiempoRecuperacion,
-                coordenadas: t.gps
-            }));
-
-            // Algoritmo ML para predecir efectividad
-            const modelo = await this.entrenarModeloEfectividad(datosEntrenamiento);
-            return modelo;
+            if (window.treeManager) {
+                this.sectores = await window.treeManager.getSectoresParaFormulario();
+                this.arboles = await window.treeManager.getArbolesParaFormulario();
+                this.poblarSelectores();
+                console.log(`📦 Cargados ${this.sectores.length} sectores y ${this.arboles.length} árboles`);
+            }
         } catch (error) {
-            console.error('Error en análisis ML:', error);
+            console.error('Error cargando datos del TreeManager:', error);
+            // Datos de respaldo si no funciona TreeManager
+            this.sectores = [
+                { id: 'sector1', nombre: 'Sector A', codigo: 'SEC-A' },
+                { id: 'sector2', nombre: 'Sector B', codigo: 'SEC-B' }
+            ];
+            this.poblarSelectores();
         }
     }
 
-    async predecirTratamientoOptimo(enfermedad, arbolId, condicionesClimaticas) {
-        const prediccion = await this.modeloIA.predict({
-            enfermedad: enfermedad,
-            climaActual: condicionesClimaticas,
-            historialArbol: await this.obtenerHistorialArbol(arbolId),
-            ubicacionGPS: await this.obtenerCoordenadas(arbolId)
-        });
+    poblarSelectores() {
+        // Selector de sectores en filtros
+        const filtroSector = document.getElementById('filtroSector');
+        if (filtroSector) {
+            filtroSector.innerHTML = '<option value="">Todos los sectores</option>';
+            this.sectores.forEach(sector => {
+                const option = document.createElement('option');
+                option.value = sector.id;
+                option.textContent = sector.nombre || sector.codigo;
+                filtroSector.appendChild(option);
+            });
+        }
 
-        return {
-            productoRecomendado: prediccion.producto,
-            dosisOptima: prediccion.dosis,
-            mejorMomento: prediccion.momento,
-            probabilidadExito: prediccion.probabilidad,
-            costo: prediccion.costoEstimado
-        };
+        // Selector de sector en modal
+        const selectorSector = document.querySelector('select[name="sector"]');
+        if (selectorSector) {
+            selectorSector.innerHTML = '<option value="">Seleccionar sector</option>';
+            this.sectores.forEach(sector => {
+                const option = document.createElement('option');
+                option.value = sector.id;
+                option.textContent = sector.nombre || sector.codigo;
+                selectorSector.appendChild(option);
+            });
+        }
+
+        // Selector de árboles específicos
+        const selectorArboles = document.querySelector('select[name="arboles"]');
+        if (selectorArboles) {
+            selectorArboles.innerHTML = '';
+            this.arboles.forEach(arbol => {
+                const option = document.createElement('option');
+                option.value = arbol.id;
+                option.textContent = `${arbol.codigo || arbol.id} - ${arbol.sector || 'Sin sector'}`;
+                selectorArboles.appendChild(option);
+            });
+        }
     }
 
-    async detectarPatronesPlagas() {
-        const analisisGeoespacial = this.tratamientos
-            .filter(t => t.fecha >= new Date(Date.now() - 30 * 24 * 60 * 60 * 1000))
-            .reduce((acc, t) => {
-                const zona = this.determinarZona(t.gps);
-                if (!acc[zona]) acc[zona] = {};
-                if (!acc[zona][t.enfermedad]) acc[zona][t.enfermedad] = 0;
-                acc[zona][t.enfermedad]++;
-                return acc;
-            }, {});
+    async cargarTratamientos() {
+        try {
+            const snapshot = await this.db.collection('tratamientos').orderBy('fechaProgramada', 'desc').get();
+            this.tratamientos = snapshot.docs.map(doc => ({
+                id: doc.id,
+                ...doc.data(),
+                fechaProgramada: doc.data().fechaProgramada?.toDate(),
+                fechaCreacion: doc.data().fechaCreacion?.toDate()
+            }));
+        } catch (error) {
+            console.error('Error cargando tratamientos:', error);
+            this.tratamientos = this.generarTratamientosEjemplo();
+        }
+    }
 
-        // IA para detectar focos de infección
-        const focos = Object.entries(analisisGeoespacial)
-            .filter(([zona, enfermedades]) => 
-                Object.values(enfermedades).some(cantidad => cantidad > 3)
-            );
+    async cargarProductos() {
+        try {
+            const snapshot = await this.db.collection('productos-tratamiento').get();
+            this.productos = snapshot.docs.map(doc => ({
+                id: doc.id,
+                ...doc.data()
+            }));
+        } catch (error) {
+            console.error('Error cargando productos:', error);
+            this.productos = [
+                { id: 'p1', nombre: 'Fungicida Cobre', tipo: 'fungicida', dosisRecomendada: 2.5 },
+                { id: 'p2', nombre: 'Insecticida Orgánico', tipo: 'insecticida', dosisRecomendada: 1.5 }
+            ];
+        }
+    }
 
-        return {
-            focosCriticos: focos,
-            recomendacionesIA: await this.generarRecomendacionesPreventivas(focos),
-            alertasPrioritarias: await this.calcularAlertasPrioridad(focos)
-        };
+    // ==================== INTERFAZ DE USUARIO ====================
+    configurarEventListeners() {
+        // Radio buttons para tipo de aplicación
+        const radioSector = document.getElementById('aplicacionSector');
+        const radioArboles = document.getElementById('aplicacionArboles');
+        const selectorSector = document.getElementById('selectorSector');
+        const selectorArboles = document.getElementById('selectorArboles');
+
+        if (radioSector && radioArboles) {
+            radioSector.addEventListener('change', () => {
+                if (radioSector.checked) {
+                    selectorSector.style.display = 'block';
+                    selectorArboles.style.display = 'none';
+                }
+            });
+
+            radioArboles.addEventListener('change', () => {
+                if (radioArboles.checked) {
+                    selectorSector.style.display = 'none';
+                    selectorArboles.style.display = 'block';
+                }
+            });
+        }
+
+        // Checkbox repetición
+        const checkRepetir = document.querySelector('input[name="repetir"]');
+        const opcionesRepeticion = document.getElementById('opcionesRepeticion');
+        if (checkRepetir) {
+            checkRepetir.addEventListener('change', () => {
+                opcionesRepeticion.style.display = checkRepetir.checked ? 'block' : 'none';
+            });
+        }
+
+        // Filtros
+        document.getElementById('filtroSector')?.addEventListener('change', () => this.aplicarFiltros());
+        document.getElementById('filtroEstado')?.addEventListener('change', () => this.aplicarFiltros());
+        document.getElementById('filtroTipo')?.addEventListener('change', () => this.aplicarFiltros());
     }
 
     // ==================== GESTIÓN DE TRATAMIENTOS ====================
-    async registrarTratamiento(datos) {
+    async guardarNuevoTratamiento() {
+        const form = document.getElementById('formNuevoTratamiento');
+        const formData = new FormData(form);
+        
         try {
-            const gpsCoords = await this.obtenerUbicacionActual();
-            const climaActual = await climaManager.obtenerDatosActuales();
-            
-            const tratamiento = {
-                id: this.generarId(),
-                fecha: new Date(),
-                arbolId: datos.arbolId,
-                bloqueId: datos.bloqueId,
-                enfermedad: datos.enfermedad,
-                sintomas: datos.sintomas,
-                producto: datos.producto,
-                dosis: datos.dosis,
-                metodoAplicacion: datos.metodo,
-                costo: datos.costo,
-                responsable: datos.responsable,
-                gps: gpsCoords,
-                clima: climaActual,
-                fotos: datos.fotos || [],
-                observaciones: datos.observaciones,
-                fechaProximoSeguimiento: this.calcularProximoSeguimiento(datos.enfermedad),
-                estadoSincronizacion: navigator.onLine ? 'sincronizado' : 'pendiente'
+            const tratamientoData = {
+                nombre: formData.get('nombre'),
+                tipo: formData.get('tipo'),
+                producto: formData.get('producto'),
+                dosisPorArbol: parseFloat(formData.get('dosisPorArbol')),
+                concentracion: parseFloat(formData.get('concentracion')),
+                tipoAplicacion: formData.get('tipoAplicacion'),
+                sector: formData.get('sector'),
+                arboles: formData.getAll('arboles'),
+                fechaProgramada: firebase.firestore.Timestamp.fromDate(new Date(formData.get('fechaProgramada') + 'T' + formData.get('hora'))),
+                responsable: formData.get('responsable'),
+                observaciones: formData.get('observaciones'),
+                estado: 'programado',
+                fechaCreacion: firebase.firestore.Timestamp.now(),
+                repetir: formData.get('repetir') === 'on',
+                frecuencia: formData.get('frecuencia') || null
             };
 
-            // Guardar en IndexedDB para offline
-            await this.guardarOffline('tratamientos', tratamiento);
+            // Calcular cantidad total necesaria
+            let cantidadArbolesAfectados = 0;
+            if (tratamientoData.tipoAplicacion === 'sector' && tratamientoData.sector) {
+                cantidadArbolesAfectados = this.arboles.filter(a => a.sectorId === tratamientoData.sector).length;
+            } else {
+                cantidadArbolesAfectados = tratamientoData.arboles.length;
+            }
             
-            // Sincronizar con Firebase si hay conexión
-            if (navigator.onLine) {
-                await this.sincronizarConFirebase(tratamiento);
+            tratamientoData.cantidadTotalEstimada = (cantidadArbolesAfectados * tratamientoData.dosisPorArbol / 1000); // en litros
+            tratamientoData.arbolesAfectados = cantidadArbolesAfectados;
+
+            const docRef = await this.db.collection('tratamientos').add(tratamientoData);
+            
+            // Agregar a la lista local
+            this.tratamientos.unshift({
+                id: docRef.id,
+                ...tratamientoData,
+                fechaProgramada: tratamientoData.fechaProgramada.toDate(),
+                fechaCreacion: tratamientoData.fechaCreacion.toDate()
+            });
+
+            // Programar repeticiones si es necesario
+            if (tratamientoData.repetir) {
+                await this.programarRepeticiones(docRef.id, tratamientoData);
             }
 
-            this.tratamientos.push(tratamiento);
-            this.actualizarUI();
-            this.generarAlertasIA(tratamiento);
+            // Cerrar modal y actualizar vista
+            bootstrap.Modal.getInstance(document.getElementById('modalNuevoTratamiento')).hide();
+            form.reset();
+            
+            this.renderizarTratamientos();
+            this.actualizarEstadisticas();
+            
+            this.mostrarAlerta('Tratamiento programado correctamente', 'success');
 
-            return tratamiento;
         } catch (error) {
-            console.error('Error registrando tratamiento:', error);
-            this.mostrarNotificacion('Error al registrar tratamiento', 'error');
+            console.error('Error guardando tratamiento:', error);
+            this.mostrarAlerta('Error al guardar el tratamiento', 'error');
         }
     }
 
-    async seguimientoTratamiento(tratamientoId, resultados) {
+    async programarRepeticiones(tratamientoBaseId, datosBase) {
+        const repeticiones = [];
+        const fechaBase = datosBase.fechaProgramada.toDate();
+        
+        // Generar hasta 12 repeticiones (1 año)
+        for (let i = 1; i <= 12; i++) {
+            const nuevaFecha = new Date(fechaBase);
+            
+            switch (datosBase.frecuencia) {
+                case 'semanal':
+                    nuevaFecha.setDate(nuevaFecha.getDate() + (i * 7));
+                    break;
+                case 'quincenal':
+                    nuevaFecha.setDate(nuevaFecha.getDate() + (i * 15));
+                    break;
+                case 'mensual':
+                    nuevaFecha.setMonth(nuevaFecha.getMonth() + i);
+                    break;
+            }
+
+            repeticiones.push({
+                ...datosBase,
+                fechaProgramada: firebase.firestore.Timestamp.fromDate(nuevaFecha),
+                tratamientoMadreId: tratamientoBaseId,
+                repeticionNumero: i
+            });
+        }
+
+        // Guardar repeticiones en lote
+        const batch = this.db.batch();
+        repeticiones.forEach(rep => {
+            const docRef = this.db.collection('tratamientos').doc();
+            batch.set(docRef, rep);
+        });
+
+        await batch.commit();
+    }
+
+    // ==================== APLICACIÓN DE TRATAMIENTOS ====================
+    mostrarModalAplicarTratamiento(tratamientoId) {
         const tratamiento = this.tratamientos.find(t => t.id === tratamientoId);
         if (!tratamiento) return;
 
-        const seguimiento = {
-            id: this.generarId(),
-            tratamientoId: tratamientoId,
-            fecha: new Date(),
-            estadoMejoria: resultados.mejoria, // 1-10
-            sintomas: resultados.sintomas,
-            efectosSecundarios: resultados.efectos,
-            necesitaRetratamiento: resultados.retratar,
-            observaciones: resultados.observaciones,
-            fotos: resultados.fotos || [],
-            gps: await this.obtenerUbicacionActual()
-        };
-
-        tratamiento.seguimientos = tratamiento.seguimientos || [];
-        tratamiento.seguimientos.push(seguimiento);
-        tratamiento.efectividad = this.calcularEfectividad(tratamiento);
-
-        // Actualizar modelo ML con nuevos datos
-        await this.actualizarModeloML(tratamiento);
+        const modal = document.getElementById('modalAplicarTratamiento');
+        const form = document.getElementById('formAplicarTratamiento');
         
-        await this.guardarOffline('tratamientos', tratamiento);
-        this.actualizarUI();
-    }
-
-    // ==================== ANÁLISIS Y REPORTES ====================
-    generarReporteTratamientos(filtros = {}) {
-        const tratamientosFiltrados = this.filtrarTratamientos(filtros);
+        form.querySelector('input[name="tratamientoId"]').value = tratamientoId;
+        form.querySelector('input[name="fechaAplicacion"]').value = new Date().toISOString().slice(0, 16);
+        form.querySelector('input[name="cantidadAplicada"]').value = tratamiento.cantidadTotalEstimada;
         
-        const reporte = {
-            resumen: {
-                totalTratamientos: tratamientosFiltrados.length,
-                costoTotal: tratamientosFiltrados.reduce((sum, t) => sum + t.costo, 0),
-                efectividadPromedio: this.calcularEfectividadPromedio(tratamientosFiltrados),
-                enfermedadesMasComunes: this.analizarEnfermedadesFrecuentes(tratamientosFiltrados)
-            },
-            analisisGeografico: this.analizarDistribucionGeografica(tratamientosFiltrados),
-            tendencias: this.analizarTendencias(tratamientosFiltrados),
-            prediccionesIA: this.generarPrediccionesFuturas(tratamientosFiltrados),
-            recomendaciones: this.generarRecomendacionesIA(tratamientosFiltrados)
-        };
-
-        return reporte;
+        new bootstrap.Modal(modal).show();
     }
 
-    analizarEficienciaProductos() {
-        const productos = {};
-        
-        this.historialTratamientos.forEach(t => {
-            if (!productos[t.producto]) {
-                productos[t.producto] = {
-                    usos: 0,
-                    efectividadTotal: 0,
-                    costoTotal: 0,
-                    tiempoRecuperacionPromedio: 0
-                };
-            }
-            
-            productos[t.producto].usos++;
-            productos[t.producto].efectividadTotal += t.efectividad;
-            productos[t.producto].costoTotal += t.costo;
-            productos[t.producto].tiempoRecuperacionPromedio += t.tiempoRecuperacion;
-        });
-
-        return Object.entries(productos).map(([nombre, datos]) => ({
-            producto: nombre,
-            efectividadPromedio: datos.efectividadTotal / datos.usos,
-            costoPromedio: datos.costoTotal / datos.usos,
-            tiempoRecuperacion: datos.tiempoRecuperacionPromedio / datos.usos,
-            frecuenciaUso: datos.usos,
-            costoBeneficio: (datos.efectividadTotal / datos.usos) / (datos.costoTotal / datos.usos)
-        })).sort((a, b) => b.costoBeneficio - a.costoBeneficio);
-    }
-
-    // ==================== GESTIÓN GPS ====================
-    async obtenerUbicacionActual() {
-        return new Promise((resolve, reject) => {
-            if (!navigator.geolocation) {
-                reject(new Error('Geolocalización no soportada'));
-                return;
-            }
-
-            navigator.geolocation.getCurrentPosition(
-                position => {
-                    resolve({
-                        lat: position.coords.latitude,
-                        lng: position.coords.longitude,
-                        accuracy: position.coords.accuracy,
-                        timestamp: new Date()
-                    });
-                },
-                error => reject(error),
-                { enableHighAccuracy: true, timeout: 10000, maximumAge: 60000 }
-            );
-        });
-    }
-
-    determinarZona(coordenadas) {
-        // Dividir finca en zonas de 100x100 metros
-        const zoneLat = Math.floor(coordenadas.lat * 1000) / 1000;
-        const zoneLng = Math.floor(coordenadas.lng * 1000) / 1000;
-        return `zona_${zoneLat}_${zoneLng}`;
-    }
-
-    calcularDistanciaEntreArboles(coord1, coord2) {
-        const R = 6371; // Radio de la Tierra en km
-        const dLat = (coord2.lat - coord1.lat) * Math.PI / 180;
-        const dLng = (coord2.lng - coord1.lng) * Math.PI / 180;
-        const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
-                Math.cos(coord1.lat * Math.PI / 180) * Math.cos(coord2.lat * Math.PI / 180) *
-                Math.sin(dLng/2) * Math.sin(dLng/2);
-        const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
-        return R * c * 1000; // Retorna en metros
-    }
-
-    // ==================== SINCRONIZACIÓN Y OFFLINE ====================
-    async sincronizarDatos() {
-        if (!navigator.onLine) return;
+    async confirmarAplicacionTratamiento() {
+        const form = document.getElementById('formAplicarTratamiento');
+        const formData = new FormData(form);
+        const tratamientoId = formData.get('tratamientoId');
 
         try {
-            // Subir datos pendientes
-            const datosPendientes = await this.obtenerDatosPendientes();
-            for (const dato of datosPendientes) {
-                await this.sincronizarConFirebase(dato);
-                dato.estadoSincronizacion = 'sincronizado';
-                await this.guardarOffline('tratamientos', dato);
+            const aplicacionData = {
+                tratamientoId,
+                fechaAplicacion: firebase.firestore.Timestamp.fromDate(new Date(formData.get('fechaAplicacion'))),
+                cantidadAplicada: parseFloat(formData.get('cantidadAplicada')),
+                condicionesClimaticas: formData.get('condicionesClimaticas'),
+                observaciones: formData.get('observacionesAplicacion'),
+                fechaRegistro: firebase.firestore.Timestamp.now()
+            };
+
+            // Guardar aplicación
+            await this.db.collection('aplicaciones-tratamiento').add(aplicacionData);
+
+            // Actualizar estado del tratamiento
+            await this.db.collection('tratamientos').doc(tratamientoId).update({
+                estado: 'aplicado',
+                fechaAplicacion: aplicacionData.fechaAplicacion,
+                cantidadAplicada: aplicacionData.cantidadAplicada
+            });
+
+            // Actualizar localmente
+            const tratamiento = this.tratamientos.find(t => t.id === tratamientoId);
+            if (tratamiento) {
+                tratamiento.estado = 'aplicado';
+                tratamiento.fechaAplicacion = aplicacionData.fechaAplicacion.toDate();
+                tratamiento.cantidadAplicada = aplicacionData.cantidadAplicada;
             }
 
-            // Descargar datos actualizados
-            const datosFirebase = await this.obtenerDatosFirebase();
-            await this.actualizarDatosLocales(datosFirebase);
-
-            this.mostrarNotificacion('Datos sincronizados correctamente', 'success');
-        } catch (error) {
-            console.error('Error en sincronización:', error);
-            this.mostrarNotificacion('Error en sincronización', 'error');
-        }
-    }
-
-    async guardarOffline(tabla, datos) {
-        return new Promise((resolve, reject) => {
-            const request = indexedDB.open('FincaHerraduraDB', 1);
+            bootstrap.Modal.getInstance(document.getElementById('modalAplicarTratamiento')).hide();
             
-            request.onsuccess = event => {
-                const db = event.target.result;
-                const transaction = db.transaction([tabla], 'readwrite');
-                const store = transaction.objectStore(tabla);
-                store.put(datos);
-                
-                transaction.oncomplete = () => resolve();
-                transaction.onerror = () => reject(transaction.error);
-            };
-        });
-    }
+            this.renderizarTratamientos();
+            this.actualizarEstadisticas();
+            
+            this.mostrarAlerta('Aplicación registrada correctamente', 'success');
 
-    // ==================== UI Y EVENTOS ====================
-    configurarEventListeners() {
-        document.addEventListener('DOMContentLoaded', () => {
-            this.configurarFormularios();
-            this.configurarFiltros();
-            this.configurarMapas();
-            this.configurarNotificaciones();
-        });
-
-        // Eventos de conectividad
-        window.addEventListener('online', () => this.sincronizarDatos());
-        window.addEventListener('offline', () => this.modoOffline());
-    }
-
-    configurarFormularios() {
-        const formTratamiento = document.getElementById('formTratamiento');
-        if (formTratamiento) {
-            formTratamiento.addEventListener('submit', async (e) => {
-                e.preventDefault();
-                const formData = new FormData(e.target);
-                const datos = Object.fromEntries(formData.entries());
-                await this.registrarTratamiento(datos);
-            });
-        }
-
-        const formSeguimiento = document.getElementById('formSeguimiento');
-        if (formSeguimiento) {
-            formSeguimiento.addEventListener('submit', async (e) => {
-                e.preventDefault();
-                const formData = new FormData(e.target);
-                const datos = Object.fromEntries(formData.entries());
-                await this.seguimientoTratamiento(datos.tratamientoId, datos);
-            });
+        } catch (error) {
+            console.error('Error registrando aplicación:', error);
+            this.mostrarAlerta('Error al registrar la aplicación', 'error');
         }
     }
 
-    actualizarUI() {
-        this.actualizarListaTratamientos();
-        this.actualizarEstadisticas();
-        this.actualizarMapa();
-        this.actualizarAlertas();
-    }
+    // ==================== RENDERIZADO ====================
+    renderizarTratamientos() {
+        const container = document.getElementById('listaTratamientos');
+        if (!container) return;
 
-    actualizarListaTratamientos() {
-        const contenedor = document.getElementById('listaTratamientos');
-        if (!contenedor) return;
-
-        contenedor.innerHTML = this.tratamientos.map(t => `
-            <div class="tratamiento-card" data-id="${t.id}">
-                <div class="tratamiento-header">
-                    <h4>Árbol ${t.arbolId} - ${t.enfermedad}</h4>
-                    <span class="fecha">${this.formatearFecha(t.fecha)}</span>
+        if (this.tratamientos.length === 0) {
+            container.innerHTML = `
+                <div class="text-center text-muted p-4">
+                    <i class="fas fa-spray-can fa-3x mb-3"></i>
+                    <p>No hay tratamientos programados</p>
+                    <button class="btn btn-primary" onclick="mostrarModalNuevoTratamiento()">
+                        Crear Primer Tratamiento
+                    </button>
                 </div>
-                <div class="tratamiento-body">
-                    <p><strong>Producto:</strong> ${t.producto}</p>
-                    <p><strong>Dosis:</strong> ${t.dosis}</p>
-                    <p><strong>Responsable:</strong> ${t.responsable}</p>
-                    <div class="efectividad">
-                        <span class="label">Efectividad:</span>
-                        <div class="progress-bar">
-                            <div class="progress" style="width: ${t.efectividad || 0}%"></div>
+            `;
+            return;
+        }
+
+        if (this.vistaTratamientos === 'tarjetas') {
+            this.renderizarTarjetas();
+        } else {
+            this.renderizarTabla();
+        }
+    }
+
+    renderizarTarjetas() {
+        const container = document.getElementById('listaTratamientos');
+        
+        container.innerHTML = this.tratamientos.map(tratamiento => {
+            const estadoClass = `status-${tratamiento.estado}`;
+            const fechaFormateada = this.formatearFecha(tratamiento.fechaProgramada);
+            const esVencido = new Date() > tratamiento.fechaProgramada && tratamiento.estado === 'programado';
+            
+            return `
+                <div class="aplicacion-card">
+                    <div class="d-flex justify-content-between align-items-start mb-2">
+                        <h6 class="mb-1">${tratamiento.nombre}</h6>
+                        <span class="status-badge ${esVencido ? 'status-vencido' : estadoClass}">
+                            ${esVencido ? 'Vencido' : this.obtenerTextoEstado(tratamiento.estado)}
+                        </span>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-8">
+                            <p class="text-muted mb-1">
+                                <i class="fas fa-calendar me-1"></i> ${fechaFormateada}
+                                <i class="fas fa-user ms-3 me-1"></i> ${tratamiento.responsable || 'Sin asignar'}
+                            </p>
+                            <p class="text-muted mb-2">
+                                <i class="fas fa-flask me-1"></i> ${tratamiento.producto}
+                                <i class="fas fa-tint ms-3 me-1"></i> ${tratamiento.cantidadTotalEstimada?.toFixed(1) || 0}L estimados
+                            </p>
+                            
+                            ${this.renderizarSectoresAfectados(tratamiento)}
+                            
+                            ${tratamiento.observaciones ? 
+                                `<p class="small text-muted"><i class="fas fa-comment me-1"></i> ${tratamiento.observaciones}</p>` : 
+                                ''
+                            }
+                        </div>
+                        <div class="col-md-4 text-end">
+                            ${this.renderizarBotonesTratamiento(tratamiento)}
                         </div>
                     </div>
                 </div>
-                <div class="tratamiento-actions">
-                    <button onclick="tratamientosManager.verDetalle('${t.id}')" class="btn-detalle">
-                        <i class="fas fa-eye"></i> Ver
-                    </button>
-                    <button onclick="tratamientosManager.seguimiento('${t.id}')" class="btn-seguimiento">
-                        <i class="fas fa-stethoscope"></i> Seguimiento
-                    </button>
-                    <button onclick="tratamientosManager.editar('${t.id}')" class="btn-editar">
-                        <i class="fas fa-edit"></i> Editar
-                    </button>
-                </div>
-            </div>
-        `).join('');
+            `;
+        }).join('');
+    }
+
+    renderizarSectoresAfectados(tratamiento) {
+        if (tratamiento.tipoAplicacion === 'sector' && tratamiento.sector) {
+            const sector = this.sectores.find(s => s.id === tratamiento.sector);
+            return `<div class="mb-2">
+                <span class="sector-badge">${sector?.nombre || tratamiento.sector}</span>
+                <small class="text-muted ms-2">${tratamiento.arbolesAfectados || 0} árboles</small>
+            </div>`;
+        } else if (tratamiento.arboles && tratamiento.arboles.length > 0) {
+            return `<div class="mb-2">
+                <small class="text-muted">${tratamiento.arboles.length} árboles específicos</small>
+            </div>`;
+        }
+        return '';
+    }
+
+    renderizarBotonesTratamiento(tratamiento) {
+        const botones = [];
+        
+        if (tratamiento.estado === 'programado') {
+            botones.push(`
+                <button class="btn btn-success btn-sm mb-1" onclick="tratamientosManager.mostrarModalAplicarTratamiento('${tratamiento.id}')">
+                    <i class="fas fa-check"></i> Aplicar
+                </button>
+            `);
+        }
+        
+        if (tratamiento.estado === 'aplicado' && tratamiento.fechaAplicacion) {
+            const fechaAplicacion = this.formatearFecha(tratamiento.fechaAplicacion);
+            botones.push(`
+                <small class="text-success d-block">
+                    <i class="fas fa-check-circle"></i> Aplicado: ${fechaAplicacion}
+                </small>
+            `);
+        }
+        
+        botones.push(`
+            <button class="btn btn-outline-primary btn-sm" onclick="tratamientosManager.editarTratamiento('${tratamiento.id}')">
+                <i class="fas fa-edit"></i>
+            </button>
+            <button class="btn btn-outline-danger btn-sm" onclick="tratamientosManager.eliminarTratamiento('${tratamiento.id}')">
+                <i class="fas fa-trash"></i>
+            </button>
+        `);
+        
+        return botones.join(' ');
+    }
+
+    // ==================== ESTADÍSTICAS ====================
+    actualizarEstadisticas() {
+        const ahora = new Date();
+        const inicioMes = new Date(ahora.getFullYear(), ahora.getMonth(), 1);
+        const finDia = new Date(ahora.getFullYear(), ahora.getMonth(), ahora.getDate(), 23, 59, 59);
+
+        const stats = {
+            total: this.tratamientos.filter(t => t.estado === 'programado').length,
+            pendientesHoy: this.tratamientos.filter(t => 
+                t.estado === 'programado' && 
+                t.fechaProgramada <= finDia
+            ).length,
+            completadosEsteMes: this.tratamientos.filter(t =>
+                t.estado === 'aplicado' &&
+                t.fechaAplicacion >= inicioMes
+            ).length,
+            litrosAplicados: this.tratamientos
+                .filter(t => t.estado === 'aplicado' && t.fechaAplicacion >= inicioMes)
+                .reduce((total, t) => total + (t.cantidadAplicada || 0), 0)
+        };
+
+        document.getElementById('totalTratamientos').textContent = stats.total;
+        document.getElementById('tratamientosPendientes').textContent = stats.pendientesHoy;
+        document.getElementById('tratamientosCompletados').textContent = stats.completadosEsteMes;
+        document.getElementById('litrosAplicados').textContent = `${stats.litrosAplicados.toFixed(1)}L`;
+    }
+
+    // ==================== FILTROS ====================
+    aplicarFiltros() {
+        const filtroSector = document.getElementById('filtroSector').value;
+        const filtroEstado = document.getElementById('filtroEstado').value;
+        const filtroTipo = document.getElementById('filtroTipo').value;
+
+        let tratamientosFiltrados = [...this.tratamientos];
+
+        if (filtroSector) {
+            tratamientosFiltrados = tratamientosFiltrados.filter(t => t.sector === filtroSector);
+        }
+
+        if (filtroEstado) {
+            tratamientosFiltrados = tratamientosFiltrados.filter(t => {
+                if (filtroEstado === 'vencido') {
+                    return new Date() > t.fechaProgramada && t.estado === 'programado';
+                }
+                return t.estado === filtroEstado;
+            });
+        }
+
+        if (filtroTipo) {
+            tratamientosFiltrados = tratamientosFiltrados.filter(t => t.tipo === filtroTipo);
+        }
+
+        // Guardar tratamientos originales y mostrar filtrados
+        const tratamientosOriginales = this.tratamientos;
+        this.tratamientos = tratamientosFiltrados;
+        this.renderizarTratamientos();
+        this.tratamientos = tratamientosOriginales;
     }
 
     // ==================== UTILIDADES ====================
-    generarId() {
-        return 'trat_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
-    }
-
     formatearFecha(fecha) {
-        return new Date(fecha).toLocaleDateString('es-GT', {
+        if (!fecha) return 'Sin fecha';
+        return new Intl.DateTimeFormat('es-ES', {
+            day: '2-digit',
+            month: '2-digit',
             year: 'numeric',
-            month: 'short',
-            day: 'numeric',
             hour: '2-digit',
             minute: '2-digit'
-        });
+        }).format(fecha);
     }
 
-    mostrarNotificacion(mensaje, tipo) {
-        // Implementar sistema de notificaciones
+    obtenerTextoEstado(estado) {
+        const estados = {
+            'programado': 'Programado',
+            'aplicado': 'Aplicado',
+            'cancelado': 'Cancelado'
+        };
+        return estados[estado] || estado;
+    }
+
+    mostrarAlerta(mensaje, tipo = 'info') {
+        // Implementar sistema de alertas/toasts
         console.log(`${tipo.toUpperCase()}: ${mensaje}`);
+        // Aquí puedes integrar con tu sistema de notificaciones favorito
     }
 
-    async cargarDatos() {
-        try {
-            // Cargar desde IndexedDB primero
-            this.tratamientos = await this.cargarDatosOffline('tratamientos') || [];
-            
-            // Si hay conexión, sincronizar
-            if (navigator.onLine) {
-                await this.sincronizarDatos();
+    generarTratamientosEjemplo() {
+        const ahora = new Date();
+        return [
+            {
+                id: 'trat1',
+                nombre: 'Tratamiento Fungicida Sector A',
+                tipo: 'fungicida',
+                producto: 'Cobre Pentahidratado',
+                dosisPorArbol: 2.5,
+                concentracion: 0.5,
+                tipoAplicacion: 'sector',
+                sector: 'sector1',
+                fechaProgramada: new Date(ahora.getTime() + 24 * 60 * 60 * 1000),
+                responsable: 'Juan Pérez',
+                estado: 'programado',
+                cantidadTotalEstimada: 15.5,
+                arbolesAfectados: 45,
+                fechaCreacion: new Date()
             }
-        } catch (error) {
-            console.error('Error cargando datos:', error);
-        }
+        ];
+    }
+
+    cargarProximosTratamientos() {
+        // Implementar carga de próximos tratamientos en sidebar
+    }
+
+    inicializarGraficos() {
+        // Implementar gráficos de efectividad
+    }
+
+    cambiarVista(vista) {
+        this.vistaTratamientos = vista;
+        this.renderizarTratamientos();
     }
 }
 
-// Inicializar el manager cuando se carga la página
-const tratamientosManager = new TratamientosManager();
+// Funciones globales para el HTML
+window.mostrarModalNuevoTratamiento = function() {
+    new bootstrap.Modal(document.getElementById('modalNuevoTratamiento')).show();
+};
+
+window.guardarNuevoTratamiento = function() {
+    if (window.tratamientosManager) {
+        window.tratamientosManager.guardarNuevoTratamiento();
+    }
+};
+
+window.confirmarAplicacionTratamiento = function() {
+    if (window.tratamientosManager) {
+        window.tratamientosManager.confirmarAplicacionTratamiento();
+    }
+};
+
+window.aplicarFiltros = function() {
+    if (window.tratamientosManager) {
+        window.tratamientosManager.aplicarFiltros();
+    }
+};
+
+window.cambiarVista = function(vista) {
+    if (window.tratamientosManager) {
+        window.tratamientosManager.cambiarVista(vista);
+    }
+};
+
+// Inicialización cuando el DOM esté listo
+document.addEventListener('DOMContentLoaded', () => {
+    window.tratamientosManager = new TratamientosManager();
+});
+
+console.log('🌿 Sistema de tratamientos cargado - Versión integrada con TreeManager');
