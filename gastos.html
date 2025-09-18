@@ -36,6 +36,10 @@
             --border: #e2e8f0;
             --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
             --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+            
+            /* Variables para navegación */
+            --sidebar-width: 280px;
+            --sidebar-collapsed-width: 70px;
         }
 
         * {
@@ -55,6 +59,23 @@
             padding: 2rem;
             max-width: 1400px;
             margin: 0 auto;
+            margin-left: var(--sidebar-width);
+            transition: margin-left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        /* Ajuste para sidebar colapsado */
+        @media (max-width: 1024px) {
+            .main-content-wrapper {
+                margin-left: var(--sidebar-collapsed-width);
+            }
+        }
+
+        @media (max-width: 768px) {
+            .main-content-wrapper {
+                margin-left: 0;
+                padding: 1rem;
+                padding-top: 5rem; /* Espacio para el botón móvil */
+            }
         }
 
         /* Estilos básicos */
@@ -702,7 +723,59 @@
             50% { transform: scale(1.1); }
         }
 
-        /* Responsivo */
+        /* Estados de conexión */
+        .connection-status {
+            position: fixed;
+            top: 1rem;
+            left: 1rem;
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            z-index: 1000;
+            transition: all 0.3s ease;
+        }
+
+        .connection-status.online {
+            background: rgba(34, 197, 94, 0.15);
+            color: #16a34a;
+            border: 1px solid rgba(34, 197, 94, 0.3);
+        }
+
+        .connection-status.offline {
+            background: rgba(239, 68, 68, 0.15);
+            color: #dc2626;
+            border: 1px solid rgba(239, 68, 68, 0.3);
+        }
+
+        .connection-status.loading {
+            background: rgba(245, 158, 11, 0.15);
+            color: #d97706;
+            border: 1px solid rgba(245, 158, 11, 0.3);
+        }
+
+        /* Animaciones personalizadas */
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .animate-fade-in-up {
+            animation: fadeInUp 0.5s ease-out;
+        }
+
+        /* Estilos para modales */
+        .modal-overlay {
+            animation: fadeInUp 0.3s ease-out;
+        }
+
+        /* Responsivo - Ajustes adicionales para navegación */
         @media (max-width: 1024px) {
             .contenido-principal {
                 grid-template-columns: 1fr;
@@ -710,10 +783,6 @@
         }
 
         @media (max-width: 768px) {
-            .main-content-wrapper {
-                padding: 1rem;
-            }
-            
             .gastos-header {
                 flex-direction: column;
                 align-items: stretch;
@@ -754,58 +823,6 @@
                 height: 60px;
                 font-size: 1.5rem;
             }
-        }
-
-        /* Animaciones personalizadas */
-        @keyframes fadeInUp {
-            from {
-                opacity: 0;
-                transform: translateY(20px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-
-        .animate-fade-in-up {
-            animation: fadeInUp 0.5s ease-out;
-        }
-
-        /* Estilos para modales */
-        .modal-overlay {
-            animation: fadeInUp 0.3s ease-out;
-        }
-
-        /* Estados de conexión */
-        .connection-status {
-            position: fixed;
-            top: 1rem;
-            left: 1rem;
-            padding: 0.5rem 1rem;
-            border-radius: 20px;
-            font-size: 0.75rem;
-            font-weight: 600;
-            z-index: 1000;
-            transition: all 0.3s ease;
-        }
-
-        .connection-status.online {
-            background: rgba(34, 197, 94, 0.15);
-            color: #16a34a;
-            border: 1px solid rgba(34, 197, 94, 0.3);
-        }
-
-        .connection-status.offline {
-            background: rgba(239, 68, 68, 0.15);
-            color: #dc2626;
-            border: 1px solid rgba(239, 68, 68, 0.3);
-        }
-
-        .connection-status.loading {
-            background: rgba(245, 158, 11, 0.15);
-            color: #d97706;
-            border: 1px solid rgba(245, 158, 11, 0.3);
         }
     </style>
 </head>
@@ -1195,6 +1212,7 @@
     <script src="js/firebase-integration.js"></script>  
     <script src="js/presupuesto-manager.js"></script>
     <script src="js/gastos.js"></script>
+    <script src="js/nav.js"></script>
     
     <script>
         // Sistema de inicialización mejorado
@@ -1411,11 +1429,36 @@
 
         window.addEventListener('offline', () => {
             updateConnectionStatus('offline');
-            console.log('📵 Sin conexión a internet');
+            console.log('🔵 Sin conexión a internet');
         });
 
         // Estado inicial de conexión
         updateConnectionStatus(navigator.onLine ? 'connecting' : 'offline');
+
+        // Placeholder functions para mantener funcionalidad
+        function mostrarFormularioGasto() {
+            console.log('Mostrar formulario de gasto');
+        }
+
+        function accionRapida(tipo) {
+            console.log('Acción rápida:', tipo);
+        }
+
+        function exportarReporte() {
+            console.log('Exportar reporte');
+        }
+
+        function aplicarFiltros() {
+            console.log('Aplicar filtros');
+        }
+
+        function limpiarFiltros() {
+            console.log('Limpiar filtros');
+        }
+
+        function guardarGastoRapido() {
+            console.log('Guardar gasto rápido');
+        }
     </script>
 </body>
 </html>
