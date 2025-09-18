@@ -1,874 +1,914 @@
-/* ========================================
-   FINCA LA HERRADURA - SISTEMA DE RIEGO INTEGRADO
-   Sistema completo integrado con TreeManager y Firebase
-   ======================================== */
+// ========================================
+// SISTEMA INTELIGENTE DE RIEGO
+// Finca La Herradura - Integración con TreeManager
+// ========================================
 
 class RiegoManager {
     constructor() {
-        // Configuración base
-        this.fincaId = 'finca_la_herradura';
-        this.currentDate = new Date().toISOString().split('T')[0];
-        this.currentTime = new Date().toTimeString().slice(0, 5);
-        
-        // Datos en memoria
-        this.riegos = new Map();
-        this.horarios = new Map();
+        this.sectores = [];
+        this.arboles = [];
+        this.programasRiego = [];
+        this.riegosActivos = new Map();
+        this.db = firebase.firestore();
+        this.timers = new Map();
         this.sensores = new Map();
-        this.alertas = [];
-        
-        // Referencias a otros managers
-        this.treeManager = null;
-        this.firebaseDb = null;
-        this.firebaseAuth = null;
-        
-        // Configuración de riego para limones
-        this.cropParameters = {
-            'Lima Persa': {
-                waterRequirement: 1200, // mm/año
-                optimalHumidity: 70,
-                maxDailyWater: 25, // L por árbol por día
-                rootDepth: 60 // cm
-            },
-            'Limón Eureka': {
-                waterRequirement: 1100,
-                optimalHumidity: 65,
-                maxDailyWater: 22,
-                rootDepth: 55
-            },
-            'Limón Meyer': {
-                waterRequirement: 1000,
-                optimalHumidity: 68,
-                maxDailyWater: 20,
-                rootDepth: 50
-            }
+        this.estadoGeneral = {
+            presion: 2.5,
+            caudal: 0,
+            caudalPromedio: 45,
+            sistemaActivo: false
         };
-        
-        // Umbrales de alerta
-        this.alertThresholds = {
-            lowHumidity: 45,
-            highHumidity: 90,
-            lowPressure: 1.0,
-            highPressure: 4.0,
-            systemFailure: 0.5,
-            waterWaste: 150
-        };
-        
         this.init();
     }
 
-    // ==========================================
-    // INICIALIZACIÓN
-    // ==========================================
-
     async init() {
-        try {
-            console.log('💧 Inicializando sistema de riego integrado...');
-            
-            // Esperar dependencias
-            await this.waitForDependencies();
-            
-            // Cargar datos offline
-            await this.loadOfflineData();
-            
-            // Inicializar sensores
-            await this.initializeSensors();
-            
-            // Configurar monitoreo automático
-            this.setupAutoUpdate();
-            
-            console.log('✅ Sistema de riego inicializado');
-            
-            // Notificar que está listo
-            window.dispatchEvent(new CustomEvent('riegoManagerReady'));
-            
-        } catch (error) {
-            console.error('❌ Error inicializando sistema de riego:', error);
+        console.log('💧 Iniciando sistema de riego...');
+        
+        // Esperar a que TreeManager esté listo
+        if (typeof window.treeManager !== 'undefined') {
+            await this.cargarDatosDeTreeManager();
+        } else {
+            setTimeout(() => this.init(), 1000);
+            return;
         }
+        
+        await this.cargarProgramasRiego();
+        await this.cargarEstadoSensores();
+        this.configurarEventListeners();
+        this.renderizarSectores();
+        this.actualizarEstadisticas();
+        this.iniciarMonitoreo();
+        this.cargarProximosRiegos();
+        this.cargarHistorialReciente();
+        
+        console.log('✅ Sistema de riego inicializado');
     }
 
-    async waitForDependencies() {
-        // Esperar TreeManager
-        await new Promise((resolve) => {
-            const checkTreeManager = () => {
-                if (window.treeManager && window.treeManager.isInitialized) {
-                    this.treeManager = window.treeManager;
-                    console.log('✅ TreeManager conectado a RiegoManager');
-                    resolve();
-                } else {
-                    setTimeout(checkTreeManager, 100);
-                }
-            };
-            checkTreeManager();
-            setTimeout(resolve, 5000); // Timeout de 5 segundos
-        });
-
-        // Esperar Firebase
-        await new Promise((resolve) => {
-            const checkFirebase = () => {
-                if (window.db && window.auth) {
-                    this.firebaseDb = window.db;
-                    this.firebaseAuth = window.auth;
-                    console.log('✅ Firebase conectado a RiegoManager');
-                    resolve();
-                } else {
-                    setTimeout(checkFirebase, 100);
-                }
-            };
-            checkFirebase();
-            setTimeout(resolve, 3000); // Timeout de 3 segundos
-        });
-    }
-
-    async loadOfflineData() {
+    // ==================== CARGA DE DATOS ====================
+    async cargarDatosDeTreeManager() {
         try {
-            // Cargar riegos existentes
-            if (this.firebaseDb) {
-                const snapshot = await this.firebaseDb.collection('riegos')
-                    .where('fincaId', '==', this.fincaId)
-                    .orderBy('createdAt', 'desc')
-                    .limit(100)
-                    .get();
-
-                snapshot.forEach(doc => {
-                    this.riegos.set(doc.id, {
-                        id: doc.id,
-                        ...doc.data(),
-                        firebaseRef: doc.ref
-                    });
-                });
-
-                console.log(`💧 ${this.riegos.size} riegos cargados desde Firebase`);
-            }
-
-            // Cargar horarios
-            if (this.firebaseDb) {
-                const horariosSnapshot = await this.firebaseDb.collection('horarios_riego')
-                    .where('fincaId', '==', this.fincaId)
-                    .where('active', '==', true)
-                    .get();
-
-                horariosSnapshot.forEach(doc => {
-                    this.horarios.set(doc.id, {
-                        id: doc.id,
-                        ...doc.data(),
-                        firebaseRef: doc.ref
-                    });
-                });
-
-                console.log(`⏰ ${this.horarios.size} horarios cargados desde Firebase`);
-            }
-
-        } catch (error) {
-            console.error('Error cargando datos offline:', error);
-        }
-    }
-
-    async initializeSensors() {
-        try {
-            // Crear sensores para sectores existentes si no existen
-            if (this.treeManager) {
-                const sectores = this.treeManager.getAllSectors();
+            if (window.treeManager) {
+                this.sectores = await window.treeManager.getSectoresParaFormulario();
+                this.arboles = await window.treeManager.getArbolesParaFormulario();
+                this.poblarSelectores();
+                console.log(`💧 Cargados ${this.sectores.length} sectores para riego`);
                 
-                for (const sector of sectores) {
-                    await this.createSensorForSector(sector);
-                }
+                // Inicializar estado de riego para cada sector
+                this.sectores.forEach(sector => {
+                    if (!this.riegosActivos.has(sector.id)) {
+                        this.riegosActivos.set(sector.id, {
+                            activo: false,
+                            inicio: null,
+                            duracion: 0,
+                            progreso: 0,
+                            caudal: 0,
+                            programa: null
+                        });
+                    }
+                });
             }
-
-            // Iniciar simulación de sensores (solo para demostración)
-            this.startSensorSimulation();
-
         } catch (error) {
-            console.error('Error inicializando sensores:', error);
+            console.error('Error cargando datos del TreeManager:', error);
+            // Datos de respaldo
+            this.sectores = [
+                { id: 'sector1', nombre: 'Sector A Norte', codigo: 'SEC-AN', arboles: 45 },
+                { id: 'sector2', nombre: 'Sector B Sur', codigo: 'SEC-BS', arboles: 38 },
+                { id: 'sector3', nombre: 'Sector C Centro', codigo: 'SEC-CC', arboles: 52 }
+            ];
+            this.poblarSelectores();
         }
     }
 
-    async createSensorForSector(sector) {
-        const sensorId = `sensor_${sector.id}`;
+    poblarSelectores() {
+        const selectorSector = document.querySelector('select[name="sector"]');
+        if (selectorSector) {
+            selectorSector.innerHTML = '<option value="">Seleccionar sector</option>';
+            this.sectores.forEach(sector => {
+                const option = document.createElement('option');
+                option.value = sector.id;
+                option.textContent = `${sector.nombre || sector.codigo} (${this.contarArbolesSector(sector.id)} árboles)`;
+                selectorSector.appendChild(option);
+            });
+        }
+    }
+
+    contarArbolesSector(sectorId) {
+        return this.arboles.filter(a => a.sectorId === sectorId).length || 0;
+    }
+
+    async cargarProgramasRiego() {
+        try {
+            const snapshot = await this.db.collection('programas-riego')
+                .orderBy('fechaCreacion', 'desc')
+                .get();
+            
+            this.programasRiego = snapshot.docs.map(doc => ({
+                id: doc.id,
+                ...doc.data(),
+                fechaProgramada: doc.data().fechaProgramada?.toDate(),
+                fechaCreacion: doc.data().fechaCreacion?.toDate()
+            }));
+        } catch (error) {
+            console.error('Error cargando programas de riego:', error);
+            this.programasRiego = this.generarProgramasEjemplo();
+        }
+    }
+
+    async cargarEstadoSensores() {
+        try {
+            const snapshot = await this.db.collection('sensores-riego').get();
+            snapshot.docs.forEach(doc => {
+                this.sensores.set(doc.id, {
+                    id: doc.id,
+                    ...doc.data(),
+                    ultimaActualizacion: doc.data().ultimaActualizacion?.toDate()
+                });
+            });
+        } catch (error) {
+            console.error('Error cargando sensores:', error);
+            // Sensores de ejemplo
+            this.sectores.forEach(sector => {
+                this.sensores.set(sector.id, {
+                    id: sector.id,
+                    humedad: Math.random() * 100,
+                    temperatura: 20 + Math.random() * 15,
+                    presion: 2.0 + Math.random() * 1.5,
+                    activo: true
+                });
+            });
+        }
+    }
+
+    // ==================== INTERFAZ DE USUARIO ====================
+    configurarEventListeners() {
+        // Tipo de programación
+        const tipoProgramacion = document.querySelector('select[name="tipoProgramacion"]');
+        if (tipoProgramacion) {
+            tipoProgramacion.addEventListener('change', this.cambiarTipoProgramacion);
+        }
+
+        // Repetir programación
+        const checkRepetir = document.querySelector('input[name="repetir"]');
+        const opcionesRepeticion = document.getElementById('opcionesRepeticion');
+        if (checkRepetir) {
+            checkRepetir.addEventListener('change', () => {
+                opcionesRepeticion.style.display = checkRepetir.checked ? 'block' : 'none';
+            });
+        }
+    }
+
+    cambiarTipoProgramacion() {
+        const tipo = document.querySelector('select[name="tipoProgramacion"]').value;
+        const opcionesProgramado = document.getElementById('opcionesProgramado');
+        const opcionesAutomatico = document.getElementById('opcionesAutomatico');
         
-        if (!this.sensores.has(sensorId)) {
-            const sensor = {
-                id: sensorId,
-                sectorId: sector.id,
-                sectorName: sector.name,
-                type: 'humedad_suelo',
-                status: 'active',
-                lastReading: {
-                    value: 65 + Math.random() * 20,
-                    timestamp: new Date().toISOString(),
-                    quality: 'good'
-                },
-                position: sector.coordinates?.center || [14.6349, -90.5069],
-                createdAt: new Date().toISOString()
+        opcionesProgramado.style.display = tipo === 'programado' ? 'block' : 'none';
+        opcionesAutomatico.style.display = tipo === 'automatico' ? 'block' : 'none';
+    }
+
+    // ==================== GESTIÓN DE RIEGOS ====================
+    async guardarNuevoRiego() {
+        const form = document.getElementById('formNuevoRiego');
+        const formData = new FormData(form);
+        
+        try {
+            const programaData = {
+                nombre: formData.get('nombre'),
+                sector: formData.get('sector'),
+                duracion: parseInt(formData.get('duracion')),
+                caudal: parseFloat(formData.get('caudal')),
+                tipoProgramacion: formData.get('tipoProgramacion'),
+                observaciones: formData.get('observaciones'),
+                estado: 'programado',
+                fechaCreacion: firebase.firestore.Timestamp.now(),
+                repetir: formData.get('repetir') === 'on',
+                frecuencia: formData.get('frecuencia') || null
             };
 
-            this.sensores.set(sensorId, sensor);
-
-            // Guardar en Firebase si está disponible
-            if (this.firebaseDb) {
-                try {
-                    await this.firebaseDb.collection('sensores_riego').doc(sensorId).set({
-                        ...sensor,
-                        createdAt: this.firebaseDb.FieldValue?.serverTimestamp?.() || new Date(),
-                        fincaId: this.fincaId
-                    });
-                } catch (error) {
-                    console.error('Error guardando sensor en Firebase:', error);
+            // Configurar fecha según el tipo
+            if (programaData.tipoProgramacion === 'programado') {
+                const fecha = formData.get('fecha');
+                const hora = formData.get('hora');
+                if (fecha && hora) {
+                    programaData.fechaProgramada = firebase.firestore.Timestamp.fromDate(
+                        new Date(fecha + 'T' + hora)
+                    );
                 }
-            }
-        }
-    }
-
-    startSensorSimulation() {
-        // Actualizar lecturas de sensores cada 15 minutos
-        setInterval(() => {
-            this.updateSensorReadings();
-        }, 15 * 60 * 1000);
-
-        // Primera actualización inmediata
-        this.updateSensorReadings();
-    }
-
-    async updateSensorReadings() {
-        for (const [sensorId, sensor] of this.sensores) {
-            if (sensor.status !== 'active') continue;
-
-            try {
-                // Simular lectura realista
-                const oldValue = sensor.lastReading?.value || 65;
-                let newValue = oldValue + (Math.random() - 0.5) * 5;
-
-                // Simular efecto de riego reciente
-                const recentRiego = this.getRecentRiegoForSector(sensor.sectorId);
-                if (recentRiego) {
-                    const hoursAgo = (new Date() - new Date(recentRiego.createdAt)) / (1000 * 60 * 60);
-                    if (hoursAgo < 2) {
-                        newValue += 15 * (1 - hoursAgo / 2);
-                    }
-                }
-
-                // Mantener dentro de rangos realistas
-                newValue = Math.max(20, Math.min(95, newValue));
-
-                sensor.lastReading = {
-                    value: Math.round(newValue * 10) / 10,
-                    timestamp: new Date().toISOString(),
-                    quality: 'good'
+            } else if (programaData.tipoProgramacion === 'automatico') {
+                programaData.condicionesActivacion = {
+                    humedadSuelo: formData.get('humedadSuelo') === 'on',
+                    temperatura: formData.get('temperatura') === 'on',
+                    sinLluvia: formData.get('sinLluvia') === 'on'
                 };
-
-                // Verificar alertas
-                this.checkSensorAlerts(sensor);
-
-            } catch (error) {
-                console.error(`Error actualizando sensor ${sensorId}:`, error);
             }
+
+            // Ejecutar inmediatamente si es riego inmediato
+            if (programaData.tipoProgramacion === 'inmediato') {
+                programaData.estado = 'ejecutando';
+                const docRef = await this.db.collection('programas-riego').add(programaData);
+                await this.ejecutarRiego(docRef.id, programaData);
+            } else {
+                await this.db.collection('programas-riego').add(programaData);
+            }
+
+            // Cerrar modal y actualizar
+            bootstrap.Modal.getInstance(document.getElementById('modalNuevoRiego')).hide();
+            form.reset();
+            
+            await this.cargarProgramasRiego();
+            this.renderizarSectores();
+            this.actualizarEstadisticas();
+            
+            this.mostrarAlerta(`Programa de riego ${programaData.tipoProgramacion === 'inmediato' ? 'iniciado' : 'guardado'} correctamente`, 'success');
+
+        } catch (error) {
+            console.error('Error guardando programa de riego:', error);
+            this.mostrarAlerta('Error al guardar el programa de riego', 'error');
         }
     }
 
-    getRecentRiegoForSector(sectorId) {
-        const recentRiegos = Array.from(this.riegos.values())
-            .filter(riego => 
-                riego.ubicacion === sectorId &&
-                riego.estado === 'completado' &&
-                new Date(riego.createdAt) > new Date(Date.now() - 6 * 60 * 60 * 1000) // últimas 6 horas
-            )
-            .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
-
-        return recentRiegos[0] || null;
-    }
-
-    checkSensorAlerts(sensor) {
-        const value = sensor.lastReading.value;
+    async ejecutarRiego(programaId, programa) {
+        console.log(`💧 Iniciando riego: ${programa.nombre} en ${programa.sector}`);
         
-        if (value < this.alertThresholds.lowHumidity) {
-            this.addAlert({
-                type: 'critical',
-                title: 'Humedad Crítica Baja',
-                message: `${sensor.sectorName}: ${value}% - Riego urgente requerido`,
-                sectorId: sensor.sectorId,
-                action: 'regar_inmediato'
+        try {
+            const estadoRiego = {
+                activo: true,
+                inicio: new Date(),
+                duracion: programa.duracion,
+                progreso: 0,
+                caudal: programa.caudal,
+                programa: programa,
+                programaId
+            };
+
+            this.riegosActivos.set(programa.sector, estadoRiego);
+            
+            // Actualizar estado en Firebase
+            await this.db.collection('programas-riego').doc(programaId).update({
+                estado: 'ejecutando',
+                fechaInicio: firebase.firestore.Timestamp.now()
             });
-        } else if (value > this.alertThresholds.highHumidity) {
-            this.addAlert({
-                type: 'warning',
-                title: 'Humedad Alta',
-                message: `${sensor.sectorName}: ${value}% - Verificar drenaje`,
-                sectorId: sensor.sectorId,
-                action: 'verificar_drenaje'
+
+            // Registrar inicio en historial
+            await this.db.collection('historial-riego').add({
+                programaId,
+                sector: programa.sector,
+                tipo: 'inicio',
+                timestamp: firebase.firestore.Timestamp.now(),
+                duracionProgramada: programa.duracion,
+                caudal: programa.caudal
             });
+
+            // Iniciar timer
+            this.iniciarTimerRiego(programa.sector, programa.duracion);
+            
+            // Actualizar interfaz
+            this.renderizarSectores();
+            this.mostrarCronometro(programa.sector, programa);
+            this.actualizarEstadoGeneral();
+
+        } catch (error) {
+            console.error('Error ejecutando riego:', error);
+            this.mostrarAlerta('Error al ejecutar el riego', 'error');
         }
     }
 
-    addAlert(alert) {
-        alert.id = `alert_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-        alert.timestamp = new Date().toISOString();
+    iniciarTimerRiego(sectorId, duracionMinutos) {
+        const duracionMs = duracionMinutos * 60 * 1000;
+        const inicioMs = Date.now();
         
-        // Evitar duplicados
-        const exists = this.alertas.find(a => 
-            a.type === alert.type && 
-            a.sectorId === alert.sectorId &&
-            (new Date() - new Date(a.timestamp)) < 30 * 60 * 1000 // últimos 30 min
+        const timer = setInterval(() => {
+            const transcurridoMs = Date.now() - inicioMs;
+            const progreso = (transcurridoMs / duracionMs) * 100;
+            
+            const estadoRiego = this.riegosActivos.get(sectorId);
+            if (estadoRiego) {
+                estadoRiego.progreso = Math.min(progreso, 100);
+                
+                // Actualizar cronómetro
+                this.actualizarCronometro(transcurridoMs);
+            }
+            
+            // Finalizar si se completó
+            if (transcurridoMs >= duracionMs) {
+                this.finalizarRiego(sectorId);
+                clearInterval(timer);
+            }
+        }, 1000);
+        
+        this.timers.set(sectorId, timer);
+    }
+
+    async finalizarRiego(sectorId) {
+        const estadoRiego = this.riegosActivos.get(sectorId);
+        if (!estadoRiego) return;
+
+        console.log(`💧 Finalizando riego en ${sectorId}`);
+        
+        try {
+            const duracionReal = (Date.now() - estadoRiego.inicio.getTime()) / (1000 * 60); // en minutos
+            
+            // Registrar finalización
+            await this.db.collection('historial-riego').add({
+                programaId: estadoRiego.programaId,
+                sector: sectorId,
+                tipo: 'fin',
+                timestamp: firebase.firestore.Timestamp.now(),
+                duracionReal: Math.round(duracionReal),
+                litrosAplicados: Math.round(duracionReal * estadoRiego.caudal)
+            });
+
+            // Actualizar programa
+            if (estadoRiego.programaId) {
+                await this.db.collection('programas-riego').doc(estadoRiego.programaId).update({
+                    estado: 'completado',
+                    fechaFinalizacion: firebase.firestore.Timestamp.now(),
+                    duracionReal: Math.round(duracionReal)
+                });
+            }
+
+            // Limpiar estado local
+            this.riegosActivos.set(sectorId, {
+                activo: false,
+                inicio: null,
+                duracion: 0,
+                progreso: 0,
+                caudal: 0,
+                programa: null
+            });
+
+            // Limpiar timer
+            const timer = this.timers.get(sectorId);
+            if (timer) {
+                clearInterval(timer);
+                this.timers.delete(sectorId);
+            }
+
+            // Actualizar interfaz
+            this.renderizarSectores();
+            this.ocultarCronometro();
+            this.actualizarEstadoGeneral();
+            this.cargarHistorialReciente();
+
+            this.mostrarAlerta(`Riego completado en ${sectorId}`, 'success');
+
+        } catch (error) {
+            console.error('Error finalizando riego:', error);
+        }
+    }
+
+    // ==================== CONTROL MANUAL ====================
+    mostrarControlManual(sectorId) {
+        const sector = this.sectores.find(s => s.id === sectorId);
+        const estadoRiego = this.riegosActivos.get(sectorId);
+        
+        if (!sector) return;
+
+        document.getElementById('sectorControlManual').textContent = `Sector: ${sector.nombre || sector.codigo}`;
+        document.getElementById('estadoControlManual').textContent = estadoRiego.activo ? 'Activo' : 'Inactivo';
+        
+        const modal = new bootstrap.Modal(document.getElementById('modalControlManual'));
+        modal._sectorId = sectorId;
+        modal.show();
+    }
+
+    async iniciarRiegoManual() {
+        const modal = bootstrap.Modal.getInstance(document.getElementById('modalControlManual'));
+        const sectorId = modal._sectorId;
+        const duracion = parseInt(document.getElementById('duracionManual').value);
+
+        if (!sectorId || !duracion) return;
+
+        const programa = {
+            nombre: `Riego Manual - ${new Date().toLocaleString()}`,
+            sector: sectorId,
+            duracion: duracion,
+            caudal: this.estadoGeneral.caudalPromedio,
+            tipoProgramacion: 'manual',
+            estado: 'ejecutando'
+        };
+
+        try {
+            const docRef = await this.db.collection('programas-riego').add({
+                ...programa,
+                fechaCreacion: firebase.firestore.Timestamp.now()
+            });
+
+            await this.ejecutarRiego(docRef.id, programa);
+            modal.hide();
+
+        } catch (error) {
+            console.error('Error iniciando riego manual:', error);
+            this.mostrarAlerta('Error al iniciar riego manual', 'error');
+        }
+    }
+
+    async detenerRiegoManual() {
+        const modal = bootstrap.Modal.getInstance(document.getElementById('modalControlManual'));
+        const sectorId = modal._sectorId;
+        
+        if (sectorId) {
+            await this.detenerRiego(sectorId);
+            modal.hide();
+        }
+    }
+
+    async detenerRiego(sectorId) {
+        const estadoRiego = this.riegosActivos.get(sectorId);
+        if (!estadoRiego || !estadoRiego.activo) return;
+
+        console.log(`💧 Deteniendo riego en ${sectorId}`);
+        
+        // Limpiar timer
+        const timer = this.timers.get(sectorId);
+        if (timer) {
+            clearInterval(timer);
+            this.timers.delete(sectorId);
+        }
+
+        await this.finalizarRiego(sectorId);
+    }
+
+    // ==================== RENDERIZADO ====================
+    renderizarSectores() {
+        const container = document.getElementById('listaSectores');
+        if (!container) return;
+
+        const sectoresHTML = this.sectores.map(sector => {
+            const estadoRiego = this.riegosActivos.get(sector.id);
+            const sensor = this.sensores.get(sector.id) || {};
+            const cantidadArboles = this.contarArbolesSector(sector.id);
+
+            let estadoClase = 'estado-inactivo';
+            let estadoTexto = 'Inactivo';
+            
+            if (estadoRiego && estadoRiego.activo) {
+                estadoClase = 'estado-activo';
+                estadoTexto = 'Regando';
+            }
+
+            return `
+                <div class="sector-card ${estadoRiego?.activo ? 'regando' : ''}">
+                    <div class="estado-riego ${estadoClase}">${estadoTexto}</div>
+                    
+                    <div class="row">
+                        <div class="col-md-8">
+                            <h6>${sector.nombre || sector.codigo}</h6>
+                            <p class="text-muted mb-2">
+                                <i class="fas fa-tree me-1"></i> ${cantidadArboles} árboles
+                                ${estadoRiego?.activo ? 
+                                    `<i class="fas fa-clock ms-3 me-1"></i> ${Math.round(estadoRiego.duracion - (estadoRiego.progreso * estadoRiego.duracion / 100))} min restantes` :
+                                    ''
+                                }
+                            </p>
+                            
+                            <div class="row">
+                                <div class="col-4">
+                                    <small class="text-muted">Humedad</small><br>
+                                    <span class="sensor-badge">${sensor.humedad?.toFixed(1) || '---'}%</span>
+                                </div>
+                                <div class="col-4">
+                                    <small class="text-muted">Temp</small><br>
+                                    <span class="sensor-badge">${sensor.temperatura?.toFixed(1) || '---'}°C</span>
+                                </div>
+                                <div class="col-4">
+                                    <small class="text-muted">Presión</small><br>
+                                    <span class="sensor-badge">${sensor.presion?.toFixed(1) || '---'} BAR</span>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-4 text-end">
+                            ${estadoRiego?.activo ? `
+                                <div class="progress mb-2" style="height: 20px;">
+                                    <div class="progress-bar bg-success" style="width: ${estadoRiego.progreso}%">
+                                        ${Math.round(estadoRiego.progreso)}%
+                                    </div>
+                                </div>
+                                <button class="btn btn-danger btn-sm" onclick="riegoManager.detenerRiego('${sector.id}')">
+                                    <i class="fas fa-stop"></i> Detener
+                                </button>
+                            ` : `
+                                <button class="btn btn-primary btn-sm mb-1" onclick="riegoManager.mostrarControlManual('${sector.id}')">
+                                    <i class="fas fa-play"></i> Regar
+                                </button>
+                                <br>
+                                <button class="btn btn-outline-secondary btn-sm" onclick="riegoManager.verHistorialSector('${sector.id}')">
+                                    <i class="fas fa-history"></i> Historial
+                                </button>
+                            `}
+                        </div>
+                    </div>
+                </div>
+            `;
+        }).join('');
+
+        container.innerHTML = sectoresHTML;
+        this.renderizarControlesRapidos();
+    }
+
+    renderizarControlesRapidos() {
+        const container = document.getElementById('controlesRapidos');
+        if (!container) return;
+
+        const controlesHTML = this.sectores.map(sector => {
+            const estadoRiego = this.riegosActivos.get(sector.id);
+            
+            return `
+                <div class="col-md-2 col-sm-4 col-6 mb-2">
+                    <button class="btn ${estadoRiego?.activo ? 'btn-success' : 'btn-outline-primary'} w-100" 
+                            onclick="riegoManager.toggleRiegoRapido('${sector.id}')"
+                            ${estadoRiego?.activo ? 'disabled' : ''}>
+                        <i class="fas fa-${estadoRiego?.activo ? 'stop' : 'play'}"></i>
+                        <small class="d-block">${sector.codigo || sector.nombre}</small>
+                        ${estadoRiego?.activo ? 
+                            `<small class="d-block text-light">${Math.round(estadoRiego.progreso)}%</small>` :
+                            ''
+                        }
+                    </button>
+                </div>
+            `;
+        }).join('');
+
+        container.innerHTML = controlesHTML;
+    }
+
+    // ==================== ESTADÍSTICAS ====================
+    actualizarEstadisticas() {
+        const riegosActivosCount = Array.from(this.riegosActivos.values()).filter(r => r.activo).length;
+        const caudalTotalActivo = Array.from(this.riegosActivos.values())
+            .filter(r => r.activo)
+            .reduce((total, r) => total + r.caudal, 0);
+
+        document.getElementById('sectoresTotales').textContent = this.sectores.length;
+        document.getElementById('sectoresActivos').textContent = riegosActivosCount;
+        
+        // Riegos programados para hoy
+        const hoy = new Date();
+        const riegosHoy = this.programasRiego.filter(p => {
+            if (!p.fechaProgramada) return false;
+            return p.fechaProgramada.toDateString() === hoy.toDateString();
+        });
+        
+        document.getElementById('riegosProgramados').textContent = riegosHoy.length;
+        document.getElementById('riegosCompletados').textContent = riegosHoy.filter(p => p.estado === 'completado').length;
+
+        // Actualizar medidores
+        this.estadoGeneral.caudal = caudalTotalActivo;
+        document.getElementById('caudalActual').textContent = Math.round(caudalTotalActivo);
+        document.getElementById('presionSistema').textContent = this.estadoGeneral.presion.toFixed(1);
+        document.getElementById('caudalPromedio').textContent = this.estadoGeneral.caudalPromedio;
+    }
+
+    actualizarEstadoGeneral() {
+        const hayRiegosActivos = Array.from(this.riegosActivos.values()).some(r => r.activo);
+        this.estadoGeneral.sistemaActivo = hayRiegosActivos;
+        
+        // Simular cambios en la presión según el estado
+        if (hayRiegosActivos) {
+            this.estadoGeneral.presion = Math.max(1.5, this.estadoGeneral.presion - 0.1);
+        } else {
+            this.estadoGeneral.presion = Math.min(3.0, this.estadoGeneral.presion + 0.05);
+        }
+        
+        this.actualizarEstadisticas();
+    }
+
+    // ==================== CRONÓMETRO ====================
+    mostrarCronometro(sectorId, programa) {
+        const cronometro = document.getElementById('cronometroRiego');
+        const sectorTexto = document.getElementById('sectorEnRiego');
+        
+        cronometro.style.display = 'block';
+        sectorTexto.textContent = `Sector: ${programa.sector}`;
+        
+        this.iniciarActualizacionCronometro();
+    }
+
+    iniciarActualizacionCronometro() {
+        if (this.cronometroInterval) {
+            clearInterval(this.cronometroInterval);
+        }
+        
+        this.cronometroInterval = setInterval(() => {
+            const riegoActivo = Array.from(this.riegosActivos.values()).find(r => r.activo);
+            if (riegoActivo) {
+                const transcurrido = Date.now() - riegoActivo.inicio.getTime();
+                this.actualizarCronometro(transcurrido);
+            } else {
+                this.ocultarCronometro();
+            }
+        }, 1000);
+    }
+
+    actualizarCronometro(transcurridoMs) {
+        const horas = Math.floor(transcurridoMs / (1000 * 60 * 60));
+        const minutos = Math.floor((transcurridoMs % (1000 * 60 * 60)) / (1000 * 60));
+        const segundos = Math.floor((transcurridoMs % (1000 * 60)) / 1000);
+        
+        const tiempoFormateado = 
+            `${horas.toString().padStart(2, '0')}:${minutos.toString().padStart(2, '0')}:${segundos.toString().padStart(2, '0')}`;
+        
+        document.getElementById('tiempoTranscurrido').textContent = tiempoFormateado;
+    }
+
+    ocultarCronometro() {
+        document.getElementById('cronometroRiego').style.display = 'none';
+        if (this.cronometroInterval) {
+            clearInterval(this.cronometroInterval);
+            this.cronometroInterval = null;
+        }
+    }
+
+    // ==================== MONITOREO AUTOMÁTICO ====================
+    iniciarMonitoreo() {
+        // Verificar programas automáticos cada minuto
+        setInterval(() => {
+            this.verificarProgramasAutomaticos();
+        }, 60000);
+
+        // Actualizar sensores cada 30 segundos
+        setInterval(() => {
+            this.actualizarSensores();
+        }, 30000);
+
+        // Actualizar estado general cada 5 segundos
+        setInterval(() => {
+            this.actualizarEstadoGeneral();
+        }, 5000);
+    }
+
+    async verificarProgramasAutomaticos() {
+        const ahora = new Date();
+        
+        // Verificar programas programados para esta hora
+        const programasPendientes = this.programasRiego.filter(p => 
+            p.estado === 'programado' &&
+            p.fechaProgramada &&
+            p.fechaProgramada <= ahora
         );
 
-        if (!exists) {
-            this.alertas.unshift(alert);
-            
-            // Mantener solo las últimas 20 alertas
-            if (this.alertas.length > 20) {
-                this.alertas = this.alertas.slice(0, 20);
+        for (const programa of programasPendientes) {
+            await this.ejecutarRiego(programa.id, programa);
+        }
+
+        // Verificar condiciones de programas automáticos
+        const programasAutomaticos = this.programasRiego.filter(p => 
+            p.tipoProgramacion === 'automatico' && 
+            p.estado === 'programado'
+        );
+
+        for (const programa of programasAutomaticos) {
+            if (await this.evaluarCondicionesAutomaticas(programa)) {
+                await this.ejecutarRiego(programa.id, programa);
             }
-
-            // Notificar nueva alerta
-            window.dispatchEvent(new CustomEvent('nuevaAlertaRiego', {
-                detail: alert
-            }));
-
-            console.log(`🚨 Nueva alerta: ${alert.title}`);
         }
     }
 
-    // ==========================================
-    // GESTIÓN DE RIEGOS
-    // ==========================================
+    async evaluarCondicionesAutomaticas(programa) {
+        const sensor = this.sensores.get(programa.sector);
+        if (!sensor || !programa.condicionesActivacion) return false;
 
-    async crearRiego(datos) {
-        try {
-            const riegoId = this.generateRiegoId();
-            
-            const riego = {
-                id: riegoId,
-                ubicacion: datos.ubicacion, // Sector ID
-                arbolId: datos.arbolId || null,
-                tipoRiego: datos.tipoRiego || 'manual',
-                duracion: parseInt(datos.duracion),
-                caudal: parseFloat(datos.caudal) || 10,
-                fechaHora: datos.fechaHora || new Date().toISOString(),
-                estado: datos.estado || 'programado',
-                responsable: datos.responsable || 'Sistema',
-                observaciones: datos.observaciones || '',
-                
-                // Cálculos automáticos
-                volumenEstimado: this.calcularVolumenEstimado(datos),
-                humedadObjetivo: this.calcularHumedadObjetivo(datos),
-                
-                // Metadatos
-                createdAt: new Date().toISOString(),
-                fincaId: this.fincaId,
-                createdBy: this.firebaseAuth?.currentUser?.uid || 'anonymous'
-            };
+        const condiciones = programa.condicionesActivacion;
+        let cumpleCondiciones = true;
 
-            // Guardar en memoria
-            this.riegos.set(riegoId, riego);
-
-            // Guardar en Firebase
-            if (this.firebaseDb) {
-                await this.firebaseDb.collection('riegos').doc(riegoId).set({
-                    ...riego,
-                    createdAt: this.firebaseDb.FieldValue?.serverTimestamp?.() || new Date()
-                });
-            }
-
-            console.log(`💧 Riego creado: ${riegoId}`);
-
-            // Notificar actualización
-            window.dispatchEvent(new CustomEvent('riegoCreado', {
-                detail: riego
-            }));
-
-            return riego;
-
-        } catch (error) {
-            console.error('Error creando riego:', error);
-            throw error;
-        }
-    }
-
-    calcularVolumenEstimado(datos) {
-        const duracion = parseInt(datos.duracion);
-        const caudal = parseFloat(datos.caudal) || 10;
-        return duracion * caudal; // Litros
-    }
-
-    calcularHumedadObjetivo(datos) {
-        // Basado en la variedad de limón si está disponible
-        if (datos.arbolId && this.treeManager) {
-            this.treeManager.getTree(datos.arbolId).then(arbol => {
-                if (arbol && this.cropParameters[arbol.variety]) {
-                    return this.cropParameters[arbol.variety].optimalHumidity;
-                }
-            });
+        if (condiciones.humedadSuelo && sensor.humedad > 30) {
+            cumpleCondiciones = false;
         }
         
-        return 70; // Humedad objetivo por defecto
+        if (condiciones.temperatura && sensor.temperatura <= 28) {
+            cumpleCondiciones = false;
+        }
+
+        // TODO: Integrar con datos de lluvia del clima
+        
+        return cumpleCondiciones;
     }
 
-    async iniciarRiego(riegoId) {
-        try {
-            const riego = this.riegos.get(riegoId);
-            if (!riego) throw new Error('Riego no encontrado');
-
-            riego.estado = 'activo';
-            riego.horaInicio = new Date().toISOString();
-            riego.updatedAt = new Date().toISOString();
-
-            // Actualizar en Firebase
-            if (this.firebaseDb && riego.firebaseRef) {
-                await riego.firebaseRef.update({
-                    estado: 'activo',
-                    horaInicio: this.firebaseDb.FieldValue?.serverTimestamp?.() || new Date(),
-                    updatedAt: this.firebaseDb.FieldValue?.serverTimestamp?.() || new Date()
-                });
+    actualizarSensores() {
+        // Simular actualización de sensores
+        this.sensores.forEach((sensor, sectorId) => {
+            const estadoRiego = this.riegosActivos.get(sectorId);
+            
+            // Si está regando, aumentar humedad y disminuir temperatura
+            if (estadoRiego?.activo) {
+                sensor.humedad = Math.min(100, sensor.humedad + Math.random() * 5);
+                sensor.temperatura = Math.max(15, sensor.temperatura - Math.random() * 2);
+            } else {
+                // Cambios naturales
+                sensor.humedad = Math.max(0, sensor.humedad - Math.random() * 2);
+                sensor.temperatura = 20 + Math.random() * 15;
             }
+            
+            sensor.ultimaActualizacion = new Date();
+        });
 
-            console.log(`🚀 Riego iniciado: ${riegoId}`);
+        // Solo renderizar si no hay riegos activos (para evitar parpadeo)
+        const hayRiegosActivos = Array.from(this.riegosActivos.values()).some(r => r.activo);
+        if (!hayRiegosActivos) {
+            this.renderizarSectores();
+        }
+    }
 
-            // Programar finalización automática
+    // ==================== UTILIDADES ====================
+    async toggleRiegoRapido(sectorId) {
+        const estadoRiego = this.riegosActivos.get(sectorId);
+        
+        if (estadoRiego && estadoRiego.activo) {
+            await this.detenerRiego(sectorId);
+        } else {
+            // Iniciar riego rápido de 15 minutos
+            const programa = {
+                nombre: `Riego Rápido - ${new Date().toLocaleString()}`,
+                sector: sectorId,
+                duracion: 15,
+                caudal: this.estadoGeneral.caudalPromedio,
+                tipoProgramacion: 'rapido'
+            };
+
+            const docRef = await this.db.collection('programas-riego').add({
+                ...programa,
+                fechaCreacion: firebase.firestore.Timestamp.now()
+            });
+
+            await this.ejecutarRiego(docRef.id, programa);
+        }
+    }
+
+    async pararTodosLosRiegos() {
+        const sectoresActivos = Array.from(this.riegosActivos.entries())
+            .filter(([_, estado]) => estado.activo)
+            .map(([sectorId, _]) => sectorId);
+
+        if (sectoresActivos.length === 0) {
+            this.mostrarAlerta('No hay riegos activos para detener', 'info');
+            return;
+        }
+
+        if (confirm(`¿Detener todos los riegos activos? (${sectoresActivos.length} sectores)`)) {
+            for (const sectorId of sectoresActivos) {
+                await this.detenerRiego(sectorId);
+            }
+            this.mostrarAlerta(`${sectoresActivos.length} riegos detenidos`, 'success');
+        }
+    }
+
+    cargarProximosRiegos() {
+        const container = document.getElementById('proximosRiegos');
+        if (!container) return;
+
+        const ahora = new Date();
+        const proximosRiegos = this.programasRiego
+            .filter(p => p.estado === 'programado' && p.fechaProgramada && p.fechaProgramada > ahora)
+            .sort((a, b) => a.fechaProgramada - b.fechaProgramada)
+            .slice(0, 5);
+
+        if (proximosRiegos.length === 0) {
+            container.innerHTML = '<p class="text-muted">No hay riegos programados</p>';
+            return;
+        }
+
+        container.innerHTML = proximosRiegos.map(programa => `
+            <div class="horario-item">
+                <strong>${programa.nombre}</strong><br>
+                <small class="text-muted">
+                    <i class="fas fa-map-marker-alt me-1"></i>${programa.sector}<br>
+                    <i class="fas fa-clock me-1"></i>${this.formatearFecha(programa.fechaProgramada)}<br>
+                    <i class="fas fa-tint me-1"></i>${programa.duracion} min
+                </small>
+            </div>
+        `).join('');
+    }
+
+    async cargarHistorialReciente() {
+        try {
+            const snapshot = await this.db.collection('historial-riego')
+                .orderBy('timestamp', 'desc')
+                .limit(10)
+                .get();
+
+            const historial = snapshot.docs.map(doc => ({
+                id: doc.id,
+                ...doc.data(),
+                timestamp: doc.data().timestamp.toDate()
+            }));
+
+            const container = document.getElementById('historialReciente');
+            if (container && historial.length > 0) {
+                container.innerHTML = historial.map(item => `
+                    <div class="horario-item">
+                        <small>
+                            <strong>${item.tipo === 'inicio' ? 'Iniciado' : 'Finalizado'}</strong> - ${item.sector}<br>
+                            <i class="fas fa-clock me-1"></i>${this.formatearFecha(item.timestamp)}
+                            ${item.litrosAplicados ? `<br><i class="fas fa-tint me-1"></i>${item.litrosAplicados}L aplicados` : ''}
+                        </small>
+                    </div>
+                `).join('');
+            }
+        } catch (error) {
+            console.error('Error cargando historial:', error);
+        }
+    }
+
+    formatearFecha(fecha) {
+        if (!fecha) return 'Sin fecha';
+        return new Intl.DateTimeFormat('es-ES', {
+            day: '2-digit',
+            month: '2-digit',
+            hour: '2-digit',
+            minute: '2-digit'
+        }).format(fecha);
+    }
+
+    mostrarAlerta(mensaje, tipo = 'info') {
+        const alertas = document.getElementById('alertasRiego');
+        const mensajeSpan = document.getElementById('mensajeAlerta');
+        
+        if (alertas && mensajeSpan) {
+            mensajeSpan.textContent = mensaje;
+            alertas.style.display = 'block';
+            
             setTimeout(() => {
-                this.completarRiego(riegoId);
-            }, riego.duracion * 60 * 1000);
-
-            // Notificar
-            window.dispatchEvent(new CustomEvent('riegoIniciado', {
-                detail: riego
-            }));
-
-            return riego;
-
-        } catch (error) {
-            console.error('Error iniciando riego:', error);
-            throw error;
+                alertas.style.display = 'none';
+            }, 5000);
         }
-    }
-
-    async completarRiego(riegoId) {
-        try {
-            const riego = this.riegos.get(riegoId);
-            if (!riego) return;
-
-            riego.estado = 'completado';
-            riego.horaFin = new Date().toISOString();
-            riego.updatedAt = new Date().toISOString();
-
-            // Calcular duración real
-            if (riego.horaInicio) {
-                const duracionReal = (new Date(riego.horaFin) - new Date(riego.horaInicio)) / (1000 * 60);
-                riego.duracionReal = Math.round(duracionReal);
-                riego.volumenReal = riego.duracionReal * riego.caudal;
-            }
-
-            // Actualizar en Firebase
-            if (this.firebaseDb && riego.firebaseRef) {
-                await riego.firebaseRef.update({
-                    estado: 'completado',
-                    horaFin: this.firebaseDb.FieldValue?.serverTimestamp?.() || new Date(),
-                    duracionReal: riego.duracionReal || riego.duracion,
-                    volumenReal: riego.volumenReal || riego.volumenEstimado,
-                    updatedAt: this.firebaseDb.FieldValue?.serverTimestamp?.() || new Date()
-                });
-            }
-
-            console.log(`✅ Riego completado: ${riegoId}`);
-
-            // Notificar
-            window.dispatchEvent(new CustomEvent('riegoCompletado', {
-                detail: riego
-            }));
-
-        } catch (error) {
-            console.error('Error completando riego:', error);
-        }
-    }
-
-    // ==========================================
-    // GESTIÓN DE HORARIOS
-    // ==========================================
-
-    async crearHorario(datos) {
-        try {
-            const horarioId = this.generateHorarioId();
-            
-            const horario = {
-                id: horarioId,
-                nombre: datos.nombre,
-                ubicacion: datos.ubicacion,
-                diasSemana: datos.diasSemana || [1, 3, 5], // Lun, Mié, Vie
-                hora: datos.hora,
-                duracion: parseInt(datos.duracion),
-                caudal: parseFloat(datos.caudal) || 10,
-                activo: datos.activo !== false,
-                
-                // Condiciones
-                humedadMinima: datos.humedadMinima || 50,
-                humedadMaxima: datos.humedadMaxima || 85,
-                omitirLluvia: datos.omitirLluvia !== false,
-                
-                // Metadatos
-                createdAt: new Date().toISOString(),
-                fincaId: this.fincaId,
-                createdBy: this.firebaseAuth?.currentUser?.uid || 'anonymous'
-            };
-
-            // Calcular próxima ejecución
-            horario.proximaEjecucion = this.calcularProximaEjecucion(horario);
-
-            // Guardar en memoria
-            this.horarios.set(horarioId, horario);
-
-            // Guardar en Firebase
-            if (this.firebaseDb) {
-                await this.firebaseDb.collection('horarios_riego').doc(horarioId).set({
-                    ...horario,
-                    createdAt: this.firebaseDb.FieldValue?.serverTimestamp?.() || new Date()
-                });
-            }
-
-            console.log(`⏰ Horario creado: ${horarioId}`);
-
-            return horario;
-
-        } catch (error) {
-            console.error('Error creando horario:', error);
-            throw error;
-        }
-    }
-
-    calcularProximaEjecucion(horario) {
-        const ahora = new Date();
-        const [hora, minuto] = horario.hora.split(':').map(Number);
         
-        let proximaFecha = new Date();
-        proximaFecha.setHours(hora, minuto, 0, 0);
-
-        // Si ya pasó la hora de hoy, buscar el próximo día válido
-        if (proximaFecha <= ahora) {
-            proximaFecha.setDate(proximaFecha.getDate() + 1);
-        }
-
-        // Encontrar el próximo día de la semana válido
-        while (!horario.diasSemana.includes(proximaFecha.getDay())) {
-            proximaFecha.setDate(proximaFecha.getDate() + 1);
-        }
-
-        return proximaFecha.toISOString();
+        console.log(`${tipo.toUpperCase()}: ${mensaje}`);
     }
 
-    // ==========================================
-    // EJECUCIÓN AUTOMÁTICA
-    // ==========================================
-
-    setupAutoUpdate() {
-        // Verificar horarios cada minuto
-        setInterval(() => {
-            this.verificarHorarios();
-        }, 60 * 1000);
-
-        // Actualizar sensores cada 15 minutos
-        setInterval(() => {
-            this.updateSensorReadings();
-        }, 15 * 60 * 1000);
-
-        console.log('⏰ Monitoreo automático configurado');
-    }
-
-    async verificarHorarios() {
-        const ahora = new Date();
-        
-        for (const [horarioId, horario] of this.horarios) {
-            if (!horario.activo) continue;
-            
-            const proximaEjecucion = new Date(horario.proximaEjecucion);
-            
-            if (proximaEjecucion <= ahora) {
-                await this.ejecutarHorario(horario);
+    generarProgramasEjemplo() {
+        return [
+            {
+                id: 'prog1',
+                nombre: 'Riego Matutino Sector A',
+                sector: 'sector1',
+                duracion: 30,
+                caudal: 45,
+                tipoProgramacion: 'programado',
+                fechaProgramada: new Date(Date.now() + 2 * 60 * 60 * 1000), // En 2 horas
+                estado: 'programado',
+                fechaCreacion: new Date()
             }
-        }
-    }
-
-    async ejecutarHorario(horario) {
-        try {
-            // Verificar condiciones antes de ejecutar
-            const puedeEjecutar = await this.verificarCondicionesRiego(horario);
-            
-            if (!puedeEjecutar.permitido) {
-                console.log(`⏸️ Riego omitido: ${puedeEjecutar.razon}`);
-                
-                // Actualizar próxima ejecución
-                horario.proximaEjecucion = this.calcularProximaEjecucion(horario);
-                
-                if (this.firebaseDb && horario.firebaseRef) {
-                    await horario.firebaseRef.update({
-                        proximaEjecucion: horario.proximaEjecucion,
-                        ultimaOmision: new Date().toISOString(),
-                        razonOmision: puedeEjecutar.razon
-                    });
-                }
-                
-                return;
-            }
-
-            // Crear riego automático
-            const riego = await this.crearRiego({
-                ubicacion: horario.ubicacion,
-                tipoRiego: 'automatico',
-                duracion: horario.duracion,
-                caudal: horario.caudal,
-                responsable: 'Sistema Automático',
-                observaciones: `Riego automático - Horario: ${horario.nombre}`,
-                horarioId: horario.id
-            });
-
-            // Iniciar inmediatamente
-            await this.iniciarRiego(riego.id);
-
-            // Actualizar horario
-            horario.proximaEjecucion = this.calcularProximaEjecucion(horario);
-            horario.ultimaEjecucion = new Date().toISOString();
-
-            if (this.firebaseDb && horario.firebaseRef) {
-                await horario.firebaseRef.update({
-                    proximaEjecucion: horario.proximaEjecucion,
-                    ultimaEjecucion: horario.ultimaEjecucion
-                });
-            }
-
-            console.log(`✅ Horario ejecutado: ${horario.nombre}`);
-
-        } catch (error) {
-            console.error('Error ejecutando horario:', error);
-        }
-    }
-
-    async verificarCondicionesRiego(horario) {
-        try {
-            // Verificar humedad del suelo
-            const sensor = Array.from(this.sensores.values())
-                .find(s => s.sectorId === horario.ubicacion);
-
-            if (sensor && sensor.lastReading) {
-                const humedad = sensor.lastReading.value;
-                
-                if (humedad > horario.humedadMaxima) {
-                    return { 
-                        permitido: false, 
-                        razon: `Humedad alta: ${humedad}%` 
-                    };
-                }
-                
-                if (humedad > horario.humedadMinima) {
-                    return { 
-                        permitido: false, 
-                        razon: `Humedad adecuada: ${humedad}%` 
-                    };
-                }
-            }
-
-            // Verificar lluvia (simplificado - en producción usar datos meteorológicos)
-            if (horario.omitirLluvia && Math.random() < 0.1) { // 10% probabilidad de lluvia
-                return { 
-                    permitido: false, 
-                    razon: 'Lluvia detectada' 
-                };
-            }
-
-            return { permitido: true, razon: 'Condiciones favorables' };
-
-        } catch (error) {
-            console.error('Error verificando condiciones:', error);
-            return { permitido: false, razon: 'Error verificando condiciones' };
-        }
-    }
-
-    // ==========================================
-    // API PÚBLICA PARA LA INTERFAZ
-    // ==========================================
-
-    // Obtener métricas para el dashboard
-    obtenerMetricas() {
-        const riegosHoy = Array.from(this.riegos.values())
-            .filter(r => r.createdAt.startsWith(this.currentDate));
-
-        const consumoHoy = riegosHoy.reduce((total, r) => 
-            total + (r.volumenReal || r.volumenEstimado || 0), 0);
-
-        const riegosActivos = Array.from(this.riegos.values())
-            .filter(r => r.estado === 'activo');
-
-        const horariosActivos = Array.from(this.horarios.values())
-            .filter(h => h.activo);
-
-        return {
-            consumoHoy: Math.round(consumoHoy),
-            tiempoActivo: riegosActivos.length > 0 ? 
-                Math.max(...riegosActivos.map(r => 
-                    Math.round((new Date() - new Date(r.horaInicio || r.createdAt)) / (1000 * 60))
-                )) : 0,
-            humedadPromedio: this.calcularHumedadPromedio(),
-            zonasActivas: riegosActivos.length,
-            costoHoy: Math.round(consumoHoy * 0.05), // Q0.05 por litro
-            sistemaActivo: horariosActivos.length > 0 || riegosActivos.length > 0,
-            cambioConsumo: this.calcularCambioConsumo(),
-            estadoHumedad: this.evaluarEstadoHumedad(),
-            estadoCosto: this.evaluarEstadoCosto(consumoHoy),
-            zonasTotal: this.sensores.size
-        };
-    }
-
-    calcularHumedadPromedio() {
-        const lecturas = Array.from(this.sensores.values())
-            .filter(s => s.lastReading && s.status === 'active')
-            .map(s => s.lastReading.value);
-
-        if (lecturas.length === 0) return 0;
-        
-        return Math.round(lecturas.reduce((sum, v) => sum + v, 0) / lecturas.length);
-    }
-
-    calcularCambioConsumo() {
-        // Simplificado - comparar con día anterior
-        const hoy = Array.from(this.riegos.values())
-            .filter(r => r.createdAt.startsWith(this.currentDate))
-            .reduce((total, r) => total + (r.volumenReal || r.volumenEstimado || 0), 0);
-
-        const ayer = new Date();
-        ayer.setDate(ayer.getDate() - 1);
-        const ayerStr = ayer.toISOString().split('T')[0];
-        
-        const consumoAyer = Array.from(this.riegos.values())
-            .filter(r => r.createdAt.startsWith(ayerStr))
-            .reduce((total, r) => total + (r.volumenReal || r.volumenEstimado || 0), 0);
-
-        if (consumoAyer === 0) return 0;
-        return Math.round(((hoy - consumoAyer) / consumoAyer) * 100);
-    }
-
-    evaluarEstadoHumedad() {
-        const promedio = this.calcularHumedadPromedio();
-        if (promedio >= 60 && promedio <= 80) return 'Óptima';
-        if (promedio >= 50) return 'Aceptable';
-        return 'Baja';
-    }
-
-    evaluarEstadoCosto(consumo) {
-        const presupuestoDiario = 500; // Q500 por día
-        const costoHoy = consumo * 0.05;
-        
-        if (costoHoy <= presupuestoDiario * 0.8) return 'Dentro presupuesto';
-        if (costoHoy <= presupuestoDiario) return 'Cerca del límite';
-        return 'Sobre presupuesto';
-    }
-
-    // Obtener programas activos para la interfaz
-    obtenerProgramasActivos() {
-        return Array.from(this.horarios.values())
-            .filter(h => h.activo)
-            .map(h => ({
-                id: h.id,
-                nombre: h.nombre,
-                horario: `${h.hora} - ${h.diasSemana.map(d => ['Dom','Lun','Mar','Mié','Jue','Vie','Sáb'][d]).join(', ')}`,
-                duracion: h.duracion,
-                zonas: [h.ubicacion],
-                estado: new Date(h.proximaEjecucion) <= new Date() ? 'activo' : 'programado'
-            }));
-    }
-
-    // Obtener datos de sensores para la interfaz
-    obtenerDatosSensores() {
-        return Array.from(this.sensores.values())
-            .filter(s => s.status === 'active')
-            .map(s => ({
-                nombre: `Sensor ${s.sectorName}`,
-                ubicacion: s.sectorName,
-                tipo: s.type,
-                valor: s.lastReading ? `${s.lastReading.value.toFixed(1)}%` : 'Sin datos',
-                unidad: '%'
-            }));
-    }
-
-    // Obtener alertas para la interfaz
-    obtenerAlertas() {
-        return this.alertas.slice(0, 5).map(a => ({
-            titulo: a.title,
-            descripcion: a.message,
-            tipo: a.type,
-            icono: this.getAlertIcon(a.type)
-        }));
-    }
-
-    getAlertIcon(type) {
-        const icons = {
-            'critical': 'fa-exclamation-triangle',
-            'warning': 'fa-exclamation-circle',
-            'info': 'fa-info-circle'
-        };
-        return icons[type] || 'fa-info-circle';
-    }
-
-    // Obtener historial de riegos
-    obtenerHistorialRiegos() {
-        return Array.from(this.riegos.values())
-            .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
-            .slice(0, 20)
-            .map(r => ({
-                fechaHora: r.fechaHora || r.createdAt,
-                zona: r.ubicacion,
-                duracion: r.duracionReal || r.duracion,
-                consumo: r.volumenReal || r.volumenEstimado || 0,
-                humedadInicial: this.getHumedadSector(r.ubicacion, r.fechaHora) - 15,
-                humedadFinal: this.getHumedadSector(r.ubicacion, r.fechaHora),
-                tipo: r.tipoRiego,
-                estado: r.estado
-            }));
-    }
-
-    getHumedadSector(sectorId, fecha) {
-        const sensor = Array.from(this.sensores.values())
-            .find(s => s.sectorId === sectorId);
-        
-        return sensor?.lastReading?.value || 65;
-    }
-
-    // ==========================================
-    // UTILIDADES
-    // ==========================================
-
-    generateRiegoId() {
-        const timestamp = Date.now().toString(36);
-        const random = Math.random().toString(36).substr(2, 4);
-        return `RIE_${timestamp}_${random}`.toUpperCase();
-    }
-
-    generateHorarioId() {
-        const timestamp = Date.now().toString(36);
-        const random = Math.random().toString(36).substr(2, 4);
-        return `HOR_${timestamp}_${random}`.toUpperCase();
+        ];
     }
 }
 
-// ==========================================
-// INICIALIZACIÓN Y EXPORTACIÓN
-// ==========================================
+// Funciones globales para el HTML
+window.mostrarModalNuevoRiego = function() {
+    new bootstrap.Modal(document.getElementById('modalNuevoRiego')).show();
+};
 
-// Instancia global del gestor de riego
-let riegoManager;
-
-// Inicializar cuando el DOM esté listo
-document.addEventListener('DOMContentLoaded', async () => {
-    try {
-        // Crear instancia del manager
-        riegoManager = new RiegoManager();
-        
-        // Hacer disponible globalmente
-        window.riegoManager = riegoManager;
-        
-        console.log('💧 RiegoManager disponible globalmente');
-        
-    } catch (error) {
-        console.error('❌ Error inicializando RiegoManager:', error);
+window.guardarNuevoRiego = function() {
+    if (window.riegoManager) {
+        window.riegoManager.guardarNuevoRiego();
     }
+};
+
+window.cambiarTipoProgramacion = function() {
+    if (window.riegoManager) {
+        window.riegoManager.cambiarTipoProgramacion();
+    }
+};
+
+window.iniciarRiegoManual = function() {
+    if (window.riegoManager) {
+        window.riegoManager.iniciarRiegoManual();
+    }
+};
+
+window.detenerRiegoManual = function() {
+    if (window.riegoManager) {
+        window.riegoManager.detenerRiegoManual();
+    }
+};
+
+window.detenerRiegoActivo = function() {
+    if (window.riegoManager) {
+        const riegoActivo = Array.from(window.riegoManager.riegosActivos.entries())
+            .find(([_, estado]) => estado.activo);
+        
+        if (riegoActivo) {
+            window.riegoManager.detenerRiego(riegoActivo[0]);
+        }
+    }
+};
+
+window.pararTodosLosRiegos = function() {
+    if (window.riegoManager) {
+        window.riegoManager.pararTodosLosRiegos();
+    }
+};
+
+window.actualizarEstadoSectores = function() {
+    if (window.riegoManager) {
+        window.riegoManager.renderizarSectores();
+        window.riegoManager.actualizarEstadisticas();
+    }
+};
+
+// Inicialización cuando el DOM esté listo
+document.addEventListener('DOMContentLoaded', () => {
+    window.riegoManager = new RiegoManager();
 });
 
-// Exportar para uso en otros módulos
-if (typeof module !== 'undefined' && module.exports) {
-    module.exports = { RiegoManager };
-}
-
-console.log('💧 Sistema de riego integrado cargado');
+console.log('💧 Sistema de riego cargado - Versión integrada con TreeManager');
