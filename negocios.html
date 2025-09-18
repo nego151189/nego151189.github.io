@@ -25,6 +25,14 @@
     
     <style>
         /* ===== SISTEMA DE NOTIFICACIONES ===== */
+        .notification-container {
+            position: fixed;
+            top: 1rem;
+            right: 1rem;
+            z-index: 10000;
+            pointer-events: none;
+        }
+
         .notification {
             background: #ffffff;
             border-radius: 12px;
@@ -39,6 +47,7 @@
             transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
             position: relative;
             overflow: hidden;
+            pointer-events: auto;
         }
 
         .notification.show {
@@ -46,25 +55,10 @@
             transform: translateX(0);
         }
 
-        .notification-success {
-            border-left-color: #22c55e;
-            background: linear-gradient(135deg, #f0f9ff 0%, #ecfdf5 100%);
-        }
-
-        .notification-error {
-            border-left-color: #ef4444;
-            background: linear-gradient(135deg, #fef2f2 0%, #fef2f2 100%);
-        }
-
-        .notification-warning {
-            border-left-color: #f59e0b;
-            background: linear-gradient(135deg, #fffbeb 0%, #fefce8 100%);
-        }
-
-        .notification-info {
-            border-left-color: #3b82f6;
-            background: linear-gradient(135deg, #eff6ff 0%, #f0f9ff 100%);
-        }
+        .notification-success { border-left-color: #22c55e; background: linear-gradient(135deg, #f0f9ff 0%, #ecfdf5 100%); }
+        .notification-error { border-left-color: #ef4444; background: linear-gradient(135deg, #fef2f2 0%, #fef2f2 100%); }
+        .notification-warning { border-left-color: #f59e0b; background: linear-gradient(135deg, #fffbeb 0%, #fefce8 100%); }
+        .notification-info { border-left-color: #3b82f6; background: linear-gradient(135deg, #eff6ff 0%, #f0f9ff 100%); }
 
         .notification-header {
             display: flex;
@@ -96,35 +90,13 @@
 
         .notification-close:hover {
             opacity: 1;
-            background: rgba(0, 0, 0, 0.05);
+            background: rgba(255, 255, 255, 0.1);
         }
 
         .notification-body {
             font-size: 0.85rem;
             line-height: 1.4;
             color: #4b5563;
-        }
-
-        .notification-progress {
-            position: absolute;
-            bottom: 0;
-            left: 0;
-            right: 0;
-            height: 3px;
-            background: rgba(0, 0, 0, 0.1);
-            overflow: hidden;
-        }
-
-        .progress-bar {
-            height: 100%;
-            background: linear-gradient(90deg, rgba(59, 130, 246, 0.8), rgba(59, 130, 246, 0.6));
-            width: 100%;
-            transform-origin: left;
-        }
-
-        @keyframes progress {
-            from { transform: scaleX(1); }
-            to { transform: scaleX(0); }
         }
 
         /* ===== INTERFAZ PRINCIPAL MEJORADA ===== */
@@ -212,6 +184,7 @@
             font-weight: 600;
             transition: all 0.3s ease;
             min-width: 180px;
+            cursor: pointer;
         }
 
         .header-actions .btn:hover {
@@ -237,6 +210,7 @@
             transition: all 0.3s ease;
             border: 1px solid #e5e7eb;
             box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+            cursor: pointer;
         }
 
         .metrica-card:hover {
@@ -667,7 +641,7 @@
         }
 
         /* ===== MODAL MEJORADO ===== */
-        .modal-negocio {
+        .modal-overlay {
             display: none;
             position: fixed;
             top: 0;
@@ -678,12 +652,12 @@
             z-index: 1000;
             padding: 2rem;
             backdrop-filter: blur(4px);
-        }
-
-        .modal-negocio.show {
-            display: flex;
             align-items: center;
             justify-content: center;
+        }
+
+        .modal-overlay.show {
+            display: flex;
         }
 
         .modal-content {
@@ -712,6 +686,7 @@
         .modal-header {
             padding: 2rem 2rem 1rem 2rem;
             border-bottom: 1px solid #e5e7eb;
+            position: relative;
         }
 
         .modal-header h3 {
@@ -873,6 +848,44 @@
             transform: translateY(-1px);
         }
 
+        /* ===== LOADING ===== */
+        .loading-spinner {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            border-top-color: white;
+            animation: spin 1s ease-in-out infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 3rem 1rem;
+            color: #6b7280;
+        }
+
+        .empty-state i {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+            opacity: 0.5;
+        }
+
+        .empty-state h4 {
+            font-size: 1.125rem;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            color: #374151;
+        }
+
+        .empty-state p {
+            margin-bottom: 1.5rem;
+        }
+
         /* ===== RESPONSIVE ===== */
         @media (max-width: 1024px) {
             .contenido-principal {
@@ -926,72 +939,12 @@
                 grid-template-columns: 1fr;
             }
         }
-
-        /* ===== ELEMENTOS ADICIONALES ===== */
-        .loading-spinner {
-            display: inline-block;
-            width: 20px;
-            height: 20px;
-            border: 2px solid rgba(255, 255, 255, 0.3);
-            border-radius: 50%;
-            border-top-color: white;
-            animation: spin 1s ease-in-out infinite;
-        }
-
-        @keyframes spin {
-            to { transform: rotate(360deg); }
-        }
-
-        .badge {
-            display: inline-flex;
-            align-items: center;
-            gap: 0.25rem;
-            padding: 0.25rem 0.75rem;
-            border-radius: 12px;
-            font-size: 0.75rem;
-            font-weight: 600;
-        }
-
-        .badge-success {
-            background: rgba(34, 197, 94, 0.1);
-            color: #16a34a;
-        }
-
-        .badge-warning {
-            background: rgba(245, 158, 11, 0.1);
-            color: #d97706;
-        }
-
-        .badge-error {
-            background: rgba(239, 68, 68, 0.1);
-            color: #dc2626;
-        }
-
-        .empty-state {
-            text-align: center;
-            padding: 3rem 1rem;
-            color: #6b7280;
-        }
-
-        .empty-state i {
-            font-size: 3rem;
-            margin-bottom: 1rem;
-            opacity: 0.5;
-        }
-
-        .empty-state h4 {
-            font-size: 1.125rem;
-            font-weight: 600;
-            margin-bottom: 0.5rem;
-            color: #374151;
-        }
-
-        .empty-state p {
-            margin-bottom: 1.5rem;
-        }
     </style>
 </head>
 <body>
+    <!-- Contenedor de notificaciones -->
+    <div class="notification-container" id="notification-container"></div>
+
     <!-- La navegación se cargará automáticamente desde nav.js -->
 
     <!-- Contenido principal -->
@@ -1020,6 +973,10 @@
                     
                     <button class="btn" id="btnReporteVentas">
                         <i class="fas fa-chart-bar"></i> Reportes
+                    </button>
+
+                    <button class="btn" id="btnIrVentas">
+                        <i class="fas fa-shopping-cart"></i> Ir a Ventas
                     </button>
                 </div>
             </div>
@@ -1149,7 +1106,7 @@
     </main>
 
     <!-- Modal mejorado para nuevo/editar negocio -->
-    <div class="modal-negocio" id="modalNegocio">
+    <div class="modal-overlay" id="modalNegocio">
         <div class="modal-content">
             <div class="modal-header">
                 <h3 id="modalTitulo">Nuevo Negocio</h3>
@@ -1240,6 +1197,58 @@
         </div>
     </div>
 
+    <!-- Modal para nuevo cliente -->
+    <div class="modal-overlay" id="modalCliente">
+        <div class="modal-content" style="max-width: 600px;">
+            <div class="modal-header">
+                <h3>Agregar Nuevo Cliente</h3>
+                <button class="modal-close" id="cerrarModalCliente">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            
+            <div class="modal-body">
+                <form id="formCliente">
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label class="form-label">Nombre Completo *</label>
+                            <input type="text" class="form-input" id="nombreCliente" required placeholder="Nombre del cliente">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label class="form-label">Empresa</label>
+                            <input type="text" class="form-input" id="empresaCliente" placeholder="Nombre de la empresa">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label class="form-label">Teléfono *</label>
+                            <input type="tel" class="form-input" id="telefonoCliente" required placeholder="+502 0000-0000">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label class="form-label">Email</label>
+                            <input type="email" class="form-input" id="emailCliente" placeholder="cliente@empresa.com">
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label">Dirección</label>
+                        <textarea class="form-textarea" id="direccionCliente" placeholder="Dirección completa del cliente"></textarea>
+                    </div>
+                    
+                    <div class="form-actions">
+                        <button type="button" class="btn btn-secondary" id="cancelarCliente">
+                            <i class="fas fa-times"></i> Cancelar
+                        </button>
+                        <button type="submit" class="btn btn-success">
+                            <i class="fas fa-save"></i> Guardar Cliente
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
     <!-- Scripts Firebase -->
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
@@ -1251,14 +1260,133 @@
     <script src="/js/auth.js"></script>
     <script src="/js/nav.js"></script>
     <script src="/js/offline.js"></script>
+    <script src="/js/data-sync.js"></script>
     <script src="/js/clientes-manager.js"></script>
-    <script src="/js/negocios.js"></script>
     
     <script>
         // Variables globales mejoradas
         let negociosSystemReady = false;
         let negocioSeleccionado = null;
         let currentFilters = { estado: '' };
+
+        // ==========================================
+        // SISTEMA DE NOTIFICACIONES INTEGRADO
+        // ==========================================
+        
+        class NotificationManager {
+            constructor() {
+                this.notifications = [];
+                this.container = null;
+                this.init();
+            }
+
+            init() {
+                this.createContainer();
+            }
+
+            createContainer() {
+                if (!this.container) {
+                    this.container = document.getElementById('notification-container');
+                    if (!this.container) {
+                        this.container = document.createElement('div');
+                        this.container.className = 'notification-container';
+                        document.body.appendChild(this.container);
+                    }
+                }
+            }
+
+            show(message, type = 'info', duration = 5000) {
+                const id = Date.now().toString();
+                const notification = this.createNotification(id, message, type, duration);
+                
+                this.notifications.push({ id, element: notification });
+                this.container.appendChild(notification);
+                
+                setTimeout(() => {
+                    notification.classList.add('show');
+                }, 100);
+                
+                if (duration > 0) {
+                    setTimeout(() => {
+                        this.hide(id);
+                    }, duration);
+                }
+                
+                return id;
+            }
+
+            createNotification(id, message, type, duration) {
+                const notification = document.createElement('div');
+                notification.className = `notification notification-${type}`;
+                notification.setAttribute('data-id', id);
+                
+                const icons = {
+                    success: 'fa-check-circle',
+                    error: 'fa-exclamation-circle',
+                    warning: 'fa-exclamation-triangle',
+                    info: 'fa-info-circle'
+                };
+                
+                const titles = {
+                    success: 'Éxito',
+                    error: 'Error',
+                    warning: 'Advertencia',
+                    info: 'Información'
+                };
+                
+                notification.innerHTML = `
+                    <div class="notification-header">
+                        <div class="notification-title">
+                            <i class="fas ${icons[type]}"></i>
+                            ${titles[type]}
+                        </div>
+                        <button class="notification-close" onclick="notificationManager.hide('${id}')">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    </div>
+                    <div class="notification-body">
+                        ${message}
+                    </div>
+                `;
+                
+                return notification;
+            }
+
+            hide(id) {
+                const notificationData = this.notifications.find(n => n.id === id);
+                if (!notificationData) return;
+                
+                const { element } = notificationData;
+                element.classList.remove('show');
+                
+                setTimeout(() => {
+                    if (element.parentNode) {
+                        element.parentNode.removeChild(element);
+                    }
+                    this.notifications = this.notifications.filter(n => n.id !== id);
+                }, 300);
+            }
+
+            success(message, duration = 5000) {
+                return this.show(message, 'success', duration);
+            }
+
+            error(message, duration = 8000) {
+                return this.show(message, 'error', duration);
+            }
+
+            warning(message, duration = 6000) {
+                return this.show(message, 'warning', duration);
+            }
+
+            info(message, duration = 5000) {
+                return this.show(message, 'info', duration);
+            }
+        }
+
+        // Crear instancia global de notificaciones
+        const notificationManager = new NotificationManager();
+        window.notificationManager = notificationManager;
 
         // ==========================================
         // INICIALIZACIÓN MEJORADA
@@ -1283,11 +1411,12 @@
                 await cargarDatosIniciales();
                 
                 negociosSystemReady = true;
+                notificationManager.success('Sistema de negocios listo');
                 console.log('✅ Sistema de negocios completamente listo');
                 
             } catch (error) {
-                console.error('❌ Error crítico en inicialización:', error);
-                mostrarNotificacion('Error crítico iniciando la aplicación', 'error');
+                console.error('⚠️ Error crítico en inicialización:', error);
+                notificationManager.error('Error crítico iniciando la aplicación');
             }
         });
 
@@ -1307,7 +1436,7 @@
             const sistemas = [
                 { nombre: 'Firebase', check: function() { return window.firebase && window.db; } },
                 { nombre: 'ClientesManager', check: function() { return window.clientesManager; } },
-                { nombre: 'NegociosManager', check: function() { return window.negociosManager; } }
+                { nombre: 'DataSync', check: function() { return window.dataSyncManager; } }
             ];
             
             for (const sistema of sistemas) {
@@ -1342,8 +1471,12 @@
             document.getElementById('btnReporteVentas')?.addEventListener('click', function() {
                 generarReporteVentas();
             });
+
+            document.getElementById('btnIrVentas')?.addEventListener('click', function() {
+                window.location.href = '/ventas.html';
+            });
             
-            // Modal
+            // Modal negocios
             document.getElementById('cerrarModal')?.addEventListener('click', function() {
                 cerrarModal();
             });
@@ -1354,6 +1487,19 @@
             
             document.getElementById('formNegocio')?.addEventListener('submit', function(e) {
                 guardarNegocio(e);
+            });
+
+            // Modal clientes
+            document.getElementById('cerrarModalCliente')?.addEventListener('click', function() {
+                cerrarModalCliente();
+            });
+            
+            document.getElementById('cancelarCliente')?.addEventListener('click', function() {
+                cerrarModalCliente();
+            });
+            
+            document.getElementById('formCliente')?.addEventListener('submit', function(e) {
+                guardarCliente(e);
             });
             
             // Filtros rápidos
@@ -1370,16 +1516,14 @@
                 });
             });
             
-            // Cliente selector
-            document.getElementById('clienteNegocio')?.addEventListener('change', function() {
-                cargarContactosCliente();
-            });
-            
-            // Cerrar modal al hacer click fuera
-            document.getElementById('modalNegocio')?.addEventListener('click', function(e) {
-                if (e.target.id === 'modalNegocio') {
-                    cerrarModal();
-                }
+            // Cerrar modales al hacer click fuera
+            document.querySelectorAll('.modal-overlay').forEach(function(modal) {
+                modal.addEventListener('click', function(e) {
+                    if (e.target === modal) {
+                        cerrarModal();
+                        cerrarModalCliente();
+                    }
+                });
             });
 
             console.log('✅ Event listeners configurados');
@@ -1391,6 +1535,13 @@
 
         async function cargarDatosIniciales() {
             try {
+                // Esperar a que el NegociosManager esté listo
+                let intentos = 0;
+                while (!window.negociosManager && intentos < 50) {
+                    await new Promise(resolve => setTimeout(resolve, 100));
+                    intentos++;
+                }
+
                 if (window.negociosManager) {
                     await actualizarMetricas();
                     await cargarPipeline();
@@ -1403,8 +1554,8 @@
                     mostrarEstadoVacio();
                 }
             } catch (error) {
-                console.error('❌ Error cargando datos:', error);
-                mostrarNotificacion('Error cargando datos', 'error');
+                console.error('⚠️ Error cargando datos:', error);
+                notificationManager.error('Error cargando datos');
             }
         }
 
@@ -1518,17 +1669,17 @@
                                 </div>
                                 <div class="detalle-item">
                                     <i class="fas fa-clock"></i>
-                                    <span>${negocio.diasDesdeCreacion} días</span>
+                                    <span>${negocio.diasDesdeCreacion || 0} días</span>
                                 </div>
                             </div>
                             
                             <div class="negocio-progreso">
                                 <div class="progreso-label">
                                     <span>Progreso</span>
-                                    <span>${negocio.progreso}%</span>
+                                    <span>${negocio.progreso || 0}%</span>
                                 </div>
                                 <div class="progreso-bar">
-                                    <div class="progreso-fill" style="width: ${negocio.progreso}%"></div>
+                                    <div class="progreso-fill" style="width: ${negocio.progreso || 0}%"></div>
                                 </div>
                             </div>
                             
@@ -1618,14 +1769,16 @@
                         llamada: 'fa-phone',
                         email: 'fa-envelope',
                         reunion: 'fa-handshake',
-                        propuesta: 'fa-file-alt'
+                        propuesta: 'fa-file-alt',
+                        nota: 'fa-sticky-note'
                     };
                     
                     const colores = {
                         llamada: '#3b82f6',
                         email: '#8b5cf6',
                         reunion: '#f59e0b',
-                        propuesta: '#22c55e'
+                        propuesta: '#22c55e',
+                        nota: '#6b7280'
                     };
                     
                     return `
@@ -1650,14 +1803,20 @@
 
         async function cargarOpcionesClientes() {
             const select = document.getElementById('clienteNegocio');
-            if (!select || !window.negociosManager) return;
+            if (!select) return;
             
             try {
-                const clientes = window.negociosManager.obtenerListaClientes();
+                let clientes = [];
+                
+                if (window.negociosManager) {
+                    clientes = window.negociosManager.obtenerListaClientes();
+                } else if (window.clientesManager) {
+                    clientes = window.clientesManager.obtenerParaSelectores();
+                }
                 
                 select.innerHTML = '<option value="">Seleccionar cliente...</option>' +
                     clientes.map(function(cliente) {
-                        return `<option value="${cliente.id}">${cliente.displayName}</option>`;
+                        return `<option value="${cliente.id}">${cliente.displayName || cliente.nombre}</option>`;
                     }).join('');
                     
             } catch (error) {
@@ -1703,14 +1862,11 @@
             form.reset();
             negocioSeleccionado = negocioId || null;
             
-            if (negocioId) {
+            if (negocioId && window.negociosManager) {
                 titulo.textContent = 'Editar Negocio';
-                // Cargar datos del negocio si existe
-                if (window.negociosManager) {
-                    const negocio = window.negociosManager.obtenerNegocio(negocioId);
-                    if (negocio) {
-                        cargarDatosFormulario(negocio);
-                    }
+                const negocio = window.negociosManager.obtenerNegocio(negocioId);
+                if (negocio) {
+                    cargarDatosFormularioNegocio(negocio);
                 }
             } else {
                 titulo.textContent = 'Nuevo Negocio';
@@ -1727,6 +1883,23 @@
             negocioSeleccionado = null;
         }
 
+        function mostrarModalCliente() {
+            const modal = document.getElementById('modalCliente');
+            const form = document.getElementById('formCliente');
+            
+            form.reset();
+            modal.classList.add('show');
+        }
+
+        function cerrarModalCliente() {
+            const modal = document.getElementById('modalCliente');
+            modal.classList.remove('show');
+        }
+
+        // ==========================================
+        // FUNCIONES DE GUARDADO
+        // ==========================================
+
         async function guardarNegocio(e) {
             e.preventDefault();
             
@@ -1738,7 +1911,7 @@
                 submitBtn.innerHTML = '<span class="loading-spinner"></span> Guardando...';
                 submitBtn.disabled = true;
                 
-                const datos = obtenerDatosFormulario();
+                const datos = obtenerDatosFormularioNegocio();
                 
                 if (window.negociosManager) {
                     if (negocioSeleccionado) {
@@ -1746,7 +1919,7 @@
                     }
                     
                     await window.negociosManager.guardarNegocio(datos);
-                    mostrarNotificacion('Negocio guardado correctamente', 'success');
+                    notificationManager.success('Negocio guardado correctamente');
                     cerrarModal();
                     await cargarDatosIniciales();
                 } else {
@@ -1754,7 +1927,7 @@
                 }
             } catch (error) {
                 console.error('Error guardando negocio:', error);
-                mostrarNotificacion('Error al guardar el negocio: ' + error.message, 'error');
+                notificationManager.error('Error al guardar el negocio: ' + error.message);
             } finally {
                 // Restaurar botón
                 submitBtn.innerHTML = originalText;
@@ -1762,7 +1935,45 @@
             }
         }
 
-        function obtenerDatosFormulario() {
+        async function guardarCliente(e) {
+            e.preventDefault();
+            
+            const submitBtn = e.target.querySelector('button[type="submit"]');
+            const originalText = submitBtn.innerHTML;
+            
+            try {
+                // Mostrar loading
+                submitBtn.innerHTML = '<span class="loading-spinner"></span> Guardando...';
+                submitBtn.disabled = true;
+                
+                const datos = {
+                    nombre: document.getElementById('nombreCliente').value,
+                    empresa: document.getElementById('empresaCliente').value,
+                    telefono: document.getElementById('telefonoCliente').value,
+                    email: document.getElementById('emailCliente').value,
+                    direccion: document.getElementById('direccionCliente').value
+                };
+                
+                if (window.clientesManager) {
+                    await window.clientesManager.crearCliente(datos);
+                    notificationManager.success('Cliente creado correctamente');
+                    cerrarModalCliente();
+                    await cargarOpcionesClientes();
+                    await cargarClientesRecientes();
+                } else {
+                    throw new Error('Sistema de clientes no disponible');
+                }
+            } catch (error) {
+                console.error('Error guardando cliente:', error);
+                notificationManager.error('Error al guardar el cliente: ' + error.message);
+            } finally {
+                // Restaurar botón
+                submitBtn.innerHTML = originalText;
+                submitBtn.disabled = false;
+            }
+        }
+
+        function obtenerDatosFormularioNegocio() {
             return {
                 nombre: document.getElementById('nombreNegocio').value,
                 clienteId: document.getElementById('clienteNegocio').value,
@@ -1777,18 +1988,18 @@
             };
         }
 
-        function cargarDatosFormulario(negocio) {
-            document.getElementById('nombreNegocio').value = negocio.nombre;
-            document.getElementById('clienteNegocio').value = negocio.clienteId;
-            document.getElementById('valorNegocio').value = negocio.valor;
-            document.getElementById('estadoNegocio').value = negocio.estado;
-            document.getElementById('fechaCierreNegocio').value = negocio.fechaCierre;
+        function cargarDatosFormularioNegocio(negocio) {
+            document.getElementById('nombreNegocio').value = negocio.nombre || '';
+            document.getElementById('clienteNegocio').value = negocio.clienteId || '';
+            document.getElementById('valorNegocio').value = negocio.valor || '';
+            document.getElementById('estadoNegocio').value = negocio.estado || 'prospecto';
+            document.getElementById('fechaCierreNegocio').value = negocio.fechaCierre || '';
             document.getElementById('descripcionNegocio').value = negocio.descripcion || '';
             document.getElementById('cantidadNegocio').value = negocio.cantidadEstimada || '';
             document.getElementById('productosNegocio').value = negocio.productos || '';
             document.getElementById('notasNegocio').value = negocio.notas || '';
             
-            seleccionarProbabilidad(negocio.probabilidad.toString());
+            seleccionarProbabilidad((negocio.probabilidad || 75).toString());
         }
 
         function seleccionarProbabilidad(probabilidad) {
@@ -1800,13 +2011,8 @@
             document.getElementById('probabilidadNegocio').value = probabilidad;
         }
 
-        function cargarContactosCliente() {
-            // Esta función se puede expandir para mostrar contactos del cliente seleccionado
-            console.log('Cargando contactos del cliente seleccionado');
-        }
-
         // ==========================================
-        // FUNCIONES DE ACCIONES MEJORADAS
+        // FUNCIONES DE ACCIONES
         // ==========================================
 
         function editarNegocio(id) {
@@ -1817,14 +2023,14 @@
             try {
                 if (window.negociosManager) {
                     await window.negociosManager.avanzarEtapa(id);
-                    mostrarNotificacion('Etapa avanzada correctamente', 'success');
+                    notificationManager.success('Etapa avanzada correctamente');
                     await cargarDatosIniciales();
                 } else {
                     throw new Error('Sistema no disponible');
                 }
             } catch (error) {
                 console.error('Error avanzando etapa:', error);
-                mostrarNotificacion('Error al avanzar etapa: ' + error.message, 'error');
+                notificationManager.error('Error al avanzar etapa: ' + error.message);
             }
         }
 
@@ -1832,7 +2038,7 @@
             if (window.negociosManager) {
                 window.negociosManager.mostrarModalActividad(id);
             } else {
-                mostrarNotificacion('Función de actividades en desarrollo', 'info');
+                notificationManager.info('Función de actividades en desarrollo');
             }
         }
 
@@ -1848,19 +2054,11 @@
             }
         }
 
-        function mostrarModalCliente() {
-            if (window.negociosManager) {
-                window.negociosManager.mostrarModalCliente();
-            } else {
-                mostrarNotificacion('Función de nuevo cliente en desarrollo', 'info');
-            }
-        }
-
         function generarReporteVentas() {
             if (window.negociosManager) {
                 window.negociosManager.generarReporte();
             } else {
-                mostrarNotificacion('Generando reporte de ventas...', 'info');
+                notificationManager.info('Generando reporte de negocios...');
             }
         }
 
@@ -1882,7 +2080,7 @@
         }
 
         // ==========================================
-        // UTILIDADES MEJORADAS
+        // UTILIDADES
         // ==========================================
 
         function formatearFecha(fecha) {
@@ -1898,14 +2096,6 @@
             }
         }
 
-        function mostrarNotificacion(mensaje, tipo, duracion) {
-            if (window.notificationManager) {
-                window.notificationManager.show(mensaje, tipo, duracion);
-            } else {
-                console.log(`${tipo.toUpperCase()}: ${mensaje}`);
-            }
-        }
-
         // Hacer funciones globales para compatibilidad
         window.editarNegocio = editarNegocio;
         window.avanzarEtapa = avanzarEtapa;
@@ -1917,12 +2107,15 @@
 
         // Manejo de errores globales
         window.addEventListener('error', function(event) {
-            console.error('❌ Error global:', event.error);
+            console.error('⚠️ Error global:', event.error);
         });
 
         window.addEventListener('unhandledrejection', function(event) {
-            console.error('❌ Promesa rechazada:', event.reason);
+            console.error('⚠️ Promesa rechazada:', event.reason);
         });
     </script>
+
+    <!-- Cargar el script de negocios después de que todo esté listo -->
+    <script src="/js/negocios.js"></script>
 </body>
 </html>
