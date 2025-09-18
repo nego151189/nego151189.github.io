@@ -1,6 +1,6 @@
 /* ========================================
    FINCA LA HERRADURA - CONTROL DE GASTOS
-   Sistema funcional completo - VERSIÓN CORREGIDA
+   Sistema completamente funcional con Firebase y Presupuestos
    ======================================== */
 
 // ===========================================
@@ -67,7 +67,6 @@ const expenseCategories = {
 function mostrarFormularioGasto() {
   console.log('Abriendo formulario de nuevo gasto...');
   
-  // Crear modal dinámico
   const modal = document.createElement('div');
   modal.className = 'modal-overlay';
   modal.style.cssText = `
@@ -76,7 +75,7 @@ function mostrarFormularioGasto() {
     left: 0;
     right: 0;
     bottom: 0;
-    background: rgba(0, 0, 0, 0.7);
+    background: rgba(0, 0, 0, 0.8);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -86,114 +85,162 @@ function mostrarFormularioGasto() {
   modal.innerHTML = `
     <div class="modal-content" style="
       background: white;
-      border-radius: 16px;
+      border-radius: 20px;
       width: 90%;
       max-width: 600px;
       max-height: 90vh;
       overflow-y: auto;
-      box-shadow: 0 20px 40px rgba(0,0,0,0.3);
+      box-shadow: 0 25px 50px rgba(0,0,0,0.4);
     ">
       <div class="modal-header" style="
-        padding: 1.5rem;
-        border-bottom: 1px solid #e5e5e5;
+        padding: 2rem;
+        border-bottom: 2px solid #f1f5f9;
         display: flex;
         justify-content: space-between;
         align-items: center;
+        background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
+        color: white;
+        border-radius: 20px 20px 0 0;
       ">
-        <h3 style="margin: 0; color: #333;">
-          <i class="fas fa-plus" style="margin-right: 0.5rem; color: #ef4444;"></i>
+        <h2 style="margin: 0; display: flex; align-items: center; gap: 1rem;">
+          <i class="fas fa-plus" style="font-size: 1.5rem;"></i>
           Nuevo Gasto
-        </h3>
+        </h2>
         <button class="btn-close" onclick="cerrarModal()" style="
-          background: none;
+          background: rgba(255,255,255,0.2);
           border: none;
-          font-size: 1.5rem;
+          font-size: 1.8rem;
           cursor: pointer;
-          color: #666;
+          color: white;
           padding: 0.5rem;
-        ">&times;</button>
+          border-radius: 8px;
+          transition: background 0.2s ease;
+        " onmouseover="this.style.background='rgba(255,255,255,0.3)'" 
+           onmouseout="this.style.background='rgba(255,255,255,0.2)'">&times;</button>
       </div>
       
-      <div class="modal-body" style="padding: 1.5rem;">
+      <div class="modal-body" style="padding: 2rem;">
         <form id="formNuevoGasto">
-          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1rem;">
+          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1.5rem;">
             
             <div style="margin-bottom: 1rem;">
-              <label style="display: block; margin-bottom: 0.5rem; font-weight: 600; color: #333;">Fecha</label>
+              <label style="display: block; margin-bottom: 0.75rem; font-weight: 600; color: #374151; font-size: 0.95rem;">
+                <i class="fas fa-calendar-alt" style="margin-right: 0.5rem; color: #6b7280;"></i>
+                Fecha
+              </label>
               <input type="date" id="modalFecha" style="
                 width: 100%;
-                padding: 0.75rem;
-                border: 2px solid #e5e5e5;
-                border-radius: 8px;
+                padding: 1rem;
+                border: 2px solid #e5e7eb;
+                border-radius: 12px;
                 font-size: 1rem;
-              " value="${new Date().toISOString().split('T')[0]}" required>
+                transition: border-color 0.2s ease, box-shadow 0.2s ease;
+              " value="${new Date().toISOString().split('T')[0]}" 
+                 onfocus="this.style.borderColor='#dc2626'; this.style.boxShadow='0 0 0 3px rgba(220, 38, 38, 0.1)'"
+                 onblur="this.style.borderColor='#e5e7eb'; this.style.boxShadow='none'" required>
             </div>
             
             <div style="margin-bottom: 1rem;">
-              <label style="display: block; margin-bottom: 0.5rem; font-weight: 600; color: #333;">Categoría</label>
+              <label style="display: block; margin-bottom: 0.75rem; font-weight: 600; color: #374151; font-size: 0.95rem;">
+                <i class="fas fa-tags" style="margin-right: 0.5rem; color: #6b7280;"></i>
+                Categoría
+              </label>
               <select id="modalCategoria" style="
                 width: 100%;
-                padding: 0.75rem;
-                border: 2px solid #e5e5e5;
-                border-radius: 8px;
+                padding: 1rem;
+                border: 2px solid #e5e7eb;
+                border-radius: 12px;
                 font-size: 1rem;
-              " required>
+                background: white;
+                cursor: pointer;
+                transition: border-color 0.2s ease, box-shadow 0.2s ease;
+              " onfocus="this.style.borderColor='#dc2626'; this.style.boxShadow='0 0 0 3px rgba(220, 38, 38, 0.1)'"
+                 onblur="this.style.borderColor='#e5e7eb'; this.style.boxShadow='none'" required>
                 <option value="">Seleccionar categoría...</option>
                 ${Object.entries(expenseCategories).map(([id, cat]) => 
-                  `<option value="${id}">${cat.name}</option>`
+                  `<option value="${id}">
+                    ${cat.name}
+                  </option>`
                 ).join('')}
               </select>
             </div>
             
             <div style="margin-bottom: 1rem; grid-column: 1 / -1;">
-              <label style="display: block; margin-bottom: 0.5rem; font-weight: 600; color: #333;">Concepto</label>
+              <label style="display: block; margin-bottom: 0.75rem; font-weight: 600; color: #374151; font-size: 0.95rem;">
+                <i class="fas fa-file-text" style="margin-right: 0.5rem; color: #6b7280;"></i>
+                Concepto
+              </label>
               <input type="text" id="modalConcepto" style="
                 width: 100%;
-                padding: 0.75rem;
-                border: 2px solid #e5e5e5;
-                border-radius: 8px;
+                padding: 1rem;
+                border: 2px solid #e5e7eb;
+                border-radius: 12px;
                 font-size: 1rem;
-              " placeholder="Descripción del gasto" required>
+                transition: border-color 0.2s ease, box-shadow 0.2s ease;
+              " placeholder="Descripción detallada del gasto" 
+                 onfocus="this.style.borderColor='#dc2626'; this.style.boxShadow='0 0 0 3px rgba(220, 38, 38, 0.1)'"
+                 onblur="this.style.borderColor='#e5e7eb'; this.style.boxShadow='none'" required>
             </div>
             
             <div style="margin-bottom: 1rem;">
-              <label style="display: block; margin-bottom: 0.5rem; font-weight: 600; color: #333;">Monto (Q)</label>
+              <label style="display: block; margin-bottom: 0.75rem; font-weight: 600; color: #374151; font-size: 0.95rem;">
+                <i class="fas fa-dollar-sign" style="margin-right: 0.5rem; color: #6b7280;"></i>
+                Monto (GTQ)
+              </label>
               <input type="number" id="modalMonto" style="
                 width: 100%;
-                padding: 0.75rem;
-                border: 2px solid #e5e5e5;
-                border-radius: 8px;
-                font-size: 1rem;
-              " step="0.01" min="0" placeholder="0.00" required>
+                padding: 1rem;
+                border: 2px solid #e5e7eb;
+                border-radius: 12px;
+                font-size: 1.1rem;
+                font-weight: 600;
+                transition: border-color 0.2s ease, box-shadow 0.2s ease;
+              " step="0.01" min="0" placeholder="0.00" 
+                 onfocus="this.style.borderColor='#dc2626'; this.style.boxShadow='0 0 0 3px rgba(220, 38, 38, 0.1)'"
+                 onblur="this.style.borderColor='#e5e7eb'; this.style.boxShadow='none'" required>
             </div>
             
             <div style="margin-bottom: 1rem;">
-              <label style="display: block; margin-bottom: 0.5rem; font-weight: 600; color: #333;">Estado</label>
+              <label style="display: block; margin-bottom: 0.75rem; font-weight: 600; color: #374151; font-size: 0.95rem;">
+                <i class="fas fa-check-circle" style="margin-right: 0.5rem; color: #6b7280;"></i>
+                Estado
+              </label>
               <select id="modalEstado" style="
                 width: 100%;
-                padding: 0.75rem;
-                border: 2px solid #e5e5e5;
-                border-radius: 8px;
+                padding: 1rem;
+                border: 2px solid #e5e7eb;
+                border-radius: 12px;
                 font-size: 1rem;
-              " required>
-                <option value="pagado">Pagado</option>
-                <option value="pendiente">Pendiente</option>
+                background: white;
+                cursor: pointer;
+                transition: border-color 0.2s ease, box-shadow 0.2s ease;
+              " onfocus="this.style.borderColor='#dc2626'; this.style.boxShadow='0 0 0 3px rgba(220, 38, 38, 0.1)'"
+                 onblur="this.style.borderColor='#e5e7eb'; this.style.boxShadow='none'" required>
+                <option value="pagado">✅ Pagado</option>
+                <option value="pendiente">⏳ Pendiente</option>
               </select>
             </div>
             
             <div style="margin-bottom: 1rem;">
-              <label style="display: block; margin-bottom: 0.5rem; font-weight: 600; color: #333;">Método de Pago</label>
+              <label style="display: block; margin-bottom: 0.75rem; font-weight: 600; color: #374151; font-size: 0.95rem;">
+                <i class="fas fa-credit-card" style="margin-right: 0.5rem; color: #6b7280;"></i>
+                Método de Pago
+              </label>
               <select id="modalMetodoPago" style="
                 width: 100%;
-                padding: 0.75rem;
-                border: 2px solid #e5e5e5;
-                border-radius: 8px;
+                padding: 1rem;
+                border: 2px solid #e5e7eb;
+                border-radius: 12px;
                 font-size: 1rem;
-              ">
-                <option value="efectivo">Efectivo</option>
-                <option value="transferencia">Transferencia</option>
-                <option value="tarjeta">Tarjeta</option>
-                <option value="cheque">Cheque</option>
+                background: white;
+                cursor: pointer;
+                transition: border-color 0.2s ease, box-shadow 0.2s ease;
+              " onfocus="this.style.borderColor='#dc2626'; this.style.boxShadow='0 0 0 3px rgba(220, 38, 38, 0.1)'"
+                 onblur="this.style.borderColor='#e5e7eb'; this.style.boxShadow='none'">
+                <option value="efectivo">💵 Efectivo</option>
+                <option value="transferencia">🏦 Transferencia</option>
+                <option value="tarjeta">💳 Tarjeta</option>
+                <option value="cheque">📝 Cheque</option>
               </select>
             </div>
             
@@ -202,31 +249,41 @@ function mostrarFormularioGasto() {
       </div>
       
       <div class="modal-footer" style="
-        padding: 1.5rem;
-        border-top: 1px solid #e5e5e5;
+        padding: 2rem;
+        border-top: 2px solid #f1f5f9;
         display: flex;
         gap: 1rem;
         justify-content: flex-end;
+        background: #f8fafc;
+        border-radius: 0 0 20px 20px;
       ">
         <button type="button" onclick="cerrarModal()" style="
-          padding: 0.75rem 1.5rem;
-          border: 2px solid #e5e5e5;
+          padding: 1rem 2rem;
+          border: 2px solid #6b7280;
           background: white;
-          color: #666;
-          border-radius: 8px;
-          cursor: pointer;
-          font-size: 1rem;
-        ">Cancelar</button>
-        <button type="button" onclick="guardarGastoModal()" style="
-          padding: 0.75rem 1.5rem;
-          border: none;
-          background: #ef4444;
-          color: white;
-          border-radius: 8px;
+          color: #6b7280;
+          border-radius: 12px;
           cursor: pointer;
           font-size: 1rem;
           font-weight: 600;
-        ">
+          transition: all 0.2s ease;
+        " onmouseover="this.style.background='#6b7280'; this.style.color='white'"
+           onmouseout="this.style.background='white'; this.style.color='#6b7280'">
+          <i class="fas fa-times" style="margin-right: 0.5rem;"></i>
+          Cancelar
+        </button>
+        <button type="button" onclick="guardarGastoModal()" style="
+          padding: 1rem 2rem;
+          border: none;
+          background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
+          color: white;
+          border-radius: 12px;
+          cursor: pointer;
+          font-size: 1rem;
+          font-weight: 600;
+          transition: transform 0.2s ease, box-shadow 0.2s ease;
+        " onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 8px 25px rgba(220, 38, 38, 0.3)'"
+           onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='none'">
           <i class="fas fa-save" style="margin-right: 0.5rem;"></i>
           Guardar Gasto
         </button>
@@ -304,8 +361,8 @@ function guardarGastoRapido() {
       return;
     }
     
-    // Crear gasto
-    createExpense(datos).then(() => {
+    // Crear gasto usando Firebase
+    createExpenseWithFirebase(datos).then(() => {
       // Limpiar formulario
       fechaInput.value = new Date().toISOString().split('T')[0];
       categoriaInput.value = '';
@@ -334,23 +391,27 @@ function exportarReporte() {
   
   try {
     const now = new Date();
+    const gastos = getAllExpenses();
+    
     const reporte = {
       fecha_generacion: now.toISOString(),
       finca: 'La Herradura',
-      periodo: 'Mensual',
+      periodo: 'Completo',
       resumen_financiero: {
         total_mes: statistics.totalMonth,
         total_año: statistics.totalYear,
-        total_gastos: expenses.size,
-        costo_por_kg: statistics.costPerKg
+        total_gastos: gastos.length,
+        costo_promedio: gastos.length > 0 ? statistics.totalMonth / gastos.length : 0
       },
-      gastos_detallados: getAllExpenses(),
+      gastos_detallados: gastos,
       categorias: Object.fromEntries(categories),
       estadisticas_por_categoria: statistics.categoriesBreakdown,
+      presupuesto: window.presupuestoManager ? window.presupuestoManager.configuracion : null,
       metadatos: {
         generado_por: getCurrentUserId(),
-        version_sistema: '1.0',
-        timestamp: now.getTime()
+        version_sistema: '2.0',
+        timestamp: now.getTime(),
+        con_firebase: window.firebaseDataManager?.initialized || false
       }
     };
     
@@ -362,7 +423,7 @@ function exportarReporte() {
     const url = URL.createObjectURL(dataBlob);
     const link = document.createElement('a');
     link.href = url;
-    link.download = `reporte_gastos_${now.toISOString().split('T')[0]}.json`;
+    link.download = `reporte_gastos_completo_${now.toISOString().split('T')[0]}.json`;
     link.style.display = 'none';
     
     // Trigger descarga
@@ -403,26 +464,26 @@ function aplicarFiltros() {
       const now = new Date();
       switch (periodo) {
         case 'hoy':
-          filtros.dateFrom = now.toISOString().split('T')[0];
-          filtros.dateTo = now.toISOString().split('T')[0];
+          filtros.startDate = now.toISOString().split('T')[0];
+          filtros.endDate = now.toISOString().split('T')[0];
           break;
         case 'semana':
           const semanaAtras = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
-          filtros.dateFrom = semanaAtras.toISOString().split('T')[0];
-          filtros.dateTo = now.toISOString().split('T')[0];
+          filtros.startDate = semanaAtras.toISOString().split('T')[0];
+          filtros.endDate = now.toISOString().split('T')[0];
           break;
         case 'mes':
-          filtros.dateFrom = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().split('T')[0];
-          filtros.dateTo = new Date(now.getFullYear(), now.getMonth() + 1, 0).toISOString().split('T')[0];
+          filtros.startDate = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().split('T')[0];
+          filtros.endDate = new Date(now.getFullYear(), now.getMonth() + 1, 0).toISOString().split('T')[0];
           break;
         case 'trimestre':
           const trimestre = Math.floor(now.getMonth() / 3);
-          filtros.dateFrom = new Date(now.getFullYear(), trimestre * 3, 1).toISOString().split('T')[0];
-          filtros.dateTo = new Date(now.getFullYear(), (trimestre + 1) * 3, 0).toISOString().split('T')[0];
+          filtros.startDate = new Date(now.getFullYear(), trimestre * 3, 1).toISOString().split('T')[0];
+          filtros.endDate = new Date(now.getFullYear(), (trimestre + 1) * 3, 0).toISOString().split('T')[0];
           break;
         case 'ano':
-          filtros.dateFrom = new Date(now.getFullYear(), 0, 1).toISOString().split('T')[0];
-          filtros.dateTo = new Date(now.getFullYear(), 11, 31).toISOString().split('T')[0];
+          filtros.startDate = new Date(now.getFullYear(), 0, 1).toISOString().split('T')[0];
+          filtros.endDate = new Date(now.getFullYear(), 11, 31).toISOString().split('T')[0];
           break;
       }
     }
@@ -472,7 +533,12 @@ function accionRapida(accion) {
       mostrarFormularioGasto();
       break;
     case 'presupuesto':
-      mostrarNotificacion('Gestión de presupuesto próximamente disponible', 'info');
+      if (window.presupuestoManager && window.presupuestoManager.mostrarGestion) {
+        window.presupuestoManager.mostrarGestion();
+      } else {
+        mostrarNotificacion('Sistema de presupuestos cargando...', 'info');
+        setTimeout(() => accionRapida('presupuesto'), 1000);
+      }
       break;
     case 'reporte':
       exportarReporte();
@@ -489,11 +555,17 @@ function accionRapida(accion) {
 function cerrarModal() {
   const modal = document.querySelector('.modal-overlay');
   if (modal && modal.parentNode) {
-    modal.parentNode.removeChild(modal);
+    modal.style.opacity = '0';
+    modal.style.transform = 'scale(0.9)';
+    setTimeout(() => {
+      if (modal.parentNode) {
+        modal.parentNode.removeChild(modal);
+      }
+    }, 200);
   }
 }
 
-function guardarGastoModal() {
+async function guardarGastoModal() {
   console.log('Guardando gasto desde modal...');
   
   try {
@@ -527,17 +599,14 @@ function guardarGastoModal() {
       return;
     }
     
-    // Crear gasto
-    createExpense(datos).then(() => {
-      // Cerrar modal
-      cerrarModal();
-      
-      // Mostrar éxito
-      mostrarNotificacion(`Gasto de ${formatCurrency(datos.monto)} registrado correctamente`, 'success');
-    }).catch(error => {
-      console.error('Error guardando gasto desde modal:', error);
-      mostrarNotificacion('Error al registrar el gasto: ' + error.message, 'error');
-    });
+    // Crear gasto usando Firebase
+    await createExpenseWithFirebase(datos);
+    
+    // Cerrar modal
+    cerrarModal();
+    
+    // Mostrar éxito
+    mostrarNotificacion(`Gasto de ${formatCurrency(datos.monto)} registrado correctamente`, 'success');
     
   } catch (error) {
     console.error('Error guardando gasto desde modal:', error);
@@ -545,269 +614,27 @@ function guardarGastoModal() {
   }
 }
 
-function editarGasto(id) {
-  const expense = expenses.get(id);
-  if (!expense) {
-    mostrarNotificacion('Gasto no encontrado', 'error');
-    return;
-  }
-  
-  console.log('Editando gasto:', expense);
-  
-  // Crear modal de edición
-  const modal = document.createElement('div');
-  modal.className = 'modal-overlay';
-  modal.style.cssText = `
-    position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: rgba(0, 0, 0, 0.7);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    z-index: 10000;
-  `;
-  
-  modal.innerHTML = `
-    <div class="modal-content" style="
-      background: white;
-      border-radius: 16px;
-      width: 90%;
-      max-width: 600px;
-      max-height: 90vh;
-      overflow-y: auto;
-      box-shadow: 0 20px 40px rgba(0,0,0,0.3);
-    ">
-      <div class="modal-header" style="
-        padding: 1.5rem;
-        border-bottom: 1px solid #e5e5e5;
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-      ">
-        <h3 style="margin: 0; color: #333;">
-          <i class="fas fa-edit" style="margin-right: 0.5rem; color: #3b82f6;"></i>
-          Editar Gasto
-        </h3>
-        <button class="btn-close" onclick="cerrarModal()" style="
-          background: none;
-          border: none;
-          font-size: 1.5rem;
-          cursor: pointer;
-          color: #666;
-          padding: 0.5rem;
-        ">&times;</button>
-      </div>
-      
-      <div class="modal-body" style="padding: 1.5rem;">
-        <form id="formEditarGasto">
-          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1rem;">
-            
-            <div style="margin-bottom: 1rem;">
-              <label style="display: block; margin-bottom: 0.5rem; font-weight: 600; color: #333;">Fecha</label>
-              <input type="date" id="editFecha" style="
-                width: 100%;
-                padding: 0.75rem;
-                border: 2px solid #e5e5e5;
-                border-radius: 8px;
-                font-size: 1rem;
-              " value="${expense.date}" required>
-            </div>
-            
-            <div style="margin-bottom: 1rem;">
-              <label style="display: block; margin-bottom: 0.5rem; font-weight: 600; color: #333;">Categoría</label>
-              <select id="editCategoria" style="
-                width: 100%;
-                padding: 0.75rem;
-                border: 2px solid #e5e5e5;
-                border-radius: 8px;
-                font-size: 1rem;
-              " required>
-                ${Object.entries(expenseCategories).map(([catId, cat]) => 
-                  `<option value="${catId}" ${catId === expense.category ? 'selected' : ''}>${cat.name}</option>`
-                ).join('')}
-              </select>
-            </div>
-            
-            <div style="margin-bottom: 1rem; grid-column: 1 / -1;">
-              <label style="display: block; margin-bottom: 0.5rem; font-weight: 600; color: #333;">Concepto</label>
-              <input type="text" id="editConcepto" style="
-                width: 100%;
-                padding: 0.75rem;
-                border: 2px solid #e5e5e5;
-                border-radius: 8px;
-                font-size: 1rem;
-              " value="${expense.description}" required>
-            </div>
-            
-            <div style="margin-bottom: 1rem;">
-              <label style="display: block; margin-bottom: 0.5rem; font-weight: 600; color: #333;">Monto (Q)</label>
-              <input type="number" id="editMonto" style="
-                width: 100%;
-                padding: 0.75rem;
-                border: 2px solid #e5e5e5;
-                border-radius: 8px;
-                font-size: 1rem;
-              " step="0.01" min="0" value="${expense.amount}" required>
-            </div>
-            
-            <div style="margin-bottom: 1rem;">
-              <label style="display: block; margin-bottom: 0.5rem; font-weight: 600; color: #333;">Estado</label>
-              <select id="editEstado" style="
-                width: 100%;
-                padding: 0.75rem;
-                border: 2px solid #e5e5e5;
-                border-radius: 8px;
-                font-size: 1rem;
-              " required>
-                <option value="pagado" ${expense.status === 'pagado' ? 'selected' : ''}>Pagado</option>
-                <option value="pendiente" ${expense.status === 'pendiente' ? 'selected' : ''}>Pendiente</option>
-              </select>
-            </div>
-            
-          </div>
-        </form>
-      </div>
-      
-      <div class="modal-footer" style="
-        padding: 1.5rem;
-        border-top: 1px solid #e5e5e5;
-        display: flex;
-        gap: 1rem;
-        justify-content: flex-end;
-      ">
-        <button type="button" onclick="cerrarModal()" style="
-          padding: 0.75rem 1.5rem;
-          border: 2px solid #e5e5e5;
-          background: white;
-          color: #666;
-          border-radius: 8px;
-          cursor: pointer;
-          font-size: 1rem;
-        ">Cancelar</button>
-        <button type="button" onclick="actualizarGasto('${id}')" style="
-          padding: 0.75rem 1.5rem;
-          border: none;
-          background: #3b82f6;
-          color: white;
-          border-radius: 8px;
-          cursor: pointer;
-          font-size: 1rem;
-          font-weight: 600;
-        ">
-          <i class="fas fa-save" style="margin-right: 0.5rem;"></i>
-          Actualizar
-        </button>
-      </div>
-    </div>
-  `;
-  
-  document.body.appendChild(modal);
-  
-  // Focus en el primer campo
-  setTimeout(() => {
-    const firstInput = document.getElementById('editConcepto');
-    if (firstInput) firstInput.focus();
-  }, 100);
-
-  // Cerrar modal con ESC
-  const closeWithEsc = (e) => {
-    if (e.key === 'Escape') {
-      cerrarModal();
-      document.removeEventListener('keydown', closeWithEsc);
-    }
-  };
-  document.addEventListener('keydown', closeWithEsc);
-
-  // Cerrar modal al hacer click fuera
-  modal.addEventListener('click', (e) => {
-    if (e.target === modal) {
-      cerrarModal();
-    }
-  });
-}
-
-function actualizarGasto(id) {
-  try {
-    const expense = expenses.get(id);
-    if (!expense) {
-      mostrarNotificacion('Gasto no encontrado', 'error');
-      return;
-    }
-
-    const datos = {
-      fecha: document.getElementById('editFecha')?.value,
-      categoria: document.getElementById('editCategoria')?.value,
-      concepto: document.getElementById('editConcepto')?.value,
-      monto: parseFloat(document.getElementById('editMonto')?.value),
-      estado: document.getElementById('editEstado')?.value
-    };
-
-    // Validaciones
-    if (!datos.categoria) {
-      mostrarNotificacion('Seleccione una categoría', 'error');
-      return;
-    }
-    
-    if (!datos.concepto || !datos.concepto.trim()) {
-      mostrarNotificacion('Ingrese un concepto', 'error');
-      return;
-    }
-    
-    if (!datos.monto || datos.monto <= 0) {
-      mostrarNotificacion('Ingrese un monto válido', 'error');
-      return;
-    }
-
-    // Actualizar el gasto
-    expense.date = datos.fecha;
-    expense.category = datos.categoria;
-    expense.description = datos.concepto;
-    expense.amount = datos.monto;
-    expense.status = datos.estado;
-    expense.updatedAt = new Date().toISOString();
-
-    expenses.set(id, expense);
-
-    // Recalcular estadísticas
-    calculateStatistics();
-
-    // Cerrar modal
-    cerrarModal();
-
-    mostrarNotificacion('Gasto actualizado correctamente', 'success');
-
-  } catch (error) {
-    console.error('Error actualizando gasto:', error);
-    mostrarNotificacion('Error al actualizar el gasto: ' + error.message, 'error');
-  }
-}
-
-function eliminarGasto(id) {
-  if (!confirm('¿Está seguro de que desea eliminar este gasto?')) {
-    return;
-  }
-  
-  try {
-    deleteExpense(id).then(() => {
-      mostrarNotificacion('Gasto eliminado correctamente', 'success');
-    }).catch(error => {
-      console.error('Error eliminando gasto:', error);
-      mostrarNotificacion('Error al eliminar el gasto: ' + error.message, 'error');
-    });
-  } catch (error) {
-    console.error('Error eliminando gasto:', error);
-    mostrarNotificacion('Error al eliminar el gasto: ' + error.message, 'error');
-  }
-}
-
 // ===========================================
-// GESTIÓN DE GASTOS
+// GESTIÓN DE GASTOS CON FIREBASE
 // ===========================================
 
-async function createExpense(expenseData) {
+async function createExpenseWithFirebase(expenseData) {
+  try {
+    // Si Firebase está disponible, usar Firebase
+    if (window.firebaseDataManager && window.firebaseDataManager.initialized) {
+      return await window.firebaseDataManager.createExpense(expenseData);
+    }
+    
+    // Fallback: usar sistema local
+    return await createExpenseLocal(expenseData);
+    
+  } catch (error) {
+    console.error('Error creando gasto:', error);
+    throw error;
+  }
+}
+
+async function createExpenseLocal(expenseData) {
   try {
     const id = generateExpenseId();
     const currentDate = new Date();
@@ -830,17 +657,17 @@ async function createExpense(expenseData) {
     expenses.set(id, expense);
     await calculateStatistics();
     
-    console.log('Gasto creado exitosamente:', expense);
+    console.log('Gasto creado localmente:', expense);
     dispatchSystemEvent('expenseCreated', { expense });
     
     return expense;
   } catch (error) {
-    console.error('Error creando gasto:', error);
+    console.error('Error creando gasto local:', error);
     throw error;
   }
 }
 
-async function deleteExpense(id) {
+async function deleteExpenseLocal(id) {
   try {
     const expense = expenses.get(id);
     if (!expense) throw new Error('Gasto no encontrado');
@@ -854,7 +681,7 @@ async function deleteExpense(id) {
     dispatchSystemEvent('expenseDeleted', { expenseId: id });
     return true;
   } catch (error) {
-    console.error('Error eliminando gasto:', error);
+    console.error('Error eliminando gasto local:', error);
     throw error;
   }
 }
@@ -868,11 +695,11 @@ function getAllExpenses(filters = {}) {
   if (filters.status) {
     expenseList = expenseList.filter(expense => expense.status === filters.status);
   }
-  if (filters.dateFrom) {
-    expenseList = expenseList.filter(expense => expense.date >= filters.dateFrom);
+  if (filters.startDate) {
+    expenseList = expenseList.filter(expense => expense.date >= filters.startDate);
   }
-  if (filters.dateTo) {
-    expenseList = expenseList.filter(expense => expense.date <= filters.dateTo);
+  if (filters.endDate) {
+    expenseList = expenseList.filter(expense => expense.date <= filters.endDate);
   }
   
   return expenseList.sort((a, b) => new Date(b.date) - new Date(a.date));
@@ -883,6 +710,12 @@ function getAllExpenses(filters = {}) {
 // ===========================================
 
 async function calculateStatistics() {
+  // Si Firebase está disponible, usar cálculos de Firebase
+  if (window.firebaseDataManager && window.firebaseDataManager.initialized) {
+    return await window.firebaseDataManager.calculateStatistics();
+  }
+  
+  // Fallback: cálculos locales
   const activeExpenses = Array.from(expenses.values()).filter(expense => expense.active);
   const currentMonth = new Date().getMonth();
   const currentYear = new Date().getFullYear();
@@ -902,21 +735,31 @@ async function calculateStatistics() {
     const categoryExpenses = monthlyExpenses.filter(expense => expense.category === categoryId);
     const total = categoryExpenses.reduce((sum, expense) => sum + expense.amount, 0);
     
-    statistics.categoriesBreakdown[categoryId] = {
-      total,
-      count: categoryExpenses.length,
-      percentage: statistics.totalMonth > 0 ? (total / statistics.totalMonth) * 100 : 0,
-      category: category.name
-    };
+    if (total > 0) {
+      statistics.categoriesBreakdown[categoryId] = {
+        total,
+        count: categoryExpenses.length,
+        percentage: statistics.totalMonth > 0 ? (total / statistics.totalMonth) * 100 : 0,
+        category: category.name
+      };
+    }
   });
   
   // Actualizar UI
   updateFinancialUI();
+  
+  return statistics;
 }
 
 function updateFinancialUI() {
   try {
-    // Actualizar resumen financiero
+    // Si hay sistema Firebase, usar su función de UI
+    if (window.firebaseDataManager && typeof window.updateFinancialUIWithRealData === 'function') {
+      window.updateFinancialUIWithRealData();
+      return;
+    }
+    
+    // Actualizar elementos del resumen financiero
     const gastosDelMes = document.getElementById('gastosDelMes');
     if (gastosDelMes) {
       gastosDelMes.textContent = formatCurrency(statistics.totalMonth);
@@ -924,25 +767,30 @@ function updateFinancialUI() {
     
     const presupuestoMensual = document.getElementById('presupuestoMensual');
     if (presupuestoMensual) {
-      presupuestoMensual.textContent = 'Q 15,000';
+      const limite = window.presupuestoManager?.configuracion?.limiteGeneral || 15000;
+      presupuestoMensual.textContent = formatCurrency(limite);
     }
     
     const gastoProyectado = document.getElementById('gastoProyectado');
     if (gastoProyectado) {
-      const proyeccion = statistics.totalMonth * 1.5;
+      const diasTranscurridos = new Date().getDate();
+      const diasMes = new Date(new Date().getFullYear(), new Date().getMonth() + 1, 0).getDate();
+      const proyeccion = (statistics.totalMonth / diasTranscurridos) * diasMes;
       gastoProyectado.textContent = formatCurrency(proyeccion);
     }
     
     const diferenciapresupuesto = document.getElementById('diferenciapresupuesto');
     if (diferenciapresupuesto) {
-      const diferencia = 15000 - statistics.totalMonth;
-      diferenciapresupuesto.textContent = formatCurrency(diferencia);
+      const limite = window.presupuestoManager?.configuracion?.limiteGeneral || 15000;
+      const diferencia = limite - statistics.totalMonth;
+      diferenciapresupuesto.textContent = formatCurrency(Math.max(0, diferencia));
     }
     
     const porcentajeUsado = document.getElementById('porcentajeUsado');
     const progressPresupuesto = document.getElementById('progressPresupuesto');
     if (porcentajeUsado && progressPresupuesto) {
-      const porcentaje = Math.min((statistics.totalMonth / 15000) * 100, 100);
+      const limite = window.presupuestoManager?.configuracion?.limiteGeneral || 15000;
+      const porcentaje = Math.min((statistics.totalMonth / limite) * 100, 100);
       porcentajeUsado.textContent = `${porcentaje.toFixed(1)}%`;
       progressPresupuesto.style.width = `${porcentaje}%`;
       
@@ -975,12 +823,28 @@ function updateFinancialUI() {
 }
 
 function updateCategoriesUI() {
+  // Si hay sistema Firebase, usar su función
+  if (window.updateCategoriesWithRealData && typeof window.updateCategoriesWithRealData === 'function') {
+    window.updateCategoriesWithRealData();
+    return;
+  }
+  
   const container = document.getElementById('listaCategoriasGastos');
   if (!container) return;
   
+  if (!statistics.categoriesBreakdown || Object.keys(statistics.categoriesBreakdown).length === 0) {
+    container.innerHTML = `
+      <div style="text-align: center; padding: 2rem; color: var(--text-secondary);">
+        <i class="fas fa-tags" style="font-size: 2rem; margin-bottom: 1rem; opacity: 0.5;"></i>
+        <br>
+        No hay gastos registrados este mes
+      </div>
+    `;
+    return;
+  }
+  
   const categoriesHTML = Object.entries(statistics.categoriesBreakdown).map(([id, data]) => {
-    const category = categories.get(id);
-    if (!category) return '';
+    const category = categories.get(id) || expenseCategories[id] || { name: id, color: '#6b7280', icon: 'fa-tag' };
     
     return `
       <div class="categoria-item ${id}">
@@ -1010,6 +874,12 @@ function updateExpensesTable() {
 }
 
 function updateExpensesTableWithData(expensesData) {
+  // Si hay sistema Firebase, usar su función
+  if (window.updateExpensesTableWithRealData && typeof window.updateExpensesTableWithRealData === 'function') {
+    window.updateExpensesTableWithRealData();
+    return;
+  }
+  
   const tbody = document.getElementById('tablaGastosBody');
   if (!tbody) return;
   
@@ -1027,19 +897,19 @@ function updateExpensesTableWithData(expensesData) {
   }
   
   const tableHTML = expensesData.map(expense => {
-    const category = categories.get(expense.category);
+    const category = categories.get(expense.category) || expenseCategories[expense.category] || { name: expense.category };
     return `
       <tr>
         <td>${formatearFecha(expense.date)}</td>
-        <td><span class="categoria-badge ${expense.category}">${category?.name || expense.category}</span></td>
+        <td><span class="categoria-badge ${expense.category}">${category.name}</span></td>
         <td>${expense.description}</td>
         <td>${formatCurrency(expense.amount)}</td>
         <td><span class="estado-badge ${expense.status}">${expense.status}</span></td>
         <td style="white-space: nowrap;">
-          <button class="btn btn-sm btn-primary" onclick="editarGasto('${expense.id}')" title="Editar">
+          <button class="btn btn-sm btn-primary" onclick="editarGastoSistema('${expense.id}')" title="Editar">
             <i class="fas fa-edit"></i>
           </button>
-          <button class="btn btn-sm btn-danger" onclick="eliminarGasto('${expense.id}')" title="Eliminar" style="margin-left: 0.5rem;">
+          <button class="btn btn-sm btn-danger" onclick="eliminarGastoSistema('${expense.id}')" title="Eliminar" style="margin-left: 0.5rem;">
             <i class="fas fa-trash"></i>
           </button>
         </td>
@@ -1051,6 +921,54 @@ function updateExpensesTableWithData(expensesData) {
 }
 
 // ===========================================
+// FUNCIONES DE EDICIÓN Y ELIMINACIÓN
+// ===========================================
+
+function editarGastoSistema(id) {
+  // Si Firebase está disponible, usar función Firebase
+  if (window.editarGastoFirebase && typeof window.editarGastoFirebase === 'function') {
+    window.editarGastoFirebase(id);
+    return;
+  }
+  
+  // Usar función local
+  editarGastoLocal(id);
+}
+
+function eliminarGastoSistema(id) {
+  // Si Firebase está disponible, usar función Firebase
+  if (window.eliminarGastoFirebase && typeof window.eliminarGastoFirebase === 'function') {
+    window.eliminarGastoFirebase(id);
+    return;
+  }
+  
+  // Usar función local
+  eliminarGastoLocal(id);
+}
+
+function editarGastoLocal(id) {
+  mostrarNotificacion('Función de edición local próximamente disponible', 'info');
+}
+
+function eliminarGastoLocal(id) {
+  if (!confirm('¿Está seguro de que desea eliminar este gasto?')) {
+    return;
+  }
+  
+  try {
+    deleteExpenseLocal(id).then(() => {
+      mostrarNotificacion('Gasto eliminado correctamente', 'success');
+    }).catch(error => {
+      console.error('Error eliminando gasto:', error);
+      mostrarNotificacion('Error al eliminar el gasto: ' + error.message, 'error');
+    });
+  } catch (error) {
+    console.error('Error eliminando gasto:', error);
+    mostrarNotificacion('Error al eliminar el gasto: ' + error.message, 'error');
+  }
+}
+
+// ===========================================
 // INICIALIZACIÓN
 // ===========================================
 
@@ -1059,14 +977,18 @@ async function initializeExpenseSystem() {
     console.log('Inicializando sistema de gastos...');
     
     await initializeCategories();
-    await loadSampleData();
+    
+    // NO cargar datos de muestra - solo datos reales
+    console.log('Sistema configurado para usar solo datos reales');
+    
     await calculateStatistics();
     
     systemInitialized = true;
     console.log('Sistema de gastos inicializado correctamente');
     
     dispatchSystemEvent('expenseManagerReady', {
-      expenseCount: expenses.size
+      expenseCount: expenses.size,
+      usingFirebase: window.firebaseDataManager?.initialized || false
     });
     
   } catch (error) {
@@ -1084,58 +1006,6 @@ async function initializeCategories() {
       totalExpenses: 0,
       active: true
     });
-  });
-}
-
-async function loadSampleData() {
-  const currentDate = new Date();
-  const sampleExpenses = [
-    {
-      id: 'EXP_001',
-      amount: 1200,
-      category: 'mano-obra',
-      description: 'Jornales de cosecha',
-      date: currentDate.toISOString().split('T')[0],
-      status: 'pagado',
-      paymentMethod: 'efectivo',
-      month: currentDate.getMonth(),
-      year: currentDate.getFullYear(),
-      active: true,
-      createdAt: currentDate.toISOString(),
-      userId: getCurrentUserId()
-    },
-    {
-      id: 'EXP_002',
-      amount: 850,
-      category: 'insumos',
-      description: 'Fertilizantes NPK',
-      date: new Date(currentDate.getTime() - 86400000).toISOString().split('T')[0],
-      status: 'pendiente',
-      paymentMethod: 'transferencia',
-      month: currentDate.getMonth(),
-      year: currentDate.getFullYear(),
-      active: true,
-      createdAt: new Date(currentDate.getTime() - 86400000).toISOString(),
-      userId: getCurrentUserId()
-    },
-    {
-      id: 'EXP_003',
-      amount: 320,
-      category: 'transporte',
-      description: 'Combustible',
-      date: new Date(currentDate.getTime() - 172800000).toISOString().split('T')[0],
-      status: 'pagado',
-      paymentMethod: 'tarjeta',
-      month: currentDate.getMonth(),
-      year: currentDate.getFullYear(),
-      active: true,
-      createdAt: new Date(currentDate.getTime() - 172800000).toISOString(),
-      userId: getCurrentUserId()
-    }
-  ];
-
-  sampleExpenses.forEach(expense => {
-    expenses.set(expense.id, expense);
   });
 }
 
@@ -1177,7 +1047,6 @@ function formatearFecha(fecha) {
 function mostrarNotificacion(mensaje, tipo = 'info') {
   console.log(`${tipo.toUpperCase()}: ${mensaje}`);
   
-  // Crear notificación visual
   const notification = document.createElement('div');
   notification.style.cssText = `
     position: fixed;
@@ -1186,21 +1055,37 @@ function mostrarNotificacion(mensaje, tipo = 'info') {
     background: ${tipo === 'success' ? '#22c55e' : tipo === 'error' ? '#ef4444' : tipo === 'warning' ? '#f59e0b' : '#3b82f6'};
     color: white;
     padding: 1rem 1.5rem;
-    border-radius: 8px;
+    border-radius: 12px;
     z-index: 10000;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+    box-shadow: 0 10px 25px rgba(0,0,0,0.3);
     max-width: 400px;
     font-size: 0.9rem;
     font-weight: 500;
-    animation: slideIn 0.3s ease-out;
+    animation: slideInRight 0.3s ease-out;
+    cursor: pointer;
   `;
   
-  // Agregar keyframes para la animación
+  // Agregar icono según tipo
+  const iconMap = {
+    success: 'fas fa-check-circle',
+    error: 'fas fa-times-circle',
+    warning: 'fas fa-exclamation-triangle',
+    info: 'fas fa-info-circle'
+  };
+  
+  notification.innerHTML = `
+    <div style="display: flex; align-items: center; gap: 0.75rem;">
+      <i class="${iconMap[tipo] || iconMap.info}" style="font-size: 1.1rem;"></i>
+      <span>${mensaje}</span>
+    </div>
+  `;
+  
+  // Agregar keyframes para la animación si no existen
   if (!document.querySelector('#notification-styles')) {
     const style = document.createElement('style');
     style.id = 'notification-styles';
     style.textContent = `
-      @keyframes slideIn {
+      @keyframes slideInRight {
         from {
           transform: translateX(100%);
           opacity: 0;
@@ -1210,7 +1095,7 @@ function mostrarNotificacion(mensaje, tipo = 'info') {
           opacity: 1;
         }
       }
-      @keyframes slideOut {
+      @keyframes slideOutRight {
         from {
           transform: translateX(0);
           opacity: 1;
@@ -1224,14 +1109,12 @@ function mostrarNotificacion(mensaje, tipo = 'info') {
     document.head.appendChild(style);
   }
   
-  notification.textContent = mensaje;
-  
   document.body.appendChild(notification);
   
   // Auto-remove after 5 seconds
   setTimeout(() => {
     if (notification.parentNode) {
-      notification.style.animation = 'slideOut 0.3s ease-in';
+      notification.style.animation = 'slideOutRight 0.3s ease-in';
       setTimeout(() => {
         if (notification.parentNode) {
           notification.parentNode.removeChild(notification);
@@ -1243,7 +1126,7 @@ function mostrarNotificacion(mensaje, tipo = 'info') {
   // Click to dismiss
   notification.addEventListener('click', () => {
     if (notification.parentNode) {
-      notification.style.animation = 'slideOut 0.3s ease-in';
+      notification.style.animation = 'slideOutRight 0.3s ease-in';
       setTimeout(() => {
         if (notification.parentNode) {
           notification.parentNode.removeChild(notification);
@@ -1253,59 +1136,15 @@ function mostrarNotificacion(mensaje, tipo = 'info') {
   });
 }
 
-function getFinancialSummary(period = 'month') {
-  const now = new Date();
-  let startDate, endDate;
-  
-  switch (period) {
-    case 'today':
-      startDate = new Date(now.setHours(0,0,0,0));
-      endDate = new Date(now.setHours(23,59,59,999));
-      break;
-    case 'week':
-      startDate = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
-      endDate = now;
-      break;
-    case 'month':
-      startDate = new Date(now.getFullYear(), now.getMonth(), 1);
-      endDate = new Date(now.getFullYear(), now.getMonth() + 1, 0);
-      break;
-    case 'year':
-      startDate = new Date(now.getFullYear(), 0, 1);
-      endDate = new Date(now.getFullYear() + 1, 0, 0);
-      break;
-    default:
-      startDate = new Date(now.getFullYear(), now.getMonth(), 1);
-      endDate = new Date(now.getFullYear(), now.getMonth() + 1, 0);
-  }
-  
-  const periodExpenses = getAllExpenses({
-    dateFrom: startDate.toISOString().split('T')[0],
-    dateTo: endDate.toISOString().split('T')[0]
-  });
-  
-  const total = periodExpenses.reduce((sum, expense) => sum + expense.amount, 0);
-  
-  return {
-    period,
-    total,
-    count: periodExpenses.length,
-    expenses: periodExpenses,
-    statistics
-  };
-}
-
 // ===========================================
 // EXPORTACIÓN GLOBAL
 // ===========================================
 
-// Manager global
 const expenseManager = {
   isInitialized: () => systemInitialized,
-  createExpense,
-  deleteExpense,
+  createExpense: createExpenseWithFirebase,
+  deleteExpense: deleteExpenseLocal,
   getAllExpenses,
-  getFinancialSummary,
   calculateStatistics,
   formatCurrency,
   get expenses() { return expenses; },
@@ -1323,7 +1162,7 @@ if (document.readyState === 'loading') {
   setTimeout(initializeExpenseSystem, 100);
 }
 
-console.log('Sistema de gastos completamente funcional cargado');
+console.log('Sistema de gastos actualizado - SOLO DATOS REALES');
 
 // Suprimir warning específico de Firebase
 const originalWarn = console.warn;
