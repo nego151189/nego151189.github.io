@@ -3,1516 +3,415 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sistema de Tratamientos - Finca La Herradura</title>
+    <title>Tratamientos - Finca La Herradura</title>
     
-    <!-- Meta tags -->
-    <meta name="description" content="Gestión inteligente de tratamientos fitosanitarios con IA y análisis predictivo">
-    <meta name="keywords" content="tratamientos, fitosanitarios, enfermedades, plagas, IA, agricultura">
+    <!-- CSS Framework -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     
-    <!-- Favicon y PWA -->
-    <link rel="icon" type="image/x-icon" href="/icons/favicon.ico">
-    <link rel="manifest" href="/manifest.json">
-    
-    <!-- CSS -->
-    <link rel="stylesheet" href="/css/main.css">
-    <link rel="stylesheet" href="/css/style.css">
-    
-    <!-- Font Awesome -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    
-    <!-- Chart.js para gráficos -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+    <!-- Estilos específicos -->
+    <link rel="stylesheet" href="css/main.css">
     
     <style>
-        .tratamientos-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 2rem;
-            flex-wrap: wrap;
-            gap: 1rem;
+        .main-content {
+            margin-left: 0;
+            padding: 20px;
+            transition: margin-left 0.3s ease;
         }
-
-        .page-title {
-            display: flex;
-            align-items: center;
-            gap: 1rem;
+        
+        .main-content.sidebar-open {
+            margin-left: 250px;
         }
-
-        .title-icon {
-            width: 60px;
-            height: 60px;
-            background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
-            border-radius: 16px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: white;
-            font-size: 1.5rem;
-        }
-
-        .estado-sistema {
-            background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
-            color: white;
-            border-radius: 20px;
-            padding: 2rem;
-            margin-bottom: 2rem;
-            position: relative;
-            overflow: hidden;
-        }
-
-        .estado-sistema::before {
-            content: '';
-            position: absolute;
-            top: -50%;
-            right: -50%;
-            width: 200%;
-            height: 200%;
-            background: radial-gradient(circle, rgba(255, 255, 255, 0.1) 0%, transparent 70%);
-            animation: float 8s ease-in-out infinite;
-        }
-
-        .sistema-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 2rem;
-            position: relative;
-            z-index: 1;
-        }
-
-        .sistema-titulo {
-            font-size: 2rem;
-            font-weight: 700;
-            margin: 0;
-            display: flex;
-            align-items: center;
-            gap: 1rem;
-        }
-
-        .alertas-tratamientos {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-            gap: 1rem;
-            position: relative;
-            z-index: 1;
-        }
-
-        .alerta-item {
-            display: flex;
-            align-items: center;
-            gap: 1rem;
-            padding: 1rem;
-            background: rgba(255, 255, 255, 0.1);
-            border-radius: 12px;
-            backdrop-filter: blur(10px);
-            border: 1px solid rgba(255, 255, 255, 0.2);
-        }
-
-        .alerta-icon {
-            width: 40px;
-            height: 40px;
-            background: rgba(255, 255, 255, 0.2);
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 1.25rem;
-        }
-
-        .control-panel {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-            gap: 1.5rem;
-            margin-bottom: 2rem;
-        }
-
+        
         .tratamiento-card {
-            background: var(--bg-card);
-            border-radius: 16px;
-            padding: 1.5rem;
-            position: relative;
-            border-left: 4px solid transparent;
-            transition: all 0.3s ease;
-            cursor: pointer;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.15);
         }
-
-        .tratamiento-card:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+        
+        .aplicacion-card {
+            background: white;
+            border-radius: 10px;
+            padding: 15px;
+            margin: 10px 0;
+            border-left: 4px solid #28a745;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
         }
-
-        .tratamiento-card.urgente {
-            border-left-color: #ef4444;
-        }
-
-        .tratamiento-card.programado {
-            border-left-color: #f59e0b;
-        }
-
-        .tratamiento-card.completado {
-            border-left-color: #22c55e;
-        }
-
-        .tratamiento-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 1rem;
-        }
-
-        .tratamiento-titulo {
-            font-size: 1.125rem;
-            font-weight: 600;
-            color: var(--text-primary);
-        }
-
-        .tratamiento-estado {
-            padding: 0.25rem 0.75rem;
+        
+        .status-badge {
+            padding: 5px 12px;
             border-radius: 20px;
-            font-size: 0.75rem;
-            font-weight: 600;
-            text-transform: uppercase;
+            font-size: 12px;
+            font-weight: bold;
         }
-
-        .estado-urgente {
-            background: rgba(239, 68, 68, 0.2);
-            color: #ef4444;
-        }
-
-        .estado-programado {
-            background: rgba(245, 158, 11, 0.2);
-            color: #f59e0b;
-        }
-
-        .estado-completado {
-            background: rgba(34, 197, 94, 0.2);
-            color: #22c55e;
-        }
-
-        .tratamiento-info {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 1rem;
-            margin-bottom: 1rem;
-        }
-
-        .info-item {
-            text-align: center;
-        }
-
-        .info-valor {
-            font-size: 1.125rem;
-            font-weight: 700;
-            color: var(--text-primary);
-        }
-
-        .info-label {
-            font-size: 0.75rem;
-            color: var(--text-secondary);
-            text-transform: uppercase;
-        }
-
-        .tratamiento-ubicacion {
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-            margin-bottom: 1rem;
-            color: var(--text-secondary);
-            font-size: 0.875rem;
-        }
-
-        .tratamiento-acciones {
-            display: flex;
-            gap: 0.5rem;
-            flex-wrap: wrap;
-        }
-
-        .btn-control {
-            flex: 1;
-            padding: 0.5rem 1rem;
-            border: none;
-            border-radius: 8px;
-            cursor: pointer;
-            font-size: 0.875rem;
-            font-weight: 600;
-            transition: all 0.3s ease;
-        }
-
-        .btn-aplicar {
-            background: #22c55e;
+        
+        .status-programado { background: #ffc107; color: #856404; }
+        .status-aplicado { background: #28a745; color: white; }
+        .status-vencido { background: #dc3545; color: white; }
+        
+        .sector-badge {
+            background: #17a2b8;
             color: white;
-        }
-
-        .btn-aplicar:hover {
-            background: #16a34a;
-        }
-
-        .btn-editar {
-            background: #f59e0b;
-            color: white;
-        }
-
-        .btn-editar:hover {
-            background: #d97706;
-        }
-
-        .btn-historial {
-            background: #3b82f6;
-            color: white;
-        }
-
-        .btn-historial:hover {
-            background: #2563eb;
-        }
-
-        .contenido-principal {
-            display: grid;
-            grid-template-columns: 1fr 350px;
-            gap: 2rem;
-            margin-bottom: 2rem;
-        }
-
-        .lista-tratamientos {
-            background: var(--bg-card);
-            border-radius: 16px;
-            padding: 1.5rem;
-        }
-
-        .sidebar-tratamientos {
-            display: grid;
-            gap: 1.5rem;
-        }
-
-        .productos-disponibles {
-            background: var(--bg-card);
-            border-radius: 16px;
-            padding: 1.5rem;
-        }
-
-        .producto-item {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 1rem;
-            margin-bottom: 1rem;
-            background: var(--bg-secondary);
+            padding: 3px 8px;
             border-radius: 12px;
-            border-left: 4px solid #22c55e;
+            font-size: 11px;
+            margin: 2px;
         }
-
-        .producto-info {
-            flex: 1;
+        
+        .progress-ring {
+            width: 120px;
+            height: 120px;
         }
-
-        .producto-nombre {
-            font-weight: 600;
-            color: var(--text-primary);
-            margin-bottom: 0.25rem;
+        
+        .progress-ring circle {
+            transition: stroke-dasharray 0.35s;
         }
-
-        .producto-tipo {
-            font-size: 0.875rem;
-            color: var(--text-secondary);
+        
+        .calendario-tratamientos {
+            background: white;
+            border-radius: 15px;
+            padding: 20px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.1);
         }
-
-        .producto-stock {
-            text-align: right;
-        }
-
-        .stock-cantidad {
-            font-weight: 700;
-            color: var(--text-primary);
-        }
-
-        .stock-unidad {
-            font-size: 0.75rem;
-            color: var(--text-secondary);
-        }
-
-        .enfermedades-detectadas {
-            background: var(--bg-card);
-            border-radius: 16px;
-            padding: 1.5rem;
-        }
-
-        .enfermedad-item {
-            display: flex;
-            align-items: flex-start;
-            gap: 1rem;
-            padding: 1rem;
-            margin-bottom: 1rem;
-            border-radius: 12px;
-            border-left: 4px solid transparent;
-        }
-
-        .enfermedad-item.critica {
-            background: rgba(239, 68, 68, 0.1);
-            border-left-color: #ef4444;
-        }
-
-        .enfermedad-item.moderada {
-            background: rgba(245, 158, 11, 0.1);
-            border-left-color: #f59e0b;
-        }
-
-        .enfermedad-item.leve {
-            background: rgba(59, 130, 246, 0.1);
-            border-left-color: #3b82f6;
-        }
-
-        .enfermedad-icon {
-            width: 32px;
-            height: 32px;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
+        
+        .alerta-fitosanitaria {
+            background: linear-gradient(135deg, #ff6b6b, #ee5a24);
             color: white;
-            font-size: 0.875rem;
-            flex-shrink: 0;
+            border-radius: 10px;
+            padding: 15px;
+            margin: 10px 0;
         }
-
-        .enfermedad-critica .enfermedad-icon {
-            background: #ef4444;
-        }
-
-        .enfermedad-moderada .enfermedad-icon {
-            background: #f59e0b;
-        }
-
-        .enfermedad-leve .enfermedad-icon {
-            background: #3b82f6;
-        }
-
-        .enfermedad-contenido {
-            flex: 1;
-        }
-
-        .enfermedad-nombre {
-            font-weight: 600;
-            color: var(--text-primary);
-            margin-bottom: 0.25rem;
-        }
-
-        .enfermedad-descripcion {
-            font-size: 0.875rem;
-            color: var(--text-secondary);
-        }
-
-        .modal-programar {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: rgba(0, 0, 0, 0.7);
-            z-index: 1000;
-            padding: 2rem;
-        }
-
-        .modal-content {
-            background: var(--bg-card);
-            border-radius: 16px;
-            max-width: 600px;
-            margin: 0 auto;
-            padding: 2rem;
-            max-height: 90vh;
-            overflow-y: auto;
-        }
-
-        .modal-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 2rem;
-        }
-
-        .modal-close {
-            background: none;
-            border: none;
-            font-size: 1.5rem;
-            cursor: pointer;
-            color: var(--text-secondary);
-        }
-
-        .form-programar {
-            display: grid;
-            gap: 1rem;
-        }
-
-        .form-row {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 1rem;
-        }
-
-        .ubicacion-selector {
-            background: var(--bg-secondary);
-            border-radius: 12px;
-            padding: 1rem;
-        }
-
-        .ubicacion-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
-            gap: 0.5rem;
-        }
-
-        .ubicacion-item {
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-            padding: 0.5rem;
-            background: var(--bg-card);
-            border-radius: 6px;
-            font-size: 0.875rem;
-        }
-
-        .graficos-tratamientos {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 2rem;
-            margin-bottom: 2rem;
-        }
-
-        .grafico-card {
-            background: var(--bg-card);
-            border-radius: 16px;
-            padding: 1.5rem;
-        }
-
-        .grafico-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 1.5rem;
-        }
-
-        .grafico-titulo {
-            font-size: 1.125rem;
-            font-weight: 600;
-            color: var(--text-primary);
-        }
-
-        .historial-tratamientos {
-            background: var(--bg-card);
-            border-radius: 16px;
-            padding: 1.5rem;
-            margin-bottom: 2rem;
-        }
-
-        @media (max-width: 1024px) {
-            .contenido-principal {
-                grid-template-columns: 1fr;
-            }
-            
-            .sidebar-tratamientos {
-                order: -1;
-            }
-            
-            .graficos-tratamientos {
-                grid-template-columns: 1fr;
-            }
-        }
-
+        
         @media (max-width: 768px) {
-            .tratamientos-header {
-                flex-direction: column;
-                align-items: stretch;
+            .main-content.sidebar-open {
+                margin-left: 0;
             }
             
-            .alertas-tratamientos {
-                grid-template-columns: 1fr;
+            .col-md-6, .col-lg-4 {
+                margin-bottom: 20px;
             }
-            
-            .control-panel {
-                grid-template-columns: 1fr;
-            }
-            
-            .form-row {
-                grid-template-columns: 1fr;
-            }
-        }
-
-        .chart-container {
-            position: relative;
-            height: 250px;
-            width: 100%;
         }
     </style>
 </head>
 <body>
-    <!-- Navegación -->
-    <nav id="navbar"></nav>
-
     <!-- Contenido principal -->
-    <main class="main-content-wrapper">
-        <!-- Header de la página -->
-        <header class="tratamientos-header">
-            <div class="page-title">
-                <div class="title-icon">
-                    <i class="fas fa-stethoscope"></i>
-                </div>
-                <div>
-                    <h1>Sistema de Tratamientos</h1>
-                    <p>Gestión inteligente de tratamientos fitosanitarios</p>
-                </div>
+    <div class="main-content" id="mainContent">
+        <!-- Header -->
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <div>
+                <h1><i class="fas fa-spray-can me-2"></i>Tratamientos Fitosanitarios</h1>
+                <p class="text-muted">Gestión integral de tratamientos por sectores y árboles</p>
             </div>
-            
-            <div class="header-actions">
-                <button class="btn btn-danger" id="btnTratamientoUrgente">
-                    <i class="fas fa-exclamation-triangle"></i> Urgente
-                </button>
-                
-                <button class="btn btn-success" id="btnNuevoTratamiento">
+            <div>
+                <button class="btn btn-success me-2" onclick="mostrarModalNuevoTratamiento()">
                     <i class="fas fa-plus"></i> Nuevo Tratamiento
                 </button>
-                
-                <button class="btn btn-primary" id="btnConfiguracion">
-                    <i class="fas fa-cog"></i> Configuración
-                </button>
-                
-                <button class="btn btn-secondary" id="btnReporteTratamientos">
-                    <i class="fas fa-chart-bar"></i> Reportes
+                <button class="btn btn-info" onclick="mostrarCalendarioTratamientos()">
+                    <i class="fas fa-calendar"></i> Calendario
                 </button>
             </div>
-        </header>
-
-        <!-- Estado del sistema -->
-        <section class="estado-sistema">
-            <div class="sistema-header">
-                <h2 class="sistema-titulo">
-                    <i class="fas fa-shield-alt"></i>
-                    Estado del Sistema de Tratamientos
-                </h2>
+        </div>
+        
+        <!-- Alertas Fitosanitarias -->
+        <div id="alertasFitosanitarias" class="row mb-4" style="display: none;">
+            <div class="col-12">
+                <h4><i class="fas fa-exclamation-triangle me-2"></i>Alertas Fitosanitarias</h4>
+                <div id="alertasContainer"></div>
             </div>
-            
-            <div class="alertas-tratamientos" id="alertasTratamientos">
-                <!-- Las alertas se cargarán dinámicamente -->
-            </div>
-        </section>
-
-        <!-- Panel de control de tratamientos -->
-        <section class="control-panel" id="panelTratamientos">
-            <!-- Los tratamientos se cargarán dinámicamente -->
-        </section>
-
-        <!-- Gráficos de tratamientos -->
-        <div class="graficos-tratamientos">
-            <div class="grafico-card">
-                <div class="grafico-header">
-                    <h3 class="grafico-titulo">
-                        <i class="fas fa-chart-line"></i>
-                        Efectividad de Tratamientos
-                    </h3>
-                </div>
-                <div class="chart-container">
-                    <canvas id="graficoEfectividad"></canvas>
+        </div>
+        
+        <!-- Estadísticas principales -->
+        <div class="row mb-4">
+            <div class="col-md-3">
+                <div class="tratamiento-card text-center">
+                    <i class="fas fa-clipboard-list fa-2x mb-2"></i>
+                    <h3 id="totalTratamientos">0</h3>
+                    <p>Tratamientos Activos</p>
                 </div>
             </div>
-            
-            <div class="grafico-card">
-                <div class="grafico-header">
-                    <h3 class="grafico-titulo">
-                        <i class="fas fa-chart-pie"></i>
-                        Tipos de Enfermedades
-                    </h3>
+            <div class="col-md-3">
+                <div class="tratamiento-card text-center">
+                    <i class="fas fa-clock fa-2x mb-2"></i>
+                    <h3 id="tratamientosPendientes">0</h3>
+                    <p>Pendientes Hoy</p>
                 </div>
-                <div class="chart-container">
-                    <canvas id="graficoEnfermedades"></canvas>
+            </div>
+            <div class="col-md-3">
+                <div class="tratamiento-card text-center">
+                    <i class="fas fa-check-circle fa-2x mb-2"></i>
+                    <h3 id="tratamientosCompletados">0</h3>
+                    <p>Completados Este Mes</p>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="tratamiento-card text-center">
+                    <i class="fas fa-tint fa-2x mb-2"></i>
+                    <h3 id="litrosAplicados">0L</h3>
+                    <p>Aplicados Este Mes</p>
                 </div>
             </div>
         </div>
-
-        <!-- Contenido principal -->
-        <div class="contenido-principal">
-            <!-- Lista de tratamientos -->
-            <div class="lista-tratamientos">
-                <h3 style="margin-bottom: 1.5rem;">
-                    <i class="fas fa-list"></i>
-                    Tratamientos Activos
-                </h3>
-                
-                <div id="listaTratamientosActivos">
-                    <!-- Los tratamientos se cargarán dinámicamente -->
-                </div>
-            </div>
-
-            <!-- Sidebar -->
-            <div class="sidebar-tratamientos">
-                <!-- Productos disponibles -->
-                <div class="productos-disponibles">
-                    <h4 style="margin-bottom: 1rem;">
-                        <i class="fas fa-flask"></i>
-                        Productos Disponibles
-                    </h4>
-                    
-                    <div id="listaProductos">
-                        <!-- Los productos se cargarán dinámicamente -->
+        
+        <!-- Filtros -->
+        <div class="row mb-4">
+            <div class="col-md-12">
+                <div class="card">
+                    <div class="card-header">
+                        <h5><i class="fas fa-filter me-2"></i>Filtros</h5>
                     </div>
-                </div>
-
-                <!-- Enfermedades detectadas -->
-                <div class="enfermedades-detectadas">
-                    <h4 style="margin-bottom: 1rem;">
-                        <i class="fas fa-bug"></i>
-                        Enfermedades Detectadas
-                    </h4>
-                    
-                    <div id="listaEnfermedades">
-                        <!-- Las enfermedades se cargarán dinámicamente -->
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Historial de tratamientos -->
-        <section class="historial-tratamientos">
-            <div class="historial-header">
-                <h3>
-                    <i class="fas fa-history"></i>
-                    Historial de Tratamientos
-                </h3>
-                <div>
-                    <button class="btn btn-sm btn-secondary" id="btnExportarHistorialTratamientos">
-                        <i class="fas fa-download"></i> Exportar
-                    </button>
-                </div>
-            </div>
-            
-            <div class="table-container">
-                <table class="table" id="tablaTratamientos">
-                    <thead>
-                        <tr>
-                            <th>Fecha/Hora</th>
-                            <th>Ubicación</th>
-                            <th>Enfermedad</th>
-                            <th>Producto</th>
-                            <th>Dosis</th>
-                            <th>Responsable</th>
-                            <th>Efectividad</th>
-                            <th>Estado</th>
-                        </tr>
-                    </thead>
-                    <tbody id="tablaTratamientosBody">
-                        <!-- Los datos se cargarán dinámicamente -->
-                    </tbody>
-                </table>
-            </div>
-        </section>
-    </main>
-
-    <!-- Modal para nuevo tratamiento -->
-    <div class="modal-programar" id="modalTratamiento">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h3 id="modalTitulo">Nuevo Tratamiento</h3>
-                <button class="modal-close" id="cerrarModalTratamiento">
-                    <i class="fas fa-times"></i>
-                </button>
-            </div>
-            
-            <form class="form-programar" id="formTratamiento">
-                <div class="form-group">
-                    <label class="form-label">Nombre del Tratamiento</label>
-                    <input type="text" class="form-input" id="nombreTratamiento" required>
-                </div>
-                
-                <div class="form-row">
-                    <div class="form-group">
-                        <label class="form-label">Enfermedad/Plaga</label>
-                        <select class="form-input" id="enfermedadTratamiento" required>
-                            <option value="">Seleccionar...</option>
-                            <option value="hongo">Hongo</option>
-                            <option value="bacteria">Bacteria</option>
-                            <option value="virus">Virus</option>
-                            <option value="plaga">Plaga</option>
-                            <option value="deficiencia">Deficiencia Nutricional</option>
-                        </select>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label class="form-label">Producto</label>
-                        <select class="form-input" id="productoTratamiento" required>
-                            <option value="">Seleccionar producto...</option>
-                        </select>
-                    </div>
-                </div>
-                
-                <div class="form-row">
-                    <div class="form-group">
-                        <label class="form-label">Dosis (ml/L)</label>
-                        <input type="number" class="form-input" id="dosisTratamiento" step="0.1" required>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label class="form-label">Método de Aplicación</label>
-                        <select class="form-input" id="metodoAplicacion" required>
-                            <option value="foliar">Foliar</option>
-                            <option value="drench">Drench (suelo)</option>
-                            <option value="inyeccion">Inyección</option>
-                            <option value="espolvoreo">Espolvoreo</option>
-                        </select>
-                    </div>
-                </div>
-                
-                <div class="form-group">
-                    <label class="form-label">Ubicación</label>
-                    <div class="ubicacion-selector">
-                        <div class="ubicacion-grid" id="ubicacionSelector">
-                            <!-- Las ubicaciones se cargarán dinámicamente -->
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-3">
+                                <label>Sector</label>
+                                <select class="form-select" id="filtroSector">
+                                    <option value="">Todos los sectores</option>
+                                </select>
+                            </div>
+                            <div class="col-md-3">
+                                <label>Estado</label>
+                                <select class="form-select" id="filtroEstado">
+                                    <option value="">Todos los estados</option>
+                                    <option value="programado">Programado</option>
+                                    <option value="aplicado">Aplicado</option>
+                                    <option value="vencido">Vencido</option>
+                                </select>
+                            </div>
+                            <div class="col-md-3">
+                                <label>Tipo de Tratamiento</label>
+                                <select class="form-select" id="filtroTipo">
+                                    <option value="">Todos los tipos</option>
+                                    <option value="fungicida">Fungicida</option>
+                                    <option value="insecticida">Insecticida</option>
+                                    <option value="fertilizante">Fertilizante</option>
+                                    <option value="herbicida">Herbicida</option>
+                                </select>
+                            </div>
+                            <div class="col-md-3 d-flex align-items-end">
+                                <button class="btn btn-primary w-100" onclick="aplicarFiltros()">
+                                    <i class="fas fa-search"></i> Filtrar
+                                </button>
+                            </div>
                         </div>
                     </div>
                 </div>
-                
-                <div class="form-row">
-                    <div class="form-group">
-                        <label class="form-label">Fecha de Aplicación</label>
-                        <input type="date" class="form-input" id="fechaAplicacion" required>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label class="form-label">Hora de Aplicación</label>
-                        <input type="time" class="form-input" id="horaAplicacion" required>
-                    </div>
-                </div>
-                
-                <div class="form-group">
-                    <label class="form-label">Observaciones</label>
-                    <textarea class="form-input" id="observacionesTratamiento" rows="3"></textarea>
-                </div>
-                
-                <div class="form-group" style="display: flex; gap: 1rem; justify-content: flex-end;">
-                    <button type="button" class="btn btn-secondary" id="cancelarTratamiento">
-                        Cancelar
-                    </button>
-                    <button type="submit" class="btn btn-success">
-                        <i class="fas fa-save"></i> Programar Tratamiento
-                    </button>
-                </div>
-            </form>
+            </div>
         </div>
-    </div>
-
-    <!-- Scripts Firebase (deben cargarse primero) -->
-    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-storage.js"></script>
-
-    <!-- Scripts de aplicación -->
-    <script type="module" src="/js/firebase-config.js"></script>
-    <script type="module" src="/js/auth.js"></script>
-    <script type="module" src="/js/nav.js"></script>
-    <script type="module" src="/js/offline.js"></script>
-    <script type="module" src="/js/tree-manager.js"></script>
-    <script type="module" src="/js/tratamientos.js"></script>
-    
-    <script>
-        // Variables globales
-        let graficoEfectividad, graficoEnfermedades;
-        let tratamientosManager;
-        let sistemaInicializado = false;
-
-        // Inicialización de la página
-        document.addEventListener('DOMContentLoaded', async () => {
-            try {
-                console.log('🩺 Iniciando sistema de tratamientos...');
-                
-                // Verificar autenticación
-                const autenticado = await verificarAutenticacion();
-                if (!autenticado) {
-                    console.log('❌ Usuario no autenticado, redirigiendo...');
-                    window.location.href = '/login.html';
-                    return;
-                }
-
-                // Esperar a que TreeManager esté disponible
-                await esperarTreeManager();
-                
-                // Esperar a que TratamientosManager esté disponible
-                await esperarTratamientosManager();
-                
-                // Inicializar página
-                await inicializarPagina();
-
-                sistemaInicializado = true;
-                console.log('🎉 Sistema de tratamientos completamente inicializado');
-
-            } catch (error) {
-                console.error('❌ Error fatal en inicialización:', error);
-                mostrarError('Error crítico iniciando la aplicación');
-            }
-        });
-
-        async function verificarAutenticacion() {
-            return new Promise((resolve) => {
-                const checkAuth = () => {
-                    if (window.firebase && window.firebase.auth) {
-                        window.firebase.auth().onAuthStateChanged((user) => {
-                            resolve(!!user);
-                        });
-                    } else {
-                        setTimeout(checkAuth, 100);
-                    }
-                };
-                checkAuth();
-                setTimeout(() => resolve(false), 5000);
-            });
-        }
-
-        function esperarTreeManager() {
-            return new Promise((resolve, reject) => {
-                const maxAttempts = 100;
-                let attempts = 0;
-                
-                const checkTreeManager = () => {
-                    attempts++;
-                    
-                    if (window.treeManager && window.treeManager.isInitialized) {
-                        console.log('✅ TreeManager disponible para tratamientos');
-                        resolve();
-                    } else if (attempts < maxAttempts) {
-                        setTimeout(checkTreeManager, 100);
-                    } else {
-                        console.warn('⚠️ Timeout esperando TreeManager');
-                        resolve(); // Continuar sin TreeManager
-                    }
-                };
-                
-                checkTreeManager();
-            });
-        }
-
-        function esperarTratamientosManager() {
-            return new Promise((resolve) => {
-                const maxAttempts = 100;
-                let attempts = 0;
-                
-                const checkTratamientosManager = () => {
-                    attempts++;
-                    
-                    if (window.tratamientosManager) {
-                        tratamientosManager = window.tratamientosManager;
-                        console.log('✅ TratamientosManager disponible');
-                        resolve();
-                    } else if (attempts < maxAttempts) {
-                        setTimeout(checkTratamientosManager, 100);
-                    } else {
-                        console.warn('⚠️ Timeout esperando TratamientosManager');
-                        resolve(); // Continuar sin TratamientosManager
-                    }
-                };
-                
-                checkTratamientosManager();
-            });
-        }
-
-        async function inicializarPagina() {
-            try {
-                console.log('⚙️ Inicializando componentes de la página...');
-                
-                // Configurar event listeners
-                configurarEventListeners();
-                
-                // Cargar datos iniciales
-                await cargarDatosIniciales();
-                
-                // Inicializar gráficos
-                inicializarGraficos();
-                
-                // Cargar ubicaciones para formulario
-                cargarUbicacionesFormulario();
-                
-                console.log('✅ Página de tratamientos inicializada correctamente');
-                
-            } catch (error) {
-                console.error('❌ Error inicializando página:', error);
-                mostrarError('Error cargando los datos de tratamientos');
-            }
-        }
-
-        function configurarEventListeners() {
-            // Botones principales
-            document.getElementById('btnNuevoTratamiento')?.addEventListener('click', mostrarModalTratamiento);
-            document.getElementById('btnTratamientoUrgente')?.addEventListener('click', crearTratamientoUrgente);
-            document.getElementById('btnConfiguracion')?.addEventListener('click', mostrarConfiguracion);
-            document.getElementById('btnReporteTratamientos')?.addEventListener('click', generarReporte);
-            
-            // Modal
-            document.getElementById('cerrarModalTratamiento')?.addEventListener('click', cerrarModal);
-            document.getElementById('cancelarTratamiento')?.addEventListener('click', cerrarModal);
-            document.getElementById('formTratamiento')?.addEventListener('submit', guardarTratamiento);
-            
-            // Otros botones
-            document.getElementById('btnExportarHistorialTratamientos')?.addEventListener('click', exportarHistorial);
-            
-            console.log('✅ Event listeners configurados');
-        }
-
-        async function cargarDatosIniciales() {
-            try {
-                // Cargar tratamientos activos
-                await cargarTratamientosActivos();
-                
-                // Cargar productos disponibles
-                await cargarProductosDisponibles();
-                
-                // Cargar enfermedades detectadas
-                await cargarEnfermedadesDetectadas();
-                
-                // Cargar historial
-                await cargarHistorialTratamientos();
-                
-                // Generar alertas
-                await generarAlertas();
-                
-            } catch (error) {
-                console.error('Error cargando datos:', error);
-            }
-        }
-
-        async function cargarTratamientosActivos() {
-            const container = document.getElementById('panelTratamientos');
-            if (!container) return;
-
-            try {
-                // Obtener tratamientos desde el manager si existe
-                let tratamientos = [];
-                if (tratamientosManager && tratamientosManager.tratamientos) {
-                    tratamientos = tratamientosManager.tratamientos
-                        .filter(t => t.estado === 'programado' || t.estado === 'en_proceso')
-                        .sort((a, b) => new Date(b.fecha) - new Date(a.fecha));
-                }
-
-                if (tratamientos.length === 0) {
-                    container.innerHTML = `
-                        <div class="tratamiento-card">
-                            <div class="tratamiento-header">
-                                <h3 class="tratamiento-titulo">No hay tratamientos activos</h3>
-                            </div>
-                            <p>No se encontraron tratamientos programados o en proceso.</p>
-                            <button class="btn btn-primary" onclick="mostrarModalTratamiento()">
-                                <i class="fas fa-plus"></i> Crear Primer Tratamiento
+        
+        <!-- Lista de Tratamientos -->
+        <div class="row">
+            <div class="col-md-8">
+                <div class="card">
+                    <div class="card-header d-flex justify-content-between">
+                        <h5><i class="fas fa-list me-2"></i>Lista de Tratamientos</h5>
+                        <div>
+                            <button class="btn btn-sm btn-outline-secondary me-2" onclick="cambiarVista('tarjetas')">
+                                <i class="fas fa-th"></i>
+                            </button>
+                            <button class="btn btn-sm btn-outline-secondary" onclick="cambiarVista('tabla')">
+                                <i class="fas fa-table"></i>
                             </button>
                         </div>
-                    `;
-                    return;
-                }
-
-                container.innerHTML = tratamientos.map(tratamiento => crearTarjetaTratamiento(tratamiento)).join('');
-
-            } catch (error) {
-                console.error('Error cargando tratamientos activos:', error);
-                container.innerHTML = '<div class="error-message">Error cargando tratamientos</div>';
-            }
-        }
-
-        function crearTarjetaTratamiento(tratamiento) {
-            const estadoClass = tratamiento.prioridad === 'alta' ? 'urgente' : 
-                              tratamiento.estado === 'programado' ? 'programado' : 'completado';
+                    </div>
+                    <div class="card-body">
+                        <div id="listaTratamientos"></div>
+                    </div>
+                </div>
+            </div>
             
-            return `
-                <div class="tratamiento-card ${estadoClass}">
-                    <div class="tratamiento-header">
-                        <h3 class="tratamiento-titulo">${tratamiento.enfermedad || 'Tratamiento'}</h3>
-                        <div class="tratamiento-estado estado-${estadoClass}">
-                            ${tratamiento.estado || 'Programado'}
-                        </div>
-                    </div>
-                    
-                    <div class="tratamiento-ubicacion">
-                        <i class="fas fa-map-marker-alt"></i>
-                        <span>${tratamiento.ubicacion || 'Ubicación no especificada'}</span>
-                    </div>
-                    
-                    <div class="tratamiento-info">
-                        <div class="info-item">
-                            <div class="info-valor">${tratamiento.producto || 'N/A'}</div>
-                            <div class="info-label">Producto</div>
-                        </div>
-                        <div class="info-item">
-                            <div class="info-valor">${tratamiento.dosis || 'N/A'}</div>
-                            <div class="info-label">Dosis</div>
-                        </div>
-                    </div>
-                    
-                    <div class="tratamiento-acciones">
-                        <button class="btn-control btn-aplicar" onclick="aplicarTratamiento('${tratamiento.id}')">
-                            <i class="fas fa-play"></i> Aplicar
-                        </button>
-                        <button class="btn-control btn-editar" onclick="editarTratamiento('${tratamiento.id}')">
-                            <i class="fas fa-edit"></i> Editar
-                        </button>
-                        <button class="btn-control btn-historial" onclick="verHistorialTratamiento('${tratamiento.id}')">
-                            <i class="fas fa-history"></i> Historial
-                        </button>
-                    </div>
+            <!-- Panel lateral con calendario y próximos tratamientos -->
+            <div class="col-md-4">
+                <div class="calendario-tratamientos mb-4">
+                    <h5><i class="fas fa-calendar-alt me-2"></i>Próximos Tratamientos</h5>
+                    <div id="proximosTratamientos"></div>
                 </div>
-            `;
-        }
-
-        async function cargarProductosDisponibles() {
-            const container = document.getElementById('listaProductos');
-            if (!container) return;
-
-            // Productos de ejemplo mientras se conecta con la base de datos real
-            const productos = [
-                { nombre: 'Fungicida Cúprico', tipo: 'Fungicida', stock: 15, unidad: 'L' },
-                { nombre: 'Insecticida Sistémico', tipo: 'Insecticida', stock: 8, unidad: 'L' },
-                { nombre: 'Fertilizante Foliar', tipo: 'Fertilizante', stock: 25, unidad: 'L' },
-                { nombre: 'Bactericida', tipo: 'Bactericida', stock: 12, unidad: 'L' }
-            ];
-
-            container.innerHTML = productos.map(producto => `
-                <div class="producto-item">
-                    <div class="producto-info">
-                        <div class="producto-nombre">${producto.nombre}</div>
-                        <div class="producto-tipo">${producto.tipo}</div>
-                    </div>
-                    <div class="producto-stock">
-                        <div class="stock-cantidad">${producto.stock}</div>
-                        <div class="stock-unidad">${producto.unidad}</div>
-                    </div>
+                
+                <div class="calendario-tratamientos">
+                    <h5><i class="fas fa-chart-line me-2"></i>Efectividad</h5>
+                    <canvas id="chartEfectividad" width="300" height="200"></canvas>
                 </div>
-            `).join('');
-
-            // También cargar en el select del formulario
-            const selectProducto = document.getElementById('productoTratamiento');
-            if (selectProducto) {
-                selectProducto.innerHTML = '<option value="">Seleccionar producto...</option>' +
-                    productos.map(p => `<option value="${p.nombre}">${p.nombre} (${p.stock}${p.unidad})</option>`).join('');
-            }
-        }
-
-        async function cargarEnfermedadesDetectadas() {
-            const container = document.getElementById('listaEnfermedades');
-            if (!container) return;
-
-            // Simular detección de enfermedades basada en árboles del TreeManager
-            let enfermedades = [];
-
-            try {
-                if (window.treeManager) {
-                    const arboles = await window.treeManager.getAllTrees();
-                    
-                    // Analizar salud de árboles para detectar posibles enfermedades
-                    arboles.forEach(arbol => {
-                        if (arbol.health && arbol.health.overall < 80) {
-                            const severidad = arbol.health.overall < 50 ? 'critica' : 
-                                            arbol.health.overall < 70 ? 'moderada' : 'leve';
+            </div>
+        </div>
+    </div>
+    
+    <!-- Modal Nuevo Tratamiento -->
+    <div class="modal fade" id="modalNuevoTratamiento" tabindex="-1">
+        <div class="modal-dialog modal-xl">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title"><i class="fas fa-plus me-2"></i>Nuevo Tratamiento</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="formNuevoTratamiento">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <h6>Información Básica</h6>
+                                <div class="mb-3">
+                                    <label class="form-label">Nombre del Tratamiento</label>
+                                    <input type="text" class="form-control" name="nombre" required>
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label">Tipo de Tratamiento</label>
+                                    <select class="form-select" name="tipo" required>
+                                        <option value="">Seleccionar tipo</option>
+                                        <option value="fungicida">Fungicida</option>
+                                        <option value="insecticida">Insecticida</option>
+                                        <option value="fertilizante">Fertilizante Foliar</option>
+                                        <option value="herbicida">Herbicida</option>
+                                        <option value="bioestimulante">Bioestimulante</option>
+                                    </select>
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label">Producto</label>
+                                    <input type="text" class="form-control" name="producto" required>
+                                </div>
+                                <div class="row">
+                                    <div class="col-6">
+                                        <label class="form-label">Dosis por árbol (ml)</label>
+                                        <input type="number" class="form-control" name="dosisPorArbol" step="0.1" required>
+                                    </div>
+                                    <div class="col-6">
+                                        <label class="form-label">Concentración (%)</label>
+                                        <input type="number" class="form-control" name="concentracion" step="0.01" required>
+                                    </div>
+                                </div>
+                            </div>
                             
-                            enfermedades.push({
-                                nombre: `Posible enfermedad - Árbol #${arbol.correlative || arbol.id}`,
-                                descripcion: `Salud al ${arbol.health.overall}% en ${arbol.blockId}`,
-                                severidad: severidad,
-                                ubicacion: arbol.blockId
-                            });
-                        }
-                    });
-                }
-
-                if (enfermedades.length === 0) {
-                    enfermedades = [
-                        {
-                            nombre: 'Sistema saludable',
-                            descripcion: 'No se detectaron enfermedades críticas',
-                            severidad: 'leve'
-                        }
-                    ];
-                }
-
-                container.innerHTML = enfermedades.map(enfermedad => `
-                    <div class="enfermedad-item enfermedad-${enfermedad.severidad}">
-                        <div class="enfermedad-icon">
-                            <i class="fas ${enfermedad.severidad === 'critica' ? 'fa-exclamation-triangle' : 
-                                           enfermedad.severidad === 'moderada' ? 'fa-exclamation-circle' : 'fa-check'}"></i>
+                            <div class="col-md-6">
+                                <h6>Aplicación</h6>
+                                <div class="mb-3">
+                                    <label class="form-label">Selección de Aplicación</label>
+                                    <div>
+                                        <input type="radio" name="tipoAplicacion" value="sector" id="aplicacionSector" checked>
+                                        <label for="aplicacionSector" class="me-3">Por Sector</label>
+                                        <input type="radio" name="tipoAplicacion" value="arboles" id="aplicacionArboles">
+                                        <label for="aplicacionArboles">Árboles Específicos</label>
+                                    </div>
+                                </div>
+                                
+                                <div id="selectorSector" class="mb-3">
+                                    <label class="form-label">Sector</label>
+                                    <select class="form-select" name="sector">
+                                        <option value="">Seleccionar sector</option>
+                                    </select>
+                                </div>
+                                
+                                <div id="selectorArboles" class="mb-3" style="display: none;">
+                                    <label class="form-label">Árboles Específicos</label>
+                                    <select class="form-select" name="arboles" multiple>
+                                    </select>
+                                    <small class="text-muted">Mantén Ctrl para seleccionar múltiples árboles</small>
+                                </div>
+                                
+                                <div class="row">
+                                    <div class="col-6">
+                                        <label class="form-label">Fecha Programada</label>
+                                        <input type="date" class="form-control" name="fechaProgramada" required>
+                                    </div>
+                                    <div class="col-6">
+                                        <label class="form-label">Hora</label>
+                                        <input type="time" class="form-control" name="hora" value="06:00">
+                                    </div>
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label class="form-label">Responsable</label>
+                                    <input type="text" class="form-control" name="responsable">
+                                </div>
+                            </div>
                         </div>
-                        <div class="enfermedad-contenido">
-                            <div class="enfermedad-nombre">${enfermedad.nombre}</div>
-                            <div class="enfermedad-descripcion">${enfermedad.descripcion}</div>
+                        
+                        <div class="row mt-3">
+                            <div class="col-12">
+                                <label class="form-label">Observaciones</label>
+                                <textarea class="form-control" name="observaciones" rows="3"></textarea>
+                            </div>
                         </div>
-                    </div>
-                `).join('');
-
-            } catch (error) {
-                console.error('Error cargando enfermedades:', error);
-                container.innerHTML = '<div class="error-message">Error analizando enfermedades</div>';
-            }
-        }
-
-        async function cargarHistorialTratamientos() {
-            const tbody = document.getElementById('tablaTratamientosBody');
-            if (!tbody) return;
-
-            try {
-                let historial = [];
-                if (tratamientosManager && tratamientosManager.historialTratamientos) {
-                    historial = tratamientosManager.historialTratamientos
-                        .sort((a, b) => new Date(b.fecha) - new Date(a.fecha))
-                        .slice(0, 10); // Mostrar solo los últimos 10
-                }
-
-                if (historial.length === 0) {
-                    tbody.innerHTML = `
-                        <tr>
-                            <td colspan="8" style="text-align: center; color: var(--text-secondary);">
-                                No hay historial de tratamientos
-                            </td>
-                        </tr>
-                    `;
-                    return;
-                }
-
-                tbody.innerHTML = historial.map(tratamiento => `
-                    <tr>
-                        <td>${formatearFecha(tratamiento.fechaHora || tratamiento.fecha)}</td>
-                        <td>${tratamiento.ubicacion || 'N/A'}</td>
-                        <td>${tratamiento.enfermedad || 'N/A'}</td>
-                        <td>${tratamiento.producto || 'N/A'}</td>
-                        <td>${tratamiento.dosis || 'N/A'}</td>
-                        <td>${tratamiento.responsable || 'Sistema'}</td>
-                        <td>${tratamiento.efectividad ? `${tratamiento.efectividad}%` : 'Pendiente'}</td>
-                        <td>
-                            <span class="estado-badge ${tratamiento.estado || 'completado'}">
-                                ${tratamiento.estado || 'Completado'}
-                            </span>
-                        </td>
-                    </tr>
-                `).join('');
-
-            } catch (error) {
-                console.error('Error cargando historial:', error);
-                tbody.innerHTML = '<tr><td colspan="8">Error cargando historial</td></tr>';
-            }
-        }
-
-        async function generarAlertas() {
-            const container = document.getElementById('alertasTratamientos');
-            if (!container) return;
-
-            const alertas = [];
-
-            try {
-                // Generar alertas basadas en estado de árboles
-                if (window.treeManager) {
-                    const stats = await window.treeManager.getStatistics();
-                    
-                    if (stats.sickTrees > 0) {
-                        alertas.push({
-                            tipo: 'urgente',
-                            icono: 'fa-exclamation-triangle',
-                            titulo: 'Árboles Enfermos Detectados',
-                            descripcion: `${stats.sickTrees} árboles requieren tratamiento inmediato`
-                        });
-                    }
-
-                    if (stats.treatmentTrees > 0) {
-                        alertas.push({
-                            tipo: 'advertencia',
-                            icono: 'fa-stethoscope',
-                            titulo: 'Tratamientos en Proceso',
-                            descripcion: `${stats.treatmentTrees} árboles en tratamiento activo`
-                        });
-                    }
-
-                    if (stats.healthyTrees === stats.totalTrees) {
-                        alertas.push({
-                            tipo: 'exito',
-                            icono: 'fa-check-circle',
-                            titulo: 'Sistema Saludable',
-                            descripcion: `Todos los ${stats.totalTrees} árboles en estado óptimo`
-                        });
-                    }
-                }
-
-                if (alertas.length === 0) {
-                    alertas.push({
-                        tipo: 'info',
-                        icono: 'fa-info-circle',
-                        titulo: 'Sistema Monitorizado',
-                        descripcion: 'Monitoreo continuo de salud de cultivos activo'
-                    });
-                }
-
-                container.innerHTML = alertas.map(alerta => `
-                    <div class="alerta-item">
-                        <div class="alerta-icon">
-                            <i class="fas ${alerta.icono}"></i>
+                        
+                        <div class="mt-3">
+                            <label class="form-check-label">
+                                <input type="checkbox" class="form-check-input" name="repetir">
+                                Programar repetición automática
+                            </label>
+                            <div id="opcionesRepeticion" style="display: none;" class="mt-2">
+                                <select class="form-select" name="frecuencia">
+                                    <option value="semanal">Semanal</option>
+                                    <option value="quincenal">Quincenal</option>
+                                    <option value="mensual">Mensual</option>
+                                </select>
+                            </div>
                         </div>
-                        <div>
-                            <h4>${alerta.titulo}</h4>
-                            <p>${alerta.descripcion}</p>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="button" class="btn btn-success" onclick="guardarNuevoTratamiento()">
+                        <i class="fas fa-save"></i> Guardar Tratamiento
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Modal Aplicar Tratamiento -->
+    <div class="modal fade" id="modalAplicarTratamiento" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title"><i class="fas fa-check-circle me-2"></i>Aplicar Tratamiento</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="formAplicarTratamiento">
+                        <input type="hidden" name="tratamientoId">
+                        <div class="mb-3">
+                            <label class="form-label">Fecha de Aplicación</label>
+                            <input type="datetime-local" class="form-control" name="fechaAplicacion" required>
                         </div>
-                    </div>
-                `).join('');
-
-            } catch (error) {
-                console.error('Error generando alertas:', error);
-            }
-        }
-
-        function cargarUbicacionesFormulario() {
-            const container = document.getElementById('ubicacionSelector');
-            if (!container) return;
-
-            try {
-                let ubicaciones = [];
-
-                // Cargar sectores del TreeManager
-                if (window.treeManager && window.treeManager.getAllSectors) {
-                    const sectores = window.treeManager.getAllSectors();
-                    ubicaciones = sectores.map(sector => ({
-                        id: sector.id,
-                        nombre: sector.name,
-                        tipo: 'sector'
-                    }));
-                }
-
-                if (ubicaciones.length === 0) {
-                    ubicaciones = [
-                        { id: 'sector_norte', nombre: 'Sector Norte', tipo: 'sector' },
-                        { id: 'sector_sur', nombre: 'Sector Sur', tipo: 'sector' },
-                        { id: 'sector_este', nombre: 'Sector Este', tipo: 'sector' }
-                    ];
-                }
-
-                container.innerHTML = ubicaciones.map(ubicacion => `
-                    <div class="ubicacion-item">
-                        <input type="checkbox" value="${ubicacion.id}" id="ubicacion_${ubicacion.id}">
-                        <label for="ubicacion_${ubicacion.id}">${ubicacion.nombre}</label>
-                    </div>
-                `).join('');
-
-            } catch (error) {
-                console.error('Error cargando ubicaciones:', error);
-            }
-        }
-
-        function inicializarGraficos() {
-            // Gráfico de efectividad
-            const ctxEfectividad = document.getElementById('graficoEfectividad');
-            if (ctxEfectividad) {
-                graficoEfectividad = new Chart(ctxEfectividad, {
-                    type: 'line',
-                    data: {
-                        labels: ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun'],
-                        datasets: [{
-                            label: 'Efectividad %',
-                            data: [85, 89, 92, 88, 94, 91],
-                            borderColor: '#22c55e',
-                            backgroundColor: 'rgba(34, 197, 94, 0.1)',
-                            tension: 0.4,
-                            fill: true
-                        }]
-                    },
-                    options: {
-                        responsive: true,
-                        maintainAspectRatio: false,
-                        plugins: {
-                            legend: {
-                                labels: { color: 'rgba(255, 255, 255, 0.8)' }
-                            }
-                        },
-                        scales: {
-                            x: {
-                                ticks: { color: 'rgba(255, 255, 255, 0.6)' },
-                                grid: { color: 'rgba(255, 255, 255, 0.1)' }
-                            },
-                            y: {
-                                ticks: { color: 'rgba(255, 255, 255, 0.6)' },
-                                grid: { color: 'rgba(255, 255, 255, 0.1)' },
-                                min: 0,
-                                max: 100
-                            }
-                        }
-                    }
-                });
-            }
-
-            // Gráfico de enfermedades
-            const ctxEnfermedades = document.getElementById('graficoEnfermedades');
-            if (ctxEnfermedades) {
-                graficoEnfermedades = new Chart(ctxEnfermedades, {
-                    type: 'doughnut',
-                    data: {
-                        labels: ['Hongos', 'Bacterias', 'Plagas', 'Deficiencias'],
-                        datasets: [{
-                            data: [45, 25, 20, 10],
-                            backgroundColor: [
-                                '#ef4444',
-                                '#f59e0b', 
-                                '#3b82f6',
-                                '#8b5cf6'
-                            ],
-                            borderWidth: 2,
-                            borderColor: '#ffffff'
-                        }]
-                    },
-                    options: {
-                        responsive: true,
-                        maintainAspectRatio: false,
-                        plugins: {
-                            legend: {
-                                position: 'bottom',
-                                labels: { 
-                                    color: 'rgba(255, 255, 255, 0.8)',
-                                    padding: 20
-                                }
-                            }
-                        }
-                    }
-                });
-            }
-        }
-
-        // Funciones de modal y formularios
-        function mostrarModalTratamiento() {
-            const modal = document.getElementById('modalTratamiento');
-            const form = document.getElementById('formTratamiento');
-            
-            // Limpiar formulario
-            form.reset();
-            
-            // Establecer fecha y hora actuales
-            const ahora = new Date();
-            document.getElementById('fechaAplicacion').value = ahora.toISOString().split('T')[0];
-            document.getElementById('horaAplicacion').value = ahora.toTimeString().slice(0,5);
-            
-            modal.style.display = 'block';
-        }
-
-        function cerrarModal() {
-            document.getElementById('modalTratamiento').style.display = 'none';
-        }
-
-        async function guardarTratamiento(e) {
-            e.preventDefault();
-            
-            const datos = obtenerDatosFormulario();
-            
-            try {
-                if (tratamientosManager && tratamientosManager.registrarTratamiento) {
-                    await tratamientosManager.registrarTratamiento(datos);
-                } else {
-                    console.log('Guardando tratamiento:', datos);
-                    // Aquí se guardaría en la base de datos real
-                }
-                
-                mostrarNotificacion('Tratamiento programado correctamente', 'success');
-                cerrarModal();
-                await cargarTratamientosActivos();
-                await cargarHistorialTratamientos();
-                
-            } catch (error) {
-                console.error('Error guardando tratamiento:', error);
-                mostrarNotificacion('Error al programar tratamiento', 'error');
-            }
-        }
-
-        function obtenerDatosFormulario() {
-            // Obtener ubicaciones seleccionadas
-            const ubicacionesSeleccionadas = [];
-            document.querySelectorAll('#ubicacionSelector input[type="checkbox"]:checked').forEach(checkbox => {
-                ubicacionesSeleccionadas.push(checkbox.value);
-            });
-            
-            return {
-                nombre: document.getElementById('nombreTratamiento').value,
-                enfermedad: document.getElementById('enfermedadTratamiento').value,
-                producto: document.getElementById('productoTratamiento').value,
-                dosis: document.getElementById('dosisTratamiento').value,
-                metodo: document.getElementById('metodoAplicacion').value,
-                ubicaciones: ubicacionesSeleccionadas,
-                fecha: document.getElementById('fechaAplicacion').value,
-                hora: document.getElementById('horaAplicacion').value,
-                observaciones: document.getElementById('observacionesTratamiento').value,
-                responsable: 'Usuario actual'
-            };
-        }
-
-        // Funciones globales para botones
-        function aplicarTratamiento(id) {
-            if (tratamientosManager && tratamientosManager.aplicarTratamiento) {
-                tratamientosManager.aplicarTratamiento(id);
-            }
-            mostrarNotificacion('Tratamiento aplicado', 'success');
-        }
-
-        function editarTratamiento(id) {
-            mostrarModalTratamiento();
-            // Cargar datos del tratamiento para editar
-        }
-
-        function verHistorialTratamiento(id) {
-            console.log('Ver historial del tratamiento:', id);
-        }
-
-        function crearTratamientoUrgente() {
-            mostrarModalTratamiento();
-            // Pre-llenar como urgente
-            document.getElementById('nombreTratamiento').value = 'Tratamiento Urgente';
-        }
-
-        function mostrarConfiguracion() {
-            mostrarNotificacion('Función de configuración en desarrollo', 'info');
-        }
-
-        function generarReporte() {
-            mostrarNotificacion('Generando reporte de tratamientos...', 'info');
-        }
-
-        function exportarHistorial() {
-            mostrarNotificacion('Exportando historial...', 'info');
-        }
-
-        // Utilidades
-        function formatearFecha(fechaString) {
-            if (!fechaString) return 'N/A';
-            
-            try {
-                const fecha = new Date(fechaString);
-                return fecha.toLocaleDateString('es-GT', {
-                    year: 'numeric',
-                    month: 'short',
-                    day: 'numeric',
-                    hour: '2-digit',
-                    minute: '2-digit'
-                });
-            } catch (error) {
-                return 'Fecha inválida';
-            }
-        }
-
-        function mostrarNotificacion(mensaje, tipo = 'info') {
-            const notification = document.createElement('div');
-            notification.className = `notification ${tipo}`;
-            notification.textContent = mensaje;
-            
-            document.body.appendChild(notification);
-            
-            setTimeout(() => {
-                notification.remove();
-            }, 4000);
-            
-            console.log(`${tipo.toUpperCase()}: ${mensaje}`);
-        }
-
-        function mostrarError(mensaje) {
-            mostrarNotificacion(mensaje, 'error');
-        }
-
-        // Hacer funciones disponibles globalmente
-        window.mostrarModalTratamiento = mostrarModalTratamiento;
-        window.aplicarTratamiento = aplicarTratamiento;
-        window.editarTratamiento = editarTratamiento;
-        window.verHistorialTratamiento = verHistorialTratamiento;
-        window.crearTratamientoUrgente = crearTratamientoUrgente;
-        window.mostrarConfiguracion = mostrarConfiguracion;
-        window.generarReporte = generarReporte;
-        window.exportarHistorial = exportarHistorial;
-    </script>
+                        <div class="mb-3">
+                            <label class="form-label">Cantidad Aplicada (L)</label>
+                            <input type="number" class="form-control" name="cantidadAplicada" step="0.1" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Condiciones Climáticas</label>
+                            <select class="form-select" name="condicionesClimaticas">
+                                <option value="optimas">Óptimas</option>
+                                <option value="aceptables">Aceptables</option>
+                                <option value="desfavorables">Desfavorables</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Observaciones</label>
+                            <textarea class="form-control" name="observacionesAplicacion" rows="3"></textarea>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="button" class="btn btn-success" onclick="confirmarAplicacionTratamiento()">
+                        <i class="fas fa-check"></i> Confirmar Aplicación
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    
+    <!-- Firebase -->
+    <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-firestore-compat.js"></script>
+    
+    <!-- Scripts del sistema -->
+    <script src="js/firebase-config.js"></script>
+    <script src="js/tree-manager.js"></script>
+    <script src="js/tratamientos.js"></script>
+    <script src="js/nav.js"></script>
 </body>
 </html>
