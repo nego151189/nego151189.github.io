@@ -1,6 +1,6 @@
 // ========================================
-// SISTEMA DE TRATAMIENTOS FITOSANITARIOS
-// Finca La Herradura - Integración con TreeManager
+// SISTEMA DE TRATAMIENTOS - COMPATIBLE CON TU ESTRUCTURA
+// Finca La Herradura - Integrado con arboles.js
 // ========================================
 
 class TratamientosManager {
@@ -8,102 +8,249 @@ class TratamientosManager {
         this.tratamientos = [];
         this.aplicaciones = [];
         this.productos = [];
-        this.db = firebase.firestore();
         this.sectores = [];
         this.arboles = [];
-        this.vistaTratamientos = 'tarjetas'; // 'tarjetas' o 'tabla'
+        this.db = null;
+        this.vistaTratamientos = 'tarjetas';
+        this.inicializando = false;
+        this.inicializado = false;
+        
         this.init();
     }
 
     async init() {
-        console.log('🌿 Iniciando sistema de tratamientos...');
+        if (this.inicializando) return;
+        this.inicializando = true;
         
-        // Esperar a que TreeManager esté listo
-        if (typeof window.treeManager !== 'undefined') {
-            await this.cargarDatosDeTreeManager();
-        } else {
-            setTimeout(() => this.init(), 1000);
-            return;
+        console.log('🌿 Iniciando sistema de tratamientos compatible...');
+        
+        try {
+            // Esperar a Firebase (usando tu configuración)
+            await this.esperarFirebase();
+            
+            // Esperar a TreeManager (compatible con tu estructura)
+            await this.esperarTreeManagerCompatible();
+            
+            // Inicializar el resto del sistema
+            await this.inicializarSistema();
+            
+        } catch (error) {
+            console.error('❌ Error en inicialización de tratamientos:', error);
+            await this.inicializarConDatosDeRespaldo();
         }
+    }
+
+    async esperarFirebase() {
+        return new Promise((resolve, reject) => {
+            let attempts = 0;
+            const maxAttempts = 50;
+            
+            const checkFirebase = () => {
+                attempts++;
+                
+                // Verificar múltiples formas de acceso (compatible con tu firebase-config.js)
+                if (typeof firebase !== 'undefined' && firebase.firestore) {
+                    this.db = firebase.firestore();
+                    console.log('✅ Firebase disponible para tratamientos');
+                    resolve(true);
+                } else if (window.firebase && window.firebase.firestore) {
+                    this.db = window.firebase.firestore();
+                    resolve(true);
+                } else if (window.db) {
+                    this.db = window.db;
+                    resolve(true);
+                } else if (attempts >= maxAttempts) {
+                    console.warn('⚠️ Firebase no disponible');
+                    resolve(false);
+                } else {
+                    setTimeout(checkFirebase, 100);
+                }
+            };
+            
+            checkFirebase();
+        });
+    }
+
+    async esperarTreeManagerCompatible() {
+        return new Promise((resolve, reject) => {
+            let attempts = 0;
+            const maxAttempts = 100;
+            
+            const checkTreeManager = async () => {
+                attempts++;
+                
+                if (window.treeManager && window.treeManager.inicializado()) {
+                    try {
+                        // Usar los métodos compatibles con tu estructura
+                        this.sectores = await window.treeManager.getSectoresParaFormulario();
+                        this.arboles = await window.treeManager.getArbolesParaFormulario();
+                        
+                        console.log(`✅ TreeManager compatible: ${this.sectores.length} sectores, ${this.arboles.length} árboles`);
+                        resolve(true);
+                    } catch (error) {
+                        console.error('Error obteniendo datos de TreeManager:', error);
+                        await this.cargarDatosDeRespaldo();
+                        resolve(false);
+                    }
+                } else if (attempts >= maxAttempts) {
+                    console.warn('⚠️ TreeManager no disponible, usando datos de respaldo');
+                    await this.cargarDatosDeRespaldo();
+                    resolve(false);
+                } else {
+                    setTimeout(checkTreeManager, 100);
+                }
+            };
+            
+            checkTreeManager();
+        });
         
+        // También escuchar eventos de TreeManager (compatible con tu arboles.js)
+        window.addEventListener('treeManagerReady', async (event) => {
+            console.log('🔄 TreeManager listo, actualizando tratamientos');
+            try {
+                this.sectores = event.detail.sectores || await window.treeManager.getSectoresParaFormulario();
+                this.arboles = event.detail.arboles || await window.treeManager.getArbolesParaFormulario();
+                this.poblarSelectores();
+            } catch (error) {
+                console.error('Error actualizando datos desde TreeManager:', error);
+            }
+        });
+
+        // Escuchar actualizaciones específicas (compatible con tus eventos)
+        window.addEventListener('sectorUpdate', () => {
+            setTimeout(async () => {
+                if (window.treeManager) {
+                    this.sectores = await window.treeManager.getSectoresParaFormulario();
+                    this.poblarSelectores();
+                }
+            }, 100);
+        });
+
+        window.addEventListener('treeUpdate', () => {
+            setTimeout(async () => {
+                if (window.treeManager) {
+                    this.arboles = await window.treeManager.getArbolesParaFormulario();
+                    this.poblarSelectores();
+                }
+            }, 100);
+        });
+    }
+
+    async inicializarSistema() {
         await this.cargarTratamientos();
         await this.cargarProductos();
         this.configurarEventListeners();
+        this.poblarSelectores();
         this.renderizarTratamientos();
         this.actualizarEstadisticas();
         this.cargarProximosTratamientos();
         this.inicializarGraficos();
         
-        console.log('✅ Sistema de tratamientos inicializado');
+        this.inicializado = true;
+        this.inicializando = false;
+        
+        console.log('✅ Sistema de tratamientos inicializado correctamente');
+        console.log(`📊 Datos: ${this.sectores.length} sectores, ${this.arboles.length} árboles, ${this.tratamientos.length} tratamientos`);
     }
 
-    // ==================== CARGA DE DATOS ====================
-    async cargarDatosDeTreeManager() {
-        try {
-            if (window.treeManager) {
-                this.sectores = await window.treeManager.getSectoresParaFormulario();
-                this.arboles = await window.treeManager.getArbolesParaFormulario();
-                this.poblarSelectores();
-                console.log(`📦 Cargados ${this.sectores.length} sectores y ${this.arboles.length} árboles`);
-            }
-        } catch (error) {
-            console.error('Error cargando datos del TreeManager:', error);
-            // Datos de respaldo si no funciona TreeManager
-            this.sectores = [
-                { id: 'sector1', nombre: 'Sector A', codigo: 'SEC-A' },
-                { id: 'sector2', nombre: 'Sector B', codigo: 'SEC-B' }
-            ];
-            this.poblarSelectores();
-        }
+    async inicializarConDatosDeRespaldo() {
+        await this.cargarDatosDeRespaldo();
+        await this.cargarTratamientos();
+        this.configurarEventListeners();
+        this.poblarSelectores();
+        this.renderizarTratamientos();
+        this.actualizarEstadisticas();
+        
+        this.inicializado = true;
+        this.inicializando = false;
+        
+        console.log('⚠️ Sistema de tratamientos inicializado con datos de respaldo');
+    }
+
+    async cargarDatosDeRespaldo() {
+        // Usar estructura compatible con tu sistema
+        this.sectores = [
+            { id: 'SECTOR_NORTE', nombre: 'Sector Norte', codigo: 'SEC-N' },
+            { id: 'SECTOR_SUR', nombre: 'Sector Sur', codigo: 'SEC-S' },
+            { id: 'SECTOR_ESTE', nombre: 'Sector Este', codigo: 'SEC-E' }
+        ];
+        
+        this.arboles = [
+            { id: 'arbol-1', codigo: 'A-001', sectorId: 'SECTOR_NORTE', sector: 'Sector Norte' },
+            { id: 'arbol-2', codigo: 'A-002', sectorId: 'SECTOR_NORTE', sector: 'Sector Norte' },
+            { id: 'arbol-3', codigo: 'A-003', sectorId: 'SECTOR_SUR', sector: 'Sector Sur' }
+        ];
     }
 
     poblarSelectores() {
+        console.log('🔄 Poblando selectores de tratamientos...');
+        
         // Selector de sectores en filtros
         const filtroSector = document.getElementById('filtroSector');
-        if (filtroSector) {
+        if (filtroSector && this.sectores.length > 0) {
             filtroSector.innerHTML = '<option value="">Todos los sectores</option>';
             this.sectores.forEach(sector => {
                 const option = document.createElement('option');
                 option.value = sector.id;
-                option.textContent = sector.nombre || sector.codigo;
+                option.textContent = `${sector.nombre || sector.codigo} (${this.contarArbolesSector(sector.id)} árboles)`;
                 filtroSector.appendChild(option);
             });
+            console.log(`✅ Filtro poblado con ${this.sectores.length} sectores`);
         }
 
         // Selector de sector en modal
         const selectorSector = document.querySelector('select[name="sector"]');
-        if (selectorSector) {
+        if (selectorSector && this.sectores.length > 0) {
             selectorSector.innerHTML = '<option value="">Seleccionar sector</option>';
             this.sectores.forEach(sector => {
                 const option = document.createElement('option');
                 option.value = sector.id;
-                option.textContent = sector.nombre || sector.codigo;
+                option.textContent = `${sector.nombre || sector.codigo} (${this.contarArbolesSector(sector.id)} árboles)`;
                 selectorSector.appendChild(option);
             });
         }
 
         // Selector de árboles específicos
         const selectorArboles = document.querySelector('select[name="arboles"]');
-        if (selectorArboles) {
+        if (selectorArboles && this.arboles.length > 0) {
             selectorArboles.innerHTML = '';
             this.arboles.forEach(arbol => {
                 const option = document.createElement('option');
                 option.value = arbol.id;
-                option.textContent = `${arbol.codigo || arbol.id} - ${arbol.sector || 'Sin sector'}`;
+                const sectorNombre = this.getSectorName(arbol.sectorId);
+                option.textContent = `${arbol.codigo || arbol.id} - ${sectorNombre}`;
                 selectorArboles.appendChild(option);
             });
         }
+
+        // Mostrar información de debug
+        console.log(`📊 Selectores actualizados: ${this.sectores.length} sectores, ${this.arboles.length} árboles`);
+    }
+
+    contarArbolesSector(sectorId) {
+        return this.arboles.filter(a => a.sectorId === sectorId || a.sector === sectorId).length;
+    }
+
+    getSectorName(sectorId) {
+        const sector = this.sectores.find(s => s.id === sectorId);
+        return sector ? (sector.nombre || sector.codigo) : sectorId || 'Sin sector';
     }
 
     async cargarTratamientos() {
         try {
-            const snapshot = await this.db.collection('tratamientos').orderBy('fechaProgramada', 'desc').get();
-            this.tratamientos = snapshot.docs.map(doc => ({
-                id: doc.id,
-                ...doc.data(),
-                fechaProgramada: doc.data().fechaProgramada?.toDate(),
-                fechaCreacion: doc.data().fechaCreacion?.toDate()
-            }));
+            if (this.db) {
+                const snapshot = await this.db.collection('tratamientos').orderBy('fechaProgramada', 'desc').get();
+                this.tratamientos = snapshot.docs.map(doc => ({
+                    id: doc.id,
+                    ...doc.data(),
+                    fechaProgramada: doc.data().fechaProgramada?.toDate(),
+                    fechaCreacion: doc.data().fechaCreacion?.toDate()
+                }));
+                
+                console.log(`✅ ${this.tratamientos.length} tratamientos cargados desde Firebase`);
+            } else {
+                this.tratamientos = [];
+            }
         } catch (error) {
             console.error('Error cargando tratamientos:', error);
             this.tratamientos = this.generarTratamientosEjemplo();
@@ -112,21 +259,27 @@ class TratamientosManager {
 
     async cargarProductos() {
         try {
-            const snapshot = await this.db.collection('productos-tratamiento').get();
-            this.productos = snapshot.docs.map(doc => ({
-                id: doc.id,
-                ...doc.data()
-            }));
+            if (this.db) {
+                const snapshot = await this.db.collection('productos-tratamiento').get();
+                this.productos = snapshot.docs.map(doc => ({
+                    id: doc.id,
+                    ...doc.data()
+                }));
+            } else {
+                this.productos = [
+                    { id: 'p1', nombre: 'Fungicida Cobre', tipo: 'fungicida', dosisRecomendada: 2.5 },
+                    { id: 'p2', nombre: 'Insecticida Orgánico', tipo: 'insecticida', dosisRecomendada: 1.5 },
+                    { id: 'p3', nombre: 'Fertilizante Foliar', tipo: 'fertilizante', dosisRecomendada: 3.0 }
+                ];
+            }
         } catch (error) {
             console.error('Error cargando productos:', error);
-            this.productos = [
-                { id: 'p1', nombre: 'Fungicida Cobre', tipo: 'fungicida', dosisRecomendada: 2.5 },
-                { id: 'p2', nombre: 'Insecticida Orgánico', tipo: 'insecticida', dosisRecomendada: 1.5 }
-            ];
+            this.productos = [];
         }
     }
 
-    // ==================== INTERFAZ DE USUARIO ====================
+    // ==================== RESTO DE FUNCIONES (manteniendo tu estructura) ====================
+    
     configurarEventListeners() {
         // Radio buttons para tipo de aplicación
         const radioSector = document.getElementById('aplicacionSector');
@@ -165,8 +318,12 @@ class TratamientosManager {
         document.getElementById('filtroTipo')?.addEventListener('change', () => this.aplicarFiltros());
     }
 
-    // ==================== GESTIÓN DE TRATAMIENTOS ====================
     async guardarNuevoTratamiento() {
+        if (!this.db) {
+            this.mostrarAlerta('Firebase no disponible', 'error');
+            return;
+        }
+
         const form = document.getElementById('formNuevoTratamiento');
         const formData = new FormData(form);
         
@@ -192,12 +349,12 @@ class TratamientosManager {
             // Calcular cantidad total necesaria
             let cantidadArbolesAfectados = 0;
             if (tratamientoData.tipoAplicacion === 'sector' && tratamientoData.sector) {
-                cantidadArbolesAfectados = this.arboles.filter(a => a.sectorId === tratamientoData.sector).length;
+                cantidadArbolesAfectados = this.contarArbolesSector(tratamientoData.sector);
             } else {
                 cantidadArbolesAfectados = tratamientoData.arboles.length;
             }
             
-            tratamientoData.cantidadTotalEstimada = (cantidadArbolesAfectados * tratamientoData.dosisPorArbol / 1000); // en litros
+            tratamientoData.cantidadTotalEstimada = (cantidadArbolesAfectados * tratamientoData.dosisPorArbol / 1000);
             tratamientoData.arbolesAfectados = cantidadArbolesAfectados;
 
             const docRef = await this.db.collection('tratamientos').add(tratamientoData);
@@ -234,7 +391,6 @@ class TratamientosManager {
         const repeticiones = [];
         const fechaBase = datosBase.fechaProgramada.toDate();
         
-        // Generar hasta 12 repeticiones (1 año)
         for (let i = 1; i <= 12; i++) {
             const nuevaFecha = new Date(fechaBase);
             
@@ -268,7 +424,6 @@ class TratamientosManager {
         await batch.commit();
     }
 
-    // ==================== APLICACIÓN DE TRATAMIENTOS ====================
     mostrarModalAplicarTratamiento(tratamientoId) {
         const tratamiento = this.tratamientos.find(t => t.id === tratamientoId);
         if (!tratamiento) return;
@@ -284,6 +439,11 @@ class TratamientosManager {
     }
 
     async confirmarAplicacionTratamiento() {
+        if (!this.db) {
+            this.mostrarAlerta('Firebase no disponible', 'error');
+            return;
+        }
+
         const form = document.getElementById('formAplicarTratamiento');
         const formData = new FormData(form);
         const tratamientoId = formData.get('tratamientoId');
@@ -329,7 +489,6 @@ class TratamientosManager {
         }
     }
 
-    // ==================== RENDERIZADO ====================
     renderizarTratamientos() {
         const container = document.getElementById('listaTratamientos');
         if (!container) return;
@@ -400,9 +559,9 @@ class TratamientosManager {
 
     renderizarSectoresAfectados(tratamiento) {
         if (tratamiento.tipoAplicacion === 'sector' && tratamiento.sector) {
-            const sector = this.sectores.find(s => s.id === tratamiento.sector);
+            const sectorNombre = this.getSectorName(tratamiento.sector);
             return `<div class="mb-2">
-                <span class="sector-badge">${sector?.nombre || tratamiento.sector}</span>
+                <span class="sector-badge">${sectorNombre}</span>
                 <small class="text-muted ms-2">${tratamiento.arbolesAfectados || 0} árboles</small>
             </div>`;
         } else if (tratamiento.arboles && tratamiento.arboles.length > 0) {
@@ -445,7 +604,6 @@ class TratamientosManager {
         return botones.join(' ');
     }
 
-    // ==================== ESTADÍSTICAS ====================
     actualizarEstadisticas() {
         const ahora = new Date();
         const inicioMes = new Date(ahora.getFullYear(), ahora.getMonth(), 1);
@@ -472,7 +630,6 @@ class TratamientosManager {
         document.getElementById('litrosAplicados').textContent = `${stats.litrosAplicados.toFixed(1)}L`;
     }
 
-    // ==================== FILTROS ====================
     aplicarFiltros() {
         const filtroSector = document.getElementById('filtroSector').value;
         const filtroEstado = document.getElementById('filtroEstado').value;
@@ -497,14 +654,12 @@ class TratamientosManager {
             tratamientosFiltrados = tratamientosFiltrados.filter(t => t.tipo === filtroTipo);
         }
 
-        // Guardar tratamientos originales y mostrar filtrados
         const tratamientosOriginales = this.tratamientos;
         this.tratamientos = tratamientosFiltrados;
         this.renderizarTratamientos();
         this.tratamientos = tratamientosOriginales;
     }
 
-    // ==================== UTILIDADES ====================
     formatearFecha(fecha) {
         if (!fecha) return 'Sin fecha';
         return new Intl.DateTimeFormat('es-ES', {
@@ -526,28 +681,30 @@ class TratamientosManager {
     }
 
     mostrarAlerta(mensaje, tipo = 'info') {
-        // Implementar sistema de alertas/toasts
         console.log(`${tipo.toUpperCase()}: ${mensaje}`);
-        // Aquí puedes integrar con tu sistema de notificaciones favorito
     }
 
     generarTratamientosEjemplo() {
+        if (this.sectores.length === 0) return [];
+        
         const ahora = new Date();
+        const sector = this.sectores[0];
+        
         return [
             {
                 id: 'trat1',
-                nombre: 'Tratamiento Fungicida Sector A',
+                nombre: `Tratamiento Fungicida ${sector.nombre}`,
                 tipo: 'fungicida',
                 producto: 'Cobre Pentahidratado',
                 dosisPorArbol: 2.5,
                 concentracion: 0.5,
                 tipoAplicacion: 'sector',
-                sector: 'sector1',
+                sector: sector.id,
                 fechaProgramada: new Date(ahora.getTime() + 24 * 60 * 60 * 1000),
                 responsable: 'Juan Pérez',
                 estado: 'programado',
                 cantidadTotalEstimada: 15.5,
-                arbolesAfectados: 45,
+                arbolesAfectados: this.contarArbolesSector(sector.id) || 25,
                 fechaCreacion: new Date()
             }
         ];
@@ -564,6 +721,18 @@ class TratamientosManager {
     cambiarVista(vista) {
         this.vistaTratamientos = vista;
         this.renderizarTratamientos();
+    }
+
+    renderizarTabla() {
+        // Implementar vista de tabla si es necesaria
+    }
+
+    editarTratamiento(id) {
+        console.log('Editar tratamiento:', id);
+    }
+
+    eliminarTratamiento(id) {
+        console.log('Eliminar tratamiento:', id);
     }
 }
 
@@ -601,4 +770,4 @@ document.addEventListener('DOMContentLoaded', () => {
     window.tratamientosManager = new TratamientosManager();
 });
 
-console.log('🌿 Sistema de tratamientos cargado - Versión integrada con TreeManager');
+console.log('🌿 Sistema de tratamientos compatible cargado - Versión integrada con estructura existente');
