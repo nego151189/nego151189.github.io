@@ -1,1017 +1,475 @@
-/* ========================================
-   FINCA LA HERRADURA - DASHBOARD RESPONSIVE CSS
-   Estilos adicionales para el dashboard responsive
-   ======================================== */
-
-/* ===========================================
-   ESTILOS ESPECÍFICOS DEL DASHBOARD
-   =========================================== */
-
-/* Dashboard Header Responsive */
-.dashboard-header {
-    display: grid;
-    grid-template-columns: 1fr auto;
-    gap: 2rem;
-    margin-bottom: 2rem;
-    padding: 2rem;
-    background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
-    border-radius: 16px;
-    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.05);
-    border: 1px solid #e2e8f0;
-}
-
-@media (max-width: 1024px) {
-    .dashboard-header {
-        grid-template-columns: 1fr;
-        gap: 1.5rem;
-        padding: 1.5rem;
-    }
-}
-
-@media (max-width: 768px) {
-    .dashboard-header {
-        padding: 1rem;
-        gap: 1rem;
-        margin-bottom: 1.5rem;
-    }
-}
-
-@media (max-width: 480px) {
-    .dashboard-header {
-        padding: 0.75rem;
-        border-radius: 12px;
-    }
-}
-
-/* Welcome Section */
-.welcome-section h2 {
-    font-size: 2rem;
-    font-weight: 700;
-    color: #1e293b;
-    margin-bottom: 0.5rem;
-    line-height: 1.2;
-}
-
-.welcome-section p {
-    color: #64748b;
-    font-size: 1rem;
-    margin: 0;
-}
-
-@media (max-width: 768px) {
-    .welcome-section h2 {
-        font-size: 1.5rem;
-    }
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Finca La Herradura - Dashboard Inteligente</title>
     
-    .welcome-section p {
-        font-size: 0.875rem;
-    }
-}
-
-@media (max-width: 480px) {
-    .welcome-section h2 {
-        font-size: 1.25rem;
-    }
+    <!-- Favicons -->
+    <link rel="icon" type="image/png" href="icons/favicon.png">
     
-    .welcome-section p {
-        font-size: 0.8rem;
-    }
-}
-
-/* Connection Status Card */
-.connection-status-card {
-    background: linear-gradient(135deg, rgba(34, 197, 94, 0.05) 0%, rgba(22, 163, 74, 0.05) 100%);
-    border: 1px solid rgba(34, 197, 94, 0.2);
-    border-radius: 16px;
-    padding: 1.5rem;
-    max-width: 400px;
-    width: 100%;
-}
-
-@media (max-width: 1024px) {
-    .connection-status-card {
-        max-width: none;
-    }
-}
-
-@media (max-width: 768px) {
-    .connection-status-card {
-        padding: 1rem;
-        border-radius: 12px;
-    }
-}
-
-@media (max-width: 480px) {
-    .connection-status-card {
-        padding: 0.75rem;
-        border-radius: 8px;
-    }
-}
-
-.status-header {
-    display: flex;
-    align-items: center;
-    gap: 0.75rem;
-    margin-bottom: 1rem;
-}
-
-.status-header h3 {
-    font-size: 1rem;
-    font-weight: 600;
-    color: #22c55e;
-    margin: 0;
-}
-
-.status-icon {
-    font-size: 1.2rem;
-}
-
-.status-info {
-    margin-bottom: 1rem;
-}
-
-.status-item {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 0.5rem;
-    font-size: 0.875rem;
-    padding: 0.25rem 0;
-}
-
-@media (max-width: 480px) {
-    .status-item {
-        flex-direction: column;
-        align-items: flex-start;
-        gap: 0.25rem;
-    }
-}
-
-.sync-button {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    background: #22c55e;
-    color: white;
-    border: none;
-    padding: 0.75rem 1rem;
-    border-radius: 8px;
-    cursor: pointer;
-    width: 100%;
-    justify-content: center;
-    font-weight: 500;
-    transition: all 0.2s ease;
-    min-height: 44px;
-}
-
-.sync-button:hover:not(:disabled) {
-    background: #16a34a;
-    transform: translateY(-1px);
-}
-
-.sync-button:disabled {
-    opacity: 0.7;
-    cursor: not-allowed;
-    transform: none;
-}
-
-@media (max-width: 768px) {
-    .sync-button {
-        min-height: 48px;
-    }
-}
-
-/* KPI Grid Responsive */
-.kpi-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-    gap: 1.5rem;
-    margin-bottom: 2rem;
-}
-
-@media (max-width: 1200px) {
-    .kpi-grid {
-        grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-        gap: 1.25rem;
-    }
-}
-
-@media (max-width: 768px) {
-    .kpi-grid {
-        grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-        gap: 1rem;
-        margin-bottom: 1.5rem;
-    }
-}
-
-@media (max-width: 640px) {
-    .kpi-grid {
-        grid-template-columns: repeat(2, 1fr);
-        gap: 0.75rem;
-    }
-}
-
-@media (max-width: 480px) {
-    .kpi-grid {
-        grid-template-columns: 1fr;
-        gap: 0.5rem;
-    }
-}
-
-/* KPI Cards */
-.kpi-card {
-    background: #ffffff;
-    border-radius: 16px;
-    padding: 1.5rem;
-    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.05);
-    border: 1px solid #e2e8f0;
-    transition: all 0.3s ease;
-    position: relative;
-    min-height: 140px;
-}
-
-.kpi-card:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
-}
-
-@media (max-width: 768px) {
-    .kpi-card {
-        padding: 1.25rem;
-        border-radius: 12px;
-        min-height: 120px;
-    }
+    <!-- TUS CSS FILES EXISTENTES -->
+    <link rel="stylesheet" href="css/main.css">
+    <link rel="stylesheet" href="css/style.css">
     
-    .kpi-card:hover {
-        transform: translateY(-1px);
-    }
-}
-
-@media (max-width: 480px) {
-    .kpi-card {
-        padding: 1rem;
-        border-radius: 8px;
-        min-height: 100px;
-    }
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
-    .kpi-card:hover {
-        transform: none;
-    }
-}
-
-.kpi-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 1rem;
-}
-
-.kpi-icon {
-    font-size: 1.5rem;
-    padding: 0.75rem;
-    background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%);
-    color: white;
-    border-radius: 12px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 48px;
-    height: 48px;
-    flex-shrink: 0;
-}
-
-@media (max-width: 768px) {
-    .kpi-icon {
-        width: 40px;
-        height: 40px;
-        font-size: 1.25rem;
-        padding: 0.5rem;
-        border-radius: 8px;
-    }
-}
-
-@media (max-width: 480px) {
-    .kpi-icon {
-        width: 36px;
-        height: 36px;
-        font-size: 1rem;
-        padding: 0.4rem;
-    }
-}
-
-.kpi-trend {
-    font-size: 0.875rem;
-    font-weight: 600;
-    padding: 0.25rem 0.75rem;
-    border-radius: 20px;
-    background: rgba(34, 197, 94, 0.1);
-    color: #22c55e;
-    white-space: nowrap;
-}
-
-@media (max-width: 768px) {
-    .kpi-trend {
-        font-size: 0.75rem;
-        padding: 0.2rem 0.5rem;
-    }
-}
-
-.kpi-value {
-    font-size: 2.25rem;
-    font-weight: 700;
-    color: #1e293b;
-    margin-bottom: 0.5rem;
-    line-height: 1.1;
-    word-break: break-word;
-}
-
-@media (max-width: 768px) {
-    .kpi-value {
-        font-size: 1.875rem;
-    }
-}
-
-@media (max-width: 480px) {
-    .kpi-value {
-        font-size: 1.5rem;
-    }
-}
-
-.kpi-label {
-    font-size: 0.875rem;
-    color: #64748b;
-    margin-bottom: 1rem;
-    line-height: 1.3;
-}
-
-@media (max-width: 768px) {
-    .kpi-label {
-        font-size: 0.8rem;
-        margin-bottom: 0.75rem;
-    }
-}
-
-.kpi-meta {
-    font-size: 0.75rem;
-    color: #94a3b8;
-    margin-top: 0.5rem;
-}
-
-@media (max-width: 480px) {
-    .kpi-meta {
-        font-size: 0.7rem;
-    }
-}
-
-.kpi-progress {
-    height: 8px;
-    background: #f1f5f9;
-    border-radius: 4px;
-    overflow: hidden;
-    margin-top: 0.5rem;
-}
-
-.progress-bar {
-    height: 100%;
-    background: linear-gradient(90deg, #22c55e, #16a34a);
-    transition: width 0.6s ease;
-    border-radius: 4px;
-}
-
-/* Additional Widgets */
-.additional-widgets {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-    gap: 1.5rem;
-    margin-bottom: 2rem;
-}
-
-@media (max-width: 1024px) {
-    .additional-widgets {
-        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-    }
-}
-
-@media (max-width: 768px) {
-    .additional-widgets {
-        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-        gap: 1rem;
-        margin-bottom: 1.5rem;
-    }
-}
-
-@media (max-width: 640px) {
-    .additional-widgets {
-        grid-template-columns: 1fr;
-        gap: 0.75rem;
-    }
-}
-
-.widget-card {
-    background: #ffffff;
-    border-radius: 16px;
-    padding: 1.5rem;
-    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.05);
-    border: 1px solid #e2e8f0;
-    transition: all 0.3s ease;
-}
-
-@media (max-width: 768px) {
-    .widget-card {
-        padding: 1.25rem;
-        border-radius: 12px;
-    }
-}
-
-@media (max-width: 480px) {
-    .widget-card {
-        padding: 1rem;
-        border-radius: 8px;
-    }
-}
-
-.widget-card h3 {
-    margin: 0 0 1rem 0;
-    color: #1e293b;
-    font-size: 1.1rem;
-    font-weight: 600;
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-}
-
-@media (max-width: 768px) {
-    .widget-card h3 {
-        font-size: 1rem;
-        margin-bottom: 0.75rem;
-    }
-}
-
-/* Tank Widget */
-.tank-visual {
-    display: flex;
-    align-items: center;
-    gap: 1rem;
-    margin-bottom: 1rem;
-}
-
-@media (max-width: 480px) {
-    .tank-visual {
-        flex-direction: column;
-        align-items: center;
-        gap: 0.75rem;
-    }
-}
-
-.tank-container {
-    position: relative;
-    width: 60px;
-    height: 120px;
-    background: #f3f4f6;
-    border: 2px solid #d1d5db;
-    border-radius: 8px;
-    overflow: hidden;
-    flex-shrink: 0;
-}
-
-@media (max-width: 768px) {
-    .tank-container {
-        width: 50px;
-        height: 100px;
-    }
-}
-
-.tank-fill {
-    position: absolute;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    background: linear-gradient(180deg, #3b82f6, #1d4ed8);
-    transition: height 0.6s ease;
-    border-radius: 0 0 6px 6px;
-}
-
-.tank-alert {
-    position: absolute;
-    top: 5px;
-    right: 5px;
-    color: #ef4444;
-    font-size: 16px;
-    animation: pulse 1.5s infinite;
-}
-
-@keyframes pulse {
-    0%, 100% { opacity: 1; }
-    50% { opacity: 0.5; }
-}
-
-.tank-info {
-    flex: 1;
-}
-
-.tank-info div {
-    font-size: 1.2rem;
-    font-weight: 600;
-    color: #1e293b;
-    margin-bottom: 0.5rem;
-    line-height: 1.2;
-}
-
-@media (max-width: 768px) {
-    .tank-info div {
-        font-size: 1rem;
-    }
-}
-
-@media (max-width: 480px) {
-    .tank-info {
-        text-align: center;
-    }
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     
-    .tank-info div {
-        font-size: 0.95rem;
-        margin-bottom: 0.25rem;
-    }
-}
-
-/* Finance Widget */
-.finance-row {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 0.5rem;
-    padding: 0.5rem 0;
-    border-bottom: 1px solid #f3f4f6;
-    font-size: 0.9rem;
-}
-
-.finance-row:last-of-type {
-    border-bottom: none;
-    font-weight: 600;
-    color: #1e293b;
-}
-
-@media (max-width: 480px) {
-    .finance-row {
-        font-size: 0.85rem;
-        flex-wrap: wrap;
-        gap: 0.25rem;
-    }
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     
-    .finance-row span:first-child {
-        flex: 1;
-        min-width: 120px;
-    }
-}
+    <!-- Firebase SDK v8 -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-storage.js"></script>
 
-/* Activity Widget */
-.activity-stats {
-    space-y: 0.5rem;
-}
+    <style>
+        /* Solo estilos críticos para loader */
+        .loader-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, #f0fdf4 0%, #ecfccb 100%);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+            transition: opacity 0.5s ease;
+        }
+        
+        .loader svg {
+            width: 80px;
+            height: 80px;
+            animation: rotate 2s ease-in-out infinite;
+        }
+        
+        .lemon-path {
+            animation: pulse 1.5s ease-in-out infinite;
+        }
+        
+        @keyframes rotate {
+            0%, 100% { transform: rotate(0deg); }
+            50% { transform: rotate(180deg); }
+        }
+        
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(0.9); opacity: 0.8; }
+        }
+        
+        .loader-container.fade-out {
+            opacity: 0;
+            pointer-events: none;
+        }
+    </style>
+</head>
+<body>
+    <!-- Loader -->
+    <div id="loader" class="loader-container">
+        <div class="loader">
+            <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+                <circle cx="50" cy="50" r="30" fill="#84cc16" opacity="0.3"/>
+                <path d="M50 20 Q30 40 35 60 T50 80 T65 60 T50 20" fill="#65a30d" class="lemon-path"/>
+            </svg>
+        </div>
+        <p>Conectando con Firebase - Solo datos reales...</p>
+    </div>
 
-.activity-item {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 0.5rem 0;
-    border-bottom: 1px solid #f3f4f6;
-    font-size: 0.875rem;
-}
+    <!-- USANDO TU ESTRUCTURA DE LAYOUT EXISTENTE -->
+    <div class="main-container">
+        
+        <!-- HEADER USANDO TUS CLASES EXISTENTES -->
+        <header class="header">
+            <div class="header-content">
+                <a href="/" class="logo">
+                    <div class="logo-icon">🍋</div>
+                    <span>Finca La Herradura</span>
+                </a>
+                
+                <!-- Información de conexión -->
+                <div class="header-actions">
+                    <span id="firebase-status" class="data-loading">Conectando...</span>
+                    <button id="sync-now" class="btn btn-sm btn-primary" disabled>
+                        <i class="fas fa-sync"></i>
+                        <span>Sincronizar</span>
+                        <span id="pending-count" class="badge">0</span>
+                    </button>
+                </div>
+            </div>
+        </header>
 
-.activity-item:last-child {
-    border-bottom: none;
-}
+        <!-- SIDEBAR USANDO TU NAV.JS EXISTENTE -->
+        <nav class="sidebar" id="navbar">
+            <ul class="nav-menu">
+                <li><a href="/" class="nav-link active">
+                    <i class="fas fa-tachometer-alt"></i>
+                    <span>Dashboard</span>
+                </a></li>
+                
+                <li><a href="cosecha.html" class="nav-link">
+                    <i class="fas fa-seedling"></i>
+                    <span>Cosecha</span>
+                </a></li>
+                
+                <li><a href="riegos.html" class="nav-link">
+                    <i class="fas fa-tint"></i>
+                    <span>Riegos</span>
+                </a></li>
+                
+                <li><a href="ventas.html" class="nav-link">
+                    <i class="fas fa-shopping-cart"></i>
+                    <span>Ventas</span>
+                </a></li>
+                
+                <li><a href="gastos.html" class="nav-link">
+                    <i class="fas fa-receipt"></i>
+                    <span>Gastos</span>
+                </a></li>
+                
+                <li><a href="arboles.html" class="nav-link">
+                    <i class="fas fa-tree"></i>
+                    <span>Árboles</span>
+                </a></li>
+                
+                <li><a href="clima.html" class="nav-link">
+                    <i class="fas fa-cloud-sun"></i>
+                    <span>Clima</span>
+                </a></li>
+                
+                <li><a href="reportes.html" class="nav-link">
+                    <i class="fas fa-chart-bar"></i>
+                    <span>Reportes</span>
+                </a></li>
+            </ul>
+        </nav>
 
-@media (max-width: 480px) {
-    .activity-item {
-        font-size: 0.8rem;
-        flex-direction: column;
-        align-items: flex-start;
-        gap: 0.25rem;
-    }
-}
+        <!-- CONTENIDO PRINCIPAL USANDO TUS CLASES EXISTENTES -->
+        <main class="main-content">
+            <!-- Page Header usando tus clases -->
+            <div class="page-header">
+                <div class="page-title">
+                    <div class="title-icon" style="background: var(--accent-yellow); color: var(--primary-green);">
+                        <i class="fas fa-tachometer-alt"></i>
+                    </div>
+                    <div>
+                        <h1>Dashboard Inteligente</h1>
+                        <p id="current-date-time">Cargando fecha y hora...</p>
+                    </div>
+                </div>
+                
+                <div class="header-actions">
+                    <span id="last-sync" class="data-loading">Última sync: --</span>
+                </div>
+            </div>
 
-/* Charts Grid */
-.charts-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
-    gap: 2rem;
-    margin-bottom: 2rem;
-}
+            <!-- DASHBOARD GRID usando tus clases responsive -->
+            <div class="dashboard-grid">
+                
+                <!-- KPI: Producción Hoy - SOLO DATOS REALES -->
+                <div class="metric-card">
+                    <div class="metric-value" id="produccion-hoy">--</div>
+                    <div class="metric-label">Producción Hoy (unidades)</div>
+                    <div class="metric-trend" id="produccion-trend">
+                        <span class="data-loading">Cargando desde Firebase...</span>
+                    </div>
+                </div>
 
-@media (max-width: 1200px) {
-    .charts-grid {
-        grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
-        gap: 1.5rem;
-    }
-}
+                <!-- KPI: Ingresos del Mes - SOLO DATOS REALES -->
+                <div class="metric-card">
+                    <div class="metric-value" id="ingresos-hoy">Q --</div>
+                    <div class="metric-label">Ingresos del Mes</div>
+                    <div class="metric-trend" id="ingresos-trend">
+                        <span class="data-loading">Cargando desde Firebase...</span>
+                    </div>
+                </div>
 
-@media (max-width: 768px) {
-    .charts-grid {
-        grid-template-columns: 1fr;
-        gap: 1rem;
-        margin-bottom: 1.5rem;
-    }
-}
+                <!-- KPI: Árboles Saludables - SOLO DATOS REALES -->
+                <div class="metric-card">
+                    <div class="metric-value" id="arboles-sanos">-- de --</div>
+                    <div class="metric-label">Árboles Saludables</div>
+                    <div class="metric-trend" id="arboles-porcentaje">
+                        <span class="data-loading">Cargando desde Firebase...</span>
+                    </div>
+                </div>
 
-.chart-card {
-    background: #ffffff;
-    border-radius: 16px;
-    padding: 1.5rem;
-    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.05);
-    border: 1px solid #e2e8f0;
-    min-height: 300px;
-}
+                <!-- KPI: Gastos del Mes - SOLO DATOS REALES -->
+                <div class="metric-card">
+                    <div class="metric-value" id="gastos-hoy">Q --</div>
+                    <div class="metric-label">Gastos del Mes</div>
+                    <div class="metric-trend" id="gastos-trend">
+                        <span class="data-loading">Cargando desde Firebase...</span>
+                    </div>
+                </div>
 
-@media (max-width: 768px) {
-    .chart-card {
-        padding: 1.25rem;
-        border-radius: 12px;
-        min-height: 250px;
-    }
-}
+            </div>
 
-@media (max-width: 480px) {
-    .chart-card {
-        padding: 1rem;
-        border-radius: 8px;
-        min-height: 200px;
-    }
-}
+            <!-- WIDGETS ADICIONALES usando tus clases -->
+            <div class="grid-responsive grid-3-cols">
+                
+                <!-- Widget del Tanque usando tu clase existente -->
+                <div class="card tank-widget">
+                    <div class="card-header">
+                        <h3 class="card-title">
+                            <i class="fas fa-tint"></i>
+                            Nivel del Tanque
+                        </h3>
+                    </div>
+                    <div class="card-body">
+                        <div class="tank-visual">
+                            <div class="tank-container">
+                                <div class="tank-fill" id="tank-fill" style="height: 0%"></div>
+                                <span class="tank-alert" id="tank-alert" style="display:none;">⚠️</span>
+                            </div>
+                            <div class="tank-info">
+                                <div id="tanque-nivel" class="data-loading">-- L</div>
+                                <div id="tank-percentage" class="data-loading">--%</div>
+                            </div>
+                        </div>
+                        <small>Fuente: <span id="tank-source" class="data-loading">Firebase Firestore</span></small>
+                    </div>
+                </div>
 
-.chart-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 1rem;
-    flex-wrap: wrap;
-    gap: 0.5rem;
-}
+                <!-- Widget Clima usando tu clase existente -->
+                <div class="card clima-widget">
+                    <div class="card-header">
+                        <h3 class="card-title">
+                            <i class="fas fa-cloud-sun"></i>
+                            Clima Actual
+                        </h3>
+                        <span id="weather-status" class="data-loading">Conectando...</span>
+                    </div>
+                    <div class="card-body">
+                        <div class="clima-actual">
+                            <div class="temperatura-actual" id="current-temp">--°C</div>
+                            <div class="clima-icono" id="weather-icon">--</div>
+                        </div>
+                        <div id="weather-desc" class="data-loading">Obteniendo datos meteorológicos...</div>
+                        <div class="clima-detalles">
+                            <div class="clima-detalle">
+                                <div class="clima-detalle-valor" id="humidity">--%</div>
+                                <div class="clima-detalle-label">Humedad</div>
+                            </div>
+                            <div class="clima-detalle">
+                                <div class="clima-detalle-valor" id="wind-speed">--</div>
+                                <div class="clima-detalle-label">Viento</div>
+                            </div>
+                            <div class="clima-detalle">
+                                <div class="clima-detalle-valor" id="rain-chance">--%</div>
+                                <div class="clima-detalle-label">Lluvia</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
 
-.chart-header h3 {
-    margin: 0;
-    font-size: 1.1rem;
-    font-weight: 600;
-    color: #1e293b;
-}
+                <!-- Widget Financiero usando tus clases -->
+                <div class="card finance-widget">
+                    <div class="card-header">
+                        <h3 class="card-title">
+                            <i class="fas fa-chart-line"></i>
+                            Resumen Financiero
+                        </h3>
+                    </div>
+                    <div class="card-body">
+                        <div class="finance-row">
+                            <span>Balance Hoy:</span>
+                            <span id="balance-hoy" class="data-loading">Q --</span>
+                        </div>
+                        <div class="finance-row">
+                            <span>Balance Mes:</span>
+                            <span id="balance-mes" class="data-loading">Q --</span>
+                        </div>
+                        <div class="finance-row">
+                            <span>Precio MAGA:</span>
+                            <span id="precio-actual" class="data-loading">Q --</span>
+                        </div>
+                        <small id="precio-update" class="data-loading">Actualizando precios MAGA...</small>
+                    </div>
+                </div>
 
-@media (max-width: 768px) {
-    .chart-header h3 {
-        font-size: 1rem;
-    }
-}
+            </div>
 
-/* Weather Card Specific */
-.weather-main {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 1rem;
-    margin-bottom: 1rem;
-}
+            <!-- RESUMEN DE DATOS DE FIREBASE -->
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title">
+                        <i class="fas fa-database"></i>
+                        Estado de Datos Reales - Firebase
+                    </h3>
+                    <button onclick="window.firebaseDataManager?.initialize?.()" class="btn btn-sm btn-secondary">
+                        <i class="fas fa-refresh"></i>
+                        Recargar
+                    </button>
+                </div>
+                <div class="card-body">
+                    <div class="grid-responsive grid-2-cols">
+                        <div>
+                            <h4>Colecciones Firebase:</h4>
+                            <div class="stats-grid">
+                                <div class="stat-card">
+                                    <div class="stat-value" id="total-cosechas">--</div>
+                                    <div class="stat-label">Cosechas</div>
+                                    <div class="stat-icon">🌱</div>
+                                </div>
+                                <div class="stat-card">
+                                    <div class="stat-value" id="total-ventas">--</div>
+                                    <div class="stat-label">Ventas</div>
+                                    <div class="stat-icon">💰</div>
+                                </div>
+                                <div class="stat-card">
+                                    <div class="stat-value" id="total-gastos-count">--</div>
+                                    <div class="stat-label">Gastos</div>
+                                    <div class="stat-icon">🧾</div>
+                                </div>
+                                <div class="stat-card">
+                                    <div class="stat-value" id="total-riegos">--</div>
+                                    <div class="stat-label">Riegos</div>
+                                    <div class="stat-icon">💧</div>
+                                </div>
+                            </div>
+                        </div>
+                        <div>
+                            <h4>Estado de Conexión:</h4>
+                            <div class="connection-status">
+                                <div class="status-item">
+                                    <span>Firebase:</span>
+                                    <span id="firebase-connection-status" class="data-loading">Conectando...</span>
+                                </div>
+                                <div class="status-item">
+                                    <span>Cosechas:</span>
+                                    <span id="status-cosechas" class="status-badge">⏳</span>
+                                </div>
+                                <div class="status-item">
+                                    <span>Ventas:</span>
+                                    <span id="status-ventas" class="status-badge">⏳</span>
+                                </div>
+                                <div class="status-item">
+                                    <span>Gastos:</span>
+                                    <span id="status-gastos" class="status-badge">⏳</span>
+                                </div>
+                                <div class="status-item">
+                                    <span>Riegos:</span>
+                                    <span id="status-riegos" class="status-badge">⏳</span>
+                                </div>
+                                <div class="status-item">
+                                    <span>Árboles:</span>
+                                    <span id="status-arboles" class="status-badge">⏳</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
 
-@media (max-width: 480px) {
-    .weather-main {
-        flex-direction: column;
-        gap: 0.5rem;
-    }
-}
+        </main>
 
-#weather-icon {
-    font-size: 2.5rem;
-}
+        <!-- FOOTER usando tus clases -->
+        <footer class="footer">
+            <p>&copy; 2025 Finca La Herradura - Sistema Inteligente de Gestión</p>
+        </footer>
+    </div>
 
-#current-temp {
-    font-size: 2rem;
-    font-weight: 700;
-    color: #1e293b;
-}
-
-@media (max-width: 768px) {
-    #weather-icon {
-        font-size: 2rem;
-    }
+    <!-- TUS SCRIPTS EXISTENTES EN ORDEN CORRECTO -->
+    <script src="js/firebase-config.js"></script>
+    <script src="js/firebase-integration.js"></script>
+    <script src="js/offline.js"></script>
+    <script src="js/clima.js"></script>
+    <script src="js/auth.js"></script>
+    <script src="js/nav.js"></script>
+    <script src="js/mobile-nav.js"></script>
     
-    #current-temp {
-        font-size: 1.5rem;
-    }
-}
+    <!-- Script de inicialización que USA tus sistemas existentes -->
+    <script>
+        // Variables globales
+        window.dashboardStartTime = Date.now();
+        
+        // Función para actualizar fecha/hora
+        function updateDateTime() {
+            const now = new Date();
+            const dateTimeEl = document.getElementById('current-date-time');
+            if (dateTimeEl) {
+                dateTimeEl.textContent = now.toLocaleDateString('es-GT', {
+                    weekday: 'long',
+                    year: 'numeric',
+                    month: 'long',
+                    day: 'numeric'
+                }) + ' - ' + now.toLocaleTimeString('es-GT');
+            }
+        }
 
-.weather-details {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 1rem;
-    margin-bottom: 1rem;
-}
+        // Log de actividades usando tu sistema
+        function logActivity(message) {
+            console.log(`[${new Date().toLocaleTimeString()}] ${message}`);
+        }
 
-@media (max-width: 640px) {
-    .weather-details {
-        grid-template-columns: 1fr;
-        gap: 0.5rem;
-    }
-}
+        // Inicialización principal
+        document.addEventListener('DOMContentLoaded', async () => {
+            logActivity('Dashboard iniciando - Solo datos reales');
+            
+            // Actualizar fecha/hora
+            updateDateTime();
+            setInterval(updateDateTime, 1000);
+            
+            try {
+                // Esperar a que tu firebase-integration.js esté listo
+                if (window.firebaseDataManager) {
+                    logActivity('Usando firebase-integration.js existente');
+                    await window.firebaseDataManager.initialize();
+                } else {
+                    logActivity('Esperando firebase-integration.js...');
+                    // Esperar hasta que esté disponible
+                    const waitForFBManager = setInterval(() => {
+                        if (window.firebaseDataManager) {
+                            clearInterval(waitForFBManager);
+                            window.firebaseDataManager.initialize();
+                        }
+                    }, 500);
+                }
+                
+                logActivity('Dashboard inicializado con datos reales');
+            } catch (error) {
+                console.error('Error inicializando dashboard:', error);
+                logActivity('Error: ' + error.message);
+            }
+            
+            // Ocultar loader
+            setTimeout(() => {
+                const loader = document.getElementById('loader');
+                if (loader) {
+                    loader.classList.add('fade-out');
+                    setTimeout(() => loader.style.display = 'none', 500);
+                }
+            }, 2000);
+        });
 
-.weather-item {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    font-size: 0.875rem;
-    color: #64748b;
-    justify-content: center;
-}
-
-@media (max-width: 640px) {
-    .weather-item {
-        justify-content: flex-start;
-        padding: 0.5rem;
-        background: #f8fafc;
-        border-radius: 6px;
-    }
-}
-
-#weather-desc {
-    text-align: center;
-    color: #64748b;
-    font-size: 0.9rem;
-    font-style: italic;
-}
-
-/* Live Indicator */
-.live-indicator {
-    font-size: 0.75rem;
-    font-weight: 600;
-    padding: 0.25rem 0.5rem;
-    border-radius: 12px;
-    background: rgba(239, 68, 68, 0.1);
-    color: #ef4444;
-    display: flex;
-    align-items: center;
-    gap: 0.25rem;
-}
-
-.live-indicator::before {
-    content: '';
-    width: 6px;
-    height: 6px;
-    background: currentColor;
-    border-radius: 50%;
-    animation: pulse 1.5s infinite;
-}
-
-/* Data Summary Grid */
-.data-summary-grid {
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: 1rem;
-}
-
-@media (max-width: 480px) {
-    .data-summary-grid {
-        grid-template-columns: 1fr;
-        gap: 0.75rem;
-    }
-}
-
-.summary-item {
-    padding: 0.75rem;
-    background: #f8fafc;
-    border-radius: 8px;
-    text-align: center;
-}
-
-.summary-label {
-    font-size: 0.75rem;
-    color: #64748b;
-    margin-bottom: 0.25rem;
-}
-
-.summary-value {
-    font-size: 1.25rem;
-    font-weight: 600;
-    color: #1e293b;
-}
-
-@media (max-width: 768px) {
-    .summary-value {
-        font-size: 1rem;
-    }
-}
-
-/* Firebase Collections Status */
-.firebase-collections {
-    space-y: 0.5rem;
-}
-
-.collection-item {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 0.5rem;
-    background: #f8fafc;
-    border-radius: 6px;
-    font-size: 0.875rem;
-}
-
-.status-badge {
-    font-size: 1rem;
-    width: 24px;
-    text-align: center;
-}
-
-/* Activity Log */
-.activity-log-section {
-    margin-top: 2rem;
-}
-
-.activity-log {
-    max-height: 300px;
-    overflow-y: auto;
-    background: #f8fafc;
-    border-radius: 8px;
-    padding: 1rem;
-}
-
-@media (max-width: 768px) {
-    .activity-log {
-        max-height: 200px;
-        padding: 0.75rem;
-    }
-}
-
-.log-entry {
-    display: flex;
-    gap: 1rem;
-    padding: 0.5rem 0;
-    border-bottom: 1px solid #e2e8f0;
-    font-size: 0.875rem;
-}
-
-.log-entry:last-child {
-    border-bottom: none;
-}
-
-@media (max-width: 480px) {
-    .log-entry {
-        flex-direction: column;
-        gap: 0.25rem;
-    }
-}
-
-.log-time {
-    color: #64748b;
-    font-family: monospace;
-    font-size: 0.75rem;
-    flex-shrink: 0;
-    min-width: 80px;
-}
-
-.log-message {
-    color: #1e293b;
-    flex: 1;
-}
-
-.log-entry.log-success .log-message {
-    color: #059669;
-}
-
-.log-entry.log-error .log-message {
-    color: #dc2626;
-}
-
-.log-entry.log-warning .log-message {
-    color: #d97706;
-}
-
-/* Estado de los datos */
-.data-loading {
-    color: #6b7280;
-    font-style: italic;
-    animation: pulse-opacity 1.5s infinite;
-}
-
-.data-error {
-    color: #dc2626;
-    font-weight: 500;
-}
-
-.data-real {
-    color: inherit;
-    animation: none;
-}
-
-@keyframes pulse-opacity {
-    0%, 100% { opacity: 1; }
-    50% { opacity: 0.6; }
-}
-
-/* Badge */
-.badge {
-    background: #ef4444;
-    color: white;
-    border-radius: 50%;
-    padding: 0.125rem 0.375rem;
-    font-size: 0.75rem;
-    min-width: 20px;
-    text-align: center;
-    font-weight: 600;
-}
-
-/* Offline Indicator */
-.offline-indicator {
-    position: fixed;
-    bottom: 1rem;
-    left: 1rem;
-    background: #f59e0b;
-    color: white;
-    padding: 0.5rem 1rem;
-    border-radius: 8px;
-    font-size: 0.875rem;
-    display: none;
-    z-index: 1000;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-    animation: slideInLeft 0.3s ease;
-}
-
-.offline-indicator.show {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-}
-
-@keyframes slideInLeft {
-    from { transform: translateX(-100%); }
-    to { transform: translateX(0); }
-}
-
-@media (max-width: 768px) {
-    .offline-indicator {
-        left: 0.5rem;
-        right: 0.5rem;
-        bottom: 0.5rem;
-        text-align: center;
-        justify-content: center;
-    }
-}
-
-/* ===========================================
-   UTILIDADES RESPONSIVE ADICIONALES
-   =========================================== */
-
-/* Scrollbar personalizado para webkit */
-::-webkit-scrollbar {
-    width: 6px;
-    height: 6px;
-}
-
-::-webkit-scrollbar-track {
-    background: #f1f5f9;
-}
-
-::-webkit-scrollbar-thumb {
-    background: #cbd5e1;
-    border-radius: 3px;
-}
-
-::-webkit-scrollbar-thumb:hover {
-    background: #94a3b8;
-}
-
-/* Focus styles mejorados */
-button:focus-visible,
-.sync-button:focus-visible {
-    outline: 2px solid #3b82f6;
-    outline-offset: 2px;
-}
-
-/* Animaciones suaves condicionales */
-@media (prefers-reduced-motion: reduce) {
-    *,
-    *::before,
-    *::after {
-        animation-duration: 0.01ms !important;
-        animation-iteration-count: 1 !important;
-        transition-duration: 0.01ms !important;
-    }
-}
-
-/* Print styles */
-@media print {
-    .sidebar,
-    .offline-indicator,
-    .sync-button,
-    .chart-header button {
-        display: none !important;
-    }
-    
-    .main-content-wrapper {
-        margin-left: 0 !important;
-    }
-    
-    .kpi-card,
-    .widget-card,
-    .chart-card {
-        break-inside: avoid;
-        box-shadow: none !important;
-        border: 1px solid #e2e8f0 !important;
-    }
-}
+        // Configurar botón de sync para usar TU sistema
+        document.addEventListener('DOMContentLoaded', () => {
+            const syncBtn = document.getElementById('sync-now');
+            if (syncBtn) {
+                syncBtn.addEventListener('click', async () => {
+                    syncBtn.disabled = true;
+                    syncBtn.innerHTML = '<i class="fas fa-spin fa-spinner"></i> Sincronizando...';
+                    
+                    try {
+                        if (window.firebaseDataManager?.initialize) {
+                            await window.firebaseDataManager.initialize();
+                            logActivity('Sincronización completada');
+                        }
+                    } catch (error) {
+                        logActivity('Error en sincronización: ' + error.message);
+                    } finally {
+                        syncBtn.disabled = false;
+                        syncBtn.innerHTML = '<i class="fas fa-sync"></i> Sincronizar';
+                    }
+                });
+            }
+        });
+    </script>
+</body>
+</html>
