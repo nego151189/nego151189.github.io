@@ -1784,8 +1784,8 @@
             console.log('Inicializando página de recordatorios...');
             
             try {
-                // Esperar a que los scripts externos estén cargados
-                await esperarScriptsExternos();
+                // Inicializar notificaciones primero
+                initializeNotifications();
                 
                 // Inicializar Firebase
                 await initializeFirebase();
@@ -1810,14 +1810,48 @@
             }
         });
 
-        async function esperarScriptsExternos() {
-            return new Promise((resolve) => {
-                // Inicializar sistema de notificaciones inmediatamente
-                initializeNotifications();
+        function initializeNotifications() {
+            // Asegurar que el contenedor existe
+            let container = document.getElementById('notificationContainer');
+            if (!container) {
+                container = document.createElement('div');
+                container.id = 'notificationContainer';
+                container.className = 'notification-container';
+                document.body.appendChild(container);
+            }
+
+            // Sistema de notificaciones simple
+            window.mostrarNotificacion = function(mensaje, tipo = 'info') {
+                const notification = document.createElement('div');
+                notification.className = `notification ${tipo} show`;
                 
-                console.log('Scripts externos verificados');
-                resolve();
-            });
+                const icons = {
+                    success: 'fa-check-circle',
+                    error: 'fa-exclamation-circle', 
+                    warning: 'fa-exclamation-triangle',
+                    info: 'fa-info-circle'
+                };
+
+                notification.innerHTML = `
+                    <i class="fas ${icons[tipo] || icons.info}"></i>
+                    <span>${mensaje}</span>
+                    <button class="notification-close" onclick="this.parentElement.remove()">
+                        <i class="fas fa-times"></i>
+                    </button>
+                `;
+
+                container.appendChild(notification);
+
+                // Auto-remover después de 4 segundos
+                setTimeout(() => {
+                    if (notification.parentNode) {
+                        notification.classList.remove('show');
+                        setTimeout(() => notification.remove(), 300);
+                    }
+                }, 4000);
+            };
+
+            console.log('Sistema de notificaciones inicializado');
         }
 
         async function initializeFirebase() {
