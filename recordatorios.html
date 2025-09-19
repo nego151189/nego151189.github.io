@@ -9,42 +9,173 @@
     <meta name="description" content="Gestión de recordatorios, tareas pendientes y programación de actividades agrícolas">
     <meta name="keywords" content="recordatorios, tareas, programación, actividades, calendario, finca">
     
-    <!-- Favicon y PWA -->
-    <link rel="icon" type="image/x-icon" href="/icons/favicon.ico">
-    <link rel="manifest" href="/manifest.json">
-    
     <!-- Firebase SDK -->
     <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-firestore-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-auth-compat.js"></script>
-    
-    <!-- CSS -->
-    <link rel="stylesheet" href="/css/main.css">
-    <link rel="stylesheet" href="/css/style.css">
     
     <!-- Font Awesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
     <style>
         /* ===========================================
-           ESTILOS BASE RESPONSIVE
+           VARIABLES CSS
            =========================================== */
-        
+        :root {
+            --primary: #8b5cf6;
+            --primary-dark: #7c3aed;
+            --success: #22c55e;
+            --success-dark: #16a34a;
+            --warning: #f59e0b;
+            --warning-dark: #d97706;
+            --danger: #ef4444;
+            --danger-dark: #dc2626;
+            --secondary: #6b7280;
+            --secondary-dark: #4b5563;
+            
+            --bg-primary: #ffffff;
+            --bg-secondary: #f8fafc;
+            --bg-card: #ffffff;
+            --text-primary: #1f2937;
+            --text-secondary: #6b7280;
+            --border-color: #e5e7eb;
+            
+            --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+            --shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
+            --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+            --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+            
+            --border-radius: 8px;
+            --border-radius-lg: 12px;
+            --border-radius-xl: 16px;
+            
+            --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        /* Modo oscuro */
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --bg-primary: #111827;
+                --bg-secondary: #1f2937;
+                --bg-card: #1f2937;
+                --text-primary: #f9fafb;
+                --text-secondary: #d1d5db;
+                --border-color: #374151;
+            }
+        }
+
+        /* ===========================================
+           RESET Y BASE
+           =========================================== */
         * {
+            margin: 0;
+            padding: 0;
             box-sizing: border-box;
         }
-        
+
+        html {
+            scroll-behavior: smooth;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background-color: var(--bg-primary);
+            color: var(--text-primary);
+            line-height: 1.6;
+            overflow-x: hidden;
+        }
+
+        /* ===========================================
+           UTILIDADES
+           =========================================== */
         .container {
             max-width: 1400px;
             margin: 0 auto;
             padding: 0 1rem;
         }
-        
+
+        .sr-only {
+            position: absolute;
+            width: 1px;
+            height: 1px;
+            padding: 0;
+            margin: -1px;
+            overflow: hidden;
+            clip: rect(0, 0, 0, 0);
+            white-space: nowrap;
+            border: 0;
+        }
+
+        /* ===========================================
+           NAVEGACIÓN SIMPLE
+           =========================================== */
+        .navbar {
+            background: var(--bg-card);
+            box-shadow: var(--shadow);
+            padding: 1rem 0;
+            position: sticky;
+            top: 0;
+            z-index: 50;
+        }
+
+        .navbar-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .navbar-brand {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: var(--primary);
+            text-decoration: none;
+        }
+
+        .navbar-brand i {
+            font-size: 1.5rem;
+        }
+
+        .navbar-nav {
+            display: flex;
+            gap: 2rem;
+            align-items: center;
+        }
+
+        .nav-link {
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-weight: 500;
+            transition: var(--transition);
+            padding: 0.5rem 1rem;
+            border-radius: var(--border-radius);
+        }
+
+        .nav-link:hover {
+            color: var(--primary);
+            background: rgba(139, 92, 246, 0.1);
+        }
+
+        .nav-link.active {
+            color: var(--primary);
+            background: rgba(139, 92, 246, 0.1);
+        }
+
+        /* ===========================================
+           LAYOUT PRINCIPAL
+           =========================================== */
+        .main-content {
+            min-height: calc(100vh - 80px);
+            padding: 2rem 0;
+        }
+
         /* ===========================================
            HEADER RESPONSIVE
            =========================================== */
-        
-        .recordatorios-header {
+        .page-header {
             display: flex;
             justify-content: space-between;
             align-items: flex-start;
@@ -64,14 +195,25 @@
         .title-icon {
             width: 60px;
             height: 60px;
-            background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
-            border-radius: 16px;
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+            border-radius: var(--border-radius-xl);
             display: flex;
             align-items: center;
             justify-content: center;
             color: white;
             font-size: 1.5rem;
             flex-shrink: 0;
+        }
+
+        .title-content h1 {
+            font-size: clamp(1.5rem, 4vw, 2rem);
+            font-weight: 700;
+            margin-bottom: 0.25rem;
+        }
+
+        .title-content p {
+            color: var(--text-secondary);
+            font-size: clamp(0.875rem, 2vw, 1rem);
         }
 
         .header-actions {
@@ -81,26 +223,104 @@
             align-items: center;
         }
 
-        .header-actions .btn {
+        /* ===========================================
+           BOTONES
+           =========================================== */
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.75rem 1rem;
+            border: none;
+            border-radius: var(--border-radius);
+            font-weight: 600;
+            text-decoration: none;
+            cursor: pointer;
+            transition: var(--transition);
+            font-size: 0.875rem;
             white-space: nowrap;
-            min-width: auto;
+            border: 2px solid transparent;
+        }
+
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .btn-primary {
+            background: var(--primary);
+            color: white;
+        }
+
+        .btn-primary:hover:not(:disabled) {
+            background: var(--primary-dark);
+        }
+
+        .btn-success {
+            background: var(--success);
+            color: white;
+        }
+
+        .btn-success:hover:not(:disabled) {
+            background: var(--success-dark);
+        }
+
+        .btn-warning {
+            background: var(--warning);
+            color: white;
+        }
+
+        .btn-warning:hover:not(:disabled) {
+            background: var(--warning-dark);
+        }
+
+        .btn-danger {
+            background: var(--danger);
+            color: white;
+        }
+
+        .btn-danger:hover:not(:disabled) {
+            background: var(--danger-dark);
+        }
+
+        .btn-secondary {
+            background: var(--secondary);
+            color: white;
+        }
+
+        .btn-secondary:hover:not(:disabled) {
+            background: var(--secondary-dark);
+        }
+
+        .btn-outline {
+            background: transparent;
+            border-color: currentColor;
+        }
+
+        .btn-sm {
+            padding: 0.5rem 0.75rem;
+            font-size: 0.75rem;
+        }
+
+        .btn-lg {
+            padding: 1rem 1.5rem;
+            font-size: 1rem;
         }
 
         /* ===========================================
-           SECCIÓN HOY RESPONSIVE
+           RESUMEN HOY
            =========================================== */
-
-        .recordatorios-hoy {
-            background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%);
+        .today-summary {
+            background: linear-gradient(135deg, var(--warning) 0%, var(--warning-dark) 100%);
             color: white;
-            border-radius: 20px;
+            border-radius: var(--border-radius-xl);
             padding: 2rem;
             margin-bottom: 2rem;
             position: relative;
             overflow: hidden;
         }
 
-        .recordatorios-hoy::before {
+        .today-summary::before {
             content: '';
             position: absolute;
             top: -50%;
@@ -111,7 +331,7 @@
             animation: float 6s ease-in-out infinite;
         }
 
-        .hoy-header {
+        .summary-header {
             display: flex;
             justify-content: space-between;
             align-items: center;
@@ -122,18 +342,18 @@
             gap: 1rem;
         }
 
-        .hoy-titulo {
+        .summary-title {
             font-size: clamp(1.5rem, 4vw, 2rem);
             font-weight: 700;
             margin: 0;
         }
 
-        .hoy-fecha {
+        .summary-date {
             font-size: clamp(0.875rem, 2.5vw, 1.125rem);
             opacity: 0.9;
         }
 
-        .hoy-stats {
+        .summary-stats {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
             gap: 1rem;
@@ -141,17 +361,16 @@
             z-index: 1;
         }
 
-        .stat-item {
+        .stat-card {
             text-align: center;
             padding: 1rem;
             background: rgba(255, 255, 255, 0.1);
-            border-radius: 16px;
+            border-radius: var(--border-radius-xl);
             backdrop-filter: blur(10px);
             border: 1px solid rgba(255, 255, 255, 0.2);
-            min-width: 0; /* Permite que el contenido se comprima */
         }
 
-        .stat-numero {
+        .stat-number {
             font-size: clamp(1.5rem, 4vw, 2rem);
             font-weight: 700;
             margin-bottom: 0.5rem;
@@ -164,18 +383,38 @@
         }
 
         /* ===========================================
-           FILTROS RESPONSIVE
+           TARJETAS Y CONTENIDO
            =========================================== */
-
-        .filtros-recordatorios {
-            background: var(--bg-card, #fff);
-            border-radius: 16px;
+        .card {
+            background: var(--bg-card);
+            border-radius: var(--border-radius-xl);
             padding: 1.5rem;
-            margin-bottom: 2rem;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            box-shadow: var(--shadow);
+            margin-bottom: 1.5rem;
         }
 
-        .filtros-grid {
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+        }
+
+        .card-title {
+            font-size: 1.125rem;
+            font-weight: 600;
+            margin: 0;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        /* ===========================================
+           FILTROS
+           =========================================== */
+        .filters-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
             gap: 1rem;
@@ -190,123 +429,121 @@
         .form-label {
             margin-bottom: 0.5rem;
             font-weight: 600;
-            color: var(--text-primary, #333);
+            color: var(--text-primary);
         }
 
         .form-input {
             padding: 0.75rem;
-            border: 2px solid #e5e7eb;
-            border-radius: 8px;
+            border: 2px solid var(--border-color);
+            border-radius: var(--border-radius);
             font-size: 1rem;
-            transition: border-color 0.3s ease;
+            transition: var(--transition);
+            background: var(--bg-primary);
+            color: var(--text-primary);
         }
 
         .form-input:focus {
             outline: none;
-            border-color: #8b5cf6;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.1);
         }
 
         /* ===========================================
-           SELECTOR DE VISTA RESPONSIVE
+           SELECTOR DE VISTA
            =========================================== */
-
-        .vista-selector {
+        .view-selector {
             display: flex;
-            background: var(--bg-secondary, #f8fafc);
-            border-radius: 12px;
+            background: var(--bg-secondary);
+            border-radius: var(--border-radius-lg);
             padding: 0.25rem;
             margin-bottom: 2rem;
             overflow-x: auto;
         }
 
-        .vista-btn {
+        .view-btn {
             flex: 1;
             padding: 0.75rem 1rem;
             border: none;
             background: transparent;
-            color: var(--text-secondary, #6b7280);
-            border-radius: 8px;
+            color: var(--text-secondary);
+            border-radius: var(--border-radius);
             cursor: pointer;
             font-weight: 600;
-            transition: all 0.3s ease;
+            transition: var(--transition);
             white-space: nowrap;
             min-width: 100px;
         }
 
-        .vista-btn.active {
-            background: var(--primary, #8b5cf6);
+        .view-btn.active {
+            background: var(--primary);
             color: white;
         }
 
-        .vista-btn:hover:not(.active) {
+        .view-btn:hover:not(.active) {
             background: rgba(139, 92, 246, 0.1);
+            color: var(--primary);
         }
 
         /* ===========================================
-           LAYOUT PRINCIPAL RESPONSIVE
+           LAYOUT CONTENIDO
            =========================================== */
-
-        .contenido-recordatorios {
+        .content-layout {
             display: grid;
             grid-template-columns: 1fr 300px;
             gap: 2rem;
         }
 
-        .recordatorios-principales {
-            min-width: 0; /* Evita overflow en grid */
+        .main-content-area {
+            min-width: 0;
         }
 
-        .sidebar-recordatorios {
+        .sidebar {
             display: grid;
             gap: 1.5rem;
             align-content: start;
         }
 
         /* ===========================================
-           CARDS DE RECORDATORIOS RESPONSIVE
+           RECORDATORIOS
            =========================================== */
-
-        .recordatorio-card {
-            background: var(--bg-card, #fff);
-            border-radius: 16px;
+        .reminder-card {
+            background: var(--bg-card);
+            border-radius: var(--border-radius-xl);
             padding: 1.5rem;
             margin-bottom: 1.5rem;
             position: relative;
-            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            transition: var(--transition);
             border-left: 4px solid transparent;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            box-shadow: var(--shadow);
         }
 
-        .recordatorio-card:hover {
+        .reminder-card:hover {
             transform: translateY(-2px);
-            box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+            box-shadow: var(--shadow-lg);
         }
 
-        .recordatorio-card.urgente,
-        .recordatorio-card.alta {
-            border-left-color: #ef4444;
+        .reminder-card.alta {
+            border-left-color: var(--danger);
             background: linear-gradient(135deg, rgba(239, 68, 68, 0.05), transparent);
         }
 
-        .recordatorio-card.importante,
-        .recordatorio-card.media {
-            border-left-color: #f59e0b;
+        .reminder-card.media {
+            border-left-color: var(--warning);
             background: linear-gradient(135deg, rgba(245, 158, 11, 0.05), transparent);
         }
 
-        .recordatorio-card.normal,
-        .recordatorio-card.baja {
-            border-left-color: #22c55e;
+        .reminder-card.baja {
+            border-left-color: var(--success);
             background: linear-gradient(135deg, rgba(34, 197, 94, 0.05), transparent);
         }
 
-        .recordatorio-card.completado {
-            border-left-color: #6b7280;
+        .reminder-card.completado {
+            border-left-color: var(--secondary);
             background: linear-gradient(135deg, rgba(107, 114, 128, 0.05), transparent);
             opacity: 0.7;
         }
 
-        .recordatorio-header {
+        .reminder-header {
             display: flex;
             justify-content: space-between;
             align-items: flex-start;
@@ -315,16 +552,15 @@
             gap: 0.5rem;
         }
 
-        .recordatorio-titulo {
+        .reminder-title {
             font-size: clamp(1rem, 2.5vw, 1.125rem);
             font-weight: 600;
-            color: var(--text-primary, #333);
             margin: 0;
             flex: 1;
             min-width: 0;
         }
 
-        .recordatorio-categoria {
+        .reminder-category {
             padding: 0.25rem 0.75rem;
             border-radius: 20px;
             font-size: 0.75rem;
@@ -333,177 +569,73 @@
             white-space: nowrap;
         }
 
-        .categoria-riego {
+        .category-riego {
             background: rgba(59, 130, 246, 0.2);
             color: #3b82f6;
         }
 
-        .categoria-fertilizacion {
+        .category-fertilizacion {
             background: rgba(34, 197, 94, 0.2);
-            color: #22c55e;
+            color: var(--success);
         }
 
-        .categoria-poda {
+        .category-poda {
             background: rgba(245, 158, 11, 0.2);
-            color: #f59e0b;
+            color: var(--warning);
         }
 
-        .categoria-cosecha {
+        .category-cosecha {
             background: rgba(139, 92, 246, 0.2);
-            color: #8b5cf6;
+            color: var(--primary);
         }
 
-        .categoria-mantenimiento {
+        .category-mantenimiento {
             background: rgba(107, 114, 128, 0.2);
-            color: #6b7280;
+            color: var(--secondary);
         }
 
-        .categoria-tratamiento {
+        .category-tratamiento {
             background: rgba(239, 68, 68, 0.2);
-            color: #ef4444;
+            color: var(--danger);
         }
 
-        .recordatorio-descripcion {
-            color: var(--text-secondary, #6b7280);
+        .reminder-description {
+            color: var(--text-secondary);
             margin-bottom: 1rem;
             line-height: 1.5;
         }
 
-        .recordatorio-detalles {
+        .reminder-details {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
             gap: 0.75rem;
             margin-bottom: 1rem;
         }
 
-        .detalle-item {
+        .detail-item {
             display: flex;
             align-items: center;
             gap: 0.5rem;
             font-size: 0.875rem;
-            color: var(--text-secondary, #6b7280);
+            color: var(--text-secondary);
             min-width: 0;
         }
 
-        .detalle-item i {
+        .detail-item i {
             flex-shrink: 0;
+            color: var(--primary);
         }
 
-        .recordatorio-acciones {
+        .reminder-actions {
             display: flex;
             gap: 0.5rem;
             flex-wrap: wrap;
         }
 
-        .btn-completar, .btn-posponer {
-            padding: 0.5rem 1rem;
-            border: none;
-            border-radius: 8px;
-            cursor: pointer;
-            font-size: 0.875rem;
-            font-weight: 600;
-            transition: all 0.3s ease;
-            white-space: nowrap;
-        }
-
-        .btn-completar {
-            background: #22c55e;
-            color: white;
-        }
-
-        .btn-completar:hover {
-            background: #16a34a;
-        }
-
-        .btn-posponer {
-            background: #f59e0b;
-            color: white;
-        }
-
-        .btn-posponer:hover {
-            background: #d97706;
-        }
-
         /* ===========================================
-           SIDEBAR RESPONSIVE
+           MODAL
            =========================================== */
-
-        .calendario-mini,
-        .categoria-filtros,
-        .resumen-stats {
-            background: var(--bg-card, #fff);
-            border-radius: 16px;
-            padding: 1.5rem;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-        }
-
-        .calendario-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 1rem;
-        }
-
-        .calendario-nav {
-            background: none;
-            border: none;
-            color: var(--text-primary, #333);
-            cursor: pointer;
-            padding: 0.5rem;
-            border-radius: 8px;
-            transition: background 0.3s ease;
-        }
-
-        .calendario-nav:hover {
-            background: var(--bg-secondary, #f8fafc);
-        }
-
-        .calendario-grid {
-            display: grid;
-            grid-template-columns: repeat(7, 1fr);
-            gap: 0.25rem;
-        }
-
-        .calendario-dia {
-            aspect-ratio: 1;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 0.875rem;
-            border-radius: 6px;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            position: relative;
-        }
-
-        .calendario-dia.header {
-            font-weight: 600;
-            color: var(--text-secondary, #6b7280);
-            cursor: default;
-        }
-
-        .calendario-dia.hoy {
-            background: var(--primary, #8b5cf6);
-            color: white;
-        }
-
-        .calendario-dia.con-recordatorios::after {
-            content: '';
-            position: absolute;
-            bottom: 2px;
-            left: 50%;
-            transform: translateX(-50%);
-            width: 4px;
-            height: 4px;
-            background: #f59e0b;
-            border-radius: 50%;
-        }
-
-        /* ===========================================
-           MODAL RESPONSIVE
-           =========================================== */
-
-        .modal-recordatorio {
+        .modal {
             display: none;
             position: fixed;
             top: 0;
@@ -517,8 +649,8 @@
         }
 
         .modal-content {
-            background: var(--bg-card, #fff);
-            border-radius: 16px;
+            background: var(--bg-card);
+            border-radius: var(--border-radius-xl);
             max-width: 600px;
             width: 100%;
             margin: 2rem auto;
@@ -541,17 +673,17 @@
             border: none;
             font-size: 1.5rem;
             cursor: pointer;
-            color: var(--text-secondary, #6b7280);
+            color: var(--text-secondary);
             padding: 0.5rem;
-            border-radius: 8px;
-            transition: background 0.3s ease;
+            border-radius: var(--border-radius);
+            transition: var(--transition);
         }
 
         .modal-close:hover {
-            background: var(--bg-secondary, #f8fafc);
+            background: var(--bg-secondary);
         }
 
-        .form-recordatorio {
+        .form-grid {
             display: grid;
             gap: 1rem;
         }
@@ -562,125 +694,142 @@
             gap: 1rem;
         }
 
-        .prioridad-selector {
+        .priority-selector {
             display: flex;
             gap: 0.5rem;
         }
 
-        .prioridad-btn {
+        .priority-btn {
             flex: 1;
             padding: 0.75rem;
             border: 2px solid transparent;
-            border-radius: 8px;
+            border-radius: var(--border-radius);
             cursor: pointer;
             font-weight: 600;
             text-align: center;
-            transition: all 0.3s ease;
+            transition: var(--transition);
             font-size: 0.875rem;
         }
 
-        .prioridad-btn.urgente,
-        .prioridad-btn.alta {
+        .priority-btn.alta {
             background: rgba(239, 68, 68, 0.1);
-            color: #ef4444;
+            color: var(--danger);
         }
 
-        .prioridad-btn.urgente.active,
-        .prioridad-btn.alta.active {
-            background: #ef4444;
+        .priority-btn.alta.active {
+            background: var(--danger);
             color: white;
-            border-color: #dc2626;
         }
 
-        .prioridad-btn.importante,
-        .prioridad-btn.media {
+        .priority-btn.media {
             background: rgba(245, 158, 11, 0.1);
-            color: #f59e0b;
+            color: var(--warning);
         }
 
-        .prioridad-btn.importante.active,
-        .prioridad-btn.media.active {
-            background: #f59e0b;
+        .priority-btn.media.active {
+            background: var(--warning);
             color: white;
-            border-color: #d97706;
         }
 
-        .prioridad-btn.normal,
-        .prioridad-btn.baja {
+        .priority-btn.baja {
             background: rgba(34, 197, 94, 0.1);
-            color: #22c55e;
+            color: var(--success);
         }
 
-        .prioridad-btn.normal.active,
-        .prioridad-btn.baja.active {
-            background: #22c55e;
+        .priority-btn.baja.active {
+            background: var(--success);
             color: white;
-            border-color: #16a34a;
         }
 
         /* ===========================================
-           BOTONES RESPONSIVE
+           CALENDARIO
            =========================================== */
-
-        .btn {
-            display: inline-flex;
+        .calendar-header {
+            display: flex;
+            justify-content: space-between;
             align-items: center;
-            gap: 0.5rem;
-            padding: 0.75rem 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .calendar-nav {
+            background: none;
             border: none;
-            border-radius: 8px;
-            font-weight: 600;
-            text-decoration: none;
+            color: var(--text-primary);
             cursor: pointer;
-            transition: all 0.3s ease;
+            padding: 0.5rem;
+            border-radius: var(--border-radius);
+            transition: var(--transition);
+        }
+
+        .calendar-nav:hover {
+            background: var(--bg-secondary);
+        }
+
+        .calendar-grid {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 0.25rem;
+        }
+
+        .calendar-day {
+            aspect-ratio: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
             font-size: 0.875rem;
-            white-space: nowrap;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: var(--transition);
+            position: relative;
         }
 
-        .btn-primary {
-            background: #8b5cf6;
+        .calendar-day.header {
+            font-weight: 600;
+            color: var(--text-secondary);
+            cursor: default;
+        }
+
+        .calendar-day.today {
+            background: var(--primary);
             color: white;
         }
 
-        .btn-primary:hover {
-            background: #7c3aed;
+        .calendar-day.has-reminders::after {
+            content: '';
+            position: absolute;
+            bottom: 2px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 4px;
+            height: 4px;
+            background: var(--warning);
+            border-radius: 50%;
         }
 
-        .btn-success {
-            background: #22c55e;
-            color: white;
-        }
-
-        .btn-success:hover {
-            background: #16a34a;
-        }
-
-        .btn-secondary {
-            background: #6b7280;
-            color: white;
-        }
-
-        .btn-secondary:hover {
-            background: #4b5563;
-        }
-
-        .btn-danger {
-            background: #ef4444;
-            color: white;
-        }
-
-        .btn-danger:hover {
-            background: #dc2626;
-        }
-
-        .btn-sm {
-            padding: 0.5rem 0.75rem;
-            font-size: 0.75rem;
+        .calendar-day:hover:not(.header) {
+            background: var(--bg-secondary);
         }
 
         /* ===========================================
-           ANIMACIONES
+           ESTADOS Y ANIMACIONES
            =========================================== */
+        .loading {
+            text-align: center;
+            padding: 3rem;
+            color: var(--text-secondary);
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 3rem;
+            color: var(--text-secondary);
+        }
+
+        .empty-state i {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+            opacity: 0.5;
+        }
 
         @keyframes float {
             0%, 100% {
@@ -691,36 +840,115 @@
             }
         }
 
-        .recordatorio-vencido {
-            animation: pulse-red 2s infinite;
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
         }
 
-        @keyframes pulse-red {
+        .spinning {
+            animation: spin 1s linear infinite;
+        }
+
+        .pulse {
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
             0%, 100% {
-                box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.4);
+                opacity: 1;
             }
             50% {
-                box-shadow: 0 0 0 10px rgba(239, 68, 68, 0);
+                opacity: 0.5;
             }
         }
 
         /* ===========================================
-           MEDIA QUERIES RESPONSIVE
+           NOTIFICACIONES
+           =========================================== */
+        .notification-container {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 10000;
+            pointer-events: none;
+            max-width: 400px;
+        }
+
+        .notification {
+            background: white;
+            border-radius: var(--border-radius-lg);
+            padding: 1rem 1.5rem;
+            margin-bottom: 0.75rem;
+            box-shadow: var(--shadow-xl);
+            border-left: 4px solid;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            font-weight: 500;
+            pointer-events: auto;
+            transform: translateX(120%);
+            transition: var(--transition);
+            opacity: 0;
+        }
+
+        .notification.show {
+            transform: translateX(0);
+            opacity: 1;
+        }
+
+        .notification.success {
+            border-left-color: var(--success);
+            color: var(--success);
+        }
+
+        .notification.error {
+            border-left-color: var(--danger);
+            color: var(--danger);
+        }
+
+        .notification.warning {
+            border-left-color: var(--warning);
+            color: var(--warning);
+        }
+
+        .notification.info {
+            border-left-color: var(--primary);
+            color: var(--primary);
+        }
+
+        .notification-close {
+            background: none;
+            border: none;
+            color: var(--text-secondary);
+            cursor: pointer;
+            padding: 0.25rem;
+            border-radius: 4px;
+            transition: var(--transition);
+            margin-left: auto;
+        }
+
+        .notification-close:hover {
+            background: var(--bg-secondary);
+        }
+
+        /* ===========================================
+           RESPONSIVE DESIGN
            =========================================== */
 
         /* Tablets */
         @media (max-width: 1024px) {
-            .contenido-recordatorios {
+            .content-layout {
                 grid-template-columns: 1fr;
             }
             
-            .sidebar-recordatorios {
+            .sidebar {
                 order: -1;
                 grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
                 gap: 1rem;
             }
 
-            .filtros-grid {
+            .filters-grid {
                 grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
             }
         }
@@ -731,7 +959,7 @@
                 padding: 0 0.75rem;
             }
 
-            .recordatorios-header {
+            .page-header {
                 flex-direction: column;
                 align-items: stretch;
                 gap: 1.5rem;
@@ -747,12 +975,12 @@
                 flex-wrap: wrap;
             }
 
-            .hoy-stats {
+            .summary-stats {
                 grid-template-columns: repeat(2, 1fr);
                 gap: 0.75rem;
             }
 
-            .filtros-grid {
+            .filters-grid {
                 grid-template-columns: 1fr;
             }
 
@@ -760,34 +988,38 @@
                 grid-template-columns: 1fr;
             }
 
-            .recordatorio-detalles {
+            .reminder-details {
                 grid-template-columns: 1fr;
             }
 
-            .prioridad-selector {
+            .priority-selector {
                 flex-direction: column;
             }
 
-            .vista-selector {
+            .view-selector {
                 overflow-x: auto;
                 scrollbar-width: none;
                 -ms-overflow-style: none;
             }
 
-            .vista-selector::-webkit-scrollbar {
+            .view-selector::-webkit-scrollbar {
                 display: none;
             }
 
-            .recordatorio-card {
+            .reminder-card {
                 padding: 1rem;
             }
 
-            .recordatorio-acciones {
+            .reminder-actions {
                 justify-content: center;
             }
 
-            .sidebar-recordatorios {
+            .sidebar {
                 grid-template-columns: 1fr;
+            }
+
+            .navbar-nav {
+                display: none;
             }
         }
 
@@ -797,24 +1029,21 @@
                 padding: 0 0.5rem;
             }
 
-            .recordatorios-hoy {
+            .today-summary {
                 padding: 1.5rem;
                 margin-bottom: 1.5rem;
             }
 
-            .hoy-stats {
+            .summary-stats {
                 grid-template-columns: 1fr;
                 gap: 0.5rem;
             }
 
-            .stat-item {
+            .stat-card {
                 padding: 0.75rem;
             }
 
-            .filtros-recordatorios,
-            .calendario-mini,
-            .categoria-filtros,
-            .resumen-stats {
+            .card {
                 padding: 1rem;
             }
 
@@ -823,12 +1052,12 @@
                 padding: 1.5rem;
             }
 
-            .recordatorio-header {
+            .reminder-header {
                 flex-direction: column;
                 align-items: stretch;
             }
 
-            .recordatorio-categoria {
+            .reminder-category {
                 align-self: flex-start;
             }
 
@@ -844,40 +1073,11 @@
             }
         }
 
-        /* Modo oscuro responsive */
-        @media (prefers-color-scheme: dark) {
-            :root {
-                --bg-card: #1f2937;
-                --bg-secondary: #374151;
-                --text-primary: #f9fafb;
-                --text-secondary: #d1d5db;
-                --border-color: #4b5563;
-            }
-        }
-
-        /* Impresión responsive */
-        @media print {
-            .header-actions,
-            .vista-selector,
-            .sidebar-recordatorios,
-            .recordatorio-acciones {
-                display: none !important;
-            }
-
-            .contenido-recordatorios {
-                grid-template-columns: 1fr;
-            }
-
-            .recordatorio-card {
-                break-inside: avoid;
-                margin-bottom: 1rem;
-            }
-        }
-
         /* Modo de alto contraste */
         @media (prefers-contrast: high) {
-            .recordatorio-card {
-                border: 2px solid;
+            .reminder-card,
+            .card {
+                border: 2px solid var(--border-color);
             }
 
             .btn {
@@ -893,22 +1093,63 @@
                 transition-duration: 0.01ms !important;
             }
         }
+
+        /* Impresión */
+        @media print {
+            .header-actions,
+            .view-selector,
+            .sidebar,
+            .reminder-actions,
+            .navbar {
+                display: none !important;
+            }
+
+            .content-layout {
+                grid-template-columns: 1fr;
+            }
+
+            .reminder-card {
+                break-inside: avoid;
+                margin-bottom: 1rem;
+            }
+
+            body {
+                background: white;
+                color: black;
+            }
+        }
     </style>
 </head>
 <body>
     <!-- Navegación -->
-    <nav id="navbar"></nav>
+    <nav class="navbar">
+        <div class="container">
+            <div class="navbar-content">
+                <a href="#" class="navbar-brand">
+                    <i class="fas fa-seedling"></i>
+                    Finca La Herradura
+                </a>
+                <div class="navbar-nav">
+                    <a href="#" class="nav-link">Dashboard</a>
+                    <a href="#" class="nav-link active">Recordatorios</a>
+                    <a href="#" class="nav-link">Cosechas</a>
+                    <a href="#" class="nav-link">Ventas</a>
+                    <a href="#" class="nav-link">Gastos</a>
+                </div>
+            </div>
+        </div>
+    </nav>
 
     <!-- Contenido principal -->
-    <main class="main-content-wrapper">
+    <main class="main-content">
         <div class="container">
             <!-- Header de la página -->
-            <header class="recordatorios-header">
+            <header class="page-header">
                 <div class="page-title">
                     <div class="title-icon">
                         <i class="fas fa-bell"></i>
                     </div>
-                    <div>
+                    <div class="title-content">
                         <h1>Recordatorios</h1>
                         <p>Gestión de tareas y actividades programadas</p>
                     </div>
@@ -933,47 +1174,50 @@
             </header>
 
             <!-- Resumen de hoy -->
-            <section class="recordatorios-hoy">
-                <div class="hoy-header">
-                    <h2 class="hoy-titulo">Recordatorios de Hoy</h2>
-                    <div class="hoy-fecha" id="fechaHoy"></div>
+            <section class="today-summary">
+                <div class="summary-header">
+                    <h2 class="summary-title">Recordatorios de Hoy</h2>
+                    <div class="summary-date" id="fechaHoy"></div>
                 </div>
                 
-                <div class="hoy-stats">
-                    <div class="stat-item">
-                        <div class="stat-numero" id="totalHoy">0</div>
+                <div class="summary-stats">
+                    <div class="stat-card">
+                        <div class="stat-number" id="totalHoy">0</div>
                         <div class="stat-label">Total del Día</div>
                     </div>
                     
-                    <div class="stat-item">
-                        <div class="stat-numero" id="pendientesHoy">0</div>
+                    <div class="stat-card">
+                        <div class="stat-number" id="pendientesHoy">0</div>
                         <div class="stat-label">Pendientes</div>
                     </div>
                     
-                    <div class="stat-item">
-                        <div class="stat-numero" id="completadosHoy">0</div>
+                    <div class="stat-card">
+                        <div class="stat-number" id="completadosHoy">0</div>
                         <div class="stat-label">Completados</div>
                     </div>
                     
-                    <div class="stat-item">
-                        <div class="stat-numero" id="vencidosHoy">0</div>
+                    <div class="stat-card">
+                        <div class="stat-number" id="vencidosHoy">0</div>
                         <div class="stat-label">Vencidos</div>
                     </div>
                     
-                    <div class="stat-item">
-                        <div class="stat-numero" id="proximosHoy">0</div>
+                    <div class="stat-card">
+                        <div class="stat-number" id="proximosHoy">0</div>
                         <div class="stat-label">Próximos 3 días</div>
                     </div>
                 </div>
             </section>
 
             <!-- Filtros -->
-            <section class="filtros-recordatorios">
-                <h3 style="margin-bottom: 1rem;">
-                    <i class="fas fa-filter"></i> Filtros
-                </h3>
+            <section class="card">
+                <div class="card-header">
+                    <h3 class="card-title">
+                        <i class="fas fa-filter"></i> 
+                        Filtros
+                    </h3>
+                </div>
                 
-                <div class="filtros-grid">
+                <div class="filters-grid">
                     <div class="form-group">
                         <label class="form-label">Estado</label>
                         <select class="form-input" id="filtroEstado">
@@ -1031,26 +1275,25 @@
             </section>
 
             <!-- Selector de vista -->
-            <div class="vista-selector">
-                <button class="vista-btn active" data-vista="tarjetas">
+            <div class="view-selector">
+                <button class="view-btn active" data-vista="tarjetas">
                     <i class="fas fa-th-large"></i> Tarjetas
                 </button>
-                <button class="vista-btn" data-vista="lista">
+                <button class="view-btn" data-vista="lista">
                     <i class="fas fa-list"></i> Lista
                 </button>
-                <button class="vista-btn" data-vista="calendario">
+                <button class="view-btn" data-vista="calendario">
                     <i class="fas fa-calendar"></i> Calendario
                 </button>
             </div>
 
             <!-- Contenido principal -->
-            <div class="contenido-recordatorios">
+            <div class="content-layout">
                 <!-- Lista de recordatorios -->
-                <div class="recordatorios-principales">
+                <div class="main-content-area">
                     <div id="listaRecordatorios">
-                        <!-- Loading placeholder -->
-                        <div style="text-align: center; padding: 3rem; color: #6b7280;">
-                            <i class="fas fa-spinner fa-spin" style="font-size: 2rem; margin-bottom: 1rem;"></i>
+                        <div class="loading">
+                            <i class="fas fa-spinner spinning" style="font-size: 2rem; margin-bottom: 1rem;"></i>
                             <br>
                             Cargando recordatorios...
                         </div>
@@ -1058,34 +1301,34 @@
                 </div>
 
                 <!-- Sidebar -->
-                <div class="sidebar-recordatorios">
+                <div class="sidebar">
                     <!-- Calendario mini -->
-                    <div class="calendario-mini">
-                        <div class="calendario-header">
-                            <button class="calendario-nav" id="mesAnterior">
+                    <div class="card">
+                        <div class="calendar-header">
+                            <button class="calendar-nav" id="mesAnterior">
                                 <i class="fas fa-chevron-left"></i>
                             </button>
                             <h4 id="mesActual">Enero 2025</h4>
-                            <button class="calendario-nav" id="mesSiguiente">
+                            <button class="calendar-nav" id="mesSiguiente">
                                 <i class="fas fa-chevron-right"></i>
                             </button>
                         </div>
-                        <div class="calendario-grid" id="calendarioGrid">
+                        <div class="calendar-grid" id="calendarioGrid">
                             <!-- El calendario se generará dinámicamente -->
                         </div>
                     </div>
 
                     <!-- Filtros por categoría -->
-                    <div class="categoria-filtros">
-                        <h4 style="margin-bottom: 1rem;">Categorías</h4>
+                    <div class="card">
+                        <h4 class="card-title" style="margin-bottom: 1rem;">Categorías</h4>
                         <div id="categoriasList">
                             <!-- Las categorías se cargarán dinámicamente -->
                         </div>
                     </div>
 
                     <!-- Resumen estadístico -->
-                    <div class="resumen-stats">
-                        <h4 style="margin-bottom: 1rem;">Resumen</h4>
+                    <div class="card">
+                        <h4 class="card-title" style="margin-bottom: 1rem;">Resumen</h4>
                         <div id="estadisticasResumen">
                             <!-- Las estadísticas se cargarán dinámicamente -->
                         </div>
@@ -1096,7 +1339,7 @@
     </main>
 
     <!-- Modal para nuevo/editar recordatorio -->
-    <div class="modal-recordatorio" id="modalRecordatorio">
+    <div class="modal" id="modalRecordatorio">
         <div class="modal-content">
             <div class="modal-header">
                 <h3 id="modalTitulo">Nuevo Recordatorio</h3>
@@ -1105,7 +1348,7 @@
                 </button>
             </div>
             
-            <form class="form-recordatorio" id="formRecordatorio">
+            <form class="form-grid" id="formRecordatorio">
                 <div class="form-group">
                     <label class="form-label">Título del Recordatorio</label>
                     <input type="text" class="form-input" id="tituloRecordatorio" required>
@@ -1150,10 +1393,10 @@
                 
                 <div class="form-group">
                     <label class="form-label">Prioridad</label>
-                    <div class="prioridad-selector">
-                        <div class="prioridad-btn baja active" data-prioridad="baja">Baja</div>
-                        <div class="prioridad-btn media" data-prioridad="media">Media</div>
-                        <div class="prioridad-btn alta" data-prioridad="alta">Alta</div>
+                    <div class="priority-selector">
+                        <div class="priority-btn baja active" data-prioridad="baja">Baja</div>
+                        <div class="priority-btn media" data-prioridad="media">Media</div>
+                        <div class="priority-btn alta" data-prioridad="alta">Alta</div>
                     </div>
                     <input type="hidden" id="prioridadRecordatorio" value="baja">
                 </div>
@@ -1185,110 +1428,496 @@
         </div>
     </div>
 
-    <!-- Scripts en orden correcto -->
-    <script src="notifications.js"></script>
-    <script src="firebase-config-optimized.js"></script>
-    <script src="finca-navigation.js"></script>
-    <script src="offline.js"></script>
-    <script src="recordatorios.js"></script>
-    
+    <!-- Contenedor de notificaciones -->
+    <div class="notification-container" id="notificationContainer">
+        <!-- Las notificaciones se insertarán aquí -->
+    </div>
+
     <script>
+        // ===========================================
+        // CONFIGURACIÓN FIREBASE INLINE
+        // ===========================================
+        const firebaseConfig = {
+            apiKey: "AIzaSyDm_DenNbuG-zLS-8tupO8BZEpfo5z3MY8",
+            authDomain: "fincalaherradura-c5229.firebaseapp.com",
+            projectId: "fincalaherradura-c5229",
+            storageBucket: "fincalaherradura-c5229.firebasestorage.app",
+            messagingSenderId: "453253173599",
+            appId: "1:453253173599:web:f5f31e55fc1a93e7f5a6ea"
+        };
+
         // Variables globales
+        let app = null;
+        let db = null;
+        let auth = null;
+        let recordatoriosManager = null;
         let currentUser = null;
         let currentMonth = new Date().getMonth();
         let currentYear = new Date().getFullYear();
 
-        // Inicialización de la página
+        // ===========================================
+        // SISTEMA DE NOTIFICACIONES
+        // ===========================================
+        class NotificationSystem {
+            constructor() {
+                this.container = document.getElementById('notificationContainer');
+                this.notifications = new Map();
+            }
+
+            show(message, type = 'info', duration = 4000) {
+                const id = Date.now() + Math.random();
+                const notification = document.createElement('div');
+                notification.className = `notification ${type}`;
+                
+                const icons = {
+                    success: 'fa-check-circle',
+                    error: 'fa-exclamation-circle',
+                    warning: 'fa-exclamation-triangle',
+                    info: 'fa-info-circle'
+                };
+
+                notification.innerHTML = `
+                    <i class="fas ${icons[type] || icons.info}"></i>
+                    <span>${message}</span>
+                    <button class="notification-close" onclick="notifications.hide(${id})">
+                        <i class="fas fa-times"></i>
+                    </button>
+                `;
+
+                this.container.appendChild(notification);
+                this.notifications.set(id, notification);
+
+                setTimeout(() => notification.classList.add('show'), 10);
+
+                if (duration > 0) {
+                    setTimeout(() => this.hide(id), duration);
+                }
+
+                return id;
+            }
+
+            hide(id) {
+                const notification = this.notifications.get(id);
+                if (notification) {
+                    notification.classList.remove('show');
+                    setTimeout(() => {
+                        if (notification.parentNode) {
+                            notification.parentNode.removeChild(notification);
+                        }
+                        this.notifications.delete(id);
+                    }, 300);
+                }
+            }
+
+            success(message, duration) { return this.show(message, 'success', duration); }
+            error(message, duration) { return this.show(message, 'error', duration); }
+            warning(message, duration) { return this.show(message, 'warning', duration); }
+            info(message, duration) { return this.show(message, 'info', duration); }
+        }
+
+        const notifications = new NotificationSystem();
+        window.mostrarNotificacion = (mensaje, tipo) => notifications.show(mensaje, tipo);
+
+        // ===========================================
+        // MANAGER DE RECORDATORIOS
+        // ===========================================
+        class RecordatoriosManager {
+            constructor() {
+                this.recordatorios = [];
+                this.filtrosActivos = {};
+                this.initialized = false;
+                console.log('Inicializando RecordatoriosManager...');
+                this.init();
+            }
+
+            async init() {
+                try {
+                    await this.cargarRecordatorios();
+                    this.initialized = true;
+                    console.log('RecordatoriosManager inicializado correctamente');
+                } catch (error) {
+                    console.error('Error inicializando RecordatoriosManager:', error);
+                }
+            }
+
+            async cargarRecordatorios() {
+                try {
+                    // Cargar desde localStorage primero
+                    const recordatoriosLocales = localStorage.getItem('finca_recordatorios');
+                    if (recordatoriosLocales) {
+                        this.recordatorios = JSON.parse(recordatoriosLocales);
+                        console.log(`Cargados ${this.recordatorios.length} recordatorios desde localStorage`);
+                    }
+
+                    // Si Firebase está disponible, sincronizar
+                    if (db) {
+                        await this.sincronizarConFirebase();
+                    }
+
+                    // Si no hay recordatorios, crear ejemplos
+                    if (this.recordatorios.length === 0) {
+                        await this.crearRecordatoriosEjemplo();
+                    }
+
+                } catch (error) {
+                    console.error('Error cargando recordatorios:', error);
+                    // Crear recordatorios de ejemplo si hay error
+                    await this.crearRecordatoriosEjemplo();
+                }
+            }
+
+            async crearRecordatoriosEjemplo() {
+                const ejemplos = [
+                    {
+                        titulo: 'Riego matutino sector A',
+                        descripcion: 'Riego programado para los árboles del sector A, revisar presión del agua',
+                        categoria: 'riego',
+                        prioridad: 'alta',
+                        fechaVencimiento: new Date(Date.now() + 2 * 60 * 60 * 1000), // 2 horas
+                        ubicacion: 'Sector A - Árboles 1-50'
+                    },
+                    {
+                        titulo: 'Aplicación de fertilizante',
+                        descripcion: 'Aplicar fertilizante orgánico en sector B según cronograma',
+                        categoria: 'fertilizacion',
+                        prioridad: 'media',
+                        fechaVencimiento: new Date(Date.now() + 24 * 60 * 60 * 1000), // 1 día
+                        ubicacion: 'Sector B'
+                    },
+                    {
+                        titulo: 'Poda de limpieza',
+                        descripcion: 'Realizar poda de limpieza en árboles identificados',
+                        categoria: 'poda',
+                        prioridad: 'baja',
+                        fechaVencimiento: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000), // 3 días
+                        ubicacion: 'Múltiples sectores'
+                    },
+                    {
+                        titulo: 'Cosecha programada',
+                        descripcion: 'Cosecha de limones en punto óptimo de maduración',
+                        categoria: 'cosecha',
+                        prioridad: 'alta',
+                        fechaVencimiento: new Date(Date.now() + 12 * 60 * 60 * 1000), // 12 horas
+                        ubicacion: 'Sector C'
+                    },
+                    {
+                        titulo: 'Mantenimiento de bomba de agua',
+                        descripcion: 'Revisión mensual del sistema de bombeo',
+                        categoria: 'mantenimiento',
+                        prioridad: 'media',
+                        fechaVencimiento: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // 7 días
+                        ubicacion: 'Casa de bombas'
+                    }
+                ];
+
+                for (const ejemplo of ejemplos) {
+                    await this.crearRecordatorio(ejemplo);
+                }
+
+                console.log('Recordatorios de ejemplo creados');
+            }
+
+            async crearRecordatorio(datos) {
+                const recordatorio = {
+                    id: this.generarId(),
+                    titulo: datos.titulo,
+                    descripcion: datos.descripcion,
+                    categoria: datos.categoria,
+                    prioridad: datos.prioridad,
+                    fechaCreacion: new Date(),
+                    fechaVencimiento: new Date(datos.fechaVencimiento),
+                    ubicacion: datos.ubicacion || '',
+                    estado: 'pendiente',
+                    repetir: datos.repetir || '',
+                    notas: datos.notas || '',
+                    sincronizado: false
+                };
+
+                this.recordatorios.push(recordatorio);
+                await this.guardarLocal();
+                
+                if (db) {
+                    await this.sincronizarRecordatorioConFirebase(recordatorio);
+                }
+
+                console.log('Recordatorio creado:', recordatorio.titulo);
+                return recordatorio;
+            }
+
+            async guardarRecordatorio(datos) {
+                if (datos.id) {
+                    // Actualizar existente
+                    const index = this.recordatorios.findIndex(r => r.id === datos.id);
+                    if (index !== -1) {
+                        this.recordatorios[index] = { ...this.recordatorios[index], ...datos };
+                        await this.guardarLocal();
+                    }
+                } else {
+                    // Crear nuevo
+                    await this.crearRecordatorio(datos);
+                }
+            }
+
+            async completarRecordatorio(id) {
+                const recordatorio = this.recordatorios.find(r => r.id === id);
+                if (recordatorio) {
+                    recordatorio.estado = 'completado';
+                    recordatorio.fechaComplecion = new Date();
+                    await this.guardarLocal();
+                    console.log('Recordatorio completado:', recordatorio.titulo);
+                }
+            }
+
+            async eliminarRecordatorio(id) {
+                const index = this.recordatorios.findIndex(r => r.id === id);
+                if (index !== -1) {
+                    const recordatorio = this.recordatorios[index];
+                    this.recordatorios.splice(index, 1);
+                    await this.guardarLocal();
+                    console.log('Recordatorio eliminado:', recordatorio.titulo);
+                }
+            }
+
+            async posponerRecordatorio(id, nuevaFecha) {
+                const recordatorio = this.recordatorios.find(r => r.id === id);
+                if (recordatorio) {
+                    recordatorio.fechaVencimiento = new Date(nuevaFecha);
+                    await this.guardarLocal();
+                    console.log('Recordatorio pospuesto:', recordatorio.titulo);
+                }
+            }
+
+            async guardarLocal() {
+                try {
+                    localStorage.setItem('finca_recordatorios', JSON.stringify(this.recordatorios));
+                } catch (error) {
+                    console.error('Error guardando en localStorage:', error);
+                }
+            }
+
+            async sincronizarConFirebase() {
+                if (!db) return;
+
+                try {
+                    const snapshot = await db.collection('recordatorios_finca')
+                        .where('fincaId', '==', 'finca_la_herradura')
+                        .orderBy('fechaCreacion', 'desc')
+                        .get();
+
+                    const recordatoriosFirebase = [];
+                    snapshot.forEach(doc => {
+                        const data = doc.data();
+                        recordatoriosFirebase.push({
+                            id: doc.id,
+                            ...data,
+                            fechaCreacion: data.fechaCreacion?.toDate() || new Date(),
+                            fechaVencimiento: data.fechaVencimiento?.toDate() || new Date()
+                        });
+                    });
+
+                    console.log(`Sincronizados ${recordatoriosFirebase.length} recordatorios desde Firebase`);
+                } catch (error) {
+                    console.error('Error sincronizando con Firebase:', error);
+                }
+            }
+
+            aplicarFiltros(filtros) {
+                this.filtrosActivos = filtros;
+            }
+
+            obtenerRecordatoriosFiltrados() {
+                let filtrados = [...this.recordatorios];
+
+                if (this.filtrosActivos.estado) {
+                    filtrados = filtrados.filter(r => r.estado === this.filtrosActivos.estado);
+                }
+
+                if (this.filtrosActivos.prioridad) {
+                    filtrados = filtrados.filter(r => r.prioridad === this.filtrosActivos.prioridad);
+                }
+
+                if (this.filtrosActivos.categoria) {
+                    filtrados = filtrados.filter(r => r.categoria === this.filtrosActivos.categoria);
+                }
+
+                if (this.filtrosActivos.periodo) {
+                    const ahora = new Date();
+                    let filtroFecha;
+
+                    switch (this.filtrosActivos.periodo) {
+                        case 'hoy':
+                            filtroFecha = (r) => {
+                                const fecha = new Date(r.fechaVencimiento);
+                                return fecha.toDateString() === ahora.toDateString();
+                            };
+                            break;
+                        case 'semana':
+                            filtroFecha = (r) => {
+                                const fecha = new Date(r.fechaVencimiento);
+                                const unaSemana = new Date(ahora.getTime() + 7 * 24 * 60 * 60 * 1000);
+                                return fecha >= ahora && fecha <= unaSemana;
+                            };
+                            break;
+                        case 'mes':
+                            filtroFecha = (r) => {
+                                const fecha = new Date(r.fechaVencimiento);
+                                return fecha.getMonth() === ahora.getMonth() && fecha.getFullYear() === ahora.getFullYear();
+                            };
+                            break;
+                        default:
+                            filtroFecha = () => true;
+                    }
+
+                    filtrados = filtrados.filter(filtroFecha);
+                }
+
+                return filtrados;
+            }
+
+            obtenerEstadisticasHoy() {
+                const hoy = new Date();
+                const recordatoriosHoy = this.recordatorios.filter(r => {
+                    const fecha = new Date(r.fechaVencimiento);
+                    return fecha.toDateString() === hoy.toDateString();
+                });
+
+                const proximos3Dias = new Date(hoy.getTime() + 3 * 24 * 60 * 60 * 1000);
+                const recordatoriosProximos = this.recordatorios.filter(r => {
+                    const fecha = new Date(r.fechaVencimiento);
+                    return fecha > hoy && fecha <= proximos3Dias;
+                });
+
+                return {
+                    total: recordatoriosHoy.length,
+                    pendientes: recordatoriosHoy.filter(r => r.estado === 'pendiente').length,
+                    completados: recordatoriosHoy.filter(r => r.estado === 'completado').length,
+                    vencidos: recordatoriosHoy.filter(r => r.estado === 'pendiente' && new Date(r.fechaVencimiento) < hoy).length,
+                    proximos: recordatoriosProximos.length
+                };
+            }
+
+            obtenerEstadisticasGenerales() {
+                const total = this.recordatorios.length;
+                const pendientes = this.recordatorios.filter(r => r.estado === 'pendiente').length;
+                const hoy = new Date();
+                const completadosHoy = this.recordatorios.filter(r => {
+                    const fecha = new Date(r.fechaComplecion || 0);
+                    return r.estado === 'completado' && fecha.toDateString() === hoy.toDateString();
+                }).length;
+
+                const proximaSemana = new Date(hoy.getTime() + 7 * 24 * 60 * 60 * 1000);
+                const proximaSemanaCount = this.recordatorios.filter(r => {
+                    const fecha = new Date(r.fechaVencimiento);
+                    return fecha > hoy && fecha <= proximaSemana;
+                }).length;
+
+                return {
+                    total,
+                    pendientes,
+                    completadosHoy,
+                    proximaSemana: proximaSemanaCount
+                };
+            }
+
+            obtenerContadoresCategorias() {
+                const contadores = {};
+                this.recordatorios.forEach(r => {
+                    contadores[r.categoria] = (contadores[r.categoria] || 0) + 1;
+                });
+                return contadores;
+            }
+
+            obtenerRecordatorio(id) {
+                return this.recordatorios.find(r => r.id === id);
+            }
+
+            tieneRecordatorios(año, mes, dia) {
+                return this.recordatorios.some(r => {
+                    const fecha = new Date(r.fechaVencimiento);
+                    return fecha.getFullYear() === año && 
+                           fecha.getMonth() === mes && 
+                           fecha.getDate() === dia;
+                });
+            }
+
+            async sincronizar() {
+                await this.sincronizarConFirebase();
+            }
+
+            exportarCalendario() {
+                const datos = this.recordatorios.map(r => ({
+                    titulo: r.titulo,
+                    descripcion: r.descripcion,
+                    fecha: r.fechaVencimiento,
+                    categoria: r.categoria
+                }));
+
+                const json = JSON.stringify(datos, null, 2);
+                const blob = new Blob([json], { type: 'application/json' });
+                const url = URL.createObjectURL(blob);
+                
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `recordatorios_${new Date().toISOString().split('T')[0]}.json`;
+                a.click();
+                
+                URL.revokeObjectURL(url);
+            }
+
+            generarId() {
+                return 'rec_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+            }
+        }
+
+        // ===========================================
+        // INICIALIZACIÓN PRINCIPAL
+        // ===========================================
         document.addEventListener('DOMContentLoaded', async () => {
-            console.log('🔔 Inicializando página de recordatorios...');
+            console.log('Inicializando página de recordatorios...');
             
             try {
-                // Esperar a que Firebase esté listo
-                await esperarFirebase();
+                // Inicializar Firebase
+                await initializeFirebase();
                 
-                // Verificar autenticación
-                if (!await verificarAutenticacion()) {
-                    console.warn('⚠️ Usuario no autenticado, continuando sin autenticación');
-                }
-
-                // Inicializar componentes
-                await inicializarPagina();
-                
-                console.log('✅ Página de recordatorios inicializada correctamente');
-                
-            } catch (error) {
-                console.error('❌ Error inicializando página:', error);
-                mostrarNotificacion('Error inicializando la página', 'error');
-            }
-        });
-
-        async function esperarFirebase() {
-            return new Promise((resolve) => {
-                const checkFirebase = () => {
-                    if (typeof firebase !== 'undefined' && window.FirebaseConfig) {
-                        resolve();
-                    } else {
-                        setTimeout(checkFirebase, 100);
-                    }
-                };
-                checkFirebase();
-                
-                // Timeout después de 10 segundos
-                setTimeout(() => {
-                    console.warn('⚠️ Firebase no se cargó completamente, continuando...');
-                    resolve();
-                }, 10000);
-            });
-        }
-
-        async function verificarAutenticacion() {
-            return new Promise((resolve) => {
-                if (typeof firebase === 'undefined' || !firebase.auth) {
-                    resolve(false);
-                    return;
-                }
-
-                const unsubscribe = firebase.auth().onAuthStateChanged((user) => {
-                    currentUser = user;
-                    unsubscribe();
-                    resolve(!!user);
-                });
-                
-                // Timeout después de 5 segundos
-                setTimeout(() => {
-                    unsubscribe();
-                    resolve(false);
-                }, 5000);
-            });
-        }
-
-        async function inicializarPagina() {
-            try {
-                // Configurar event listeners
-                configurarEventListeners();
+                // Inicializar manager de recordatorios
+                recordatoriosManager = new RecordatoriosManager();
+                window.recordatoriosManager = recordatoriosManager;
                 
                 // Esperar a que el manager esté listo
                 await esperarRecordatoriosManager();
                 
-                // Cargar datos iniciales
-                await cargarDatosIniciales();
+                // Inicializar página
+                await inicializarPagina();
                 
-                // Configurar fecha de hoy
-                configurarFechaHoy();
-                
-                // Generar calendario
-                generarCalendario();
+                console.log('Página de recordatorios inicializada correctamente');
                 
             } catch (error) {
                 console.error('Error inicializando página:', error);
-                mostrarNotificacion('Error cargando la página', 'error');
+                notifications.error('Error inicializando la página');
+            }
+        });
+
+        async function initializeFirebase() {
+            try {
+                if (typeof firebase === 'undefined') {
+                    console.warn('Firebase SDK no disponible');
+                    return;
+                }
+
+                app = firebase.initializeApp(firebaseConfig);
+                db = firebase.firestore();
+                auth = firebase.auth();
+
+                console.log('Firebase inicializado correctamente');
+            } catch (error) {
+                console.error('Error inicializando Firebase:', error);
             }
         }
 
         async function esperarRecordatoriosManager() {
             return new Promise((resolve) => {
                 const checkManager = () => {
-                    if (window.recordatoriosManager && window.recordatoriosManager.initialized) {
+                    if (recordatoriosManager && recordatoriosManager.initialized) {
                         resolve();
                     } else {
                         setTimeout(checkManager, 100);
@@ -1296,12 +1925,22 @@
                 };
                 checkManager();
                 
-                // Timeout después de 10 segundos
                 setTimeout(() => {
-                    console.warn('⚠️ RecordatoriosManager no se inicializó completamente');
+                    console.warn('RecordatoriosManager tardó en inicializar');
                     resolve();
                 }, 10000);
             });
+        }
+
+        async function inicializarPagina() {
+            try {
+                configurarEventListeners();
+                await cargarDatosIniciales();
+                configurarFechaHoy();
+                generarCalendario();
+            } catch (error) {
+                console.error('Error inicializando página:', error);
+            }
         }
 
         function configurarEventListeners() {
@@ -1320,8 +1959,8 @@
             document.getElementById('limpiarFiltros')?.addEventListener('click', limpiarFiltros);
             
             // Vista selector
-            document.querySelectorAll('.vista-btn').forEach(btn => {
-                btn.addEventListener('click', (e) => cambiarVista(e.target.closest('.vista-btn').dataset.vista));
+            document.querySelectorAll('.view-btn').forEach(btn => {
+                btn.addEventListener('click', (e) => cambiarVista(e.target.closest('.view-btn').dataset.vista));
             });
             
             // Calendario
@@ -1329,7 +1968,7 @@
             document.getElementById('mesSiguiente')?.addEventListener('click', () => navegarMes(1));
             
             // Prioridad selector
-            document.querySelectorAll('.prioridad-btn').forEach(btn => {
+            document.querySelectorAll('.priority-btn').forEach(btn => {
                 btn.addEventListener('click', (e) => seleccionarPrioridad(e.target.dataset.prioridad));
             });
             
@@ -1343,17 +1982,10 @@
 
         async function cargarDatosIniciales() {
             try {
-                if (window.recordatoriosManager && window.recordatoriosManager.initialized) {
-                    // Actualizar estadísticas
+                if (recordatoriosManager && recordatoriosManager.initialized) {
                     actualizarEstadisticasHoy();
-                    
-                    // Cargar lista
                     cargarListaRecordatorios();
-                    
-                    // Cargar categorías
                     cargarCategorias();
-                    
-                    // Cargar resumen
                     cargarResumenEstadisticas();
                 }
             } catch (error) {
@@ -1379,11 +2011,9 @@
             const calendario = document.getElementById('calendarioGrid');
             if (!calendario) return;
 
-            const ahora = new Date();
             const año = currentYear;
             const mes = currentMonth;
             
-            // Actualizar título del mes
             const fechaCalendario = new Date(año, mes, 1);
             const mesNombre = fechaCalendario.toLocaleDateString('es-GT', { month: 'long', year: 'numeric' });
             const mesActualElement = document.getElementById('mesActual');
@@ -1391,62 +2021,49 @@
                 mesActualElement.textContent = mesNombre.charAt(0).toUpperCase() + mesNombre.slice(1);
             }
             
-            // Limpiar calendario
             calendario.innerHTML = '';
             
-            // Headers de días
             const diasSemana = ['D', 'L', 'M', 'M', 'J', 'V', 'S'];
             diasSemana.forEach(dia => {
                 const header = document.createElement('div');
-                header.className = 'calendario-dia header';
+                header.className = 'calendar-day header';
                 header.textContent = dia;
                 calendario.appendChild(header);
             });
             
-            // Primer día del mes y número de días
             const primerDia = new Date(año, mes, 1).getDay();
             const ultimoDia = new Date(año, mes + 1, 0).getDate();
             
-            // Días vacíos al inicio
             for (let i = 0; i < primerDia; i++) {
                 const diaVacio = document.createElement('div');
-                diaVacio.className = 'calendario-dia';
+                diaVacio.className = 'calendar-day';
                 calendario.appendChild(diaVacio);
             }
             
-            // Días del mes
-            const hoy = ahora.getDate();
-            const mesActual = ahora.getMonth();
-            const añoActual = ahora.getFullYear();
-            
+            const hoy = new Date();
             for (let dia = 1; dia <= ultimoDia; dia++) {
                 const diaElement = document.createElement('div');
-                diaElement.className = 'calendario-dia';
+                diaElement.className = 'calendar-day';
                 diaElement.textContent = dia;
                 
-                // Marcar día actual
-                if (dia === hoy && mes === mesActual && año === añoActual) {
-                    diaElement.classList.add('hoy');
+                if (dia === hoy.getDate() && mes === hoy.getMonth() && año === hoy.getFullYear()) {
+                    diaElement.classList.add('today');
                 }
                 
-                // Verificar si hay recordatorios
-                if (window.recordatoriosManager?.tieneRecordatorios && 
-                    window.recordatoriosManager.tieneRecordatorios(año, mes, dia)) {
-                    diaElement.classList.add('con-recordatorios');
+                if (recordatoriosManager?.tieneRecordatorios(año, mes, dia)) {
+                    diaElement.classList.add('has-reminders');
                 }
                 
-                // Click handler
                 diaElement.addEventListener('click', () => filtrarPorFecha(año, mes, dia));
-                
                 calendario.appendChild(diaElement);
             }
         }
 
         function actualizarEstadisticasHoy() {
-            if (!window.recordatoriosManager) return;
+            if (!recordatoriosManager) return;
             
             try {
-                const stats = window.recordatoriosManager.obtenerEstadisticasHoy();
+                const stats = recordatoriosManager.obtenerEstadisticasHoy();
                 
                 document.getElementById('totalHoy').textContent = stats.total || 0;
                 document.getElementById('pendientesHoy').textContent = stats.pendientes || 0;
@@ -1462,11 +2079,10 @@
             const container = document.getElementById('listaRecordatorios');
             if (!container) return;
             
-            if (!window.recordatoriosManager) {
+            if (!recordatoriosManager) {
                 container.innerHTML = `
-                    <div style="text-align: center; padding: 3rem; color: #6b7280;">
-                        <i class="fas fa-exclamation-triangle" style="font-size: 2rem; margin-bottom: 1rem; color: #f59e0b;"></i>
-                        <br>
+                    <div class="empty-state">
+                        <i class="fas fa-exclamation-triangle"></i>
                         Sistema de recordatorios no disponible
                     </div>
                 `;
@@ -1474,13 +2090,12 @@
             }
             
             try {
-                const recordatorios = window.recordatoriosManager.obtenerRecordatoriosFiltrados();
+                const recordatorios = recordatoriosManager.obtenerRecordatoriosFiltrados();
                 
                 if (recordatorios.length === 0) {
                     container.innerHTML = `
-                        <div style="text-align: center; padding: 3rem; color: #6b7280;">
-                            <i class="fas fa-bell-slash" style="font-size: 2rem; margin-bottom: 1rem; opacity: 0.5;"></i>
-                            <br>
+                        <div class="empty-state">
+                            <i class="fas fa-bell-slash"></i>
                             No hay recordatorios que mostrar
                             <br>
                             <button class="btn btn-primary" onclick="mostrarModalRecordatorio()" style="margin-top: 1rem;">
@@ -1492,51 +2107,50 @@
                 }
 
                 container.innerHTML = recordatorios.map(recordatorio => `
-                    <div class="recordatorio-card ${recordatorio.prioridad} ${recordatorio.estado}" 
-                         ${recordatorio.estado === 'vencido' ? 'recordatorio-vencido' : ''}>
-                        <div class="recordatorio-header">
-                            <h3 class="recordatorio-titulo">${recordatorio.titulo}</h3>
-                            <div class="recordatorio-categoria categoria-${recordatorio.categoria}">
+                    <div class="reminder-card ${recordatorio.prioridad} ${recordatorio.estado}">
+                        <div class="reminder-header">
+                            <h3 class="reminder-title">${recordatorio.titulo}</h3>
+                            <div class="reminder-category category-${recordatorio.categoria}">
                                 ${recordatorio.categoria}
                             </div>
                         </div>
                         
-                        <div class="recordatorio-descripcion">${recordatorio.descripcion}</div>
+                        <div class="reminder-description">${recordatorio.descripcion}</div>
                         
-                        <div class="recordatorio-detalles">
-                            <div class="detalle-item">
+                        <div class="reminder-details">
+                            <div class="detail-item">
                                 <i class="fas fa-calendar"></i>
                                 <span>${formatearFecha(recordatorio.fechaVencimiento)}</span>
                             </div>
-                            <div class="detalle-item">
+                            <div class="detail-item">
                                 <i class="fas fa-clock"></i>
                                 <span>${formatearHora(recordatorio.fechaVencimiento)}</span>
                             </div>
                             ${recordatorio.ubicacion ? `
-                                <div class="detalle-item">
+                                <div class="detail-item">
                                     <i class="fas fa-map-marker-alt"></i>
                                     <span>${recordatorio.ubicacion}</span>
                                 </div>
                             ` : ''}
-                            <div class="detalle-item">
+                            <div class="detail-item">
                                 <i class="fas fa-flag"></i>
                                 <span>${recordatorio.prioridad}</span>
                             </div>
                         </div>
                         
-                        <div class="recordatorio-acciones">
+                        <div class="reminder-actions">
                             ${recordatorio.estado !== 'completado' ? `
-                                <button class="btn-completar" onclick="completarRecordatorio('${recordatorio.id}')">
+                                <button class="btn btn-success btn-sm" onclick="completarRecordatorio('${recordatorio.id}')">
                                     <i class="fas fa-check"></i> Completar
                                 </button>
-                                <button class="btn-posponer" onclick="posponerRecordatorio('${recordatorio.id}')">
+                                <button class="btn btn-warning btn-sm" onclick="posponerRecordatorio('${recordatorio.id}')">
                                     <i class="fas fa-clock"></i> Posponer
                                 </button>
                             ` : ''}
-                            <button class="btn btn-sm btn-secondary" onclick="editarRecordatorio('${recordatorio.id}')">
+                            <button class="btn btn-secondary btn-sm" onclick="editarRecordatorio('${recordatorio.id}')">
                                 <i class="fas fa-edit"></i>
                             </button>
-                            <button class="btn btn-sm btn-danger" onclick="eliminarRecordatorio('${recordatorio.id}')">
+                            <button class="btn btn-danger btn-sm" onclick="eliminarRecordatorio('${recordatorio.id}')">
                                 <i class="fas fa-trash"></i>
                             </button>
                         </div>
@@ -1545,9 +2159,8 @@
             } catch (error) {
                 console.error('Error cargando lista de recordatorios:', error);
                 container.innerHTML = `
-                    <div style="text-align: center; padding: 3rem; color: #ef4444;">
-                        <i class="fas fa-exclamation-triangle" style="font-size: 2rem; margin-bottom: 1rem;"></i>
-                        <br>
+                    <div class="empty-state">
+                        <i class="fas fa-exclamation-triangle"></i>
                         Error cargando recordatorios
                     </div>
                 `;
@@ -1556,18 +2169,23 @@
 
         function cargarCategorias() {
             const container = document.getElementById('categoriasList');
-            if (!container || !window.recordatoriosManager) return;
+            if (!container || !recordatoriosManager) return;
             
             try {
-                const categorias = window.recordatoriosManager.obtenerContadoresCategorias();
+                const categorias = recordatoriosManager.obtenerContadoresCategorias();
                 
                 container.innerHTML = Object.entries(categorias).map(([categoria, contador]) => `
-                    <div class="categoria-item" onclick="filtrarPorCategoria('${categoria}')">
-                        <div>
+                    <div style="display: flex; justify-content: space-between; align-items: center; padding: 0.75rem; margin-bottom: 0.5rem; border-radius: 8px; cursor: pointer; transition: background 0.3s ease;" 
+                         onmouseover="this.style.background='var(--bg-secondary)'" 
+                         onmouseout="this.style.background='transparent'"
+                         onclick="filtrarPorCategoria('${categoria}')">
+                        <div style="display: flex; align-items: center; gap: 0.5rem;">
                             <i class="fas ${obtenerIconoCategoria(categoria)}"></i>
                             <span>${categoria.charAt(0).toUpperCase() + categoria.slice(1)}</span>
                         </div>
-                        <div class="categoria-contador">${contador}</div>
+                        <div style="background: var(--bg-secondary); color: var(--text-secondary); padding: 0.25rem 0.5rem; border-radius: 12px; font-size: 0.75rem; font-weight: 600;">
+                            ${contador}
+                        </div>
                     </div>
                 `).join('');
             } catch (error) {
@@ -1577,27 +2195,27 @@
 
         function cargarResumenEstadisticas() {
             const container = document.getElementById('estadisticasResumen');
-            if (!container || !window.recordatoriosManager) return;
+            if (!container || !recordatoriosManager) return;
             
             try {
-                const stats = window.recordatoriosManager.obtenerEstadisticasGenerales();
+                const stats = recordatoriosManager.obtenerEstadisticasGenerales();
                 
                 container.innerHTML = `
-                    <div class="stat-resumen">
+                    <div style="display: flex; justify-content: space-between; align-items: center; padding: 0.75rem 0; border-bottom: 1px solid var(--border-color);">
                         <span>Total Recordatorios</span>
-                        <span>${stats.total}</span>
+                        <span style="font-weight: 600;">${stats.total}</span>
                     </div>
-                    <div class="stat-resumen">
+                    <div style="display: flex; justify-content: space-between; align-items: center; padding: 0.75rem 0; border-bottom: 1px solid var(--border-color);">
                         <span>Pendientes</span>
-                        <span>${stats.pendientes}</span>
+                        <span style="font-weight: 600; color: var(--warning);">${stats.pendientes}</span>
                     </div>
-                    <div class="stat-resumen">
+                    <div style="display: flex; justify-content: space-between; align-items: center; padding: 0.75rem 0; border-bottom: 1px solid var(--border-color);">
                         <span>Completados Hoy</span>
-                        <span>${stats.completadosHoy}</span>
+                        <span style="font-weight: 600; color: var(--success);">${stats.completadosHoy}</span>
                     </div>
-                    <div class="stat-resumen">
+                    <div style="display: flex; justify-content: space-between; align-items: center; padding: 0.75rem 0;">
                         <span>Próxima Semana</span>
-                        <span>${stats.proximaSemana}</span>
+                        <span style="font-weight: 600; color: var(--primary);">${stats.proximaSemana}</span>
                     </div>
                 `;
             } catch (error) {
@@ -1612,18 +2230,16 @@
             
             if (!modal || !form || !titulo) return;
             
-            // Limpiar formulario
             form.reset();
             
-            if (recordatorioId && window.recordatoriosManager) {
+            if (recordatorioId && recordatoriosManager) {
                 titulo.textContent = 'Editar Recordatorio';
-                const recordatorio = window.recordatoriosManager.obtenerRecordatorio(recordatorioId);
+                const recordatorio = recordatoriosManager.obtenerRecordatorio(recordatorioId);
                 if (recordatorio) {
                     cargarDatosFormulario(recordatorio);
                 }
             } else {
                 titulo.textContent = 'Nuevo Recordatorio';
-                // Configurar fecha/hora por defecto
                 const ahora = new Date();
                 document.getElementById('fechaRecordatorio').value = ahora.toISOString().split('T')[0];
                 document.getElementById('horaRecordatorio').value = ahora.toTimeString().slice(0, 5);
@@ -1642,22 +2258,22 @@
         async function guardarRecordatorio(e) {
             e.preventDefault();
             
-            if (!window.recordatoriosManager) {
-                mostrarNotificacion('Sistema de recordatorios no disponible', 'error');
+            if (!recordatoriosManager) {
+                notifications.error('Sistema de recordatorios no disponible');
                 return;
             }
             
             const datos = obtenerDatosFormulario();
             
             try {
-                await window.recordatoriosManager.guardarRecordatorio(datos);
-                mostrarNotificacion('Recordatorio guardado correctamente', 'success');
+                await recordatoriosManager.guardarRecordatorio(datos);
+                notifications.success('Recordatorio guardado correctamente');
                 cerrarModal();
                 await cargarDatosIniciales();
                 generarCalendario();
             } catch (error) {
                 console.error('Error guardando recordatorio:', error);
-                mostrarNotificacion('Error al guardar el recordatorio', 'error');
+                notifications.error('Error al guardar el recordatorio');
             }
         }
 
@@ -1665,7 +2281,6 @@
             const fecha = document.getElementById('fechaRecordatorio').value;
             const hora = document.getElementById('horaRecordatorio').value;
             
-            // Combinar fecha y hora
             let fechaVencimiento = new Date(fecha);
             if (hora) {
                 const [horas, minutos] = hora.split(':');
@@ -1701,7 +2316,7 @@
         }
 
         function seleccionarPrioridad(prioridad) {
-            document.querySelectorAll('.prioridad-btn').forEach(btn => btn.classList.remove('active'));
+            document.querySelectorAll('.priority-btn').forEach(btn => btn.classList.remove('active'));
             const btnPrioridad = document.querySelector(`[data-prioridad="${prioridad}"]`);
             if (btnPrioridad) {
                 btnPrioridad.classList.add('active');
@@ -1713,29 +2328,29 @@
         }
 
         async function completarRecordatorio(id) {
-            if (!window.recordatoriosManager) return;
+            if (!recordatoriosManager) return;
             
             try {
-                await window.recordatoriosManager.completarRecordatorio(id);
-                mostrarNotificacion('Recordatorio completado', 'success');
+                await recordatoriosManager.completarRecordatorio(id);
+                notifications.success('Recordatorio completado');
                 await cargarDatosIniciales();
             } catch (error) {
                 console.error('Error completando recordatorio:', error);
-                mostrarNotificacion('Error al completar recordatorio', 'error');
+                notifications.error('Error al completar recordatorio');
             }
         }
 
         async function posponerRecordatorio(id) {
             const nuevaFecha = prompt('Nueva fecha (YYYY-MM-DD):');
-            if (!nuevaFecha || !window.recordatoriosManager) return;
+            if (!nuevaFecha || !recordatoriosManager) return;
             
             try {
-                await window.recordatoriosManager.posponerRecordatorio(id, nuevaFecha);
-                mostrarNotificacion('Recordatorio pospuesto', 'success');
+                await recordatoriosManager.posponerRecordatorio(id, nuevaFecha);
+                notifications.success('Recordatorio pospuesto');
                 await cargarDatosIniciales();
             } catch (error) {
                 console.error('Error posponiendo recordatorio:', error);
-                mostrarNotificacion('Error al posponer recordatorio', 'error');
+                notifications.error('Error al posponer recordatorio');
             }
         }
 
@@ -1745,21 +2360,21 @@
 
         async function eliminarRecordatorio(id) {
             if (!confirm('¿Estás seguro de que quieres eliminar este recordatorio?')) return;
-            if (!window.recordatoriosManager) return;
+            if (!recordatoriosManager) return;
             
             try {
-                await window.recordatoriosManager.eliminarRecordatorio(id);
-                mostrarNotificacion('Recordatorio eliminado', 'success');
+                await recordatoriosManager.eliminarRecordatorio(id);
+                notifications.success('Recordatorio eliminado');
                 await cargarDatosIniciales();
                 generarCalendario();
             } catch (error) {
                 console.error('Error eliminando recordatorio:', error);
-                mostrarNotificacion('Error al eliminar recordatorio', 'error');
+                notifications.error('Error al eliminar recordatorio');
             }
         }
 
         function aplicarFiltros() {
-            if (!window.recordatoriosManager) return;
+            if (!recordatoriosManager) return;
             
             const filtros = {
                 estado: document.getElementById('filtroEstado').value,
@@ -1768,7 +2383,7 @@
                 periodo: document.getElementById('filtroPeriodo').value
             };
             
-            window.recordatoriosManager.aplicarFiltros(filtros);
+            recordatoriosManager.aplicarFiltros(filtros);
             cargarListaRecordatorios();
         }
 
@@ -1781,14 +2396,10 @@
         }
 
         function cambiarVista(vista) {
-            document.querySelectorAll('.vista-btn').forEach(btn => btn.classList.remove('active'));
+            document.querySelectorAll('.view-btn').forEach(btn => btn.classList.remove('active'));
             const btnVista = document.querySelector(`[data-vista="${vista}"]`);
             if (btnVista) {
                 btnVista.classList.add('active');
-            }
-            
-            if (window.recordatoriosManager) {
-                window.recordatoriosManager.cambiarVista(vista);
             }
         }
 
@@ -1805,11 +2416,11 @@
         }
 
         function filtrarPorFecha(año, mes, dia) {
-            if (!window.recordatoriosManager) return;
+            if (!recordatoriosManager) return;
             
             const fecha = new Date(año, mes, dia);
-            window.recordatoriosManager.filtrarPorFecha(fecha);
-            cargarListaRecordatorios();
+            document.getElementById('filtroPeriodo').value = 'hoy';
+            aplicarFiltros();
         }
 
         function filtrarPorCategoria(categoria) {
@@ -1818,21 +2429,21 @@
         }
 
         async function sincronizarRecordatorios() {
-            if (!window.recordatoriosManager) return;
+            if (!recordatoriosManager) return;
             
             try {
                 const btnSincronizar = document.getElementById('btnSincronizar');
                 if (btnSincronizar) {
-                    btnSincronizar.innerHTML = '<i class="fas fa-sync-alt fa-spin"></i> <span class="btn-text">Sincronizando</span>';
+                    btnSincronizar.innerHTML = '<i class="fas fa-sync-alt spinning"></i> <span class="btn-text">Sincronizando</span>';
                     btnSincronizar.disabled = true;
                 }
                 
-                await window.recordatoriosManager.sincronizar();
-                mostrarNotificacion('Recordatorios sincronizados', 'success');
+                await recordatoriosManager.sincronizar();
+                notifications.success('Recordatorios sincronizados');
                 await cargarDatosIniciales();
             } catch (error) {
                 console.error('Error sincronizando:', error);
-                mostrarNotificacion('Error en la sincronización', 'error');
+                notifications.error('Error en la sincronización');
             } finally {
                 const btnSincronizar = document.getElementById('btnSincronizar');
                 if (btnSincronizar) {
@@ -1843,14 +2454,14 @@
         }
 
         function exportarCalendario() {
-            if (!window.recordatoriosManager) return;
+            if (!recordatoriosManager) return;
             
             try {
-                window.recordatoriosManager.exportarCalendario();
-                mostrarNotificacion('Calendario exportado', 'success');
+                recordatoriosManager.exportarCalendario();
+                notifications.success('Calendario exportado');
             } catch (error) {
                 console.error('Error exportando:', error);
-                mostrarNotificacion('Error al exportar calendario', 'error');
+                notifications.error('Error al exportar calendario');
             }
         }
 
@@ -1879,7 +2490,7 @@
             });
         }
 
-        // Hacer funciones globales para uso en HTML
+        // Hacer funciones globales
         window.mostrarModalRecordatorio = mostrarModalRecordatorio;
         window.completarRecordatorio = completarRecordatorio;
         window.posponerRecordatorio = posponerRecordatorio;
