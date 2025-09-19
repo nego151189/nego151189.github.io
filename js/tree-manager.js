@@ -671,18 +671,27 @@ if (document.readyState === 'loading') {
     }, 500);
 }
 
-// También intentar inicializar cuando Firebase esté disponible
+// También intentar inicializar cuando Firebase esté disponible:
 if (typeof window !== 'undefined') {
-    window.addEventListener('load', () => {
-        if (!treeManagerInicializado) {
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', () => {
             setTimeout(async () => {
-                await initializeTreeManager();
-                if (!window.treeManager) {
+                if (!window.treeManager) { // Solo crear si no existe
+                    await initializeGlobalProductionManager();
                     window.treeManager = treeManager;
+                    console.log('✅ TreeManager disponible globalmente');
                 }
-            }, 1000);
-        }
-    });
+            }, 500);
+        });
+    } else {
+        setTimeout(async () => {
+            if (!window.treeManager) { // Solo crear si no existe
+                await initializeGlobalProductionManager();
+                window.treeManager = treeManager;
+            }
+        }, 500);
+    }
 }
 
 console.log('🌳 TreeManager integrado cargado - Versión compatible con sistema existente');
+
