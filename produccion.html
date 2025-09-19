@@ -2581,9 +2581,34 @@ ${datos.ubicacion.lat ? `• GPS: ${datos.ubicacion.lat.toFixed(4)}, ${datos.ubi
         window.exportarDatos = exportarDatos;
         
         console.log('🌾 Sistema de producción completo cargado');
+
+        // 🧹 LIMPIEZA TEMPORAL DE CACHE - EJECUTAR UNA VEZ
+if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.getRegistrations().then(function(registrations) {
+        for(let registration of registrations) {
+            registration.unregister().then(() => {
+                console.log('🧹 Service Worker anterior eliminado');
+            });
+        }
+    });
+}
+
+// Limpiar caches antiguos
+if ('caches' in window) {
+    caches.keys().then(function(names) {
+        for (let name of names) {
+            if (name.includes('finca-herradura-v1') || name.includes('finca-herradura-v2')) {
+                caches.delete(name).then(() => {
+                    console.log('🧹 Cache antiguo eliminado:', name);
+                });
+            }
+        }
+    });
+}
     </script>
 </body>
 </html>
+
 
 
 
