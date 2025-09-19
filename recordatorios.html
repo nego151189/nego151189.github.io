@@ -14,8 +14,7 @@
     <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-firestore-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-auth-compat.js"></script>
     
-    <!-- Scripts del proyecto -->
-    <script src="notifications.js"></script>
+    <!-- Scripts del proyecto - se cargarán después del DOM -->
     <script src="js/finca-navigation.js"></script>
     
     <!-- Font Awesome -->
@@ -1813,27 +1812,11 @@
 
         async function esperarScriptsExternos() {
             return new Promise((resolve) => {
-                const checkScripts = () => {
-                    // Inicializar sistema de notificaciones fallback si es necesario
-                    initializeFallbackNotifications();
-                    
-                    console.log('Scripts externos verificados');
-                    resolve();
-                };
+                // Inicializar sistema de notificaciones inmediatamente
+                initializeNotifications();
                 
-                // Esperar a que el DOM esté completamente cargado
-                if (document.readyState === 'complete') {
-                    checkScripts();
-                } else {
-                    setTimeout(checkScripts, 500);
-                }
-                
-                // Timeout después de 5 segundos
-                setTimeout(() => {
-                    console.warn('Continuando sin esperar scripts externos...');
-                    initializeFallbackNotifications();
-                    resolve();
-                }, 5000);
+                console.log('Scripts externos verificados');
+                resolve();
             });
         }
 
