@@ -13,6 +13,11 @@
     <link rel="icon" type="image/x-icon" href="/icons/favicon.ico">
     <link rel="manifest" href="/manifest.json">
     
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-auth-compat.js"></script>
+    
     <!-- CSS -->
     <link rel="stylesheet" href="/css/main.css">
     <link rel="stylesheet" href="/css/style.css">
@@ -21,19 +26,39 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
     <style>
+        /* ===========================================
+           ESTILOS BASE RESPONSIVE
+           =========================================== */
+        
+        * {
+            box-sizing: border-box;
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 0 1rem;
+        }
+        
+        /* ===========================================
+           HEADER RESPONSIVE
+           =========================================== */
+        
         .recordatorios-header {
             display: flex;
             justify-content: space-between;
-            align-items: center;
+            align-items: flex-start;
             margin-bottom: 2rem;
-            flex-wrap: wrap;
             gap: 1rem;
+            flex-wrap: wrap;
         }
 
         .page-title {
             display: flex;
             align-items: center;
             gap: 1rem;
+            flex: 1;
+            min-width: 250px;
         }
 
         .title-icon {
@@ -46,7 +71,24 @@
             justify-content: center;
             color: white;
             font-size: 1.5rem;
+            flex-shrink: 0;
         }
+
+        .header-actions {
+            display: flex;
+            gap: 0.75rem;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+
+        .header-actions .btn {
+            white-space: nowrap;
+            min-width: auto;
+        }
+
+        /* ===========================================
+           SECCIÓN HOY RESPONSIVE
+           =========================================== */
 
         .recordatorios-hoy {
             background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%);
@@ -76,23 +118,25 @@
             margin-bottom: 1.5rem;
             position: relative;
             z-index: 1;
+            flex-wrap: wrap;
+            gap: 1rem;
         }
 
         .hoy-titulo {
-            font-size: 2rem;
+            font-size: clamp(1.5rem, 4vw, 2rem);
             font-weight: 700;
             margin: 0;
         }
 
         .hoy-fecha {
-            font-size: 1.125rem;
+            font-size: clamp(0.875rem, 2.5vw, 1.125rem);
             opacity: 0.9;
         }
 
         .hoy-stats {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
-            gap: 1.5rem;
+            gap: 1rem;
             position: relative;
             z-index: 1;
         }
@@ -104,39 +148,75 @@
             border-radius: 16px;
             backdrop-filter: blur(10px);
             border: 1px solid rgba(255, 255, 255, 0.2);
+            min-width: 0; /* Permite que el contenido se comprima */
         }
 
         .stat-numero {
-            font-size: 2rem;
+            font-size: clamp(1.5rem, 4vw, 2rem);
             font-weight: 700;
             margin-bottom: 0.5rem;
         }
 
         .stat-label {
-            font-size: 0.875rem;
+            font-size: clamp(0.75rem, 2vw, 0.875rem);
             opacity: 0.8;
+            line-height: 1.2;
         }
 
+        /* ===========================================
+           FILTROS RESPONSIVE
+           =========================================== */
+
         .filtros-recordatorios {
-            background: var(--bg-card);
+            background: var(--bg-card, #fff);
             border-radius: 16px;
             padding: 1.5rem;
             margin-bottom: 2rem;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
         }
 
         .filtros-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
             gap: 1rem;
             align-items: end;
         }
 
+        .form-group {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .form-label {
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+            color: var(--text-primary, #333);
+        }
+
+        .form-input {
+            padding: 0.75rem;
+            border: 2px solid #e5e7eb;
+            border-radius: 8px;
+            font-size: 1rem;
+            transition: border-color 0.3s ease;
+        }
+
+        .form-input:focus {
+            outline: none;
+            border-color: #8b5cf6;
+        }
+
+        /* ===========================================
+           SELECTOR DE VISTA RESPONSIVE
+           =========================================== */
+
         .vista-selector {
             display: flex;
-            background: var(--bg-secondary);
+            background: var(--bg-secondary, #f8fafc);
             border-radius: 12px;
             padding: 0.25rem;
             margin-bottom: 2rem;
+            overflow-x: auto;
         }
 
         .vista-btn {
@@ -144,17 +224,27 @@
             padding: 0.75rem 1rem;
             border: none;
             background: transparent;
-            color: var(--text-secondary);
+            color: var(--text-secondary, #6b7280);
             border-radius: 8px;
             cursor: pointer;
             font-weight: 600;
             transition: all 0.3s ease;
+            white-space: nowrap;
+            min-width: 100px;
         }
 
         .vista-btn.active {
-            background: var(--primary);
+            background: var(--primary, #8b5cf6);
             color: white;
         }
+
+        .vista-btn:hover:not(.active) {
+            background: rgba(139, 92, 246, 0.1);
+        }
+
+        /* ===========================================
+           LAYOUT PRINCIPAL RESPONSIVE
+           =========================================== */
 
         .contenido-recordatorios {
             display: grid;
@@ -163,34 +253,49 @@
         }
 
         .recordatorios-principales {
-            display: grid;
-            gap: 1.5rem;
+            min-width: 0; /* Evita overflow en grid */
         }
 
+        .sidebar-recordatorios {
+            display: grid;
+            gap: 1.5rem;
+            align-content: start;
+        }
+
+        /* ===========================================
+           CARDS DE RECORDATORIOS RESPONSIVE
+           =========================================== */
+
         .recordatorio-card {
-            background: var(--bg-card);
+            background: var(--bg-card, #fff);
             border-radius: 16px;
             padding: 1.5rem;
+            margin-bottom: 1.5rem;
             position: relative;
-            transition: transform 0.3s ease;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
             border-left: 4px solid transparent;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
         }
 
         .recordatorio-card:hover {
             transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.15);
         }
 
-        .recordatorio-card.urgente {
+        .recordatorio-card.urgente,
+        .recordatorio-card.alta {
             border-left-color: #ef4444;
             background: linear-gradient(135deg, rgba(239, 68, 68, 0.05), transparent);
         }
 
-        .recordatorio-card.importante {
+        .recordatorio-card.importante,
+        .recordatorio-card.media {
             border-left-color: #f59e0b;
             background: linear-gradient(135deg, rgba(245, 158, 11, 0.05), transparent);
         }
 
-        .recordatorio-card.normal {
+        .recordatorio-card.normal,
+        .recordatorio-card.baja {
             border-left-color: #22c55e;
             background: linear-gradient(135deg, rgba(34, 197, 94, 0.05), transparent);
         }
@@ -206,13 +311,17 @@
             justify-content: space-between;
             align-items: flex-start;
             margin-bottom: 1rem;
+            flex-wrap: wrap;
+            gap: 0.5rem;
         }
 
         .recordatorio-titulo {
-            font-size: 1.125rem;
+            font-size: clamp(1rem, 2.5vw, 1.125rem);
             font-weight: 600;
-            color: var(--text-primary);
-            margin: 0 0 0.5rem 0;
+            color: var(--text-primary, #333);
+            margin: 0;
+            flex: 1;
+            min-width: 0;
         }
 
         .recordatorio-categoria {
@@ -221,6 +330,7 @@
             font-size: 0.75rem;
             font-weight: 600;
             text-transform: uppercase;
+            white-space: nowrap;
         }
 
         .categoria-riego {
@@ -254,13 +364,14 @@
         }
 
         .recordatorio-descripcion {
-            color: var(--text-secondary);
+            color: var(--text-secondary, #6b7280);
             margin-bottom: 1rem;
+            line-height: 1.5;
         }
 
         .recordatorio-detalles {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
             gap: 0.75rem;
             margin-bottom: 1rem;
         }
@@ -270,7 +381,12 @@
             align-items: center;
             gap: 0.5rem;
             font-size: 0.875rem;
-            color: var(--text-secondary);
+            color: var(--text-secondary, #6b7280);
+            min-width: 0;
+        }
+
+        .detalle-item i {
+            flex-shrink: 0;
         }
 
         .recordatorio-acciones {
@@ -279,16 +395,20 @@
             flex-wrap: wrap;
         }
 
-        .btn-completar {
-            background: #22c55e;
-            color: white;
-            border: none;
+        .btn-completar, .btn-posponer {
             padding: 0.5rem 1rem;
+            border: none;
             border-radius: 8px;
             cursor: pointer;
             font-size: 0.875rem;
             font-weight: 600;
             transition: all 0.3s ease;
+            white-space: nowrap;
+        }
+
+        .btn-completar {
+            background: #22c55e;
+            color: white;
         }
 
         .btn-completar:hover {
@@ -298,28 +418,23 @@
         .btn-posponer {
             background: #f59e0b;
             color: white;
-            border: none;
-            padding: 0.5rem 1rem;
-            border-radius: 8px;
-            cursor: pointer;
-            font-size: 0.875rem;
-            font-weight: 600;
-            transition: all 0.3s ease;
         }
 
         .btn-posponer:hover {
             background: #d97706;
         }
 
-        .sidebar-recordatorios {
-            display: grid;
-            gap: 1.5rem;
-        }
+        /* ===========================================
+           SIDEBAR RESPONSIVE
+           =========================================== */
 
-        .calendario-mini {
-            background: var(--bg-card);
+        .calendario-mini,
+        .categoria-filtros,
+        .resumen-stats {
+            background: var(--bg-card, #fff);
             border-radius: 16px;
             padding: 1.5rem;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
         }
 
         .calendario-header {
@@ -332,7 +447,7 @@
         .calendario-nav {
             background: none;
             border: none;
-            color: var(--text-primary);
+            color: var(--text-primary, #333);
             cursor: pointer;
             padding: 0.5rem;
             border-radius: 8px;
@@ -340,7 +455,7 @@
         }
 
         .calendario-nav:hover {
-            background: var(--bg-secondary);
+            background: var(--bg-secondary, #f8fafc);
         }
 
         .calendario-grid {
@@ -363,12 +478,12 @@
 
         .calendario-dia.header {
             font-weight: 600;
-            color: var(--text-secondary);
+            color: var(--text-secondary, #6b7280);
             cursor: default;
         }
 
         .calendario-dia.hoy {
-            background: var(--primary);
+            background: var(--primary, #8b5cf6);
             color: white;
         }
 
@@ -384,58 +499,9 @@
             border-radius: 50%;
         }
 
-        .categoria-filtros {
-            background: var(--bg-card);
-            border-radius: 16px;
-            padding: 1.5rem;
-        }
-
-        .categoria-item {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 0.75rem;
-            margin-bottom: 0.5rem;
-            border-radius: 10px;
-            cursor: pointer;
-            transition: background 0.3s ease;
-        }
-
-        .categoria-item:hover {
-            background: var(--bg-secondary);
-        }
-
-        .categoria-item.active {
-            background: rgba(139, 92, 246, 0.1);
-            border: 1px solid rgba(139, 92, 246, 0.3);
-        }
-
-        .categoria-contador {
-            background: var(--bg-secondary);
-            color: var(--text-secondary);
-            padding: 0.25rem 0.5rem;
-            border-radius: 12px;
-            font-size: 0.75rem;
-            font-weight: 600;
-        }
-
-        .resumen-stats {
-            background: var(--bg-card);
-            border-radius: 16px;
-            padding: 1.5rem;
-        }
-
-        .stat-resumen {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 0.75rem 0;
-            border-bottom: 1px solid var(--border-color);
-        }
-
-        .stat-resumen:last-child {
-            border-bottom: none;
-        }
+        /* ===========================================
+           MODAL RESPONSIVE
+           =========================================== */
 
         .modal-recordatorio {
             display: none;
@@ -446,16 +512,18 @@
             bottom: 0;
             background: rgba(0, 0, 0, 0.7);
             z-index: 1000;
-            padding: 2rem;
+            padding: 1rem;
+            overflow-y: auto;
         }
 
         .modal-content {
-            background: var(--bg-card);
+            background: var(--bg-card, #fff);
             border-radius: 16px;
             max-width: 600px;
-            margin: 0 auto;
+            width: 100%;
+            margin: 2rem auto;
             padding: 2rem;
-            max-height: 90vh;
+            max-height: calc(100vh - 4rem);
             overflow-y: auto;
         }
 
@@ -464,6 +532,8 @@
             justify-content: space-between;
             align-items: center;
             margin-bottom: 2rem;
+            flex-wrap: wrap;
+            gap: 1rem;
         }
 
         .modal-close {
@@ -471,7 +541,14 @@
             border: none;
             font-size: 1.5rem;
             cursor: pointer;
-            color: var(--text-secondary);
+            color: var(--text-secondary, #6b7280);
+            padding: 0.5rem;
+            border-radius: 8px;
+            transition: background 0.3s ease;
+        }
+
+        .modal-close:hover {
+            background: var(--bg-secondary, #f8fafc);
         }
 
         .form-recordatorio {
@@ -499,39 +576,119 @@
             font-weight: 600;
             text-align: center;
             transition: all 0.3s ease;
+            font-size: 0.875rem;
         }
 
-        .prioridad-btn.urgente {
+        .prioridad-btn.urgente,
+        .prioridad-btn.alta {
             background: rgba(239, 68, 68, 0.1);
             color: #ef4444;
         }
 
-        .prioridad-btn.urgente.active {
+        .prioridad-btn.urgente.active,
+        .prioridad-btn.alta.active {
             background: #ef4444;
             color: white;
             border-color: #dc2626;
         }
 
-        .prioridad-btn.importante {
+        .prioridad-btn.importante,
+        .prioridad-btn.media {
             background: rgba(245, 158, 11, 0.1);
             color: #f59e0b;
         }
 
-        .prioridad-btn.importante.active {
+        .prioridad-btn.importante.active,
+        .prioridad-btn.media.active {
             background: #f59e0b;
             color: white;
             border-color: #d97706;
         }
 
-        .prioridad-btn.normal {
+        .prioridad-btn.normal,
+        .prioridad-btn.baja {
             background: rgba(34, 197, 94, 0.1);
             color: #22c55e;
         }
 
-        .prioridad-btn.normal.active {
+        .prioridad-btn.normal.active,
+        .prioridad-btn.baja.active {
             background: #22c55e;
             color: white;
             border-color: #16a34a;
+        }
+
+        /* ===========================================
+           BOTONES RESPONSIVE
+           =========================================== */
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.75rem 1rem;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            text-decoration: none;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 0.875rem;
+            white-space: nowrap;
+        }
+
+        .btn-primary {
+            background: #8b5cf6;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #7c3aed;
+        }
+
+        .btn-success {
+            background: #22c55e;
+            color: white;
+        }
+
+        .btn-success:hover {
+            background: #16a34a;
+        }
+
+        .btn-secondary {
+            background: #6b7280;
+            color: white;
+        }
+
+        .btn-secondary:hover {
+            background: #4b5563;
+        }
+
+        .btn-danger {
+            background: #ef4444;
+            color: white;
+        }
+
+        .btn-danger:hover {
+            background: #dc2626;
+        }
+
+        .btn-sm {
+            padding: 0.5rem 0.75rem;
+            font-size: 0.75rem;
+        }
+
+        /* ===========================================
+           ANIMACIONES
+           =========================================== */
+
+        @keyframes float {
+            0%, 100% {
+                transform: translateY(0px);
+            }
+            50% {
+                transform: translateY(-10px);
+            }
         }
 
         .recordatorio-vencido {
@@ -539,10 +696,19 @@
         }
 
         @keyframes pulse-red {
-            0%, 100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.4); }
-            50% { box-shadow: 0 0 0 10px rgba(239, 68, 68, 0); }
+            0%, 100% {
+                box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.4);
+            }
+            50% {
+                box-shadow: 0 0 0 10px rgba(239, 68, 68, 0);
+            }
         }
 
+        /* ===========================================
+           MEDIA QUERIES RESPONSIVE
+           =========================================== */
+
+        /* Tablets */
         @media (max-width: 1024px) {
             .contenido-recordatorios {
                 grid-template-columns: 1fr;
@@ -550,29 +716,181 @@
             
             .sidebar-recordatorios {
                 order: -1;
+                grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+                gap: 1rem;
+            }
+
+            .filtros-grid {
+                grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
             }
         }
 
+        /* Móviles grandes */
         @media (max-width: 768px) {
+            .container {
+                padding: 0 0.75rem;
+            }
+
             .recordatorios-header {
                 flex-direction: column;
                 align-items: stretch;
+                gap: 1.5rem;
             }
-            
+
+            .page-title {
+                justify-content: center;
+                text-align: center;
+            }
+
+            .header-actions {
+                justify-content: center;
+                flex-wrap: wrap;
+            }
+
             .hoy-stats {
                 grid-template-columns: repeat(2, 1fr);
+                gap: 0.75rem;
             }
-            
+
             .filtros-grid {
                 grid-template-columns: 1fr;
             }
-            
+
             .form-row {
                 grid-template-columns: 1fr;
             }
-            
+
             .recordatorio-detalles {
                 grid-template-columns: 1fr;
+            }
+
+            .prioridad-selector {
+                flex-direction: column;
+            }
+
+            .vista-selector {
+                overflow-x: auto;
+                scrollbar-width: none;
+                -ms-overflow-style: none;
+            }
+
+            .vista-selector::-webkit-scrollbar {
+                display: none;
+            }
+
+            .recordatorio-card {
+                padding: 1rem;
+            }
+
+            .recordatorio-acciones {
+                justify-content: center;
+            }
+
+            .sidebar-recordatorios {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* Móviles pequeños */
+        @media (max-width: 480px) {
+            .container {
+                padding: 0 0.5rem;
+            }
+
+            .recordatorios-hoy {
+                padding: 1.5rem;
+                margin-bottom: 1.5rem;
+            }
+
+            .hoy-stats {
+                grid-template-columns: 1fr;
+                gap: 0.5rem;
+            }
+
+            .stat-item {
+                padding: 0.75rem;
+            }
+
+            .filtros-recordatorios,
+            .calendario-mini,
+            .categoria-filtros,
+            .resumen-stats {
+                padding: 1rem;
+            }
+
+            .modal-content {
+                margin: 1rem auto;
+                padding: 1.5rem;
+            }
+
+            .recordatorio-header {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .recordatorio-categoria {
+                align-self: flex-start;
+            }
+
+            .btn {
+                font-size: 0.75rem;
+                padding: 0.5rem 0.75rem;
+            }
+
+            .header-actions .btn {
+                flex: 1;
+                justify-content: center;
+                min-width: 120px;
+            }
+        }
+
+        /* Modo oscuro responsive */
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --bg-card: #1f2937;
+                --bg-secondary: #374151;
+                --text-primary: #f9fafb;
+                --text-secondary: #d1d5db;
+                --border-color: #4b5563;
+            }
+        }
+
+        /* Impresión responsive */
+        @media print {
+            .header-actions,
+            .vista-selector,
+            .sidebar-recordatorios,
+            .recordatorio-acciones {
+                display: none !important;
+            }
+
+            .contenido-recordatorios {
+                grid-template-columns: 1fr;
+            }
+
+            .recordatorio-card {
+                break-inside: avoid;
+                margin-bottom: 1rem;
+            }
+        }
+
+        /* Modo de alto contraste */
+        @media (prefers-contrast: high) {
+            .recordatorio-card {
+                border: 2px solid;
+            }
+
+            .btn {
+                border: 2px solid currentColor;
+            }
+        }
+
+        /* Reducir animaciones para usuarios sensibles */
+        @media (prefers-reduced-motion: reduce) {
+            * {
+                animation-duration: 0.01ms !important;
+                animation-iteration-count: 1 !important;
+                transition-duration: 0.01ms !important;
             }
         }
     </style>
@@ -583,182 +901,194 @@
 
     <!-- Contenido principal -->
     <main class="main-content-wrapper">
-        <!-- Header de la página -->
-        <header class="recordatorios-header">
-            <div class="page-title">
-                <div class="title-icon">
-                    <i class="fas fa-bell"></i>
-                </div>
-                <div>
-                    <h1>Recordatorios</h1>
-                    <p>Gestión de tareas y actividades programadas</p>
-                </div>
-            </div>
-            
-            <div class="header-actions">
-                <button class="btn btn-success" id="btnNuevoRecordatorio">
-                    <i class="fas fa-plus"></i> Nuevo Recordatorio
-                </button>
-                
-                <button class="btn btn-primary" id="btnSincronizar">
-                    <i class="fas fa-sync-alt"></i> Sincronizar
-                </button>
-                
-                <button class="btn btn-secondary" id="btnExportarCalendario">
-                    <i class="fas fa-calendar-export"></i> Exportar
-                </button>
-            </div>
-        </header>
-
-        <!-- Resumen de hoy -->
-        <section class="recordatorios-hoy">
-            <div class="hoy-header">
-                <h2 class="hoy-titulo">Recordatorios de Hoy</h2>
-                <div class="hoy-fecha" id="fechaHoy"></div>
-            </div>
-            
-            <div class="hoy-stats">
-                <div class="stat-item">
-                    <div class="stat-numero" id="totalHoy">5</div>
-                    <div class="stat-label">Total del Día</div>
+        <div class="container">
+            <!-- Header de la página -->
+            <header class="recordatorios-header">
+                <div class="page-title">
+                    <div class="title-icon">
+                        <i class="fas fa-bell"></i>
+                    </div>
+                    <div>
+                        <h1>Recordatorios</h1>
+                        <p>Gestión de tareas y actividades programadas</p>
+                    </div>
                 </div>
                 
-                <div class="stat-item">
-                    <div class="stat-numero" id="pendientesHoy">3</div>
-                    <div class="stat-label">Pendientes</div>
-                </div>
-                
-                <div class="stat-item">
-                    <div class="stat-numero" id="completadosHoy">2</div>
-                    <div class="stat-label">Completados</div>
-                </div>
-                
-                <div class="stat-item">
-                    <div class="stat-numero" id="vencidosHoy">1</div>
-                    <div class="stat-label">Vencidos</div>
-                </div>
-                
-                <div class="stat-item">
-                    <div class="stat-numero" id="proximosHoy">7</div>
-                    <div class="stat-label">Próximos 3 días</div>
-                </div>
-            </div>
-        </section>
-
-        <!-- Filtros -->
-        <section class="filtros-recordatorios">
-            <h3 style="margin-bottom: 1rem;">
-                <i class="fas fa-filter"></i> Filtros
-            </h3>
-            
-            <div class="filtros-grid">
-                <div class="form-group">
-                    <label class="form-label">Estado</label>
-                    <select class="form-input" id="filtroEstado">
-                        <option value="">Todos</option>
-                        <option value="pendiente">Pendientes</option>
-                        <option value="completado">Completados</option>
-                        <option value="vencido">Vencidos</option>
-                    </select>
-                </div>
-                
-                <div class="form-group">
-                    <label class="form-label">Prioridad</label>
-                    <select class="form-input" id="filtroPrioridad">
-                        <option value="">Todas</option>
-                        <option value="urgente">Urgente</option>
-                        <option value="importante">Importante</option>
-                        <option value="normal">Normal</option>
-                    </select>
-                </div>
-                
-                <div class="form-group">
-                    <label class="form-label">Categoría</label>
-                    <select class="form-input" id="filtroCategoria">
-                        <option value="">Todas</option>
-                        <option value="riego">Riego</option>
-                        <option value="fertilizacion">Fertilización</option>
-                        <option value="poda">Poda</option>
-                        <option value="cosecha">Cosecha</option>
-                        <option value="mantenimiento">Mantenimiento</option>
-                        <option value="tratamiento">Tratamiento</option>
-                    </select>
-                </div>
-                
-                <div class="form-group">
-                    <label class="form-label">Período</label>
-                    <select class="form-input" id="filtroPeriodo">
-                        <option value="hoy">Hoy</option>
-                        <option value="semana" selected>Esta Semana</option>
-                        <option value="mes">Este Mes</option>
-                        <option value="todos">Todos</option>
-                    </select>
-                </div>
-                
-                <div class="form-group">
-                    <button class="btn btn-primary" id="aplicarFiltros">
-                        <i class="fas fa-search"></i> Filtrar
+                <div class="header-actions">
+                    <button class="btn btn-success" id="btnNuevoRecordatorio">
+                        <i class="fas fa-plus"></i> 
+                        <span class="btn-text">Nuevo</span>
                     </button>
-                    <button class="btn btn-secondary" id="limpiarFiltros">
-                        <i class="fas fa-times"></i> Limpiar
+                    
+                    <button class="btn btn-primary" id="btnSincronizar">
+                        <i class="fas fa-sync-alt"></i> 
+                        <span class="btn-text">Sincronizar</span>
+                    </button>
+                    
+                    <button class="btn btn-secondary" id="btnExportarCalendario">
+                        <i class="fas fa-calendar-export"></i> 
+                        <span class="btn-text">Exportar</span>
                     </button>
                 </div>
-            </div>
-        </section>
+            </header>
 
-        <!-- Selector de vista -->
-        <div class="vista-selector">
-            <button class="vista-btn active" data-vista="tarjetas">
-                <i class="fas fa-th-large"></i> Tarjetas
-            </button>
-            <button class="vista-btn" data-vista="lista">
-                <i class="fas fa-list"></i> Lista
-            </button>
-            <button class="vista-btn" data-vista="calendario">
-                <i class="fas fa-calendar"></i> Calendario
-            </button>
-        </div>
-
-        <!-- Contenido principal -->
-        <div class="contenido-recordatorios">
-            <!-- Lista de recordatorios -->
-            <div class="recordatorios-principales">
-                <div id="listaRecordatorios">
-                    <!-- Los recordatorios se cargarán dinámicamente -->
+            <!-- Resumen de hoy -->
+            <section class="recordatorios-hoy">
+                <div class="hoy-header">
+                    <h2 class="hoy-titulo">Recordatorios de Hoy</h2>
+                    <div class="hoy-fecha" id="fechaHoy"></div>
                 </div>
-            </div>
+                
+                <div class="hoy-stats">
+                    <div class="stat-item">
+                        <div class="stat-numero" id="totalHoy">0</div>
+                        <div class="stat-label">Total del Día</div>
+                    </div>
+                    
+                    <div class="stat-item">
+                        <div class="stat-numero" id="pendientesHoy">0</div>
+                        <div class="stat-label">Pendientes</div>
+                    </div>
+                    
+                    <div class="stat-item">
+                        <div class="stat-numero" id="completadosHoy">0</div>
+                        <div class="stat-label">Completados</div>
+                    </div>
+                    
+                    <div class="stat-item">
+                        <div class="stat-numero" id="vencidosHoy">0</div>
+                        <div class="stat-label">Vencidos</div>
+                    </div>
+                    
+                    <div class="stat-item">
+                        <div class="stat-numero" id="proximosHoy">0</div>
+                        <div class="stat-label">Próximos 3 días</div>
+                    </div>
+                </div>
+            </section>
 
-            <!-- Sidebar -->
-            <div class="sidebar-recordatorios">
-                <!-- Calendario mini -->
-                <div class="calendario-mini">
-                    <div class="calendario-header">
-                        <button class="calendario-nav" id="mesAnterior">
-                            <i class="fas fa-chevron-left"></i>
+            <!-- Filtros -->
+            <section class="filtros-recordatorios">
+                <h3 style="margin-bottom: 1rem;">
+                    <i class="fas fa-filter"></i> Filtros
+                </h3>
+                
+                <div class="filtros-grid">
+                    <div class="form-group">
+                        <label class="form-label">Estado</label>
+                        <select class="form-input" id="filtroEstado">
+                            <option value="">Todos</option>
+                            <option value="pendiente">Pendientes</option>
+                            <option value="completado">Completados</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label">Prioridad</label>
+                        <select class="form-input" id="filtroPrioridad">
+                            <option value="">Todas</option>
+                            <option value="alta">Alta</option>
+                            <option value="media">Media</option>
+                            <option value="baja">Baja</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label">Categoría</label>
+                        <select class="form-input" id="filtroCategoria">
+                            <option value="">Todas</option>
+                            <option value="riego">Riego</option>
+                            <option value="fertilizacion">Fertilización</option>
+                            <option value="poda">Poda</option>
+                            <option value="cosecha">Cosecha</option>
+                            <option value="mantenimiento">Mantenimiento</option>
+                            <option value="tratamiento">Tratamiento</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label">Período</label>
+                        <select class="form-input" id="filtroPeriodo">
+                            <option value="hoy">Hoy</option>
+                            <option value="semana" selected>Esta Semana</option>
+                            <option value="mes">Este Mes</option>
+                            <option value="todos">Todos</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <button class="btn btn-primary" id="aplicarFiltros" style="width: 100%;">
+                            <i class="fas fa-search"></i> Filtrar
                         </button>
-                        <h4 id="mesActual">Enero 2025</h4>
-                        <button class="calendario-nav" id="mesSiguiente">
-                            <i class="fas fa-chevron-right"></i>
+                    </div>
+                    
+                    <div class="form-group">
+                        <button class="btn btn-secondary" id="limpiarFiltros" style="width: 100%;">
+                            <i class="fas fa-times"></i> Limpiar
                         </button>
                     </div>
-                    <div class="calendario-grid" id="calendarioGrid">
-                        <!-- El calendario se generará dinámicamente -->
+                </div>
+            </section>
+
+            <!-- Selector de vista -->
+            <div class="vista-selector">
+                <button class="vista-btn active" data-vista="tarjetas">
+                    <i class="fas fa-th-large"></i> Tarjetas
+                </button>
+                <button class="vista-btn" data-vista="lista">
+                    <i class="fas fa-list"></i> Lista
+                </button>
+                <button class="vista-btn" data-vista="calendario">
+                    <i class="fas fa-calendar"></i> Calendario
+                </button>
+            </div>
+
+            <!-- Contenido principal -->
+            <div class="contenido-recordatorios">
+                <!-- Lista de recordatorios -->
+                <div class="recordatorios-principales">
+                    <div id="listaRecordatorios">
+                        <!-- Loading placeholder -->
+                        <div style="text-align: center; padding: 3rem; color: #6b7280;">
+                            <i class="fas fa-spinner fa-spin" style="font-size: 2rem; margin-bottom: 1rem;"></i>
+                            <br>
+                            Cargando recordatorios...
+                        </div>
                     </div>
                 </div>
 
-                <!-- Filtros por categoría -->
-                <div class="categoria-filtros">
-                    <h4 style="margin-bottom: 1rem;">Categorías</h4>
-                    <div id="categoriasList">
-                        <!-- Las categorías se cargarán dinámicamente -->
+                <!-- Sidebar -->
+                <div class="sidebar-recordatorios">
+                    <!-- Calendario mini -->
+                    <div class="calendario-mini">
+                        <div class="calendario-header">
+                            <button class="calendario-nav" id="mesAnterior">
+                                <i class="fas fa-chevron-left"></i>
+                            </button>
+                            <h4 id="mesActual">Enero 2025</h4>
+                            <button class="calendario-nav" id="mesSiguiente">
+                                <i class="fas fa-chevron-right"></i>
+                            </button>
+                        </div>
+                        <div class="calendario-grid" id="calendarioGrid">
+                            <!-- El calendario se generará dinámicamente -->
+                        </div>
                     </div>
-                </div>
 
-                <!-- Resumen estadístico -->
-                <div class="resumen-stats">
-                    <h4 style="margin-bottom: 1rem;">Resumen</h4>
-                    <div id="estadisticasResumen">
-                        <!-- Las estadísticas se cargarán dinámicamente -->
+                    <!-- Filtros por categoría -->
+                    <div class="categoria-filtros">
+                        <h4 style="margin-bottom: 1rem;">Categorías</h4>
+                        <div id="categoriasList">
+                            <!-- Las categorías se cargarán dinámicamente -->
+                        </div>
+                    </div>
+
+                    <!-- Resumen estadístico -->
+                    <div class="resumen-stats">
+                        <h4 style="margin-bottom: 1rem;">Resumen</h4>
+                        <div id="estadisticasResumen">
+                            <!-- Las estadísticas se cargarán dinámicamente -->
+                        </div>
                     </div>
                 </div>
             </div>
@@ -821,11 +1151,11 @@
                 <div class="form-group">
                     <label class="form-label">Prioridad</label>
                     <div class="prioridad-selector">
-                        <div class="prioridad-btn normal active" data-prioridad="normal">Normal</div>
-                        <div class="prioridad-btn importante" data-prioridad="importante">Importante</div>
-                        <div class="prioridad-btn urgente" data-prioridad="urgente">Urgente</div>
+                        <div class="prioridad-btn baja active" data-prioridad="baja">Baja</div>
+                        <div class="prioridad-btn media" data-prioridad="media">Media</div>
+                        <div class="prioridad-btn alta" data-prioridad="alta">Alta</div>
                     </div>
-                    <input type="hidden" id="prioridadRecordatorio" value="normal">
+                    <input type="hidden" id="prioridadRecordatorio" value="baja">
                 </div>
                 
                 <div class="form-group">
@@ -835,7 +1165,6 @@
                         <option value="diario">Diariamente</option>
                         <option value="semanal">Semanalmente</option>
                         <option value="mensual">Mensualmente</option>
-                        <option value="personalizado">Personalizado</option>
                     </select>
                 </div>
                 
@@ -844,7 +1173,7 @@
                     <textarea class="form-input" id="notasRecordatorio" rows="2" placeholder="Materiales necesarios, instrucciones especiales..."></textarea>
                 </div>
                 
-                <div class="form-group" style="display: flex; gap: 1rem; justify-content: flex-end;">
+                <div class="form-group" style="display: flex; gap: 1rem; justify-content: flex-end; margin-top: 2rem;">
                     <button type="button" class="btn btn-secondary" id="cancelarRecordatorio">
                         Cancelar
                     </button>
@@ -856,41 +1185,90 @@
         </div>
     </div>
 
-    <!-- Scripts -->
-    <script type="module" src="/js/firebase-config.js"></script>
-    <script type="module" src="/js/auth.js"></script>
-    <script type="module" src="/js/finca-navigation.js"></script>
-    <script type="module" src="/js/offline.js"></script>
-    <script type="module" src="/js/recordatorios.js"></script>
+    <!-- Scripts en orden correcto -->
+    <script src="notifications.js"></script>
+    <script src="firebase-config-optimized.js"></script>
+    <script src="finca-navigation.js"></script>
+    <script src="offline.js"></script>
+    <script src="recordatorios.js"></script>
     
     <script>
+        // Variables globales
+        let currentUser = null;
+        let currentMonth = new Date().getMonth();
+        let currentYear = new Date().getFullYear();
+
         // Inicialización de la página
         document.addEventListener('DOMContentLoaded', async () => {
-            // Verificar autenticación
-            if (!await verificarAutenticacion()) {
-                window.location.href = '/login.html';
-                return;
-            }
+            console.log('🔔 Inicializando página de recordatorios...');
+            
+            try {
+                // Esperar a que Firebase esté listo
+                await esperarFirebase();
+                
+                // Verificar autenticación
+                if (!await verificarAutenticacion()) {
+                    console.warn('⚠️ Usuario no autenticado, continuando sin autenticación');
+                }
 
-            // Inicializar componentes
-            await inicializarPagina();
+                // Inicializar componentes
+                await inicializarPagina();
+                
+                console.log('✅ Página de recordatorios inicializada correctamente');
+                
+            } catch (error) {
+                console.error('❌ Error inicializando página:', error);
+                mostrarNotificacion('Error inicializando la página', 'error');
+            }
         });
+
+        async function esperarFirebase() {
+            return new Promise((resolve) => {
+                const checkFirebase = () => {
+                    if (typeof firebase !== 'undefined' && window.FirebaseConfig) {
+                        resolve();
+                    } else {
+                        setTimeout(checkFirebase, 100);
+                    }
+                };
+                checkFirebase();
+                
+                // Timeout después de 10 segundos
+                setTimeout(() => {
+                    console.warn('⚠️ Firebase no se cargó completamente, continuando...');
+                    resolve();
+                }, 10000);
+            });
+        }
 
         async function verificarAutenticacion() {
             return new Promise((resolve) => {
-                firebase.auth().onAuthStateChanged((user) => {
+                if (typeof firebase === 'undefined' || !firebase.auth) {
+                    resolve(false);
+                    return;
+                }
+
+                const unsubscribe = firebase.auth().onAuthStateChanged((user) => {
+                    currentUser = user;
+                    unsubscribe();
                     resolve(!!user);
                 });
+                
+                // Timeout después de 5 segundos
+                setTimeout(() => {
+                    unsubscribe();
+                    resolve(false);
+                }, 5000);
             });
         }
 
         async function inicializarPagina() {
             try {
-                // Cargar navegación
-                await cargarNavegacion();
-                
                 // Configurar event listeners
                 configurarEventListeners();
+                
+                // Esperar a que el manager esté listo
+                await esperarRecordatoriosManager();
                 
                 // Cargar datos iniciales
                 await cargarDatosIniciales();
@@ -901,12 +1279,29 @@
                 // Generar calendario
                 generarCalendario();
                 
-                console.log('Página de recordatorios inicializada correctamente');
-                
             } catch (error) {
                 console.error('Error inicializando página:', error);
                 mostrarNotificacion('Error cargando la página', 'error');
             }
+        }
+
+        async function esperarRecordatoriosManager() {
+            return new Promise((resolve) => {
+                const checkManager = () => {
+                    if (window.recordatoriosManager && window.recordatoriosManager.initialized) {
+                        resolve();
+                    } else {
+                        setTimeout(checkManager, 100);
+                    }
+                };
+                checkManager();
+                
+                // Timeout después de 10 segundos
+                setTimeout(() => {
+                    console.warn('⚠️ RecordatoriosManager no se inicializó completamente');
+                    resolve();
+                }, 10000);
+            });
         }
 
         function configurarEventListeners() {
@@ -948,10 +1343,7 @@
 
         async function cargarDatosIniciales() {
             try {
-                if (window.recordatoriosManager) {
-                    // Cargar recordatorios
-                    await window.recordatoriosManager.cargarRecordatorios();
-                    
+                if (window.recordatoriosManager && window.recordatoriosManager.initialized) {
                     // Actualizar estadísticas
                     actualizarEstadisticasHoy();
                     
@@ -977,19 +1369,27 @@
                 month: 'long', 
                 day: 'numeric' 
             };
-            document.getElementById('fechaHoy').textContent = 
-                hoy.toLocaleDateString('es-GT', opciones);
+            const fechaElement = document.getElementById('fechaHoy');
+            if (fechaElement) {
+                fechaElement.textContent = hoy.toLocaleDateString('es-GT', opciones);
+            }
         }
 
         function generarCalendario() {
             const calendario = document.getElementById('calendarioGrid');
+            if (!calendario) return;
+
             const ahora = new Date();
-            const año = ahora.getFullYear();
-            const mes = ahora.getMonth();
+            const año = currentYear;
+            const mes = currentMonth;
             
             // Actualizar título del mes
-            const mesNombre = ahora.toLocaleDateString('es-GT', { month: 'long', year: 'numeric' });
-            document.getElementById('mesActual').textContent = mesNombre.charAt(0).toUpperCase() + mesNombre.slice(1);
+            const fechaCalendario = new Date(año, mes, 1);
+            const mesNombre = fechaCalendario.toLocaleDateString('es-GT', { month: 'long', year: 'numeric' });
+            const mesActualElement = document.getElementById('mesActual');
+            if (mesActualElement) {
+                mesActualElement.textContent = mesNombre.charAt(0).toUpperCase() + mesNombre.slice(1);
+            }
             
             // Limpiar calendario
             calendario.innerHTML = '';
@@ -1016,18 +1416,22 @@
             
             // Días del mes
             const hoy = ahora.getDate();
+            const mesActual = ahora.getMonth();
+            const añoActual = ahora.getFullYear();
+            
             for (let dia = 1; dia <= ultimoDia; dia++) {
                 const diaElement = document.createElement('div');
                 diaElement.className = 'calendario-dia';
                 diaElement.textContent = dia;
                 
                 // Marcar día actual
-                if (dia === hoy) {
+                if (dia === hoy && mes === mesActual && año === añoActual) {
                     diaElement.classList.add('hoy');
                 }
                 
                 // Verificar si hay recordatorios
-                if (window.recordatoriosManager?.tieneRecordatorios(año, mes, dia)) {
+                if (window.recordatoriosManager?.tieneRecordatorios && 
+                    window.recordatoriosManager.tieneRecordatorios(año, mes, dia)) {
                     diaElement.classList.add('con-recordatorios');
                 }
                 
@@ -1041,42 +1445,72 @@
         function actualizarEstadisticasHoy() {
             if (!window.recordatoriosManager) return;
             
-            const stats = window.recordatoriosManager.obtenerEstadisticasHoy();
-            
-            document.getElementById('totalHoy').textContent = stats.total;
-            document.getElementById('pendientesHoy').textContent = stats.pendientes;
-            document.getElementById('completadosHoy').textContent = stats.completados;
-            document.getElementById('vencidosHoy').textContent = stats.vencidos;
-            document.getElementById('proximosHoy').textContent = stats.proximos;
+            try {
+                const stats = window.recordatoriosManager.obtenerEstadisticasHoy();
+                
+                document.getElementById('totalHoy').textContent = stats.total || 0;
+                document.getElementById('pendientesHoy').textContent = stats.pendientes || 0;
+                document.getElementById('completadosHoy').textContent = stats.completados || 0;
+                document.getElementById('vencidosHoy').textContent = stats.vencidos || 0;
+                document.getElementById('proximosHoy').textContent = stats.proximos || 0;
+            } catch (error) {
+                console.error('Error actualizando estadísticas:', error);
+            }
         }
 
         function cargarListaRecordatorios() {
             const container = document.getElementById('listaRecordatorios');
+            if (!container) return;
             
-            if (window.recordatoriosManager) {
+            if (!window.recordatoriosManager) {
+                container.innerHTML = `
+                    <div style="text-align: center; padding: 3rem; color: #6b7280;">
+                        <i class="fas fa-exclamation-triangle" style="font-size: 2rem; margin-bottom: 1rem; color: #f59e0b;"></i>
+                        <br>
+                        Sistema de recordatorios no disponible
+                    </div>
+                `;
+                return;
+            }
+            
+            try {
                 const recordatorios = window.recordatoriosManager.obtenerRecordatoriosFiltrados();
                 
+                if (recordatorios.length === 0) {
+                    container.innerHTML = `
+                        <div style="text-align: center; padding: 3rem; color: #6b7280;">
+                            <i class="fas fa-bell-slash" style="font-size: 2rem; margin-bottom: 1rem; opacity: 0.5;"></i>
+                            <br>
+                            No hay recordatorios que mostrar
+                            <br>
+                            <button class="btn btn-primary" onclick="mostrarModalRecordatorio()" style="margin-top: 1rem;">
+                                <i class="fas fa-plus"></i> Crear primer recordatorio
+                            </button>
+                        </div>
+                    `;
+                    return;
+                }
+
                 container.innerHTML = recordatorios.map(recordatorio => `
                     <div class="recordatorio-card ${recordatorio.prioridad} ${recordatorio.estado}" 
                          ${recordatorio.estado === 'vencido' ? 'recordatorio-vencido' : ''}>
                         <div class="recordatorio-header">
-                            <div>
-                                <h3 class="recordatorio-titulo">${recordatorio.titulo}</h3>
-                                <div class="recordatorio-descripcion">${recordatorio.descripcion}</div>
-                            </div>
+                            <h3 class="recordatorio-titulo">${recordatorio.titulo}</h3>
                             <div class="recordatorio-categoria categoria-${recordatorio.categoria}">
                                 ${recordatorio.categoria}
                             </div>
                         </div>
                         
+                        <div class="recordatorio-descripcion">${recordatorio.descripcion}</div>
+                        
                         <div class="recordatorio-detalles">
                             <div class="detalle-item">
                                 <i class="fas fa-calendar"></i>
-                                <span>${formatearFecha(recordatorio.fechaHora)}</span>
+                                <span>${formatearFecha(recordatorio.fechaVencimiento)}</span>
                             </div>
                             <div class="detalle-item">
                                 <i class="fas fa-clock"></i>
-                                <span>${formatearHora(recordatorio.fechaHora)}</span>
+                                <span>${formatearHora(recordatorio.fechaVencimiento)}</span>
                             </div>
                             ${recordatorio.ubicacion ? `
                                 <div class="detalle-item">
@@ -1108,13 +1542,23 @@
                         </div>
                     </div>
                 `).join('');
+            } catch (error) {
+                console.error('Error cargando lista de recordatorios:', error);
+                container.innerHTML = `
+                    <div style="text-align: center; padding: 3rem; color: #ef4444;">
+                        <i class="fas fa-exclamation-triangle" style="font-size: 2rem; margin-bottom: 1rem;"></i>
+                        <br>
+                        Error cargando recordatorios
+                    </div>
+                `;
             }
         }
 
         function cargarCategorias() {
             const container = document.getElementById('categoriasList');
+            if (!container || !window.recordatoriosManager) return;
             
-            if (window.recordatoriosManager) {
+            try {
                 const categorias = window.recordatoriosManager.obtenerContadoresCategorias();
                 
                 container.innerHTML = Object.entries(categorias).map(([categoria, contador]) => `
@@ -1126,13 +1570,16 @@
                         <div class="categoria-contador">${contador}</div>
                     </div>
                 `).join('');
+            } catch (error) {
+                console.error('Error cargando categorías:', error);
             }
         }
 
         function cargarResumenEstadisticas() {
             const container = document.getElementById('estadisticasResumen');
+            if (!container || !window.recordatoriosManager) return;
             
-            if (window.recordatoriosManager) {
+            try {
                 const stats = window.recordatoriosManager.obtenerEstadisticasGenerales();
                 
                 container.innerHTML = `
@@ -1153,6 +1600,8 @@
                         <span>${stats.proximaSemana}</span>
                     </div>
                 `;
+            } catch (error) {
+                console.error('Error cargando resumen de estadísticas:', error);
             }
         }
 
@@ -1161,17 +1610,16 @@
             const form = document.getElementById('formRecordatorio');
             const titulo = document.getElementById('modalTitulo');
             
+            if (!modal || !form || !titulo) return;
+            
             // Limpiar formulario
             form.reset();
             
-            if (recordatorioId) {
+            if (recordatorioId && window.recordatoriosManager) {
                 titulo.textContent = 'Editar Recordatorio';
-                // Cargar datos del recordatorio
-                if (window.recordatoriosManager) {
-                    const recordatorio = window.recordatoriosManager.obtenerRecordatorio(recordatorioId);
-                    if (recordatorio) {
-                        cargarDatosFormulario(recordatorio);
-                    }
+                const recordatorio = window.recordatoriosManager.obtenerRecordatorio(recordatorioId);
+                if (recordatorio) {
+                    cargarDatosFormulario(recordatorio);
                 }
             } else {
                 titulo.textContent = 'Nuevo Recordatorio';
@@ -1185,22 +1633,28 @@
         }
 
         function cerrarModal() {
-            document.getElementById('modalRecordatorio').style.display = 'none';
+            const modal = document.getElementById('modalRecordatorio');
+            if (modal) {
+                modal.style.display = 'none';
+            }
         }
 
         async function guardarRecordatorio(e) {
             e.preventDefault();
             
+            if (!window.recordatoriosManager) {
+                mostrarNotificacion('Sistema de recordatorios no disponible', 'error');
+                return;
+            }
+            
             const datos = obtenerDatosFormulario();
             
             try {
-                if (window.recordatoriosManager) {
-                    await window.recordatoriosManager.guardarRecordatorio(datos);
-                    mostrarNotificacion('Recordatorio guardado correctamente', 'success');
-                    cerrarModal();
-                    await cargarDatosIniciales();
-                    generarCalendario();
-                }
+                await window.recordatoriosManager.guardarRecordatorio(datos);
+                mostrarNotificacion('Recordatorio guardado correctamente', 'success');
+                cerrarModal();
+                await cargarDatosIniciales();
+                generarCalendario();
             } catch (error) {
                 console.error('Error guardando recordatorio:', error);
                 mostrarNotificacion('Error al guardar el recordatorio', 'error');
@@ -1208,11 +1662,20 @@
         }
 
         function obtenerDatosFormulario() {
+            const fecha = document.getElementById('fechaRecordatorio').value;
+            const hora = document.getElementById('horaRecordatorio').value;
+            
+            // Combinar fecha y hora
+            let fechaVencimiento = new Date(fecha);
+            if (hora) {
+                const [horas, minutos] = hora.split(':');
+                fechaVencimiento.setHours(parseInt(horas), parseInt(minutos));
+            }
+            
             return {
                 titulo: document.getElementById('tituloRecordatorio').value,
                 descripcion: document.getElementById('descripcionRecordatorio').value,
-                fecha: document.getElementById('fechaRecordatorio').value,
-                hora: document.getElementById('horaRecordatorio').value,
+                fechaVencimiento: fechaVencimiento,
                 categoria: document.getElementById('categoriaRecordatorio').value,
                 ubicacion: document.getElementById('ubicacionRecordatorio').value,
                 prioridad: document.getElementById('prioridadRecordatorio').value,
@@ -1224,8 +1687,11 @@
         function cargarDatosFormulario(recordatorio) {
             document.getElementById('tituloRecordatorio').value = recordatorio.titulo;
             document.getElementById('descripcionRecordatorio').value = recordatorio.descripcion;
-            document.getElementById('fechaRecordatorio').value = recordatorio.fecha;
-            document.getElementById('horaRecordatorio').value = recordatorio.hora;
+            
+            const fecha = new Date(recordatorio.fechaVencimiento);
+            document.getElementById('fechaRecordatorio').value = fecha.toISOString().split('T')[0];
+            document.getElementById('horaRecordatorio').value = fecha.toTimeString().slice(0, 5);
+            
             document.getElementById('categoriaRecordatorio').value = recordatorio.categoria;
             document.getElementById('ubicacionRecordatorio').value = recordatorio.ubicacion || '';
             document.getElementById('repetirRecordatorio').value = recordatorio.repetir || '';
@@ -1236,17 +1702,23 @@
 
         function seleccionarPrioridad(prioridad) {
             document.querySelectorAll('.prioridad-btn').forEach(btn => btn.classList.remove('active'));
-            document.querySelector(`[data-prioridad="${prioridad}"]`).classList.add('active');
-            document.getElementById('prioridadRecordatorio').value = prioridad;
+            const btnPrioridad = document.querySelector(`[data-prioridad="${prioridad}"]`);
+            if (btnPrioridad) {
+                btnPrioridad.classList.add('active');
+            }
+            const hiddenInput = document.getElementById('prioridadRecordatorio');
+            if (hiddenInput) {
+                hiddenInput.value = prioridad;
+            }
         }
 
         async function completarRecordatorio(id) {
+            if (!window.recordatoriosManager) return;
+            
             try {
-                if (window.recordatoriosManager) {
-                    await window.recordatoriosManager.completarRecordatorio(id);
-                    mostrarNotificacion('Recordatorio completado', 'success');
-                    await cargarDatosIniciales();
-                }
+                await window.recordatoriosManager.completarRecordatorio(id);
+                mostrarNotificacion('Recordatorio completado', 'success');
+                await cargarDatosIniciales();
             } catch (error) {
                 console.error('Error completando recordatorio:', error);
                 mostrarNotificacion('Error al completar recordatorio', 'error');
@@ -1255,17 +1727,15 @@
 
         async function posponerRecordatorio(id) {
             const nuevaFecha = prompt('Nueva fecha (YYYY-MM-DD):');
-            if (nuevaFecha) {
-                try {
-                    if (window.recordatoriosManager) {
-                        await window.recordatoriosManager.posponerRecordatorio(id, nuevaFecha);
-                        mostrarNotificacion('Recordatorio pospuesto', 'success');
-                        await cargarDatosIniciales();
-                    }
-                } catch (error) {
-                    console.error('Error posponiendo recordatorio:', error);
-                    mostrarNotificacion('Error al posponer recordatorio', 'error');
-                }
+            if (!nuevaFecha || !window.recordatoriosManager) return;
+            
+            try {
+                await window.recordatoriosManager.posponerRecordatorio(id, nuevaFecha);
+                mostrarNotificacion('Recordatorio pospuesto', 'success');
+                await cargarDatosIniciales();
+            } catch (error) {
+                console.error('Error posponiendo recordatorio:', error);
+                mostrarNotificacion('Error al posponer recordatorio', 'error');
             }
         }
 
@@ -1274,33 +1744,32 @@
         }
 
         async function eliminarRecordatorio(id) {
-            if (confirm('¿Estás seguro de que quieres eliminar este recordatorio?')) {
-                try {
-                    if (window.recordatoriosManager) {
-                        await window.recordatoriosManager.eliminarRecordatorio(id);
-                        mostrarNotificacion('Recordatorio eliminado', 'success');
-                        await cargarDatosIniciales();
-                        generarCalendario();
-                    }
-                } catch (error) {
-                    console.error('Error eliminando recordatorio:', error);
-                    mostrarNotificacion('Error al eliminar recordatorio', 'error');
-                }
+            if (!confirm('¿Estás seguro de que quieres eliminar este recordatorio?')) return;
+            if (!window.recordatoriosManager) return;
+            
+            try {
+                await window.recordatoriosManager.eliminarRecordatorio(id);
+                mostrarNotificacion('Recordatorio eliminado', 'success');
+                await cargarDatosIniciales();
+                generarCalendario();
+            } catch (error) {
+                console.error('Error eliminando recordatorio:', error);
+                mostrarNotificacion('Error al eliminar recordatorio', 'error');
             }
         }
 
         function aplicarFiltros() {
-            if (window.recordatoriosManager) {
-                const filtros = {
-                    estado: document.getElementById('filtroEstado').value,
-                    prioridad: document.getElementById('filtroPrioridad').value,
-                    categoria: document.getElementById('filtroCategoria').value,
-                    periodo: document.getElementById('filtroPeriodo').value
-                };
-                
-                window.recordatoriosManager.aplicarFiltros(filtros);
-                cargarListaRecordatorios();
-            }
+            if (!window.recordatoriosManager) return;
+            
+            const filtros = {
+                estado: document.getElementById('filtroEstado').value,
+                prioridad: document.getElementById('filtroPrioridad').value,
+                categoria: document.getElementById('filtroCategoria').value,
+                periodo: document.getElementById('filtroPeriodo').value
+            };
+            
+            window.recordatoriosManager.aplicarFiltros(filtros);
+            cargarListaRecordatorios();
         }
 
         function limpiarFiltros() {
@@ -1313,7 +1782,10 @@
 
         function cambiarVista(vista) {
             document.querySelectorAll('.vista-btn').forEach(btn => btn.classList.remove('active'));
-            document.querySelector(`[data-vista="${vista}"]`).classList.add('active');
+            const btnVista = document.querySelector(`[data-vista="${vista}"]`);
+            if (btnVista) {
+                btnVista.classList.add('active');
+            }
             
             if (window.recordatoriosManager) {
                 window.recordatoriosManager.cambiarVista(vista);
@@ -1321,15 +1793,23 @@
         }
 
         function navegarMes(direccion) {
-            // Implementar navegación del calendario
+            currentMonth += direccion;
+            if (currentMonth < 0) {
+                currentMonth = 11;
+                currentYear--;
+            } else if (currentMonth > 11) {
+                currentMonth = 0;
+                currentYear++;
+            }
             generarCalendario();
         }
 
         function filtrarPorFecha(año, mes, dia) {
-            if (window.recordatoriosManager) {
-                window.recordatoriosManager.filtrarPorFecha(new Date(año, mes, dia));
-                cargarListaRecordatorios();
-            }
+            if (!window.recordatoriosManager) return;
+            
+            const fecha = new Date(año, mes, dia);
+            window.recordatoriosManager.filtrarPorFecha(fecha);
+            cargarListaRecordatorios();
         }
 
         function filtrarPorCategoria(categoria) {
@@ -1338,25 +1818,39 @@
         }
 
         async function sincronizarRecordatorios() {
+            if (!window.recordatoriosManager) return;
+            
             try {
-                document.getElementById('btnSincronizar').innerHTML = '<i class="fas fa-sync-alt fa-spin"></i> Sincronizando';
-                
-                if (window.recordatoriosManager) {
-                    await window.recordatoriosManager.sincronizar();
-                    mostrarNotificacion('Recordatorios sincronizados', 'success');
-                    await cargarDatosIniciales();
+                const btnSincronizar = document.getElementById('btnSincronizar');
+                if (btnSincronizar) {
+                    btnSincronizar.innerHTML = '<i class="fas fa-sync-alt fa-spin"></i> <span class="btn-text">Sincronizando</span>';
+                    btnSincronizar.disabled = true;
                 }
+                
+                await window.recordatoriosManager.sincronizar();
+                mostrarNotificacion('Recordatorios sincronizados', 'success');
+                await cargarDatosIniciales();
             } catch (error) {
                 console.error('Error sincronizando:', error);
                 mostrarNotificacion('Error en la sincronización', 'error');
             } finally {
-                document.getElementById('btnSincronizar').innerHTML = '<i class="fas fa-sync-alt"></i> Sincronizar';
+                const btnSincronizar = document.getElementById('btnSincronizar');
+                if (btnSincronizar) {
+                    btnSincronizar.innerHTML = '<i class="fas fa-sync-alt"></i> <span class="btn-text">Sincronizar</span>';
+                    btnSincronizar.disabled = false;
+                }
             }
         }
 
         function exportarCalendario() {
-            if (window.recordatoriosManager) {
+            if (!window.recordatoriosManager) return;
+            
+            try {
                 window.recordatoriosManager.exportarCalendario();
+                mostrarNotificacion('Calendario exportado', 'success');
+            } catch (error) {
+                console.error('Error exportando:', error);
+                mostrarNotificacion('Error al exportar calendario', 'error');
             }
         }
 
@@ -1373,26 +1867,25 @@
         }
 
         function formatearFecha(fechaHora) {
-            return new Date(fechaHora).toLocaleDateString('es-GT');
+            const fecha = new Date(fechaHora);
+            return fecha.toLocaleDateString('es-GT');
         }
 
         function formatearHora(fechaHora) {
-            return new Date(fechaHora).toLocaleTimeString('es-GT', { 
+            const fecha = new Date(fechaHora);
+            return fecha.toLocaleTimeString('es-GT', { 
                 hour: '2-digit', 
                 minute: '2-digit' 
             });
         }
 
-        function mostrarNotificacion(mensaje, tipo) {
-            console.log(`${tipo.toUpperCase()}: ${mensaje}`);
-        }
-
-        // Hacer funciones globales
+        // Hacer funciones globales para uso en HTML
+        window.mostrarModalRecordatorio = mostrarModalRecordatorio;
         window.completarRecordatorio = completarRecordatorio;
         window.posponerRecordatorio = posponerRecordatorio;
         window.editarRecordatorio = editarRecordatorio;
         window.eliminarRecordatorio = eliminarRecordatorio;
+        window.filtrarPorCategoria = filtrarPorCategoria;
     </script>
 </body>
-
 </html>
