@@ -1345,6 +1345,17 @@
 
     <script>
         // ===========================================
+        // VARIABLES GLOBALES - DEFINIDAS PRIMERO
+        // ===========================================
+        let app = null;
+        let db = null;
+        let auth = null;
+        let recordatoriosManager = null;
+        let currentUser = null;
+        let currentMonth = new Date().getMonth();
+        let currentYear = new Date().getFullYear();
+
+        // ===========================================
         // CONFIGURACIÓN FIREBASE INLINE
         // ===========================================
         const firebaseConfig = {
