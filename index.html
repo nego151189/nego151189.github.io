@@ -451,6 +451,7 @@
             .main-content-wrapper {
                 margin-left: 0;
                 padding: 1rem;
+                padding-top: 6rem; /* Espacio para header fijo */
             }
 
             .dashboard-header {
@@ -468,14 +469,31 @@
             .chart-card {
                 min-width: unset;
             }
+            
+            .welcome-section h2 {
+                font-size: 1.5rem;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            .main-content-wrapper {
+                padding: 0.5rem;
+                padding-top: 6rem;
+            }
+            
+            .dashboard-header {
+                padding: 1rem;
+            }
+            
+            .ai-assistant-card {
+                max-width: none;
+            }
         }
     </style>
 </head>
 <body>
-
-        <!-- Overlay para sidebar móvil -->
+    <!-- Overlay para sidebar móvil -->
     <div class="sidebar-overlay" id="sidebarOverlay"></div>
-
     
     <!-- Loader -->
     <div id="loader" class="loader-container">
@@ -494,17 +512,17 @@
     <main class="main-content-wrapper">
         <section id="dashboard" class="dashboard-section">
             <!-- Dashboard Header -->
-                <div class="header-content">
-                    <div style="display: flex; align-items: center; gap: 1rem;">
-                        <button class="menu-toggle" id="menuToggle" aria-label="Abrir menú">
-                            <i class="fas fa-bars"></i>
-                        </button>
-                        <div class="welcome-section">
-                            <h2 id="welcomeMessage">Buenos dÃ­as, Administrador</h2>
-                            <p id="dateDisplay">MiÃ©rcoles, 3 de Septiembre 2025</p>
-                        </div>
+            <div class="dashboard-header">
+                <div style="display: flex; align-items: center; gap: 1rem; width: 100%;">
+                    <button class="menu-toggle" id="menuToggle" aria-label="Abrir menú">
+                        <i class="fas fa-bars"></i>
+                    </button>
+                    <div class="welcome-section">
+                        <h2 id="welcomeMessage">Buenos días, Administrador</h2>
+                        <p id="dateDisplay">Miércoles, 3 de Septiembre 2025</p>
                     </div>
-                                
+                </div>
+                
                 <!-- AI Assistant Card -->
                 <div class="ai-assistant-card">
                     <div class="ai-header">
@@ -522,7 +540,7 @@
                         </div>
                         <div class="recommendation">
                             <span class="rec-icon">📈</span>
-                            <p>ML predice incremento del 20% en producción para el próximo mes basado en patrones históricos.</p>
+                            <p>ML predice incremento del 20% en producción para el próximo mes basado en patrones histó­ricos.</p>
                         </div>
                     </div>
                 </div>
@@ -720,12 +738,8 @@
     <script src="js/clima.js"></script>
     <script src="js/auth.js"></script>
     <script src="js/nav.js"></script>
-
-
-       <script src="js/index.js"></script>
-</body>
-Agregar antes:
-html    <script>
+    
+    <script>
         // Toggle del menú móvil
         document.addEventListener('DOMContentLoaded', function() {
             const menuToggle = document.getElementById('menuToggle');
@@ -753,8 +767,6 @@ html    <script>
             }
         });
     </script>
-    
     <script src="js/index.js"></script>
 </body>
-
 </html>
