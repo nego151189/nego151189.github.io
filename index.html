@@ -17,51 +17,203 @@
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-storage.js"></script>
     
-    <!-- TUS CSS FILES EXACTOS -->
+    <!-- CSS Files Externos -->
     <link rel="stylesheet" href="css/main.css">
     <link rel="stylesheet" href="css/style.css">
     
     <style>
-        /* EXACTAMENTE el mismo patrón que gastos.html - solo variables CSS específicas */
+        /* Variables específicas para dashboard - Complementan main.css */
         :root {
-            --primary: #22c55e;
-            --secondary: #3b82f6;
-            --success: #22c55e;
-            --warning: #f59e0b;
-            --danger: #ef4444;
-            --info: #3b82f6;
-            --light: #f8fafc;
-            --dark: #1e293b;
-            --bg-primary: #ffffff;
-            --bg-secondary: #f8fafc;
-            --bg-card: #ffffff;
-            --text-primary: #1e293b;
-            --text-secondary: #64748b;
-            --border: #e2e8f0;
-            --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
-            --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+            --dashboard-primary: #22c55e;
+            --dashboard-secondary: #3b82f6;
+            --dashboard-success: #22c55e;
+            --dashboard-warning: #f59e0b;
+            --dashboard-danger: #ef4444;
+            --dashboard-info: #3b82f6;
         }
 
-        /* Header de dashboard - usando mismo patrón que gastos-header */
+        /* Override específico para evitar conflictos con navegación */
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: var(--font-primary, 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif);
+            background: var(--light-gray, #f8f9fa);
+            color: var(--dark-gray, #343a40);
+            line-height: 1.6;
+        }
+
+        /* Main wrapper compatible con el sistema de navegación */
+        .main-content-wrapper {
+            margin-left: var(--sidebar-width, 280px);
+            margin-top: var(--header-height, 80px);
+            padding: 2rem;
+            max-width: none;
+            transition: margin-left var(--transition-normal, 0.3s ease);
+            min-height: calc(100vh - var(--header-height, 80px));
+            background: var(--light-gray, #f8f9fa);
+        }
+
+        /* Estados de conexión - MOVIDO A LA DERECHA IGUAL QUE GASTOS */
+        .connection-status {
+            position: fixed;
+            top: 1.25rem;
+            right: 1.5rem; /* Más margen a la derecha */
+            padding: 0.6rem 1rem;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            z-index: 999;
+            transition: all var(--transition-normal, 0.3s ease);
+            backdrop-filter: blur(10px);
+            box-shadow: var(--shadow-md, 0 4px 8px rgba(0,0,0,0.15));
+            min-width: 120px;
+            text-align: center;
+        }
+
+        .connection-status.online {
+            background: rgba(34, 197, 94, 0.95);
+            color: white;
+            border: 1px solid rgba(34, 197, 94, 0.4);
+        }
+
+        .connection-status.offline {
+            background: rgba(239, 68, 68, 0.95);
+            color: white;
+            border: 1px solid rgba(239, 68, 68, 0.4);
+        }
+
+        .connection-status.loading {
+            background: rgba(245, 158, 11, 0.95);
+            color: white;
+            border: 1px solid rgba(245, 158, 11, 0.4);
+        }
+
+        /* Responsive para conexión status */
+        @media (max-width: 1024px) {
+            .connection-status {
+                top: 1rem;
+                right: 1rem;
+                padding: 0.5rem 0.8rem;
+                font-size: 0.75rem;
+                min-width: 100px;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .connection-status {
+                top: 0.75rem;
+                right: 0.75rem;
+                padding: 0.4rem 0.6rem;
+                font-size: 0.7rem;
+                min-width: 90px;
+                z-index: 998; /* Bajo el header de navegación */
+            }
+        }
+
+        @media (max-width: 480px) {
+            .connection-status {
+                top: 0.5rem;
+                right: 0.5rem;
+                padding: 0.35rem 0.5rem;
+                font-size: 0.65rem;
+                min-width: 80px;
+                border-radius: 15px;
+            }
+        }
+
+        /* Loader de inicialización - Responsive */
+        .initialization-loader {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.95);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 10000;
+            color: white;
+            font-size: 1.2rem;
+            backdrop-filter: blur(5px);
+        }
+
+        .initialization-loader.hidden {
+            display: none;
+        }
+
+        .loader-content {
+            text-align: center;
+            max-width: 400px;
+            padding: 2rem;
+        }
+
+        @media (max-width: 768px) {
+            .loader-content {
+                max-width: 300px;
+                padding: 1.5rem;
+                font-size: 1rem;
+            }
+        }
+
+        .loader-icon {
+            font-size: 4rem;
+            margin-bottom: 2rem;
+            animation: pulse 2s ease-in-out infinite;
+        }
+
+        @media (max-width: 768px) {
+            .loader-icon {
+                font-size: 3rem;
+                margin-bottom: 1.5rem;
+            }
+        }
+
+        /* Header del dashboard - Completamente responsive */
         .dashboard-header {
             display: flex;
             justify-content: space-between;
-            align-items: center;
+            align-items: flex-start;
             margin-bottom: 2rem;
             flex-wrap: wrap;
-            gap: 1rem;
+            gap: 1.5rem;
+        }
+
+        @media (max-width: 1024px) {
+            .dashboard-header {
+                gap: 1rem;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .dashboard-header {
+                flex-direction: column;
+                align-items: stretch;
+                gap: 1rem;
+                margin-bottom: 1.5rem;
+            }
         }
 
         .page-title {
             display: flex;
             align-items: center;
-            gap: 1rem;
+            gap: 1.5rem;
+            flex: 1;
+        }
+
+        @media (max-width: 640px) {
+            .page-title {
+                flex-direction: column;
+                text-align: center;
+                gap: 1rem;
+            }
         }
 
         .title-icon {
             width: 70px;
             height: 70px;
-            background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%);
+            background: linear-gradient(135deg, var(--dashboard-primary) 0%, #16a34a 100%);
             border-radius: 20px;
             display: flex;
             align-items: center;
@@ -69,8 +221,59 @@
             color: white;
             font-size: 1.8rem;
             box-shadow: var(--shadow-lg);
+            flex-shrink: 0;
         }
 
+        @media (max-width: 768px) {
+            .title-icon {
+                width: 60px;
+                height: 60px;
+                font-size: 1.5rem;
+                border-radius: 16px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .title-icon {
+                width: 50px;
+                height: 50px;
+                font-size: 1.25rem;
+                border-radius: 12px;
+            }
+        }
+
+        .title-text h1 {
+            font-size: 2.5rem;
+            font-weight: 800;
+            margin-bottom: 0.5rem;
+            color: var(--text-primary, #1e293b);
+        }
+
+        .title-text p {
+            font-size: 1.1rem;
+            color: var(--text-secondary, #64748b);
+            margin: 0;
+        }
+
+        @media (max-width: 768px) {
+            .title-text h1 {
+                font-size: 2rem;
+            }
+            .title-text p {
+                font-size: 1rem;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .title-text h1 {
+                font-size: 1.75rem;
+            }
+            .title-text p {
+                font-size: 0.9rem;
+            }
+        }
+
+        /* Header actions - Responsive */
         .header-actions {
             display: flex;
             gap: 1rem;
@@ -78,6 +281,27 @@
             flex-wrap: wrap;
         }
 
+        @media (max-width: 768px) {
+            .header-actions {
+                width: 100%;
+                justify-content: center;
+                gap: 0.75rem;
+            }
+        }
+
+        @media (max-width: 640px) {
+            .header-actions {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            
+            .header-actions .btn {
+                width: 100%;
+                justify-content: center;
+            }
+        }
+
+        /* Estado sistema - Responsive */
         .estado-sistema {
             display: flex;
             align-items: center;
@@ -90,11 +314,7 @@
             border: 2px solid rgba(34, 197, 94, 0.3);
             box-shadow: var(--shadow);
             transition: all 0.3s ease;
-        }
-
-        .estado-sistema:hover {
-            transform: translateY(-2px);
-            box-shadow: var(--shadow-lg);
+            white-space: nowrap;
         }
 
         .estado-sistema.loading {
@@ -109,7 +329,23 @@
             border-color: rgba(239, 68, 68, 0.3);
         }
 
-        /* KPIs usando EXACTAMENTE el patrón de resumen-financiero de gastos.html */
+        @media (max-width: 768px) {
+            .estado-sistema {
+                padding: 0.75rem 1.25rem;
+                font-size: 0.9rem;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .estado-sistema {
+                padding: 0.625rem 1rem;
+                font-size: 0.8rem;
+                white-space: normal;
+                text-align: center;
+            }
+        }
+
+        /* KPIs Dashboard - Grid completamente responsive */
         .kpis-dashboard {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
@@ -117,8 +353,30 @@
             margin-bottom: 2rem;
         }
 
+        @media (max-width: 1200px) {
+            .kpis-dashboard {
+                grid-template-columns: repeat(2, 1fr);
+                gap: 1.5rem;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .kpis-dashboard {
+                grid-template-columns: repeat(2, 1fr);
+                gap: 1rem;
+            }
+        }
+
+        @media (max-width: 640px) {
+            .kpis-dashboard {
+                grid-template-columns: 1fr;
+                gap: 1rem;
+            }
+        }
+
+        /* KPI Cards - Responsive */
         .kpi-card {
-            background: var(--bg-card);
+            background: var(--white, #ffffff);
             border-radius: 20px;
             padding: 2rem;
             position: relative;
@@ -132,6 +390,28 @@
             box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
         }
 
+        @media (max-width: 768px) {
+            .kpi-card {
+                padding: 1.5rem;
+                border-radius: 16px;
+            }
+            
+            .kpi-card:hover {
+                transform: translateY(-2px);
+            }
+        }
+
+        @media (max-width: 480px) {
+            .kpi-card {
+                padding: 1.25rem;
+                border-radius: 12px;
+            }
+            
+            .kpi-card:hover {
+                transform: none; /* Desactivar hover en móviles pequeños */
+            }
+        }
+
         .kpi-card::before {
             content: '';
             position: absolute;
@@ -142,27 +422,36 @@
             border-radius: 20px 20px 0 0;
         }
 
-        .kpi-card.produccion::before {
-            background: linear-gradient(90deg, #22c55e, #16a34a);
+        @media (max-width: 768px) {
+            .kpi-card::before {
+                height: 4px;
+                border-radius: 16px 16px 0 0;
+            }
         }
 
-        .kpi-card.ingresos::before {
-            background: linear-gradient(90deg, #3b82f6, #1d4ed8);
-        }
+        /* Colores específicos para cada KPI */
+        .kpi-card.produccion::before { background: linear-gradient(90deg, var(--dashboard-primary), #16a34a); }
+        .kpi-card.ingresos::before { background: linear-gradient(90deg, var(--dashboard-secondary), #1d4ed8); }
+        .kpi-card.arboles::before { background: linear-gradient(90deg, var(--dashboard-warning), #d97706); }
+        .kpi-card.gastos::before { background: linear-gradient(90deg, var(--dashboard-danger), #b91c1c); }
 
-        .kpi-card.arboles::before {
-            background: linear-gradient(90deg, #f59e0b, #d97706);
-        }
-
-        .kpi-card.gastos::before {
-            background: linear-gradient(90deg, #dc2626, #b91c1c);
-        }
-
+        /* Header de KPI card */
         .kpi-header {
             display: flex;
             justify-content: space-between;
             align-items: flex-start;
             margin-bottom: 1.5rem;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+        }
+
+        @media (max-width: 640px) {
+            .kpi-header {
+                flex-direction: column;
+                align-items: center;
+                text-align: center;
+                margin-bottom: 1rem;
+            }
         }
 
         .kpi-icon {
@@ -177,33 +466,83 @@
             box-shadow: var(--shadow);
         }
 
+        @media (max-width: 768px) {
+            .kpi-icon {
+                width: 50px;
+                height: 50px;
+                font-size: 1.25rem;
+                border-radius: 12px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .kpi-icon {
+                width: 45px;
+                height: 45px;
+                font-size: 1.125rem;
+                border-radius: 10px;
+            }
+        }
+
         .kpi-tendencia {
             display: flex;
             align-items: center;
             gap: 0.5rem;
             font-size: 0.875rem;
             font-weight: 600;
-            color: #22c55e;
+            color: var(--dashboard-success);
             background: rgba(34, 197, 94, 0.1);
             padding: 0.5rem 1rem;
             border-radius: 20px;
         }
 
+        @media (max-width: 768px) {
+            .kpi-tendencia {
+                font-size: 0.8rem;
+                padding: 0.4rem 0.8rem;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .kpi-tendencia {
+                font-size: 0.75rem;
+                padding: 0.35rem 0.7rem;
+            }
+        }
+
         .kpi-valor {
             font-size: 2.5rem;
             font-weight: 800;
-            color: var(--text-primary);
+            color: var(--text-primary, #1e293b);
             margin-bottom: 0.5rem;
             letter-spacing: -0.025em;
         }
 
+        @media (max-width: 768px) {
+            .kpi-valor {
+                font-size: 2rem;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .kpi-valor {
+                font-size: 1.75rem;
+            }
+        }
+
         .kpi-label {
-            color: var(--text-secondary);
+            color: var(--text-secondary, #64748b);
             font-size: 1rem;
             font-weight: 500;
         }
 
-        /* Widgets usando patrón de gastos.html */
+        @media (max-width: 480px) {
+            .kpi-label {
+                font-size: 0.9rem;
+            }
+        }
+
+        /* Widgets Dashboard - Layout responsivo */
         .widgets-dashboard {
             display: grid;
             grid-template-columns: 2fr 1fr;
@@ -211,13 +550,47 @@
             margin-bottom: 2rem;
         }
 
+        @media (max-width: 1200px) {
+            .widgets-dashboard {
+                grid-template-columns: 3fr 2fr;
+                gap: 1.5rem;
+            }
+        }
+
+        @media (max-width: 1024px) {
+            .widgets-dashboard {
+                grid-template-columns: 1fr;
+                gap: 1.5rem;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .widgets-dashboard {
+                gap: 1rem;
+            }
+        }
+
+        /* Widget Principal */
         .widget-principal {
             display: grid;
             gap: 2rem;
         }
 
+        @media (max-width: 768px) {
+            .widget-principal {
+                gap: 1.5rem;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .widget-principal {
+                gap: 1rem;
+            }
+        }
+
+        /* Widget Cards - Responsive */
         .widget-card {
-            background: var(--bg-card);
+            background: var(--white, #ffffff);
             border-radius: 20px;
             padding: 2rem;
             box-shadow: var(--shadow-lg);
@@ -229,6 +602,28 @@
             box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
         }
 
+        @media (max-width: 768px) {
+            .widget-card {
+                padding: 1.5rem;
+                border-radius: 16px;
+            }
+            
+            .widget-card:hover {
+                transform: translateY(-1px);
+            }
+        }
+
+        @media (max-width: 480px) {
+            .widget-card {
+                padding: 1.25rem;
+                border-radius: 12px;
+            }
+            
+            .widget-card:hover {
+                transform: none; /* Desactivar hover en móviles */
+            }
+        }
+
         .widget-header {
             display: flex;
             justify-content: space-between;
@@ -236,53 +631,335 @@
             margin-bottom: 1.5rem;
             min-height: 40px;
             flex-shrink: 0;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+        }
+
+        @media (max-width: 640px) {
+            .widget-header {
+                flex-direction: column;
+                align-items: flex-start;
+                margin-bottom: 1rem;
+            }
         }
 
         .widget-titulo {
             font-size: 1.25rem;
             font-weight: 700;
-            color: var(--text-primary);
+            color: var(--text-primary, #1e293b);
             display: flex;
             align-items: center;
             gap: 1rem;
         }
 
-        /* Loader EXACTO como gastos.html */
-        .initialization-loader {
-            position: fixed;
-            top: 0;
+        @media (max-width: 768px) {
+            .widget-titulo {
+                font-size: 1.125rem;
+                gap: 0.75rem;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .widget-titulo {
+                font-size: 1rem;
+                gap: 0.5rem;
+                flex-direction: column;
+                align-items: flex-start;
+            }
+        }
+
+        /* Widget del Clima - Responsive */
+        .clima-widget {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+            color: white !important;
+        }
+
+        .clima-widget .widget-titulo {
+            color: white !important;
+        }
+
+        .clima-detalles-clima {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+
+        @media (max-width: 640px) {
+            .clima-detalles-clima {
+                grid-template-columns: 1fr;
+                gap: 0.75rem;
+            }
+        }
+
+        .clima-detalle {
+            text-align: center;
+            padding: 0.75rem;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            backdrop-filter: blur(10px);
+        }
+
+        @media (max-width: 768px) {
+            .clima-detalle {
+                padding: 0.625rem;
+                border-radius: 10px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .clima-detalle {
+                padding: 0.5rem;
+                border-radius: 8px;
+            }
+        }
+
+        .clima-detalle-valor {
+            font-size: 1.25rem;
+            font-weight: 600;
+            display: block;
+        }
+
+        .clima-detalle-label {
+            font-size: 0.75rem;
+            opacity: 0.8;
+            margin-top: 0.25rem;
+        }
+
+        @media (max-width: 768px) {
+            .clima-detalle-valor {
+                font-size: 1.125rem;
+            }
+            
+            .clima-detalle-label {
+                font-size: 0.7rem;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .clima-detalle-valor {
+                font-size: 1rem;
+            }
+            
+            .clima-detalle-label {
+                font-size: 0.65rem;
+            }
+        }
+
+        /* Widget del Tanque - Responsive */
+        .tanque-container {
+            display: flex;
+            align-items: center;
+            gap: 1.5rem;
+            margin-bottom: 1rem;
+        }
+
+        @media (max-width: 640px) {
+            .tanque-container {
+                flex-direction: column;
+                text-align: center;
+                gap: 1rem;
+            }
+        }
+
+        .tanque-visual {
+            position: relative;
+            width: 80px;
+            height: 140px;
+            background: #f3f4f6;
+            border: 2px solid #d1d5db;
+            border-radius: 8px;
+            overflow: hidden;
+            flex-shrink: 0;
+        }
+
+        @media (max-width: 768px) {
+            .tanque-visual {
+                width: 70px;
+                height: 120px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .tanque-visual {
+                width: 60px;
+                height: 100px;
+            }
+        }
+
+        .tanque-fill {
+            position: absolute;
+            bottom: 0;
             left: 0;
             right: 0;
-            bottom: 0;
-            background: rgba(0, 0, 0, 0.9);
+            background: linear-gradient(180deg, var(--dashboard-secondary), #1d4ed8);
+            transition: height 0.6s ease;
+            border-radius: 0 0 6px 6px;
+            height: 0%;
+        }
+
+        .tanque-datos {
+            flex: 1;
+        }
+
+        .tanque-nivel {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--text-primary, #1e293b);
+            margin-bottom: 0.5rem;
+        }
+
+        .tanque-porcentaje {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: var(--dashboard-secondary);
+        }
+
+        @media (max-width: 768px) {
+            .tanque-nivel {
+                font-size: 1.25rem;
+            }
+            
+            .tanque-porcentaje {
+                font-size: 1.125rem;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .tanque-nivel {
+                font-size: 1.125rem;
+            }
+            
+            .tanque-porcentaje {
+                font-size: 1rem;
+            }
+        }
+
+        /* Panel Lateral - Responsive */
+        .panel-lateral {
+            display: grid;
+            gap: 1.5rem;
+        }
+
+        @media (max-width: 768px) {
+            .panel-lateral {
+                gap: 1rem;
+            }
+        }
+
+        /* Resumen Financiero - Grid responsive */
+        .resumen-financiero-grid {
+            display: grid;
+            gap: 1rem;
+        }
+
+        .resumen-item {
             display: flex;
-            flex-direction: column;
+            justify-content: space-between;
             align-items: center;
-            justify-content: center;
-            z-index: 9999;
-            color: white;
-            font-size: 1.2rem;
+            padding: 0.75rem 0;
+            border-bottom: 1px solid var(--border, #e2e8f0);
         }
 
-        .initialization-loader.hidden {
-            display: none;
+        .resumen-item:last-child {
+            border-bottom: none;
+            font-weight: 600;
+            color: var(--text-primary, #1e293b);
         }
 
-        .loader-content {
+        @media (max-width: 480px) {
+            .resumen-item {
+                padding: 0.5rem 0;
+                font-size: 0.9rem;
+            }
+        }
+
+        /* Estado Firebase - Grid responsive */
+        .firebase-status-grid {
+            display: grid;
+            gap: 0.75rem;
+        }
+
+        .firebase-status-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.5rem;
+            background: var(--light-gray, #f8fafc);
+            border-radius: 8px;
+            font-size: 0.875rem;
+        }
+
+        @media (max-width: 480px) {
+            .firebase-status-item {
+                padding: 0.4rem;
+                font-size: 0.8rem;
+            }
+        }
+
+        /* Contadores de registros - Grid responsive */
+        .registros-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 1rem;
+        }
+
+        @media (max-width: 480px) {
+            .registros-grid {
+                gap: 0.75rem;
+            }
+        }
+
+        .registro-item {
             text-align: center;
-            max-width: 400px;
-            padding: 2rem;
+            padding: 1rem;
+            background: var(--light-gray, #f8fafc);
+            border-radius: 12px;
         }
 
-        .loader-icon {
-            font-size: 4rem;
-            margin-bottom: 2rem;
-            animation: pulse 2s ease-in-out infinite;
+        @media (max-width: 768px) {
+            .registro-item {
+                padding: 0.875rem;
+                border-radius: 10px;
+            }
         }
 
-        @keyframes pulse {
-            0%, 100% { transform: scale(1); }
-            50% { transform: scale(1.1); }
+        @media (max-width: 480px) {
+            .registro-item {
+                padding: 0.75rem;
+                border-radius: 8px;
+            }
+        }
+
+        .registro-valor {
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin-bottom: 0.25rem;
+        }
+
+        .registro-label {
+            font-size: 0.75rem;
+            color: var(--text-secondary, #64748b);
+        }
+
+        @media (max-width: 768px) {
+            .registro-valor {
+                font-size: 1.25rem;
+            }
+            
+            .registro-label {
+                font-size: 0.7rem;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .registro-valor {
+                font-size: 1.125rem;
+            }
+            
+            .registro-label {
+                font-size: 0.65rem;
+            }
         }
 
         /* Estados de datos */
@@ -292,7 +969,7 @@
         }
 
         .data-error {
-            color: #dc2626;
+            color: var(--dashboard-danger);
             font-weight: 500;
         }
 
@@ -300,38 +977,27 @@
             color: inherit;
         }
 
-        /* Estado de conexión IGUAL que gastos.html */
-        .connection-status {
-            position: fixed;
-            top: 1rem;
-            left: 1rem;
-            padding: 0.5rem 1rem;
-            border-radius: 20px;
-            font-size: 0.75rem;
-            font-weight: 600;
-            z-index: 1000;
-            transition: all 0.3s ease;
+        /* Ajustes para el layout principal responsive */
+        @media (max-width: 1024px) {
+            .main-content-wrapper {
+                margin-left: 0;
+            }
         }
 
-        .connection-status.online {
-            background: rgba(34, 197, 94, 0.15);
-            color: #16a34a;
-            border: 1px solid rgba(34, 197, 94, 0.3);
+        @media (max-width: 768px) {
+            .main-content-wrapper {
+                padding: 1rem;
+                margin-top: var(--header-height, 80px);
+            }
         }
 
-        .connection-status.offline {
-            background: rgba(239, 68, 68, 0.15);
-            color: #dc2626;
-            border: 1px solid rgba(239, 68, 68, 0.3);
+        @media (max-width: 480px) {
+            .main-content-wrapper {
+                padding: 0.75rem;
+            }
         }
 
-        .connection-status.loading {
-            background: rgba(245, 158, 11, 0.15);
-            color: #d97706;
-            border: 1px solid rgba(245, 158, 11, 0.3);
-        }
-
-        /* Animaciones IGUALES que gastos.html */
+        /* Animaciones - Desactivadas en móviles para mejor performance */
         @keyframes fadeInUp {
             from {
                 opacity: 0;
@@ -347,49 +1013,51 @@
             animation: fadeInUp 0.5s ease-out;
         }
 
-        /* Responsivo EXACTO como gastos.html */
-        @media (max-width: 1024px) {
-            .widgets-dashboard {
-                grid-template-columns: 1fr;
+        @media (max-width: 768px) {
+            .animate-fade-in-up {
+                animation: none; /* Desactivar animaciones en móviles */
             }
         }
 
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+        }
+
+        /* Mejoras para touch targets en móviles */
         @media (max-width: 768px) {
-            .dashboard-header {
-                flex-direction: column;
-                align-items: stretch;
+            .btn {
+                min-height: 44px;
+                min-width: 44px;
+                touch-action: manipulation;
             }
             
-            .kpis-dashboard {
-                grid-template-columns: repeat(2, 1fr);
+            button {
+                min-height: 44px;
+                touch-action: manipulation;
             }
         }
 
-        @media (max-width: 480px) {
-            .kpis-dashboard {
-                grid-template-columns: 1fr;
-            }
+        /* Responsive utilities */
+        @media (max-width: 768px) {
+            .hide-mobile { display: none !important; }
+            .show-mobile { display: block !important; }
+        }
 
-            .kpi-valor {
-                font-size: 2rem;
-            }
-
-            .title-icon {
-                width: 60px;
-                height: 60px;
-                font-size: 1.5rem;
-            }
+        @media (min-width: 769px) {
+            .hide-desktop { display: none !important; }
+            .show-mobile { display: none !important; }
         }
     </style>
 </head>
 <body>
-    <!-- Estado de conexión IGUAL que gastos.html -->
+    <!-- Estado de conexión - MOVIDO A LA DERECHA -->
     <div class="connection-status loading" id="connectionStatus">
         <i class="fas fa-circle"></i>
         Conectando...
     </div>
 
-    <!-- Loader IGUAL que gastos.html -->
+    <!-- Loader de inicialización -->
     <div class="initialization-loader" id="initLoader">
         <div class="loader-content">
             <div class="loader-icon">
@@ -400,7 +1068,7 @@
         </div>
     </div>
 
-    <!-- ESTRUCTURA EXACTA como gastos.html - main-content-wrapper directo -->
+    <!-- Contenido principal -->
     <main class="main-content-wrapper">
         <!-- Header del dashboard -->
         <header class="dashboard-header animate-fade-in-up">
@@ -408,9 +1076,9 @@
                 <div class="title-icon">
                     <i class="fas fa-tachometer-alt"></i>
                 </div>
-                <div>
-                    <h1 style="font-size: 2.5rem; font-weight: 800; margin-bottom: 0.5rem;">Dashboard Inteligente</h1>
-                    <p style="font-size: 1.1rem; color: var(--text-secondary);" id="current-date">Sistema de gestión en tiempo real</p>
+                <div class="title-text">
+                    <h1>Dashboard Inteligente</h1>
+                    <p id="current-date">Sistema de gestión en tiempo real</p>
                 </div>
             </div>
             
@@ -421,15 +1089,21 @@
                 </div>
                 
                 <button class="btn btn-primary" onclick="window.location.reload()">
-                    <i class="fas fa-sync"></i> Sincronizar
+                    <i class="fas fa-sync"></i> 
+                    <span class="hide-mobile">Sincronizar</span>
+                    <span class="show-mobile">Sync</span>
                 </button>
                 
                 <button class="btn btn-secondary" onclick="window.location.href='reportes.html'">
-                    <i class="fas fa-chart-bar"></i> Reportes
+                    <i class="fas fa-chart-bar"></i> 
+                    <span class="hide-mobile">Reportes</span>
+                    <span class="show-mobile">Reports</span>
                 </button>
                 
                 <button class="btn btn-success" id="sync-now">
-                    <i class="fas fa-database"></i> Firebase
+                    <i class="fas fa-database"></i> 
+                    <span class="hide-mobile">Firebase</span>
+                    <span class="show-mobile">DB</span>
                 </button>
             </div>
         </header>
@@ -438,7 +1112,7 @@
         <section class="kpis-dashboard animate-fade-in-up">
             <div class="kpi-card produccion">
                 <div class="kpi-header">
-                    <div class="kpi-icon" style="background: linear-gradient(135deg, #22c55e, #16a34a);">
+                    <div class="kpi-icon" style="background: linear-gradient(135deg, var(--dashboard-primary), #16a34a);">
                         <i class="fas fa-seedling"></i>
                     </div>
                     <div class="kpi-tendencia" id="produccion-trend">
@@ -452,7 +1126,7 @@
             
             <div class="kpi-card ingresos">
                 <div class="kpi-header">
-                    <div class="kpi-icon" style="background: linear-gradient(135deg, #3b82f6, #1d4ed8);">
+                    <div class="kpi-icon" style="background: linear-gradient(135deg, var(--dashboard-secondary), #1d4ed8);">
                         <i class="fas fa-dollar-sign"></i>
                     </div>
                     <div class="kpi-tendencia" id="ingresos-trend">
@@ -466,7 +1140,7 @@
             
             <div class="kpi-card arboles">
                 <div class="kpi-header">
-                    <div class="kpi-icon" style="background: linear-gradient(135deg, #f59e0b, #d97706);">
+                    <div class="kpi-icon" style="background: linear-gradient(135deg, var(--dashboard-warning), #d97706);">
                         <i class="fas fa-tree"></i>
                     </div>
                     <div class="kpi-tendencia" id="arboles-trend">
@@ -480,7 +1154,7 @@
             
             <div class="kpi-card gastos">
                 <div class="kpi-header">
-                    <div class="kpi-icon" style="background: linear-gradient(135deg, #dc2626, #b91c1c);">
+                    <div class="kpi-icon" style="background: linear-gradient(135deg, var(--dashboard-danger), #b91c1c);">
                         <i class="fas fa-receipt"></i>
                     </div>
                     <div class="kpi-tendencia" id="gastos-trend">
@@ -498,11 +1172,11 @@
             <!-- Widget principal -->
             <div class="widget-principal">
                 <!-- Widget del clima -->
-                <div class="widget-card clima-widget" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white;">
+                <div class="widget-card clima-widget">
                     <div class="widget-header">
-                        <h3 class="widget-titulo" style="color: white;">
+                        <h3 class="widget-titulo">
                             <i class="fas fa-cloud-sun"></i>
-                            Clima Actual - Finca La Herradura
+                            <span>Clima Actual - Finca La Herradura</span>
                         </h3>
                         <span id="weather-status" class="data-loading" style="color: rgba(255,255,255,0.8);">Conectando...</span>
                     </div>
@@ -513,18 +1187,18 @@
                         <div id="weather-desc" class="data-loading" style="opacity: 0.9;">Obteniendo datos meteorológicos...</div>
                     </div>
                     
-                    <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; margin-top: 1rem;">
-                        <div style="text-align: center; padding: 0.75rem; background: rgba(255, 255, 255, 0.1); border-radius: 12px; backdrop-filter: blur(10px);">
-                            <div style="font-size: 1.25rem; font-weight: 600; display: block;" id="humidity">--%</div>
-                            <div style="font-size: 0.75rem; opacity: 0.8; margin-top: 0.25rem;">Humedad</div>
+                    <div class="clima-detalles-clima">
+                        <div class="clima-detalle">
+                            <div class="clima-detalle-valor" id="humidity">--%</div>
+                            <div class="clima-detalle-label">Humedad</div>
                         </div>
-                        <div style="text-align: center; padding: 0.75rem; background: rgba(255, 255, 255, 0.1); border-radius: 12px; backdrop-filter: blur(10px);">
-                            <div style="font-size: 1.25rem; font-weight: 600; display: block;" id="wind-speed">--</div>
-                            <div style="font-size: 0.75rem; opacity: 0.8; margin-top: 0.25rem;">Viento</div>
+                        <div class="clima-detalle">
+                            <div class="clima-detalle-valor" id="wind-speed">--</div>
+                            <div class="clima-detalle-label">Viento</div>
                         </div>
-                        <div style="text-align: center; padding: 0.75rem; background: rgba(255, 255, 255, 0.1); border-radius: 12px; backdrop-filter: blur(10px);">
-                            <div style="font-size: 1.25rem; font-weight: 600; display: block;" id="rain-chance">--%</div>
-                            <div style="font-size: 0.75rem; opacity: 0.8; margin-top: 0.25rem;">Lluvia</div>
+                        <div class="clima-detalle">
+                            <div class="clima-detalle-valor" id="rain-chance">--%</div>
+                            <div class="clima-detalle-label">Lluvia</div>
                         </div>
                     </div>
                 </div>
@@ -534,110 +1208,110 @@
                     <div class="widget-header">
                         <h3 class="widget-titulo">
                             <i class="fas fa-tint"></i>
-                            Nivel del Tanque
+                            <span>Nivel del Tanque</span>
                         </h3>
                     </div>
-                    <div style="display: flex; align-items: center; gap: 1.5rem; margin-bottom: 1rem;">
-                        <div style="position: relative; width: 80px; height: 140px; background: #f3f4f6; border: 2px solid #d1d5db; border-radius: 8px; overflow: hidden;">
-                            <div id="tank-fill" style="position: absolute; bottom: 0; left: 0; right: 0; background: linear-gradient(180deg, #3b82f6, #1d4ed8); transition: height 0.6s ease; border-radius: 0 0 6px 6px; height: 0%;"></div>
-                            <span id="tank-alert" style="display:none; position: absolute; top: 5px; right: 5px; color: #ef4444;">⚠️</span>
+                    <div class="tanque-container">
+                        <div class="tanque-visual">
+                            <div class="tanque-fill" id="tank-fill"></div>
+                            <span id="tank-alert" style="display:none; position: absolute; top: 5px; right: 5px; color: var(--dashboard-danger);">⚠️</span>
                         </div>
-                        <div style="flex: 1;">
-                            <div style="font-size: 1.5rem; font-weight: 700; color: var(--text-primary); margin-bottom: 0.5rem;" id="tanque-nivel">-- L</div>
-                            <div style="font-size: 1.25rem; font-weight: 600;" id="tank-percentage">--%</div>
+                        <div class="tanque-datos">
+                            <div class="tanque-nivel" id="tanque-nivel">-- L</div>
+                            <div class="tanque-porcentaje" id="tank-percentage">--%</div>
                         </div>
                     </div>
-                    <small style="color: var(--text-secondary);">Fuente: <span id="tank-source" class="data-loading">Firebase Firestore</span></small>
+                    <small style="color: var(--text-secondary, #64748b);">Fuente: <span id="tank-source" class="data-loading">Firebase Firestore</span></small>
                 </div>
             </div>
 
             <!-- Panel lateral -->
-            <div>
+            <div class="panel-lateral">
                 <!-- Resumen financiero -->
                 <div class="widget-card">
                     <h3 style="margin-bottom: 1.5rem; display: flex; align-items: center; gap: 0.75rem;">
-                        <i class="fas fa-chart-line" style="color: var(--success);"></i>
-                        Resumen Financiero
+                        <i class="fas fa-chart-line" style="color: var(--dashboard-success);"></i>
+                        <span>Resumen Financiero</span>
                     </h3>
                     
-                    <div style="display: grid; gap: 1rem;">
-                        <div style="display: flex; justify-content: space-between; align-items: center; padding: 0.75rem 0; border-bottom: 1px solid var(--border);">
+                    <div class="resumen-financiero-grid">
+                        <div class="resumen-item">
                             <span>Balance Hoy:</span>
                             <span id="balance-hoy" class="data-loading">Q --</span>
                         </div>
-                        <div style="display: flex; justify-content: space-between; align-items: center; padding: 0.75rem 0; border-bottom: 1px solid var(--border);">
+                        <div class="resumen-item">
                             <span>Balance Mes:</span>
                             <span id="balance-mes" class="data-loading">Q --</span>
                         </div>
-                        <div style="display: flex; justify-content: space-between; align-items: center; padding: 0.75rem 0; border-bottom: none; font-weight: 600; color: var(--text-primary);">
+                        <div class="resumen-item">
                             <span>Precio MAGA:</span>
                             <span id="precio-actual" class="data-loading">Q --</span>
                         </div>
                         <div>
-                            <small id="precio-update" class="data-loading" style="color: var(--text-secondary);">Actualizando precios MAGA...</small>
+                            <small id="precio-update" class="data-loading" style="color: var(--text-secondary, #64748b);">Actualizando precios MAGA...</small>
                         </div>
                     </div>
                 </div>
 
                 <!-- Estado de Firebase -->
-                <div class="widget-card" style="margin-top: 1.5rem;">
+                <div class="widget-card">
                     <div class="widget-header">
                         <h3 class="widget-titulo">
                             <i class="fas fa-database"></i>
-                            Estado de Firebase
+                            <span>Estado de Firebase</span>
                         </h3>
                         <span id="firebase-connection-status" class="data-loading">Conectando...</span>
                     </div>
                     
-                    <div style="display: grid; gap: 0.75rem;">
-                        <div style="display: flex; justify-content: space-between; align-items: center; padding: 0.5rem; background: var(--bg-secondary); border-radius: 8px;">
-                            <span style="font-size: 0.875rem;">Cosechas:</span>
+                    <div class="firebase-status-grid">
+                        <div class="firebase-status-item">
+                            <span>Cosechas:</span>
                             <span id="status-cosechas">⏳</span>
                         </div>
-                        <div style="display: flex; justify-content: space-between; align-items: center; padding: 0.5rem; background: var(--bg-secondary); border-radius: 8px;">
-                            <span style="font-size: 0.875rem;">Ventas:</span>
+                        <div class="firebase-status-item">
+                            <span>Ventas:</span>
                             <span id="status-ventas">⏳</span>
                         </div>
-                        <div style="display: flex; justify-content: space-between; align-items: center; padding: 0.5rem; background: var(--bg-secondary); border-radius: 8px;">
-                            <span style="font-size: 0.875rem;">Gastos:</span>
+                        <div class="firebase-status-item">
+                            <span>Gastos:</span>
                             <span id="status-gastos">⏳</span>
                         </div>
-                        <div style="display: flex; justify-content: space-between; align-items: center; padding: 0.5rem; background: var(--bg-secondary); border-radius: 8px;">
-                            <span style="font-size: 0.875rem;">Riegos:</span>
+                        <div class="firebase-status-item">
+                            <span>Riegos:</span>
                             <span id="status-riegos">⏳</span>
                         </div>
-                        <div style="display: flex; justify-content: space-between; align-items: center; padding: 0.5rem; background: var(--bg-secondary); border-radius: 8px;">
-                            <span style="font-size: 0.875rem;">Árboles:</span>
+                        <div class="firebase-status-item">
+                            <span>Árboles:</span>
                             <span id="status-arboles">⏳</span>
                         </div>
                     </div>
                 </div>
 
                 <!-- Contadores de registros -->
-                <div class="widget-card" style="margin-top: 1.5rem;">
+                <div class="widget-card">
                     <div class="widget-header">
                         <h3 class="widget-titulo">
                             <i class="fas fa-database"></i>
-                            Registros Totales
+                            <span>Registros Totales</span>
                         </h3>
                     </div>
                     
-                    <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 1rem;">
-                        <div style="text-align: center; padding: 1rem; background: var(--bg-secondary); border-radius: 12px;">
-                            <div style="font-size: 1.5rem; font-weight: 700; color: var(--primary);" id="total-cosechas">--</div>
-                            <div style="font-size: 0.75rem; color: var(--text-secondary);">Cosechas</div>
+                    <div class="registros-grid">
+                        <div class="registro-item">
+                            <div class="registro-valor" style="color: var(--dashboard-primary);" id="total-cosechas">--</div>
+                            <div class="registro-label">Cosechas</div>
                         </div>
-                        <div style="text-align: center; padding: 1rem; background: var(--bg-secondary); border-radius: 12px;">
-                            <div style="font-size: 1.5rem; font-weight: 700; color: var(--secondary);" id="total-ventas">--</div>
-                            <div style="font-size: 0.75rem; color: var(--text-secondary);">Ventas</div>
+                        <div class="registro-item">
+                            <div class="registro-valor" style="color: var(--dashboard-secondary);" id="total-ventas">--</div>
+                            <div class="registro-label">Ventas</div>
                         </div>
-                        <div style="text-align: center; padding: 1rem; background: var(--bg-secondary); border-radius: 12px;">
-                            <div style="font-size: 1.5rem; font-weight: 700; color: var(--danger);" id="total-gastos-count">--</div>
-                            <div style="font-size: 0.75rem; color: var(--text-secondary);">Gastos</div>
+                        <div class="registro-item">
+                            <div class="registro-valor" style="color: var(--dashboard-danger);" id="total-gastos-count">--</div>
+                            <div class="registro-label">Gastos</div>
                         </div>
-                        <div style="text-align: center; padding: 1rem; background: var(--bg-secondary); border-radius: 12px;">
-                            <div style="font-size: 1.5rem; font-weight: 700; color: var(--info);" id="total-riegos">--</div>
-                            <div style="font-size: 0.75rem; color: var(--text-secondary);">Riegos</div>
+                        <div class="registro-item">
+                            <div class="registro-valor" style="color: var(--dashboard-info);" id="total-riegos">--</div>
+                            <div class="registro-label">Riegos</div>
                         </div>
                     </div>
                 </div>
@@ -645,14 +1319,14 @@
         </div>
     </main>
 
-    <!-- SCRIPTS EN ORDEN EXACTO como gastos.html -->
+    <!-- Scripts -->
     <script src="js/firebase-config.js"></script>
     <script src="js/firebase-integration.js"></script>  
     <script src="js/finca-navigation.js"></script>
     <script src="js/index.js"></script>
     
     <script>
-        // Sistema EXACTO como gastos.html
+        // Sistema de inicialización
         let initSteps = {
             firebase: false,
             datos: false
@@ -664,7 +1338,7 @@
                 'connecting': { class: 'loading', icon: 'fa-circle', text: 'Conectando...' },
                 'online': { class: 'online', icon: 'fa-check-circle', text: 'Conectado' },
                 'offline': { class: 'offline', icon: 'fa-times-circle', text: 'Sin conexión' },
-                'firebase': { class: 'online', icon: 'fa-database', text: 'Firebase conectado' }
+                'firebase': { class: 'online', icon: 'fa-database', text: 'Firebase OK' }
             };
             
             const config = statusMap[status] || statusMap.connecting;
@@ -677,12 +1351,21 @@
             loader.style.opacity = '0';
             setTimeout(() => {
                 loader.classList.add('hidden');
-                document.querySelectorAll('.animate-fade-in-up').forEach((el, index) => {
-                    setTimeout(() => {
+                // Activar animaciones solo en desktop
+                if (window.innerWidth > 768) {
+                    document.querySelectorAll('.animate-fade-in-up').forEach((el, index) => {
+                        setTimeout(() => {
+                            el.style.opacity = '1';
+                            el.style.transform = 'translateY(0)';
+                        }, index * 100);
+                    });
+                } else {
+                    // En móviles mostrar todo inmediatamente
+                    document.querySelectorAll('.animate-fade-in-up').forEach(el => {
                         el.style.opacity = '1';
                         el.style.transform = 'translateY(0)';
-                    }, index * 100);
-                });
+                    });
+                }
             }, 300);
         }
 
@@ -699,7 +1382,7 @@
             }
         }
 
-        // Event listeners IGUALES que gastos.html
+        // Event listeners para Firebase
         window.addEventListener('firebaseReady', (event) => {
             console.log('Firebase está listo');
             updateConnectionStatus('firebase');
@@ -717,7 +1400,7 @@
             initSteps.datos = true;
         });
 
-        // Inicialización EXACTA como gastos.html
+        // Inicialización principal
         document.addEventListener('DOMContentLoaded', () => {
             console.log('🚀 Iniciando dashboard inteligente');
             
@@ -733,12 +1416,14 @@
                 }) + ' - ' + now.toLocaleTimeString('es-GT');
             }
 
-            // Configurar elementos con animación
-            document.querySelectorAll('.animate-fade-in-up').forEach(el => {
-                el.style.opacity = '0';
-                el.style.transform = 'translateY(20px)';
-                el.style.transition = 'all 0.5s ease-out';
-            });
+            // Configurar elementos con animación solo en desktop
+            if (window.innerWidth > 768) {
+                document.querySelectorAll('.animate-fade-in-up').forEach(el => {
+                    el.style.opacity = '0';
+                    el.style.transform = 'translateY(20px)';
+                    el.style.transition = 'all 0.5s ease-out';
+                });
+            }
             
             // Ocultar loader después de 2 segundos
             setTimeout(() => {
@@ -749,7 +1434,7 @@
             console.log('✅ Dashboard inicializado');
         });
 
-        // Manejo de conectividad IGUAL que gastos.html
+        // Manejo de conectividad
         window.addEventListener('online', () => {
             updateConnectionStatus('online');
             updateSystemStatus('online', 'Conexión restaurada');
@@ -759,11 +1444,16 @@
         window.addEventListener('offline', () => {
             updateConnectionStatus('offline');
             updateSystemStatus('error', 'Sin conexión');
-            console.log('📵 Sin conexión a internet');
+            console.log('🔵 Sin conexión a internet');
         });
 
         // Estado inicial de conexión
         updateConnectionStatus(navigator.onLine ? 'connecting' : 'offline');
+
+        // Touch-friendly improvements para móviles
+        if ('ontouchstart' in window) {
+            document.body.classList.add('touch-device');
+        }
     </script>
 </body>
 </html>
