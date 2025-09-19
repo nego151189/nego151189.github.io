@@ -1,17 +1,16 @@
 /* ========================================
-   SISTEMA DE NAVEGACIÓN UNIFICADO
-   Optimizado para menú hamburguesa en móviles/tablets
+   SISTEMA DE NAVEGACIÓN PROFESIONAL
+   Diseño elegante con secciones organizadas
    ======================================== */
 
 (function() {
     'use strict';
 
-    // Configuración mejorada
+    // Configuración
     const config = {
         sidebarWidth: '280px',
         sidebarCollapsedWidth: '60px',
-        // Breakpoint más alto para incluir tablets
-        breakpoint: 1024, // Cambiado de 768 a 1024 para incluir tablets
+        breakpoint: 1024,
         tabletBreakpoint: 768,
         animationDuration: 300
     };
@@ -36,7 +35,7 @@
         console.log(`📱 Dispositivo: ${width}px - ${navigationState.isDesktop ? 'Desktop' : navigationState.isTablet ? 'Tablet' : 'Móvil'}`);
     }
 
-    // Inyectar CSS completo mejorado
+    // Inyectar CSS completo para navegación profesional
     function injectNavigationCSS() {
         if (document.getElementById('navigation-complete-css')) return;
 
@@ -155,7 +154,7 @@
                 background: rgba(255, 255, 255, 0.2);
             }
 
-            /* Sidebar mejorado */
+            /* Sidebar profesional mejorado */
             .finca-sidebar {
                 position: fixed;
                 top: var(--header-height);
@@ -169,29 +168,85 @@
                 overflow-x: hidden;
                 transition: transform var(--transition-normal);
                 box-shadow: var(--shadow-md);
+                display: flex;
+                flex-direction: column;
             }
 
-            /* Scrollbar personalizado */
-            .finca-sidebar::-webkit-scrollbar {
-                width: 6px;
+            /* Header del sidebar */
+            .finca-sidebar-header {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                padding: 1.5rem;
+                border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+                background: linear-gradient(135deg, #f8fafc 0%, #ffffff 100%);
+                flex-shrink: 0;
             }
 
-            .finca-sidebar::-webkit-scrollbar-track {
-                background: transparent;
+            .finca-sidebar-brand {
+                display: flex;
+                align-items: center;
+                gap: 0.75rem;
+                flex: 1;
             }
 
-            .finca-sidebar::-webkit-scrollbar-thumb {
-                background: var(--border);
-                border-radius: 3px;
+            .finca-brand-icon {
+                width: 40px;
+                height: 40px;
+                background: linear-gradient(135deg, var(--primary-green) 0%, var(--primary-light) 100%);
+                border-radius: 12px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                font-size: 1.2rem;
+                box-shadow: 0 4px 12px rgba(45, 80, 22, 0.3);
             }
 
-            .finca-sidebar::-webkit-scrollbar-thumb:hover {
-                background: var(--dark-gray);
+            .finca-brand-text {
+                flex: 1;
             }
 
-            .finca-nav-menu {
+            .finca-brand-title {
+                font-size: 1rem;
+                font-weight: 700;
+                color: var(--dark-gray);
+                line-height: 1.2;
+                margin: 0;
+            }
+
+            .finca-brand-subtitle {
+                font-size: 0.75rem;
+                color: #94a3b8;
+                font-weight: 500;
+                line-height: 1.2;
+                margin: 0;
+            }
+
+            /* Contenido del sidebar con scroll */
+            .finca-sidebar-content {
+                flex: 1;
+                overflow-y: auto;
+                padding: 0.5rem 0;
+            }
+
+            /* Secciones del menú */
+            .finca-nav-section {
+                margin-bottom: 1.5rem;
+            }
+
+            .finca-nav-section-title {
+                font-size: 0.65rem;
+                font-weight: 700;
+                color: #94a3b8;
+                text-transform: uppercase;
+                letter-spacing: 0.5px;
+                padding: 0 1.5rem 0.75rem 1.5rem;
+                margin-bottom: 0.5rem;
+            }
+
+            .finca-nav-section-items {
                 list-style: none;
-                padding: 1.5rem 0;
+                padding: 0;
                 margin: 0;
             }
 
@@ -202,26 +257,34 @@
             .finca-nav-link {
                 display: flex;
                 align-items: center;
-                gap: 1rem;
-                padding: 1rem 1.5rem;
-                color: var(--dark-gray);
+                justify-content: space-between;
+                padding: 0.875rem 1.5rem;
+                color: #64748b;
                 text-decoration: none;
                 transition: all var(--transition-fast);
                 border-left: 3px solid transparent;
                 font-weight: 500;
-                font-size: 0.95rem;
+                font-size: 0.875rem;
                 position: relative;
-                min-height: 52px;
+                min-height: 48px;
+            }
+
+            .finca-nav-link-content {
+                display: flex;
+                align-items: center;
+                gap: 0.875rem;
+                flex: 1;
             }
 
             .finca-nav-link:hover {
-                background: linear-gradient(90deg, rgba(45, 80, 22, 0.05), transparent);
+                background: linear-gradient(90deg, rgba(34, 197, 94, 0.08) 0%, transparent 100%);
                 color: var(--primary-green);
-                padding-left: 2rem;
+                border-left-color: var(--primary-green);
+                transform: translateX(2px);
             }
 
             .finca-nav-link.active {
-                background: linear-gradient(90deg, rgba(45, 80, 22, 0.1), transparent);
+                background: linear-gradient(90deg, rgba(34, 197, 94, 0.12) 0%, transparent 100%);
                 color: var(--primary-green);
                 border-left-color: var(--primary-green);
                 font-weight: 600;
@@ -237,13 +300,97 @@
                 height: 6px;
                 background: var(--primary-green);
                 border-radius: 50%;
+                box-shadow: 0 0 8px rgba(34, 197, 94, 0.4);
             }
 
             .finca-nav-icon {
-                width: 20px;
+                width: 18px;
                 text-align: center;
-                font-size: 1.1rem;
+                font-size: 1rem;
                 flex-shrink: 0;
+                color: currentColor;
+            }
+
+            .finca-nav-text {
+                flex: 1;
+                font-size: 0.875rem;
+            }
+
+            /* Badges para notificaciones */
+            .finca-nav-badge {
+                background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%);
+                color: white;
+                font-size: 0.7rem;
+                font-weight: 700;
+                padding: 0.25rem 0.5rem;
+                border-radius: 12px;
+                min-width: 20px;
+                height: 20px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                box-shadow: 0 2px 8px rgba(34, 197, 94, 0.3);
+                animation: pulse-badge 2s infinite;
+            }
+
+            @keyframes pulse-badge {
+                0%, 100% {
+                    transform: scale(1);
+                    opacity: 1;
+                }
+                50% {
+                    transform: scale(1.1);
+                    opacity: 0.9;
+                }
+            }
+
+            /* Footer del sidebar */
+            .finca-sidebar-footer {
+                margin-top: auto;
+                padding: 1.5rem;
+                border-top: 1px solid rgba(0, 0, 0, 0.05);
+                background: linear-gradient(135deg, #f8fafc 0%, #ffffff 100%);
+                flex-shrink: 0;
+            }
+
+            .finca-user-info {
+                display: flex;
+                align-items: center;
+                gap: 0.875rem;
+            }
+
+            .finca-user-avatar {
+                width: 40px;
+                height: 40px;
+                background: linear-gradient(135deg, var(--primary-green) 0%, var(--primary-light) 100%);
+                border-radius: 50%;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                color: white;
+                font-size: 1rem;
+                font-weight: 700;
+                box-shadow: 0 4px 12px rgba(45, 80, 22, 0.3);
+            }
+
+            .finca-user-details {
+                flex: 1;
+            }
+
+            .finca-user-name {
+                font-size: 0.875rem;
+                font-weight: 600;
+                color: var(--dark-gray);
+                line-height: 1.2;
+                margin: 0;
+            }
+
+            .finca-user-role {
+                font-size: 0.75rem;
+                color: #94a3b8;
+                font-weight: 500;
+                line-height: 1.2;
+                margin: 0;
             }
 
             /* Contenido principal */
@@ -276,21 +423,18 @@
                 opacity: 1;
             }
 
-            /* Botón cerrar móvil */
+            /* Botón cerrar móvil mejorado */
             .finca-mobile-close {
                 display: none;
-                position: absolute;
-                top: 1rem;
-                right: 1rem;
                 background: rgba(0, 0, 0, 0.1);
                 border: none;
-                width: 40px;
-                height: 40px;
+                width: 32px;
+                height: 32px;
                 border-radius: 50%;
                 cursor: pointer;
                 align-items: center;
                 justify-content: center;
-                font-size: 1.2rem;
+                font-size: 1rem;
                 color: var(--dark-gray);
                 transition: all var(--transition-fast);
                 z-index: 1002;
@@ -301,7 +445,29 @@
                 transform: rotate(90deg) scale(1.1);
             }
 
-            /* RESPONSIVE DESIGN MEJORADO */
+            /* Scrollbar personalizado para el sidebar */
+            .finca-sidebar::-webkit-scrollbar,
+            .finca-sidebar-content::-webkit-scrollbar {
+                width: 4px;
+            }
+
+            .finca-sidebar::-webkit-scrollbar-track,
+            .finca-sidebar-content::-webkit-scrollbar-track {
+                background: transparent;
+            }
+
+            .finca-sidebar::-webkit-scrollbar-thumb,
+            .finca-sidebar-content::-webkit-scrollbar-thumb {
+                background: rgba(148, 163, 184, 0.3);
+                border-radius: 2px;
+            }
+
+            .finca-sidebar::-webkit-scrollbar-thumb:hover,
+            .finca-sidebar-content::-webkit-scrollbar-thumb:hover {
+                background: rgba(148, 163, 184, 0.5);
+            }
+
+            /* RESPONSIVE DESIGN COMPLETO */
 
             /* Tablets y móviles (1024px y menos) */
             @media (max-width: 1024px) {
@@ -547,24 +713,6 @@
                 }
             }
 
-            /* Scrollbar personalizado para el sidebar */
-            .finca-sidebar::-webkit-scrollbar {
-                width: 4px;
-            }
-
-            .finca-sidebar::-webkit-scrollbar-track {
-                background: transparent;
-            }
-
-            .finca-sidebar::-webkit-scrollbar-thumb {
-                background: rgba(148, 163, 184, 0.3);
-                border-radius: 2px;
-            }
-
-            .finca-sidebar::-webkit-scrollbar-thumb:hover {
-                background: rgba(148, 163, 184, 0.5);
-            }
-
             /* Prevenir scroll cuando menú móvil está abierto */
             body.finca-mobile-menu-open {
                 overflow: hidden;
@@ -603,33 +751,6 @@
                 animation: slideOutLeft 0.3s cubic-bezier(0.4, 0, 0.2, 1);
             }
 
-            /* Estados de carga y loading */
-            .finca-nav-link.loading {
-                opacity: 0.6;
-                pointer-events: none;
-                position: relative;
-            }
-
-            .finca-nav-link.loading::before {
-                content: '';
-                position: absolute;
-                right: 1.5rem;
-                top: 50%;
-                transform: translateY(-50%);
-                width: 16px;
-                height: 16px;
-                border: 2px solid var(--border);
-                border-top: 2px solid var(--primary-green);
-                border-radius: 50%;
-                animation: spin 1s linear infinite;
-            }
-
-            @keyframes spin {
-                to {
-                    transform: translateY(-50%) rotate(360deg);
-                }
-            }
-
             /* Mejoras de accesibilidad */
             .finca-mobile-toggle:focus,
             .finca-mobile-close:focus,
@@ -638,13 +759,13 @@
                 outline-offset: 2px;
             }
 
-            /* Modo oscuro automático */
-            @media (prefers-color-scheme: dark) {
-                :root {
-                    --white: #1a1a1a;
-                    --light-gray: #121212;
-                    --dark-gray: #e0e0e0;
-                    --border: #333333;
+            /* Estados hover solo en dispositivos que los soportan */
+            @media (hover: hover) {
+                .finca-nav-link:hover {
+                    background: linear-gradient(90deg, rgba(34, 197, 94, 0.08) 0%, transparent 100%);
+                    color: var(--primary-green);
+                    border-left-color: var(--primary-green);
+                    transform: translateX(2px);
                 }
             }
 
@@ -655,31 +776,10 @@
                     animation: none !important;
                 }
             }
-
-            /* Estados hover solo en dispositivos que los soportan */
-            @media (hover: hover) {
-                .finca-nav-link:hover {
-                    background: linear-gradient(90deg, rgba(45, 80, 22, 0.05), transparent);
-                    color: var(--primary-green);
-                    padding-left: 2rem;
-                }
-            }
-
-            /* Alto contraste para accesibilidad */
-            @media (prefers-contrast: high) {
-                .finca-nav-link {
-                    border: 1px solid transparent;
-                }
-                
-                .finca-nav-link:hover,
-                .finca-nav-link.active {
-                    border-color: var(--primary-green);
-                }
-            }
         `;
 
         document.head.appendChild(style);
-        console.log('✅ CSS de navegación hamburguesa inyectado');
+        console.log('✅ CSS de navegación profesional inyectado');
     }
 
     // Crear estructura HTML del header mejorado
@@ -693,7 +793,7 @@
                 <button class="finca-mobile-toggle" id="fincaMobileToggle" aria-label="Abrir menú" aria-expanded="false">
                     <i class="fas fa-bars"></i>
                 </button>
-                <a href="/" class="finca-logo">
+                <a href="/index.html" class="finca-logo">
                     <div class="finca-logo-icon">🍋</div>
                     <span>Finca La Herradura</span>
                 </a>
@@ -701,51 +801,120 @@
         `;
 
         document.body.insertBefore(header, document.body.firstChild);
-        console.log('✅ Header hamburguesa creado');
+        console.log('✅ Header profesional creado');
     }
 
-    // Crear estructura HTML del sidebar
+    // Crear estructura HTML del sidebar profesional con secciones organizadas
     function createSidebar() {
         if (document.querySelector('.finca-sidebar')) return;
 
-        const menuItems = [
-            { href: '/', icon: 'fas fa-tachometer-alt', text: 'Dashboard', id: 'dashboard' },
-            { href: '/cosecha.html', icon: 'fas fa-seedling', text: 'Cosecha', id: 'cosecha' },
-            { href: '/riegos.html', icon: 'fas fa-tint', text: 'Riegos', id: 'riegos' },
-            { href: '/ventas.html', icon: 'fas fa-shopping-cart', text: 'Ventas', id: 'ventas' },
-            { href: '/gastos.html', icon: 'fas fa-receipt', text: 'Gastos', id: 'gastos' },
-            { href: '/arboles.html', icon: 'fas fa-tree', text: 'Árboles', id: 'arboles' },
-            { href: '/clima.html', icon: 'fas fa-cloud-sun', text: 'Clima', id: 'clima' },
-            { href: '/reportes.html', icon: 'fas fa-chart-bar', text: 'Reportes', id: 'reportes' }
-        ];
+        // Estructura de menú organizada por secciones ACTUALIZADA
+        const menuStructure = {
+            principal: {
+                title: 'PRINCIPAL',
+                items: [
+                    { href: '/index.html', icon: 'fas fa-tachometer-alt', text: 'Dashboard', id: 'dashboard' },
+                    { href: '/recordatorios.html', icon: 'fas fa-bell', text: 'Recordatorios', id: 'recordatorios', badge: '3' }
+                ]
+            },
+            cultivo: {
+                title: 'GESTIÓN DE CULTIVO',
+                items: [
+                    { href: '/arboles.html', icon: 'fas fa-tree', text: 'Gestión de Árboles', id: 'arboles' },
+                    { href: '/produccion.html', icon: 'fas fa-seedling', text: 'Producción', id: 'produccion' },
+                    { href: '/riegos.html', icon: 'fas fa-tint', text: 'Sistema de Riegos', id: 'riegos' },
+                    { href: '/tratamientos.html', icon: 'fas fa-leaf', text: 'Tratamientos', id: 'tratamientos', badge: '1' },
+                    { href: '/clima.html', icon: 'fas fa-cloud-sun', text: 'Clima', id: 'clima' }
+                ]
+            },
+            comercial: {
+                title: 'COMERCIAL',
+                items: [
+                    { href: '/ventas.html', icon: 'fas fa-shopping-cart', text: 'Ventas', id: 'ventas' },
+                    { href: '/precios.html', icon: 'fas fa-chart-line', text: 'Precios MAGA', id: 'precios' },
+                    { href: '/gastos.html', icon: 'fas fa-receipt', text: 'Gastos', id: 'gastos' },
+                    { href: '/negocios.html', icon: 'fas fa-handshake', text: 'Negocios', id: 'negocios' }
+                ]
+            }
+        };
 
         const sidebar = document.createElement('nav');
         sidebar.className = 'finca-sidebar';
         sidebar.id = 'fincaSidebar';
         sidebar.setAttribute('aria-label', 'Navegación principal');
 
-        const menuHTML = menuItems.map(item => {
-            const isActive = isCurrentPage(item.href);
-            return `
-                <li class="finca-nav-item">
-                    <a href="${item.href}" class="finca-nav-link ${isActive ? 'active' : ''}" 
-                       data-page="${item.id}" aria-current="${isActive ? 'page' : 'false'}">
-                        <i class="${item.icon} finca-nav-icon" aria-hidden="true"></i>
-                        <span>${item.text}</span>
-                    </a>
-                </li>
-            `;
-        }).join('');
-
-        sidebar.innerHTML = `
-            <button class="finca-mobile-close" id="fincaMobileClose" aria-label="Cerrar menú">
-                <i class="fas fa-times" aria-hidden="true"></i>
-            </button>
-            <ul class="finca-nav-menu" role="list">
-                ${menuHTML}
-            </ul>
+        // Generar el HTML del menú por secciones
+        let menuHTML = '';
+        
+        // Header del sidebar
+        menuHTML += `
+            <div class="finca-sidebar-header">
+                <div class="finca-sidebar-brand">
+                    <div class="finca-brand-icon">🍋</div>
+                    <div class="finca-brand-text">
+                        <div class="finca-brand-title">Finca La Herradura</div>
+                        <div class="finca-brand-subtitle">Sistema Inteligente</div>
+                    </div>
+                </div>
+                <button class="finca-mobile-close" id="fincaMobileClose" aria-label="Cerrar menú">
+                    <i class="fas fa-times" aria-hidden="true"></i>
+                </button>
+            </div>
         `;
 
+        // Contenido scrolleable del sidebar
+        menuHTML += `<div class="finca-sidebar-content">`;
+
+        // Generar secciones del menú
+        Object.entries(menuStructure).forEach(([sectionKey, section]) => {
+            menuHTML += `
+                <div class="finca-nav-section">
+                    <div class="finca-nav-section-title">${section.title}</div>
+                    <ul class="finca-nav-section-items" role="list">
+            `;
+            
+            section.items.forEach(item => {
+                const isActive = isCurrentPage(item.href);
+                const badgeHTML = item.badge ? `<span class="finca-nav-badge">${item.badge}</span>` : '';
+                
+                menuHTML += `
+                    <li class="finca-nav-item">
+                        <a href="${item.href}" class="finca-nav-link ${isActive ? 'active' : ''}" 
+                           data-page="${item.id}" aria-current="${isActive ? 'page' : 'false'}">
+                            <div class="finca-nav-link-content">
+                                <i class="${item.icon} finca-nav-icon" aria-hidden="true"></i>
+                                <span class="finca-nav-text">${item.text}</span>
+                            </div>
+                            ${badgeHTML}
+                        </a>
+                    </li>
+                `;
+            });
+            
+            menuHTML += `
+                    </ul>
+                </div>
+            `;
+        });
+
+        menuHTML += `</div>`; // Cerrar finca-sidebar-content
+
+        // Footer del sidebar
+        menuHTML += `
+            <div class="finca-sidebar-footer">
+                <div class="finca-user-info">
+                    <div class="finca-user-avatar">
+                        <span>A</span>
+                    </div>
+                    <div class="finca-user-details">
+                        <div class="finca-user-name">Administrador</div>
+                        <div class="finca-user-role">Gestor Principal</div>
+                    </div>
+                </div>
+            </div>
+        `;
+
+        sidebar.innerHTML = menuHTML;
         document.body.appendChild(sidebar);
         
         // Crear overlay
@@ -755,18 +924,30 @@
         overlay.setAttribute('aria-hidden', 'true');
         document.body.appendChild(overlay);
 
-        console.log('✅ Sidebar hamburguesa y overlay creados');
+        console.log('✅ Sidebar profesional con secciones organizadas creado');
     }
 
-    // Verificar si es la página actual
+    // Verificar si es la página actual - mejorado para todos los archivos
     function isCurrentPage(href) {
         const currentPath = window.location.pathname;
-        const hrefPath = href === '/' ? '/' : href;
+        const fileName = currentPath.split('/').pop() || 'index.html';
+        const targetFileName = href.split('/').pop();
         
-        return currentPath === hrefPath || 
-               currentPath.includes(hrefPath.replace('.html', '')) ||
-               (currentPath === '/' && href === '/') ||
-               (currentPath.includes('index') && href === '/');
+        // Manejo especial para index/dashboard
+        if ((fileName === '' || fileName === 'index.html') && (targetFileName === 'index.html' || href === '/')) {
+            return true;
+        }
+        
+        // Comparación exacta de archivos
+        if (fileName === targetFileName) {
+            return true;
+        }
+        
+        // Comparación sin extensión
+        const currentBase = fileName.replace('.html', '');
+        const targetBase = targetFileName ? targetFileName.replace('.html', '') : '';
+        
+        return currentBase === targetBase;
     }
 
     // Configurar event listeners mejorados
@@ -801,13 +982,9 @@
         sidebar.querySelectorAll('.finca-nav-link').forEach(link => {
             link.addEventListener('click', (e) => {
                 if (!navigationState.isDesktop && navigationState.isMobileMenuOpen) {
-                    // Añadir clase de loading
-                    link.classList.add('loading');
-                    
                     // Pequeño delay para permitir navegación
                     setTimeout(() => {
                         closeMobileMenu();
-                        link.classList.remove('loading');
                     }, 150);
                 }
             });
@@ -835,7 +1012,7 @@
             }
         }, { passive: false });
 
-        console.log('✅ Event listeners hamburguesa configurados');
+        console.log('✅ Event listeners profesionales configurados');
     }
 
     // Abrir menú móvil mejorado
@@ -877,7 +1054,7 @@
             if (firstLink) firstLink.focus();
         }, 100);
         
-        console.log(`📱 Menú hamburguesa abierto (${navigationState.isTablet ? 'Tablet' : 'Móvil'})`);
+        console.log(`📱 Menú profesional abierto (${navigationState.isTablet ? 'Tablet' : 'Móvil'})`);
     }
 
     // Cerrar menú móvil mejorado
@@ -908,7 +1085,7 @@
         
         document.body.classList.remove('finca-mobile-menu-open');
         
-        console.log('📱 Menú hamburguesa cerrado');
+        console.log('📱 Menú profesional cerrado');
     }
 
     // Manejar cambio de tamaño de ventana
@@ -939,7 +1116,7 @@
             return;
         }
 
-        console.log('🚀 Inicializando sistema de navegación hamburguesa...');
+        console.log('🚀 Inicializando sistema de navegación profesional...');
 
         try {
             // Detectar dispositivo inicial
@@ -961,7 +1138,7 @@
             }
             
             navigationState.isInitialized = true;
-            console.log('✅ Sistema de navegación hamburguesa inicializado exitosamente');
+            console.log('✅ Sistema de navegación profesional inicializado exitosamente');
             console.log(`📱 Dispositivo detectado: ${navigationState.isDesktop ? 'Desktop' : navigationState.isTablet ? 'Tablet' : 'Móvil'}`);
             
             // Disparar evento personalizado
@@ -1011,6 +1188,6 @@
         config
     };
 
-    console.log('📋 Sistema de navegación hamburguesa Finca La Herradura cargado');
+    console.log('📋 Sistema de navegación profesional Finca La Herradura cargado');
 
 })();
