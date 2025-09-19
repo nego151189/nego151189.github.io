@@ -44,7 +44,7 @@ let statistics = {
 };
 
 // Referencias a managers externos
-let treeManager = null;
+let treeManagerRef = null;
 let offlineManager = null;
 let climateManager = null;
 
@@ -1282,6 +1282,7 @@ if (typeof module !== 'undefined' && module.exports) {
 
 // Hacer función disponible globalmente
 window.abrirRegistroCompleto = abrirRegistroCompleto;
+
 
 
 
