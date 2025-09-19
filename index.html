@@ -446,71 +446,10 @@
         <p>Conectando con Firebase - Solo datos reales...</p>
     </div>
 
-    <!-- ESTRUCTURA COMPLETA CON SIDEBAR usando tu main.css -->
-    <div class="main-container">
-        
-        <!-- HEADER PRINCIPAL -->
-        <header class="header">
-            <div class="header-content">
-                <a href="/" class="logo">
-                    <div class="logo-icon">🍋</div>
-                    <span>Finca La Herradura</span>
-                </a>
-                
-                <!-- Estado de Firebase en header -->
-                <div style="display: flex; align-items: center; gap: 1rem; font-size: 0.875rem; color: white;">
-                    <span id="last-sync">Última sync: --</span>
-                </div>
-            </div>
-        </header>
-
-        <!-- SIDEBAR DE NAVEGACIÓN -->
-        <nav class="sidebar" id="navbar">
-            <ul class="nav-menu">
-                <li><a href="/" class="nav-link active">
-                    <i class="fas fa-tachometer-alt"></i>
-                    <span>Dashboard</span>
-                </a></li>
-                
-                <li><a href="cosecha.html" class="nav-link">
-                    <i class="fas fa-seedling"></i>
-                    <span>Cosecha</span>
-                </a></li>
-                
-                <li><a href="riegos.html" class="nav-link">
-                    <i class="fas fa-tint"></i>
-                    <span>Riegos</span>
-                </a></li>
-                
-                <li><a href="ventas.html" class="nav-link">
-                    <i class="fas fa-shopping-cart"></i>
-                    <span>Ventas</span>
-                </a></li>
-                
-                <li><a href="gastos.html" class="nav-link">
-                    <i class="fas fa-receipt"></i>
-                    <span>Gastos</span>
-                </a></li>
-                
-                <li><a href="arboles.html" class="nav-link">
-                    <i class="fas fa-tree"></i>
-                    <span>Árboles</span>
-                </a></li>
-                
-                <li><a href="clima.html" class="nav-link">
-                    <i class="fas fa-cloud-sun"></i>
-                    <span>Clima</span>
-                </a></li>
-                
-                <li><a href="reportes.html" class="nav-link">
-                    <i class="fas fa-chart-bar"></i>
-                    <span>Reportes</span>
-                </a></li>
-            </ul>
-        </nav>
-
-        <!-- CONTENIDO PRINCIPAL -->
-        <main class="main-content">
+    <!-- El sidebar será creado automáticamente por nav.js como en gastos.html -->
+    
+    <!-- Contenido principal usando EXACTAMENTE tu estructura de gastos.html -->
+    <main class="main-content-wrapper">
         <!-- Header del dashboard -->
         <header class="dashboard-header animate-fade-in-up">
             <div class="page-title">
@@ -751,13 +690,7 @@
                 </div>
             </div>
         </div>
-        </main>
-
-        <!-- FOOTER -->
-        <footer class="footer">
-            <p>&copy; 2025 Finca La Herradura - Sistema Inteligente de Gestión</p>
-        </footer>
-    </div>
+    </main>
 
     <!-- TUS SCRIPTS EN ORDEN CORRECTO -->
     <script src="js/firebase-config.js"></script>
