@@ -1184,9 +1184,8 @@
     <script src="/js/offline.js"></script>
     <script src="/js/auth.js"></script>
      <script src="js/finca-navigation.js"></script>
-    <script src="/js/clima.js"></script>
-    <script src="/js/tree-manager.js"></script>
-    <script src="/js/produccion.js"></script>
+ <script src="/js/tree-manager.js"></script>  <!-- ✅ ANTES de produccion.js -->
+<script src="/js/produccion.js"></script>  
     
     <script>
         // Variables globales
@@ -1258,61 +1257,70 @@
 
         // ESPERAR MANAGERS DEL SISTEMA
         async function waitForSystemManagers() {
+            console.log('⏳ Esperando managers del sistema...');
+            
             const managers = [
-                { name: 'treeManager', timeout: 5000 },
-                { name: 'productionManager', timeout: 8000 },
-                { name: 'climateManager', timeout: 3000 }
+                { name: 'treeManager', timeout: 10000 },
+                { name: 'climateManager', timeout: 5000 }
             ];
+            
+            const results = {};
             
             for (const manager of managers) {
                 try {
-                    await waitForManager(manager.name, manager.timeout);
-                    console.log(`✅ ${manager.name} cargado`);
+                    console.log(`🔍 Buscando ${manager.name}...`);
+                    
+                    const result = await waitForManager(manager.name, manager.timeout);
+                    if (result) {
+                        results[manager.name] = result;
+                        console.log(`✅ ${manager.name} cargado correctamente`);
+                    } else {
+                        console.warn(`⚠️ ${manager.name} no disponible, continuando sin él`);
+                        results[manager.name] = null;
+                    }
                 } catch (error) {
-                    console.warn(`⚠️ ${manager.name} no disponible:`, error);
-                    // NO fallar si un manager no está disponible
+                    console.warn(`⚠️ ${manager.name} falló:`, error.message);
+                    results[manager.name] = null;
                 }
             }
+            
+            // Asignar referencias globales
+            treeManagerRef = results.treeManager;
+            climateManager = results.climateManager;
+            
+            console.log('📋 Managers cargados:', Object.keys(results).filter(k => results[k]));
+            return results;
         }
 
-        function waitForManager(managerName, timeout = 5000) {
-            return new Promise((resolve, reject) => {
-                const timeoutId = setTimeout(() => {
-                    reject(new Error(`Timeout esperando ${managerName}`));
-                }, timeout);
-                
-                const checkManager = () => {
-                    if (window[managerName]) {
-                        clearTimeout(timeoutId);
-                        resolve(window[managerName]);
-                        return;
-                    }
-                };
-                
-                // Verificar inmediatamente
-                if (window[managerName]) {
-                    clearTimeout(timeoutId);
-                    resolve(window[managerName]);
-                    return;
-                }
-                
-                // Verificar cada 100ms pero con límite de intentos
+                function waitForManager(managerName, timeout = 10000) {
+            return new Promise((resolve) => {
+                const startTime = Date.now();
                 let attempts = 0;
                 const maxAttempts = timeout / 100;
                 
-                const interval = setInterval(() => {
+                const checkManager = () => {
                     attempts++;
+                    const elapsed = Date.now() - startTime;
+                    
+                    // Verificar si el manager está disponible
                     if (window[managerName]) {
-                        clearInterval(interval);
-                        clearTimeout(timeoutId);
+                        console.log(`✅ ${managerName} encontrado después de ${elapsed}ms`);
                         resolve(window[managerName]);
-                    } else if (attempts >= maxAttempts) {
-                        clearInterval(interval);
-                        // No rechazar, resolver con null para continuar
-                        clearTimeout(timeoutId);
-                        resolve(null);
+                        return;
                     }
-                }, 100);
+                    
+                    // Si excede el tiempo, resolver con null (no rechazar)
+                    if (elapsed >= timeout || attempts >= maxAttempts) {
+                        console.warn(`⏰ Timeout esperando ${managerName} (${elapsed}ms)`);
+                        resolve(null);
+                        return;
+                    }
+                    
+                    // Continuar buscando
+                    setTimeout(checkManager, 100);
+                };
+                
+                checkManager();
             });
         }
 
@@ -2576,6 +2584,7 @@ ${datos.ubicacion.lat ? `• GPS: ${datos.ubicacion.lat.toFixed(4)}, ${datos.ubi
     </script>
 </body>
 </html>
+
 
 
 
