@@ -14,6 +14,10 @@
     <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-firestore-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-auth-compat.js"></script>
     
+    <!-- Scripts del proyecto -->
+    <script src="notifications.js"></script>
+    <script src="js/finca-navigation.js"></script>
+    
     <!-- Font Awesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
@@ -93,83 +97,6 @@
             max-width: 1400px;
             margin: 0 auto;
             padding: 0 1rem;
-        }
-
-        .sr-only {
-            position: absolute;
-            width: 1px;
-            height: 1px;
-            padding: 0;
-            margin: -1px;
-            overflow: hidden;
-            clip: rect(0, 0, 0, 0);
-            white-space: nowrap;
-            border: 0;
-        }
-
-        /* ===========================================
-           NAVEGACIÓN SIMPLE
-           =========================================== */
-        .navbar {
-            background: var(--bg-card);
-            box-shadow: var(--shadow);
-            padding: 1rem 0;
-            position: sticky;
-            top: 0;
-            z-index: 50;
-        }
-
-        .navbar-content {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        .navbar-brand {
-            display: flex;
-            align-items: center;
-            gap: 0.75rem;
-            font-size: 1.25rem;
-            font-weight: 700;
-            color: var(--primary);
-            text-decoration: none;
-        }
-
-        .navbar-brand i {
-            font-size: 1.5rem;
-        }
-
-        .navbar-nav {
-            display: flex;
-            gap: 2rem;
-            align-items: center;
-        }
-
-        .nav-link {
-            color: var(--text-secondary);
-            text-decoration: none;
-            font-weight: 500;
-            transition: var(--transition);
-            padding: 0.5rem 1rem;
-            border-radius: var(--border-radius);
-        }
-
-        .nav-link:hover {
-            color: var(--primary);
-            background: rgba(139, 92, 246, 0.1);
-        }
-
-        .nav-link.active {
-            color: var(--primary);
-            background: rgba(139, 92, 246, 0.1);
-        }
-
-        /* ===========================================
-           LAYOUT PRINCIPAL
-           =========================================== */
-        .main-content {
-            min-height: calc(100vh - 80px);
-            padding: 2rem 0;
         }
 
         /* ===========================================
@@ -1122,23 +1049,7 @@
 </head>
 <body>
     <!-- Navegación -->
-    <nav class="navbar">
-        <div class="container">
-            <div class="navbar-content">
-                <a href="#" class="navbar-brand">
-                    <i class="fas fa-seedling"></i>
-                    Finca La Herradura
-                </a>
-                <div class="navbar-nav">
-                    <a href="#" class="nav-link">Dashboard</a>
-                    <a href="#" class="nav-link active">Recordatorios</a>
-                    <a href="#" class="nav-link">Cosechas</a>
-                    <a href="#" class="nav-link">Ventas</a>
-                    <a href="#" class="nav-link">Gastos</a>
-                </div>
-            </div>
-        </div>
-    </nav>
+    <nav id="navbar"></nav>
 
     <!-- Contenido principal -->
     <main class="main-content">
@@ -1456,69 +1367,6 @@
         let currentYear = new Date().getFullYear();
 
         // ===========================================
-        // SISTEMA DE NOTIFICACIONES
-        // ===========================================
-        class NotificationSystem {
-            constructor() {
-                this.container = document.getElementById('notificationContainer');
-                this.notifications = new Map();
-            }
-
-            show(message, type = 'info', duration = 4000) {
-                const id = Date.now() + Math.random();
-                const notification = document.createElement('div');
-                notification.className = `notification ${type}`;
-                
-                const icons = {
-                    success: 'fa-check-circle',
-                    error: 'fa-exclamation-circle',
-                    warning: 'fa-exclamation-triangle',
-                    info: 'fa-info-circle'
-                };
-
-                notification.innerHTML = `
-                    <i class="fas ${icons[type] || icons.info}"></i>
-                    <span>${message}</span>
-                    <button class="notification-close" onclick="notifications.hide(${id})">
-                        <i class="fas fa-times"></i>
-                    </button>
-                `;
-
-                this.container.appendChild(notification);
-                this.notifications.set(id, notification);
-
-                setTimeout(() => notification.classList.add('show'), 10);
-
-                if (duration > 0) {
-                    setTimeout(() => this.hide(id), duration);
-                }
-
-                return id;
-            }
-
-            hide(id) {
-                const notification = this.notifications.get(id);
-                if (notification) {
-                    notification.classList.remove('show');
-                    setTimeout(() => {
-                        if (notification.parentNode) {
-                            notification.parentNode.removeChild(notification);
-                        }
-                        this.notifications.delete(id);
-                    }, 300);
-                }
-            }
-
-            success(message, duration) { return this.show(message, 'success', duration); }
-            error(message, duration) { return this.show(message, 'error', duration); }
-            warning(message, duration) { return this.show(message, 'warning', duration); }
-            info(message, duration) { return this.show(message, 'info', duration); }
-        }
-
-        const notifications = new NotificationSystem();
-        window.mostrarNotificacion = (mensaje, tipo) => notifications.show(mensaje, tipo);
-
-        // ===========================================
         // MANAGER DE RECORDATORIOS
         // ===========================================
         class RecordatoriosManager {
@@ -1554,68 +1402,15 @@
                         await this.sincronizarConFirebase();
                     }
 
-                    // Si no hay recordatorios, crear ejemplos
-                    if (this.recordatorios.length === 0) {
-                        await this.crearRecordatoriosEjemplo();
-                    }
+                    console.log(`Total de recordatorios cargados: ${this.recordatorios.length}`);
 
                 } catch (error) {
                     console.error('Error cargando recordatorios:', error);
-                    // Crear recordatorios de ejemplo si hay error
-                    await this.crearRecordatoriosEjemplo();
+                    this.recordatorios = []; // Mantener array vacío en caso de error
                 }
             }
 
-            async crearRecordatoriosEjemplo() {
-                const ejemplos = [
-                    {
-                        titulo: 'Riego matutino sector A',
-                        descripcion: 'Riego programado para los árboles del sector A, revisar presión del agua',
-                        categoria: 'riego',
-                        prioridad: 'alta',
-                        fechaVencimiento: new Date(Date.now() + 2 * 60 * 60 * 1000), // 2 horas
-                        ubicacion: 'Sector A - Árboles 1-50'
-                    },
-                    {
-                        titulo: 'Aplicación de fertilizante',
-                        descripcion: 'Aplicar fertilizante orgánico en sector B según cronograma',
-                        categoria: 'fertilizacion',
-                        prioridad: 'media',
-                        fechaVencimiento: new Date(Date.now() + 24 * 60 * 60 * 1000), // 1 día
-                        ubicacion: 'Sector B'
-                    },
-                    {
-                        titulo: 'Poda de limpieza',
-                        descripcion: 'Realizar poda de limpieza en árboles identificados',
-                        categoria: 'poda',
-                        prioridad: 'baja',
-                        fechaVencimiento: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000), // 3 días
-                        ubicacion: 'Múltiples sectores'
-                    },
-                    {
-                        titulo: 'Cosecha programada',
-                        descripcion: 'Cosecha de limones en punto óptimo de maduración',
-                        categoria: 'cosecha',
-                        prioridad: 'alta',
-                        fechaVencimiento: new Date(Date.now() + 12 * 60 * 60 * 1000), // 12 horas
-                        ubicacion: 'Sector C'
-                    },
-                    {
-                        titulo: 'Mantenimiento de bomba de agua',
-                        descripcion: 'Revisión mensual del sistema de bombeo',
-                        categoria: 'mantenimiento',
-                        prioridad: 'media',
-                        fechaVencimiento: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // 7 días
-                        ubicacion: 'Casa de bombas'
-                    }
-                ];
-
-                for (const ejemplo of ejemplos) {
-                    await this.crearRecordatorio(ejemplo);
-                }
-
-                console.log('Recordatorios de ejemplo creados');
-            }
+            // ELIMINADO: crearRecordatoriosEjemplo() - Solo datos reales
 
             async crearRecordatorio(datos) {
                 const recordatorio = {
@@ -1699,9 +1494,9 @@
                 if (!db) return;
 
                 try {
+                    // Consulta simple sin orderBy para evitar índices compuestos
                     const snapshot = await db.collection('recordatorios_finca')
                         .where('fincaId', '==', 'finca_la_herradura')
-                        .orderBy('fechaCreacion', 'desc')
                         .get();
 
                     const recordatoriosFirebase = [];
@@ -1715,10 +1510,70 @@
                         });
                     });
 
+                    // Ordenar en el cliente
+                    recordatoriosFirebase.sort((a, b) => b.fechaCreacion - a.fechaCreacion);
+
+                    // Mergear con datos locales
+                    this.recordatorios = this.mergearRecordatorios(this.recordatorios, recordatoriosFirebase);
+                    await this.guardarLocal();
+
                     console.log(`Sincronizados ${recordatoriosFirebase.length} recordatorios desde Firebase`);
                 } catch (error) {
                     console.error('Error sincronizando con Firebase:', error);
                 }
+            }
+
+            async sincronizarRecordatorioConFirebase(recordatorio) {
+                if (!db) return;
+
+                try {
+                    const docData = {
+                        titulo: recordatorio.titulo,
+                        descripcion: recordatorio.descripcion,
+                        categoria: recordatorio.categoria,
+                        prioridad: recordatorio.prioridad,
+                        fechaCreacion: firebase.firestore.Timestamp.fromDate(recordatorio.fechaCreacion),
+                        fechaVencimiento: firebase.firestore.Timestamp.fromDate(recordatorio.fechaVencimiento),
+                        ubicacion: recordatorio.ubicacion,
+                        estado: recordatorio.estado,
+                        repetir: recordatorio.repetir,
+                        notas: recordatorio.notas,
+                        fincaId: 'finca_la_herradura',
+                        updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+                    };
+
+                    if (recordatorio.firebaseId) {
+                        // Actualizar existente
+                        await db.collection('recordatorios_finca').doc(recordatorio.firebaseId).update(docData);
+                    } else {
+                        // Crear nuevo
+                        const docRef = await db.collection('recordatorios_finca').add(docData);
+                        recordatorio.firebaseId = docRef.id;
+                    }
+
+                    recordatorio.sincronizado = true;
+                    await this.guardarLocal();
+                    console.log('Recordatorio sincronizado con Firebase:', recordatorio.titulo);
+                } catch (error) {
+                    console.error('Error sincronizando recordatorio individual:', error);
+                }
+            }
+
+            mergearRecordatorios(locales, remotos) {
+                const merged = [...locales];
+                
+                remotos.forEach(remoto => {
+                    const existeLocal = merged.find(local => 
+                        local.firebaseId === remoto.id || local.id === remoto.id
+                    );
+                    
+                    if (!existeLocal) {
+                        remoto.firebaseId = remoto.id;
+                        merged.push(remoto);
+                    }
+                });
+
+                return merged;
             }
 
             aplicarFiltros(filtros) {
@@ -1876,6 +1731,9 @@
             console.log('Inicializando página de recordatorios...');
             
             try {
+                // Esperar a que los scripts externos estén cargados
+                await esperarScriptsExternos();
+                
                 // Inicializar Firebase
                 await initializeFirebase();
                 
@@ -1893,9 +1751,34 @@
                 
             } catch (error) {
                 console.error('Error inicializando página:', error);
-                notifications.error('Error inicializando la página');
+                if (window.mostrarNotificacion) {
+                    mostrarNotificacion('Error inicializando la página', 'error');
+                }
             }
         });
+
+        async function esperarScriptsExternos() {
+            return new Promise((resolve) => {
+                const checkScripts = () => {
+                    const notificationsReady = typeof window.mostrarNotificacion === 'function';
+                    const navigationReady = document.getElementById('navbar') !== null;
+                    
+                    if (notificationsReady || navigationReady) {
+                        console.log('Scripts externos cargados');
+                        resolve();
+                    } else {
+                        setTimeout(checkScripts, 100);
+                    }
+                };
+                checkScripts();
+                
+                // Timeout después de 10 segundos
+                setTimeout(() => {
+                    console.warn('Scripts externos tardaron en cargar, continuando...');
+                    resolve();
+                }, 10000);
+            });
+        }
 
         async function initializeFirebase() {
             try {
