@@ -73,7 +73,7 @@
             .main-content-wrapper {
                 margin-left: 0;
                 padding: 1rem;
-                padding-top: 5rem; /* Espacio para el botón móvil */
+                padding-top: 6rem; /* Espacio para el header fijo */
             }
         }
 
@@ -799,10 +799,30 @@
                 height: 220px;
                 max-height: 220px;
             }
+            
+            .title-icon {
+                width: 48px;
+                height: 48px;
+                font-size: 1.2rem;
+            }
+            
+            .header-actions {
+                flex-direction: column;
+                width: 100%;
+                gap: 0.5rem;
+            }
+            
+            .header-actions .btn {
+                width: 100%;
+                justify-content: center;
+            }
         }
     </style>
 </head>
 <body>
+    <!-- Overlay para sidebar móvil -->
+    <div class="sidebar-overlay" id="sidebarOverlay"></div>
+    
     <!-- Loader de inicialización -->
     <div class="initialization-loader" id="initLoader">
         <div style="text-align: center;">
@@ -817,13 +837,18 @@
     <main class="main-content-wrapper">
         <!-- Header de la página -->
         <header class="precios-header">
-            <div class="page-title">
-                <div class="title-icon">
-                    <i class="fas fa-chart-line"></i>
-                </div>
-                <div>
-                    <h1>Gestión de Precios</h1>
-                    <p>Monitoreo de mercado y análisis de tendencias</p>
+            <div style="display: flex; align-items: center; gap: 1rem; width: 100%;">
+                <button class="menu-toggle" id="menuToggle" aria-label="Abrir menú">
+                    <i class="fas fa-bars"></i>
+                </button>
+                <div class="page-title">
+                    <div class="title-icon">
+                        <i class="fas fa-chart-line"></i>
+                    </div>
+                    <div>
+                        <h1>Gestión de Precios</h1>
+                        <p>Monitoreo de mercado y análisis de tendencias</p>
+                    </div>
                 </div>
             </div>
             
@@ -1479,6 +1504,30 @@
                 console.log('📊 Gráficos inicializados correctamente');
             } else {
                 console.warn('⚠️ Chart.js no disponible');
+            }
+            
+            // Toggle del menú móvil
+            const menuToggle = document.getElementById('menuToggle');
+            const sidebar = document.querySelector('.sidebar');
+            const sidebarOverlay = document.getElementById('sidebarOverlay');
+            
+            if (menuToggle && sidebar && sidebarOverlay) {
+                menuToggle.addEventListener('click', function() {
+                    sidebar.classList.toggle('open');
+                    sidebarOverlay.classList.toggle('show');
+                });
+                
+                sidebarOverlay.addEventListener('click', function() {
+                    sidebar.classList.remove('open');
+                    sidebarOverlay.classList.remove('show');
+                });
+                
+                window.addEventListener('resize', function() {
+                    if (window.innerWidth > 768) {
+                        sidebar.classList.remove('open');
+                        sidebarOverlay.classList.remove('show');
+                    }
+                });
             }
             
             console.log('✅ Sistema de gestión de precios inicializado correctamente');
