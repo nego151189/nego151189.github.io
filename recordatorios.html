@@ -1357,14 +1357,56 @@
             appId: "1:453253173599:web:f5f31e55fc1a93e7f5a6ea"
         };
 
-        // Variables globales
-        let app = null;
-        let db = null;
-        let auth = null;
-        let recordatoriosManager = null;
-        let currentUser = null;
-        let currentMonth = new Date().getMonth();
-        let currentYear = new Date().getFullYear();
+        // ===========================================
+        // SISTEMA DE NOTIFICACIONES FALLBACK
+        // ===========================================
+        
+        // Función fallback si notifications.js no está disponible
+        function initializeFallbackNotifications() {
+            if (typeof window.mostrarNotificacion !== 'function') {
+                console.log('Inicializando sistema de notificaciones fallback...');
+                
+                // Crear contenedor si no existe
+                let container = document.getElementById('notificationContainer');
+                if (!container) {
+                    container = document.createElement('div');
+                    container.id = 'notificationContainer';
+                    container.className = 'notification-container';
+                    document.body.appendChild(container);
+                }
+
+                // Sistema simple de notificaciones
+                window.mostrarNotificacion = function(mensaje, tipo = 'info') {
+                    const notification = document.createElement('div');
+                    notification.className = `notification ${tipo} show`;
+                    
+                    const icons = {
+                        success: 'fa-check-circle',
+                        error: 'fa-exclamation-circle', 
+                        warning: 'fa-exclamation-triangle',
+                        info: 'fa-info-circle'
+                    };
+
+                    notification.innerHTML = `
+                        <i class="fas ${icons[tipo] || icons.info}"></i>
+                        <span>${mensaje}</span>
+                        <button class="notification-close" onclick="this.parentElement.remove()">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    `;
+
+                    container.appendChild(notification);
+
+                    // Auto-remover después de 4 segundos
+                    setTimeout(() => {
+                        if (notification.parentNode) {
+                            notification.classList.remove('show');
+                            setTimeout(() => notification.remove(), 300);
+                        }
+                    }, 4000);
+                };
+            }
+        }
 
         // ===========================================
         // MANAGER DE RECORDATORIOS
@@ -1390,19 +1432,18 @@
 
             async cargarRecordatorios() {
                 try {
-                    // Cargar desde localStorage primero
-                    const recordatoriosLocales = localStorage.getItem('finca_recordatorios');
-                    if (recordatoriosLocales) {
-                        this.recordatorios = JSON.parse(recordatoriosLocales);
-                        console.log(`Cargados ${this.recordatorios.length} recordatorios desde localStorage`);
-                    }
+                    console.log('Cargando recordatorios SOLO desde Firebase...');
+                    
+                    // Inicializar con array vacío
+                    this.recordatorios = [];
 
-                    // Si Firebase está disponible, sincronizar
+                    // SOLO cargar desde Firebase, no localStorage
                     if (db) {
                         await this.sincronizarConFirebase();
+                        console.log(`Total de recordatorios cargados desde Firebase: ${this.recordatorios.length}`);
+                    } else {
+                        console.warn('Firebase no disponible - sin recordatorios');
                     }
-
-                    console.log(`Total de recordatorios cargados: ${this.recordatorios.length}`);
 
                 } catch (error) {
                     console.error('Error cargando recordatorios:', error);
@@ -1494,30 +1535,43 @@
                 if (!db) return;
 
                 try {
+                    console.log('Sincronizando con Firebase...');
+                    
                     // Consulta simple sin orderBy para evitar índices compuestos
                     const snapshot = await db.collection('recordatorios_finca')
                         .where('fincaId', '==', 'finca_la_herradura')
                         .get();
 
-                    const recordatoriosFirebase = [];
+                    // REEMPLAZAR completamente con datos de Firebase
+                    this.recordatorios = [];
+                    
                     snapshot.forEach(doc => {
                         const data = doc.data();
-                        recordatoriosFirebase.push({
+                        const recordatorio = {
                             id: doc.id,
-                            ...data,
+                            firebaseId: doc.id,
+                            titulo: data.titulo,
+                            descripcion: data.descripcion,
+                            categoria: data.categoria,
+                            prioridad: data.prioridad,
                             fechaCreacion: data.fechaCreacion?.toDate() || new Date(),
-                            fechaVencimiento: data.fechaVencimiento?.toDate() || new Date()
-                        });
+                            fechaVencimiento: data.fechaVencimiento?.toDate() || new Date(),
+                            ubicacion: data.ubicacion || '',
+                            estado: data.estado || 'pendiente',
+                            repetir: data.repetir || '',
+                            notas: data.notas || '',
+                            sincronizado: true
+                        };
+                        this.recordatorios.push(recordatorio);
                     });
 
-                    // Ordenar en el cliente
-                    recordatoriosFirebase.sort((a, b) => b.fechaCreacion - a.fechaCreacion);
+                    // Ordenar por fecha en el cliente
+                    this.recordatorios.sort((a, b) => b.fechaCreacion - a.fechaCreacion);
 
-                    // Mergear con datos locales
-                    this.recordatorios = this.mergearRecordatorios(this.recordatorios, recordatoriosFirebase);
+                    // Guardar en localStorage como backup
                     await this.guardarLocal();
 
-                    console.log(`Sincronizados ${recordatoriosFirebase.length} recordatorios desde Firebase`);
+                    console.log(`Cargados ${this.recordatorios.length} recordatorios REALES desde Firebase`);
                 } catch (error) {
                     console.error('Error sincronizando con Firebase:', error);
                 }
@@ -1760,23 +1814,26 @@
         async function esperarScriptsExternos() {
             return new Promise((resolve) => {
                 const checkScripts = () => {
-                    const notificationsReady = typeof window.mostrarNotificacion === 'function';
-                    const navigationReady = document.getElementById('navbar') !== null;
+                    // Inicializar sistema de notificaciones fallback si es necesario
+                    initializeFallbackNotifications();
                     
-                    if (notificationsReady || navigationReady) {
-                        console.log('Scripts externos cargados');
-                        resolve();
-                    } else {
-                        setTimeout(checkScripts, 100);
-                    }
-                };
-                checkScripts();
-                
-                // Timeout después de 10 segundos
-                setTimeout(() => {
-                    console.warn('Scripts externos tardaron en cargar, continuando...');
+                    console.log('Scripts externos verificados');
                     resolve();
-                }, 10000);
+                };
+                
+                // Esperar a que el DOM esté completamente cargado
+                if (document.readyState === 'complete') {
+                    checkScripts();
+                } else {
+                    setTimeout(checkScripts, 500);
+                }
+                
+                // Timeout después de 5 segundos
+                setTimeout(() => {
+                    console.warn('Continuando sin esperar scripts externos...');
+                    initializeFallbackNotifications();
+                    resolve();
+                }, 5000);
             });
         }
 
