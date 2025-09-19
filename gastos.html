@@ -56,47 +56,71 @@
             background: var(--light-gray, #f8f9fa);
         }
 
-        /* Estados de conexión - MOVIDO A LA DERECHA */
+        /* Estados de conexión - COMPLETAMENTE A LA DERECHA SIN INTERFERIR */
         .connection-status {
             position: fixed;
-            top: 1rem;
-            right: 1rem; /* Cambiado de left a right */
-            padding: 0.75rem 1.25rem;
-            border-radius: 25px;
-            font-size: 0.875rem;
+            top: 1.25rem;
+            right: 1.5rem; /* Más margen a la derecha */
+            padding: 0.6rem 1rem;
+            border-radius: 20px;
+            font-size: 0.8rem;
             font-weight: 600;
-            z-index: 999; /* Reducido para que no tape la navegación */
+            z-index: 999;
             transition: all var(--transition-normal, 0.3s ease);
             backdrop-filter: blur(10px);
             box-shadow: var(--shadow-md, 0 4px 8px rgba(0,0,0,0.15));
+            min-width: 120px;
+            text-align: center;
         }
 
         .connection-status.online {
-            background: rgba(34, 197, 94, 0.9);
+            background: rgba(34, 197, 94, 0.95);
             color: white;
-            border: 1px solid rgba(34, 197, 94, 0.3);
+            border: 1px solid rgba(34, 197, 94, 0.4);
         }
 
         .connection-status.offline {
-            background: rgba(239, 68, 68, 0.9);
+            background: rgba(239, 68, 68, 0.95);
             color: white;
-            border: 1px solid rgba(239, 68, 68, 0.3);
+            border: 1px solid rgba(239, 68, 68, 0.4);
         }
 
         .connection-status.loading {
-            background: rgba(245, 158, 11, 0.9);
+            background: rgba(245, 158, 11, 0.95);
             color: white;
-            border: 1px solid rgba(245, 158, 11, 0.3);
+            border: 1px solid rgba(245, 158, 11, 0.4);
         }
 
-        /* Responsive para conexión status */
+        /* Responsive para conexión status - MÁS SEPARACIÓN */
+        @media (max-width: 1024px) {
+            .connection-status {
+                top: 1rem;
+                right: 1rem;
+                padding: 0.5rem 0.8rem;
+                font-size: 0.75rem;
+                min-width: 100px;
+            }
+        }
+
         @media (max-width: 768px) {
+            .connection-status {
+                top: 0.75rem;
+                right: 0.75rem;
+                padding: 0.4rem 0.6rem;
+                font-size: 0.7rem;
+                min-width: 90px;
+                z-index: 998; /* Bajo el header de navegación */
+            }
+        }
+
+        @media (max-width: 480px) {
             .connection-status {
                 top: 0.5rem;
                 right: 0.5rem;
-                padding: 0.5rem 0.75rem;
-                font-size: 0.75rem;
-                z-index: 998; /* Asegurar que no interfiera con navegación móvil */
+                padding: 0.35rem 0.5rem;
+                font-size: 0.65rem;
+                min-width: 80px;
+                border-radius: 15px;
             }
         }
 
