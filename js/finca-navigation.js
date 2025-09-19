@@ -330,12 +330,13 @@
                 }
 
                 .finca-nav-link {
-                    padding: 1.25rem 1.5rem;
-                    font-size: 1rem;
-                    min-height: 56px;
+                    padding: 1rem 1.5rem;
+                    font-size: 0.9rem;
+                    min-height: 52px;
                 }
 
                 .finca-nav-link:hover {
+                    transform: translateX(0);
                     padding-left: 1.5rem;
                 }
             }
@@ -346,12 +347,16 @@
                     padding: 0 2rem;
                 }
 
-                .finca-logo {
-                    font-size: 1.3rem;
+                .finca-sidebar-header {
+                    padding: 1.25rem 1.5rem;
                 }
 
-                .finca-nav-menu {
-                    padding: 2rem 0;
+                .finca-brand-title {
+                    font-size: 1.1rem;
+                }
+
+                .finca-nav-section {
+                    margin-bottom: 1.25rem;
                 }
             }
 
@@ -381,9 +386,75 @@
                     font-size: 1.1rem;
                 }
 
+                .finca-sidebar-header {
+                    padding: 1rem;
+                }
+
+                .finca-brand-icon {
+                    width: 36px;
+                    height: 36px;
+                    font-size: 1.1rem;
+                }
+
+                .finca-brand-title {
+                    font-size: 0.95rem;
+                }
+
+                .finca-brand-subtitle {
+                    font-size: 0.7rem;
+                }
+
+                .finca-nav-section-title {
+                    font-size: 0.6rem;
+                    padding: 0 1rem 0.5rem 1rem;
+                }
+
                 .finca-nav-link {
-                    padding: 1rem 1.25rem;
-                    font-size: 1rem;
+                    padding: 0.875rem 1rem;
+                    font-size: 0.875rem;
+                    min-height: 48px;
+                }
+
+                .finca-nav-link-content {
+                    gap: 0.75rem;
+                }
+
+                .finca-nav-icon {
+                    font-size: 0.95rem;
+                    width: 16px;
+                }
+
+                .finca-nav-text {
+                    font-size: 0.875rem;
+                }
+
+                .finca-nav-badge {
+                    font-size: 0.65rem;
+                    padding: 0.2rem 0.4rem;
+                    min-width: 18px;
+                    height: 18px;
+                }
+
+                .finca-sidebar-footer {
+                    padding: 1rem;
+                }
+
+                .finca-user-info {
+                    gap: 0.75rem;
+                }
+
+                .finca-user-avatar {
+                    width: 36px;
+                    height: 36px;
+                    font-size: 0.9rem;
+                }
+
+                .finca-user-name {
+                    font-size: 0.8rem;
+                }
+
+                .finca-user-role {
+                    font-size: 0.7rem;
                 }
 
                 .finca-mobile-toggle {
@@ -410,6 +481,88 @@
                 .finca-sidebar {
                     width: 100%;
                 }
+
+                .finca-sidebar-header {
+                    padding: 0.875rem;
+                }
+
+                .finca-brand-icon {
+                    width: 32px;
+                    height: 32px;
+                    font-size: 1rem;
+                }
+
+                .finca-brand-title {
+                    font-size: 0.9rem;
+                }
+
+                .finca-brand-subtitle {
+                    font-size: 0.65rem;
+                }
+
+                .finca-nav-section-title {
+                    font-size: 0.55rem;
+                    padding: 0 0.875rem 0.4rem 0.875rem;
+                }
+
+                .finca-nav-link {
+                    padding: 0.75rem 0.875rem;
+                    font-size: 0.8rem;
+                    min-height: 44px;
+                }
+
+                .finca-nav-link-content {
+                    gap: 0.625rem;
+                }
+
+                .finca-nav-icon {
+                    font-size: 0.9rem;
+                    width: 14px;
+                }
+
+                .finca-nav-text {
+                    font-size: 0.8rem;
+                }
+
+                .finca-sidebar-footer {
+                    padding: 0.875rem;
+                }
+
+                .finca-user-info {
+                    gap: 0.625rem;
+                }
+
+                .finca-user-avatar {
+                    width: 32px;
+                    height: 32px;
+                    font-size: 0.8rem;
+                }
+
+                .finca-user-name {
+                    font-size: 0.75rem;
+                }
+
+                .finca-user-role {
+                    font-size: 0.65rem;
+                }
+            }
+
+            /* Scrollbar personalizado para el sidebar */
+            .finca-sidebar::-webkit-scrollbar {
+                width: 4px;
+            }
+
+            .finca-sidebar::-webkit-scrollbar-track {
+                background: transparent;
+            }
+
+            .finca-sidebar::-webkit-scrollbar-thumb {
+                background: rgba(148, 163, 184, 0.3);
+                border-radius: 2px;
+            }
+
+            .finca-sidebar::-webkit-scrollbar-thumb:hover {
+                background: rgba(148, 163, 184, 0.5);
             }
 
             /* Prevenir scroll cuando menú móvil está abierto */
