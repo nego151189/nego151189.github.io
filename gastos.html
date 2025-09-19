@@ -17,220 +17,214 @@
     <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-storage-compat.js"></script>
     
+    <!-- CSS Externos -->
+    <link rel="stylesheet" href="main.css">
+    <link rel="stylesheet" href="style.css">
+    
     <style>
-        /* Variables CSS */
+        /* Variables específicas para gastos - Complementan main.css */
         :root {
-            --primary: #dc2626;
-            --secondary: #3b82f6;
-            --success: #22c55e;
-            --warning: #f59e0b;
-            --danger: #ef4444;
-            --info: #3b82f6;
-            --light: #f8fafc;
-            --dark: #1e293b;
-            --bg-primary: #ffffff;
-            --bg-secondary: #f8fafc;
-            --bg-card: #ffffff;
-            --text-primary: #1e293b;
-            --text-secondary: #64748b;
-            --border: #e2e8f0;
-            --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
-            --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
-            
-            /* Variables para navegación */
-            --sidebar-width: 280px;
-            --sidebar-collapsed-width: 70px;
+            --gastos-primary: #dc2626;
+            --gastos-primary-light: #f87171;
+            --gastos-primary-dark: #b91c1c;
+            --gastos-secondary: #3b82f6;
+            --gastos-accent: #f59e0b;
+            --gastos-success: #22c55e;
+            --gastos-danger: #ef4444;
+            --gastos-warning: #f59e0b;
+            --gastos-info: #3b82f6;
         }
 
-        * {
+        /* Override específico para evitar conflictos con navegación */
+        body {
             margin: 0;
             padding: 0;
-            box-sizing: border-box;
-        }
-
-        body {
-            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            background: var(--bg-secondary);
-            color: var(--text-primary);
+            font-family: var(--font-primary, 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif);
+            background: var(--light-gray, #f8f9fa);
+            color: var(--dark-gray, #343a40);
             line-height: 1.6;
         }
 
+        /* Main wrapper compatible con el sistema de navegación */
         .main-content-wrapper {
+            margin-left: var(--sidebar-width, 280px);
+            margin-top: var(--header-height, 80px);
             padding: 2rem;
-            max-width: 1400px;
-            margin: 0 auto;
-            margin-left: var(--sidebar-width);
-            transition: margin-left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            max-width: none;
+            transition: margin-left var(--transition-normal, 0.3s ease);
+            min-height: calc(100vh - var(--header-height, 80px));
+            background: var(--light-gray, #f8f9fa);
         }
 
-        /* Ajuste para sidebar colapsado */
+        /* Estados de conexión - MOVIDO A LA DERECHA */
+        .connection-status {
+            position: fixed;
+            top: 1rem;
+            right: 1rem; /* Cambiado de left a right */
+            padding: 0.75rem 1.25rem;
+            border-radius: 25px;
+            font-size: 0.875rem;
+            font-weight: 600;
+            z-index: 999; /* Reducido para que no tape la navegación */
+            transition: all var(--transition-normal, 0.3s ease);
+            backdrop-filter: blur(10px);
+            box-shadow: var(--shadow-md, 0 4px 8px rgba(0,0,0,0.15));
+        }
+
+        .connection-status.online {
+            background: rgba(34, 197, 94, 0.9);
+            color: white;
+            border: 1px solid rgba(34, 197, 94, 0.3);
+        }
+
+        .connection-status.offline {
+            background: rgba(239, 68, 68, 0.9);
+            color: white;
+            border: 1px solid rgba(239, 68, 68, 0.3);
+        }
+
+        .connection-status.loading {
+            background: rgba(245, 158, 11, 0.9);
+            color: white;
+            border: 1px solid rgba(245, 158, 11, 0.3);
+        }
+
+        /* Responsive para conexión status */
+        @media (max-width: 768px) {
+            .connection-status {
+                top: 0.5rem;
+                right: 0.5rem;
+                padding: 0.5rem 0.75rem;
+                font-size: 0.75rem;
+                z-index: 998; /* Asegurar que no interfiera con navegación móvil */
+            }
+        }
+
+        /* Loader de inicialización - Responsive */
+        .initialization-loader {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.95);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 10000;
+            color: white;
+            font-size: 1.2rem;
+            backdrop-filter: blur(5px);
+        }
+
+        .initialization-loader.hidden {
+            display: none;
+        }
+
+        .loader-content {
+            text-align: center;
+            max-width: 400px;
+            padding: 2rem;
+        }
+
+        @media (max-width: 768px) {
+            .loader-content {
+                max-width: 300px;
+                padding: 1.5rem;
+                font-size: 1rem;
+            }
+        }
+
+        .loader-icon {
+            font-size: 4rem;
+            margin-bottom: 2rem;
+            animation: pulse 2s ease-in-out infinite;
+        }
+
+        @media (max-width: 768px) {
+            .loader-icon {
+                font-size: 3rem;
+                margin-bottom: 1.5rem;
+            }
+        }
+
+        .loader-steps {
+            margin-top: 2rem;
+            text-align: left;
+        }
+
+        .loader-step {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 1rem;
+            opacity: 0.5;
+            transition: opacity 0.3s ease;
+            font-size: 0.9rem;
+        }
+
+        .loader-step.active {
+            opacity: 1;
+            color: var(--gastos-success);
+        }
+
+        .loader-step.completed {
+            opacity: 0.7;
+            color: #6b7280;
+        }
+
+        @media (max-width: 480px) {
+            .loader-step {
+                font-size: 0.8rem;
+                gap: 0.75rem;
+            }
+        }
+
+        /* Header de gastos - Completamente responsive */
+        .gastos-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 2rem;
+            flex-wrap: wrap;
+            gap: 1.5rem;
+        }
+
         @media (max-width: 1024px) {
-            .main-content-wrapper {
-                margin-left: var(--sidebar-collapsed-width);
+            .gastos-header {
+                gap: 1rem;
             }
         }
 
         @media (max-width: 768px) {
-            .main-content-wrapper {
-                margin-left: 0;
-                padding: 1rem;
-                padding-top: 5rem; /* Espacio para el botón móvil */
+            .gastos-header {
+                flex-direction: column;
+                align-items: stretch;
+                gap: 1rem;
+                margin-bottom: 1.5rem;
             }
-        }
-
-        /* Estilos básicos */
-        .btn {
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            gap: 0.5rem;
-            padding: 0.75rem 1.5rem;
-            font-size: 0.875rem;
-            font-weight: 600;
-            border-radius: 12px;
-            border: none;
-            cursor: pointer;
-            transition: all 0.2s ease;
-            text-decoration: none;
-            white-space: nowrap;
-        }
-
-        .btn-primary {
-            background: linear-gradient(135deg, var(--primary) 0%, #b91c1c 100%);
-            color: white;
-            box-shadow: var(--shadow);
-        }
-
-        .btn-primary:hover {
-            transform: translateY(-2px);
-            box-shadow: var(--shadow-lg);
-        }
-
-        .btn-secondary {
-            background: linear-gradient(135deg, var(--secondary) 0%, #1d4ed8 100%);
-            color: white;
-            box-shadow: var(--shadow);
-        }
-
-        .btn-secondary:hover {
-            transform: translateY(-2px);
-            box-shadow: var(--shadow-lg);
-        }
-
-        .btn-success {
-            background: linear-gradient(135deg, var(--success) 0%, #16a34a 100%);
-            color: white;
-            box-shadow: var(--shadow);
-        }
-
-        .btn-success:hover {
-            transform: translateY(-2px);
-            box-shadow: var(--shadow-lg);
-        }
-
-        .btn-danger {
-            background: linear-gradient(135deg, var(--danger) 0%, #dc2626 100%);
-            color: white;
-            box-shadow: var(--shadow);
-        }
-
-        .btn-danger:hover {
-            transform: translateY(-2px);
-            box-shadow: var(--shadow-lg);
-        }
-
-        .btn-sm {
-            padding: 0.5rem 0.75rem;
-            font-size: 0.75rem;
-        }
-
-        .form-input, .form-select {
-            width: 100%;
-            padding: 0.75rem;
-            border: 2px solid var(--border);
-            border-radius: 8px;
-            font-size: 1rem;
-            transition: border-color 0.2s ease;
-        }
-
-        .form-input:focus, .form-select:focus {
-            outline: none;
-            border-color: var(--primary);
-            box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.1);
-        }
-
-        .form-label {
-            display: block;
-            margin-bottom: 0.5rem;
-            font-weight: 600;
-            color: var(--text-primary);
-        }
-
-        .form-group {
-            margin-bottom: 1rem;
-        }
-
-        .table {
-            width: 100%;
-            border-collapse: collapse;
-            background: white;
-            border-radius: 12px;
-            overflow: hidden;
-            box-shadow: var(--shadow);
-        }
-
-        .table th,
-        .table td {
-            padding: 1rem;
-            text-align: left;
-            border-bottom: 1px solid var(--border);
-        }
-
-        .table th {
-            background: var(--bg-secondary);
-            font-weight: 600;
-            color: var(--text-primary);
-        }
-
-        .table tr:hover {
-            background: #f8fafc;
-        }
-
-        .progress-bar {
-            width: 100%;
-            height: 12px;
-            background: #e2e8f0;
-            border-radius: 6px;
-            overflow: hidden;
-        }
-
-        .progress {
-            height: 100%;
-            background: linear-gradient(90deg, var(--success) 0%, var(--warning) 70%, var(--danger) 100%);
-            transition: width 0.5s ease;
-            border-radius: 6px;
-        }
-
-        /* CSS específico para la página de gastos */
-        .gastos-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 2rem;
-            flex-wrap: wrap;
-            gap: 1rem;
         }
 
         .page-title {
             display: flex;
             align-items: center;
-            gap: 1rem;
+            gap: 1.5rem;
+            flex: 1;
+        }
+
+        @media (max-width: 640px) {
+            .page-title {
+                flex-direction: column;
+                text-align: center;
+                gap: 1rem;
+            }
         }
 
         .title-icon {
             width: 70px;
             height: 70px;
-            background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
+            background: linear-gradient(135deg, var(--gastos-primary) 0%, var(--gastos-primary-dark) 100%);
             border-radius: 20px;
             display: flex;
             align-items: center;
@@ -238,8 +232,59 @@
             color: white;
             font-size: 1.8rem;
             box-shadow: var(--shadow-lg);
+            flex-shrink: 0;
         }
 
+        @media (max-width: 768px) {
+            .title-icon {
+                width: 60px;
+                height: 60px;
+                font-size: 1.5rem;
+                border-radius: 16px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .title-icon {
+                width: 50px;
+                height: 50px;
+                font-size: 1.25rem;
+                border-radius: 12px;
+            }
+        }
+
+        .title-text h1 {
+            font-size: 2.5rem;
+            font-weight: 800;
+            margin-bottom: 0.5rem;
+            color: var(--text-primary, #1e293b);
+        }
+
+        .title-text p {
+            font-size: 1.1rem;
+            color: var(--text-secondary, #64748b);
+            margin: 0;
+        }
+
+        @media (max-width: 768px) {
+            .title-text h1 {
+                font-size: 2rem;
+            }
+            .title-text p {
+                font-size: 1rem;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .title-text h1 {
+                font-size: 1.75rem;
+            }
+            .title-text p {
+                font-size: 0.9rem;
+            }
+        }
+
+        /* Header actions - Responsive */
         .header-actions {
             display: flex;
             gap: 1rem;
@@ -247,6 +292,27 @@
             flex-wrap: wrap;
         }
 
+        @media (max-width: 768px) {
+            .header-actions {
+                width: 100%;
+                justify-content: center;
+                gap: 0.75rem;
+            }
+        }
+
+        @media (max-width: 640px) {
+            .header-actions {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            
+            .header-actions .btn {
+                width: 100%;
+                justify-content: center;
+            }
+        }
+
+        /* Estado presupuesto - Responsive */
         .estado-presupuesto {
             display: flex;
             align-items: center;
@@ -255,29 +321,42 @@
             border-radius: 25px;
             font-weight: 600;
             background: rgba(34, 197, 94, 0.15);
-            color: #16a34a;
+            color: var(--gastos-success);
             border: 2px solid rgba(34, 197, 94, 0.3);
             box-shadow: var(--shadow);
             transition: all 0.3s ease;
-        }
-
-        .estado-presupuesto:hover {
-            transform: translateY(-2px);
-            box-shadow: var(--shadow-lg);
+            white-space: nowrap;
         }
 
         .estado-presupuesto.alerta {
             background: rgba(245, 158, 11, 0.15);
-            color: #d97706;
+            color: var(--gastos-warning);
             border-color: rgba(245, 158, 11, 0.3);
         }
 
         .estado-presupuesto.critico {
             background: rgba(239, 68, 68, 0.15);
-            color: #dc2626;
+            color: var(--gastos-danger);
             border-color: rgba(239, 68, 68, 0.3);
         }
 
+        @media (max-width: 768px) {
+            .estado-presupuesto {
+                padding: 0.75rem 1.25rem;
+                font-size: 0.9rem;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .estado-presupuesto {
+                padding: 0.625rem 1rem;
+                font-size: 0.8rem;
+                white-space: normal;
+                text-align: center;
+            }
+        }
+
+        /* Resumen financiero - Grid completamente responsive */
         .resumen-financiero {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
@@ -285,8 +364,30 @@
             margin-bottom: 2rem;
         }
 
+        @media (max-width: 1200px) {
+            .resumen-financiero {
+                grid-template-columns: repeat(2, 1fr);
+                gap: 1.5rem;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .resumen-financiero {
+                grid-template-columns: repeat(2, 1fr);
+                gap: 1rem;
+            }
+        }
+
+        @media (max-width: 640px) {
+            .resumen-financiero {
+                grid-template-columns: 1fr;
+                gap: 1rem;
+            }
+        }
+
+        /* Cards del resumen - Responsive */
         .resumen-card {
-            background: var(--bg-card);
+            background: var(--white, #ffffff);
             border-radius: 20px;
             padding: 2rem;
             position: relative;
@@ -300,6 +401,28 @@
             box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
         }
 
+        @media (max-width: 768px) {
+            .resumen-card {
+                padding: 1.5rem;
+                border-radius: 16px;
+            }
+            
+            .resumen-card:hover {
+                transform: translateY(-2px);
+            }
+        }
+
+        @media (max-width: 480px) {
+            .resumen-card {
+                padding: 1.25rem;
+                border-radius: 12px;
+            }
+            
+            .resumen-card:hover {
+                transform: none; /* Desactivar hover en móviles pequeños */
+            }
+        }
+
         .resumen-card::before {
             content: '';
             position: absolute;
@@ -310,27 +433,36 @@
             border-radius: 20px 20px 0 0;
         }
 
-        .resumen-card.gastos::before {
-            background: linear-gradient(90deg, #dc2626, #b91c1c);
+        @media (max-width: 768px) {
+            .resumen-card::before {
+                height: 4px;
+                border-radius: 16px 16px 0 0;
+            }
         }
 
-        .resumen-card.presupuesto::before {
-            background: linear-gradient(90deg, #3b82f6, #1d4ed8);
-        }
+        /* Colores específicos para cada card */
+        .resumen-card.gastos::before { background: linear-gradient(90deg, var(--gastos-primary), var(--gastos-primary-dark)); }
+        .resumen-card.presupuesto::before { background: linear-gradient(90deg, var(--gastos-secondary), #1d4ed8); }
+        .resumen-card.proyectado::before { background: linear-gradient(90deg, var(--gastos-accent), #d97706); }
+        .resumen-card.diferencia::before { background: linear-gradient(90deg, #8b5cf6, #7c3aed); }
 
-        .resumen-card.proyectado::before {
-            background: linear-gradient(90deg, #f59e0b, #d97706);
-        }
-
-        .resumen-card.diferencia::before {
-            background: linear-gradient(90deg, #8b5cf6, #7c3aed);
-        }
-
+        /* Header de resumen card */
         .resumen-header {
             display: flex;
             justify-content: space-between;
             align-items: flex-start;
             margin-bottom: 1.5rem;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+        }
+
+        @media (max-width: 640px) {
+            .resumen-header {
+                flex-direction: column;
+                align-items: center;
+                text-align: center;
+                margin-bottom: 1rem;
+            }
         }
 
         .resumen-icon {
@@ -345,34 +477,91 @@
             box-shadow: var(--shadow);
         }
 
+        @media (max-width: 768px) {
+            .resumen-icon {
+                width: 50px;
+                height: 50px;
+                font-size: 1.25rem;
+                border-radius: 12px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .resumen-icon {
+                width: 45px;
+                height: 45px;
+                font-size: 1.125rem;
+                border-radius: 10px;
+            }
+        }
+
         .resumen-tendencia {
             display: flex;
             align-items: center;
             gap: 0.5rem;
             font-size: 0.875rem;
             font-weight: 600;
-            color: #22c55e;
+            color: var(--gastos-success);
             background: rgba(34, 197, 94, 0.1);
             padding: 0.5rem 1rem;
             border-radius: 20px;
         }
 
+        @media (max-width: 768px) {
+            .resumen-tendencia {
+                font-size: 0.8rem;
+                padding: 0.4rem 0.8rem;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .resumen-tendencia {
+                font-size: 0.75rem;
+                padding: 0.35rem 0.7rem;
+            }
+        }
+
         .resumen-valor {
             font-size: 2.5rem;
             font-weight: 800;
-            color: var(--text-primary);
+            color: var(--text-primary, #1e293b);
             margin-bottom: 0.5rem;
             letter-spacing: -0.025em;
         }
 
+        @media (max-width: 768px) {
+            .resumen-valor {
+                font-size: 2rem;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .resumen-valor {
+                font-size: 1.75rem;
+            }
+        }
+
         .resumen-label {
-            color: var(--text-secondary);
+            color: var(--text-secondary, #64748b);
             font-size: 1rem;
             font-weight: 500;
         }
 
+        @media (max-width: 480px) {
+            .resumen-label {
+                font-size: 0.9rem;
+            }
+        }
+
+        /* Progress bar responsive */
         .progress-presupuesto {
             margin-top: 1.5rem;
+        }
+
+        @media (max-width: 768px) {
+            .progress-presupuesto {
+                margin-top: 1rem;
+            }
         }
 
         .progress-info {
@@ -382,77 +571,63 @@
             margin-bottom: 0.75rem;
             font-size: 0.875rem;
             font-weight: 600;
+            flex-wrap: wrap;
+            gap: 0.5rem;
         }
 
-        .contenido-principal {
-            display: grid;
-            grid-template-columns: 2fr 1fr;
-            gap: 2rem;
-            margin-bottom: 2rem;
+        @media (max-width: 480px) {
+            .progress-info {
+                font-size: 0.8rem;
+                flex-direction: column;
+                align-items: stretch;
+                text-align: center;
+            }
         }
 
-        .graficos-container {
-            display: grid;
-            gap: 2rem;
-        }
-
-        .grafico-card {
-            background: var(--bg-card);
-            border-radius: 20px;
-            padding: 2rem;
-            height: 450px;
-            display: flex;
-            flex-direction: column;
-            overflow: hidden;
-            box-shadow: var(--shadow-lg);
-            transition: all 0.3s ease;
-        }
-
-        .grafico-card:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
-        }
-
-        .grafico-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 1.5rem;
-            min-height: 40px;
-            flex-shrink: 0;
-        }
-
-        .grafico-titulo {
-            font-size: 1.25rem;
-            font-weight: 700;
-            color: var(--text-primary);
-            display: flex;
-            align-items: center;
-            gap: 1rem;
-        }
-
-        .chart-container {
-            position: relative;
-            height: 350px;
-            flex: 1;
-            min-height: 300px;
-            max-height: 400px;
+        .progress-bar {
+            width: 100%;
+            height: 12px;
+            background: #e2e8f0;
+            border-radius: 6px;
             overflow: hidden;
         }
 
-        .chart-container canvas {
-            max-width: 100% !important;
-            max-height: 100% !important;
-            width: 100% !important;
-            height: 100% !important;
+        .progress {
+            height: 100%;
+            background: linear-gradient(90deg, var(--gastos-success) 0%, var(--gastos-warning) 70%, var(--gastos-danger) 100%);
+            transition: width 0.5s ease;
+            border-radius: 6px;
         }
 
+        @media (max-width: 480px) {
+            .progress-bar {
+                height: 10px;
+            }
+        }
+
+        /* Filtros - Completamente responsive */
         .filtros-gastos {
-            background: var(--bg-card);
+            background: var(--white, #ffffff);
             border-radius: 20px;
             padding: 2rem;
             margin-bottom: 2rem;
             box-shadow: var(--shadow-lg);
+        }
+
+        @media (max-width: 768px) {
+            .filtros-gastos {
+                padding: 1.5rem;
+                border-radius: 16px;
+                margin-bottom: 1.5rem;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .filtros-gastos {
+                padding: 1.25rem;
+                border-radius: 12px;
+                margin-bottom: 1rem;
+            }
         }
 
         .filtros-grid {
@@ -462,15 +637,44 @@
             align-items: end;
         }
 
+        @media (max-width: 768px) {
+            .filtros-grid {
+                grid-template-columns: repeat(2, 1fr);
+                gap: 1rem;
+            }
+        }
+
+        @media (max-width: 640px) {
+            .filtros-grid {
+                grid-template-columns: 1fr;
+                gap: 0.75rem;
+            }
+        }
+
+        /* Acciones rápidas - Grid responsive */
         .acciones-rapidas {
-            display: flex;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
             gap: 1.5rem;
             margin-bottom: 2rem;
-            flex-wrap: wrap;
+        }
+
+        @media (max-width: 768px) {
+            .acciones-rapidas {
+                grid-template-columns: repeat(2, 1fr);
+                gap: 1rem;
+            }
+        }
+
+        @media (max-width: 640px) {
+            .acciones-rapidas {
+                grid-template-columns: 1fr;
+                gap: 0.75rem;
+            }
         }
 
         .accion-rapida {
-            background: var(--bg-card);
+            background: var(--white, #ffffff);
             border-radius: 16px;
             padding: 1.5rem;
             display: flex;
@@ -479,14 +683,35 @@
             cursor: pointer;
             transition: all 0.3s ease;
             border: 2px solid transparent;
-            min-width: 200px;
             box-shadow: var(--shadow);
         }
 
         .accion-rapida:hover {
-            border-color: var(--primary);
+            border-color: var(--gastos-primary);
             transform: translateY(-4px);
             box-shadow: var(--shadow-lg);
+        }
+
+        @media (max-width: 768px) {
+            .accion-rapida {
+                padding: 1.25rem;
+                border-radius: 12px;
+            }
+            
+            .accion-rapida:hover {
+                transform: translateY(-2px);
+            }
+        }
+
+        @media (max-width: 480px) {
+            .accion-rapida {
+                padding: 1rem;
+                border-radius: 10px;
+            }
+            
+            .accion-rapida:hover {
+                transform: none; /* Desactivar en móviles */
+            }
         }
 
         .accion-icon {
@@ -499,13 +724,280 @@
             color: white;
             font-size: 1.2rem;
             box-shadow: var(--shadow);
+            flex-shrink: 0;
         }
 
+        @media (max-width: 768px) {
+            .accion-icon {
+                width: 45px;
+                height: 45px;
+                font-size: 1.125rem;
+                border-radius: 10px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .accion-icon {
+                width: 40px;
+                height: 40px;
+                font-size: 1rem;
+                border-radius: 8px;
+            }
+        }
+
+        .accion-texto {
+            flex: 1;
+        }
+
+        .accion-titulo {
+            font-weight: 700;
+            font-size: 1rem;
+            margin-bottom: 0.25rem;
+            color: var(--text-primary, #1e293b);
+        }
+
+        .accion-descripcion {
+            font-size: 0.875rem;
+            color: var(--text-secondary, #64748b);
+        }
+
+        @media (max-width: 768px) {
+            .accion-titulo {
+                font-size: 0.9rem;
+            }
+            
+            .accion-descripcion {
+                font-size: 0.8rem;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .accion-titulo {
+                font-size: 0.85rem;
+            }
+            
+            .accion-descripcion {
+                font-size: 0.75rem;
+            }
+        }
+
+        /* Formulario de registro - Responsive grid */
+        .form-registro-gasto {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 1.5rem;
+            align-items: end;
+            background: var(--white, #ffffff);
+            border-radius: 20px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            box-shadow: var(--shadow-lg);
+        }
+
+        @media (max-width: 768px) {
+            .form-registro-gasto {
+                grid-template-columns: repeat(2, 1fr);
+                gap: 1rem;
+                padding: 1.5rem;
+                border-radius: 16px;
+            }
+        }
+
+        @media (max-width: 640px) {
+            .form-registro-gasto {
+                grid-template-columns: 1fr;
+                gap: 0.75rem;
+                padding: 1.25rem;
+                border-radius: 12px;
+            }
+        }
+
+        .form-registro-gasto h3 {
+            grid-column: 1 / -1;
+            margin-bottom: 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            font-size: 1.25rem;
+            color: var(--text-primary, #1e293b);
+        }
+
+        @media (max-width: 768px) {
+            .form-registro-gasto h3 {
+                font-size: 1.125rem;
+                margin-bottom: 1rem;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .form-registro-gasto h3 {
+                font-size: 1rem;
+                text-align: center;
+                flex-direction: column;
+                gap: 0.5rem;
+            }
+        }
+
+        /* Contenido principal - Layout responsivo */
+        .contenido-principal {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 2rem;
+            margin-bottom: 2rem;
+        }
+
+        @media (max-width: 1200px) {
+            .contenido-principal {
+                grid-template-columns: 3fr 2fr;
+                gap: 1.5rem;
+            }
+        }
+
+        @media (max-width: 1024px) {
+            .contenido-principal {
+                grid-template-columns: 1fr;
+                gap: 1.5rem;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .contenido-principal {
+                gap: 1rem;
+            }
+        }
+
+        /* Gráficos - Completamente responsive */
+        .graficos-container {
+            display: grid;
+            gap: 2rem;
+        }
+
+        @media (max-width: 768px) {
+            .graficos-container {
+                gap: 1.5rem;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .graficos-container {
+                gap: 1rem;
+            }
+        }
+
+        .grafico-card {
+            background: var(--white, #ffffff);
+            border-radius: 20px;
+            padding: 2rem;
+            height: 450px;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            box-shadow: var(--shadow-lg);
+            transition: all 0.3s ease;
+        }
+
+        @media (max-width: 768px) {
+            .grafico-card {
+                height: 400px;
+                padding: 1.5rem;
+                border-radius: 16px;
+            }
+        }
+
+        @media (max-width: 640px) {
+            .grafico-card {
+                height: 350px;
+                padding: 1.25rem;
+                border-radius: 12px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .grafico-card {
+                height: 300px;
+                padding: 1rem;
+                border-radius: 10px;
+            }
+        }
+
+        .grafico-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+            min-height: 40px;
+            flex-shrink: 0;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+        }
+
+        @media (max-width: 640px) {
+            .grafico-header {
+                flex-direction: column;
+                align-items: flex-start;
+                margin-bottom: 1rem;
+            }
+        }
+
+        .grafico-titulo {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: var(--text-primary, #1e293b);
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        @media (max-width: 768px) {
+            .grafico-titulo {
+                font-size: 1.125rem;
+                gap: 0.75rem;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .grafico-titulo {
+                font-size: 1rem;
+                gap: 0.5rem;
+                flex-direction: column;
+                align-items: flex-start;
+            }
+        }
+
+        .chart-container {
+            position: relative;
+            flex: 1;
+            min-height: 200px;
+            overflow: hidden;
+        }
+
+        .chart-container canvas {
+            max-width: 100% !important;
+            max-height: 100% !important;
+            width: 100% !important;
+            height: 100% !important;
+        }
+
+        /* Categorías gastos - Panel lateral responsive */
         .categorias-gastos {
-            background: var(--bg-card);
+            background: var(--white, #ffffff);
             border-radius: 20px;
             padding: 2rem;
             box-shadow: var(--shadow-lg);
+        }
+
+        @media (max-width: 768px) {
+            .categorias-gastos {
+                padding: 1.5rem;
+                border-radius: 16px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .categorias-gastos {
+                padding: 1.25rem;
+                border-radius: 12px;
+            }
         }
 
         .categoria-item {
@@ -526,30 +1018,50 @@
             box-shadow: var(--shadow-lg);
         }
 
-        .categoria-item.mano-obra {
-            border-left-color: #ef4444;
+        @media (max-width: 768px) {
+            .categoria-item {
+                padding: 1.25rem;
+                border-radius: 12px;
+                border-left-width: 4px;
+            }
+            
+            .categoria-item:hover {
+                transform: translateX(2px);
+            }
         }
 
-        .categoria-item.insumos {
-            border-left-color: #f59e0b;
+        @media (max-width: 480px) {
+            .categoria-item {
+                padding: 1rem;
+                border-radius: 10px;
+                border-left-width: 3px;
+                flex-direction: column;
+                gap: 0.75rem;
+            }
+            
+            .categoria-item:hover {
+                transform: none;
+            }
         }
 
-        .categoria-item.transporte {
-            border-left-color: #3b82f6;
-        }
-
-        .categoria-item.mantenimiento {
-            border-left-color: #8b5cf6;
-        }
-
-        .categoria-item.servicios {
-            border-left-color: #22c55e;
-        }
+        /* Colores de categorías */
+        .categoria-item.mano-obra { border-left-color: #ef4444; }
+        .categoria-item.insumos { border-left-color: #f59e0b; }
+        .categoria-item.transporte { border-left-color: #3b82f6; }
+        .categoria-item.mantenimiento { border-left-color: #8b5cf6; }
+        .categoria-item.servicios { border-left-color: #22c55e; }
 
         .categoria-info {
             display: flex;
             align-items: center;
             gap: 1rem;
+        }
+
+        @media (max-width: 480px) {
+            .categoria-info {
+                width: 100%;
+                justify-content: center;
+            }
         }
 
         .categoria-icon {
@@ -564,42 +1076,96 @@
             box-shadow: var(--shadow);
         }
 
+        @media (max-width: 768px) {
+            .categoria-icon {
+                width: 45px;
+                height: 45px;
+                font-size: 1.125rem;
+                border-radius: 10px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .categoria-icon {
+                width: 40px;
+                height: 40px;
+                font-size: 1rem;
+                border-radius: 8px;
+            }
+        }
+
         .categoria-datos {
             display: flex;
             flex-direction: column;
             align-items: flex-end;
         }
 
+        @media (max-width: 480px) {
+            .categoria-datos {
+                align-items: center;
+                text-align: center;
+            }
+        }
+
         .categoria-monto {
             font-size: 1.25rem;
             font-weight: 700;
-            color: var(--text-primary);
+            color: var(--text-primary, #1e293b);
         }
 
         .categoria-porcentaje {
             font-size: 0.875rem;
-            color: var(--text-secondary);
+            color: var(--text-secondary, #64748b);
             font-weight: 600;
         }
 
-        .form-registro-gasto {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-            gap: 1.5rem;
-            align-items: end;
-            background: var(--bg-card);
-            border-radius: 20px;
-            padding: 2rem;
-            margin-bottom: 2rem;
-            box-shadow: var(--shadow-lg);
+        @media (max-width: 768px) {
+            .categoria-monto {
+                font-size: 1.125rem;
+            }
+            
+            .categoria-porcentaje {
+                font-size: 0.8rem;
+            }
         }
 
+        @media (max-width: 480px) {
+            .categoria-monto {
+                font-size: 1rem;
+            }
+            
+            .categoria-porcentaje {
+                font-size: 0.75rem;
+            }
+        }
+
+        /* Tabla de gastos - Completamente responsive */
         .tabla-gastos {
-            background: var(--bg-card);
+            background: var(--white, #ffffff);
             border-radius: 20px;
             padding: 2rem;
             margin-top: 2rem;
             box-shadow: var(--shadow-lg);
+        }
+
+        @media (max-width: 768px) {
+            .tabla-gastos {
+                padding: 1.5rem;
+                border-radius: 16px;
+                margin-top: 1.5rem;
+                overflow-x: auto;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .tabla-gastos {
+                padding: 1rem;
+                border-radius: 12px;
+                margin-top: 1rem;
+                margin-left: -1rem;
+                margin-right: -1rem;
+                border-radius: 0;
+            }
         }
 
         .tabla-header {
@@ -607,42 +1173,77 @@
             justify-content: space-between;
             align-items: center;
             margin-bottom: 2rem;
+            flex-wrap: wrap;
+            gap: 1rem;
         }
 
-        .categoria-badge {
-            padding: 0.5rem 1rem;
-            border-radius: 20px;
-            font-size: 0.75rem;
+        @media (max-width: 640px) {
+            .tabla-header {
+                flex-direction: column;
+                align-items: stretch;
+                text-align: center;
+                margin-bottom: 1.5rem;
+            }
+        }
+
+        /* Tabla responsive con scroll horizontal */
+        .table-container {
+            overflow-x: auto;
+            margin: 0 -0.5rem;
+            padding: 0 0.5rem;
+        }
+
+        .table {
+            width: 100%;
+            border-collapse: collapse;
+            background: white;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: var(--shadow);
+            min-width: 600px; /* Ancho mínimo para mantener legibilidad */
+        }
+
+        @media (max-width: 768px) {
+            .table {
+                min-width: 500px;
+                font-size: 0.875rem;
+            }
+        }
+
+        .table th,
+        .table td {
+            padding: 1rem;
+            text-align: left;
+            border-bottom: 1px solid var(--border, #e2e8f0);
+            white-space: nowrap;
+        }
+
+        @media (max-width: 768px) {
+            .table th,
+            .table td {
+                padding: 0.75rem 0.5rem;
+            }
+        }
+
+        .table th {
+            background: var(--light-gray, #f8fafc);
             font-weight: 600;
-            text-transform: uppercase;
-            letter-spacing: 0.025em;
+            color: var(--text-primary, #1e293b);
+            font-size: 0.875rem;
         }
 
-        .categoria-badge.mano-obra {
-            background: rgba(239, 68, 68, 0.15);
-            color: #dc2626;
+        @media (max-width: 768px) {
+            .table th {
+                font-size: 0.8rem;
+            }
         }
 
-        .categoria-badge.insumos {
-            background: rgba(245, 158, 11, 0.15);
-            color: #d97706;
+        .table tr:hover {
+            background: #f8fafc;
         }
 
-        .categoria-badge.transporte {
-            background: rgba(59, 130, 246, 0.15);
-            color: #2563eb;
-        }
-
-        .categoria-badge.mantenimiento {
-            background: rgba(139, 92, 246, 0.15);
-            color: #8b5cf6;
-        }
-
-        .categoria-badge.servicios {
-            background: rgba(34, 197, 94, 0.15);
-            color: #16a34a;
-        }
-
+        /* Badges para categorías y estados - Responsive */
+        .categoria-badge,
         .estado-badge {
             padding: 0.5rem 1rem;
             border-radius: 20px;
@@ -650,111 +1251,56 @@
             font-weight: 600;
             text-transform: uppercase;
             letter-spacing: 0.025em;
+            display: inline-block;
         }
 
-        .estado-badge.pendiente {
-            background: rgba(245, 158, 11, 0.15);
-            color: #d97706;
+        @media (max-width: 768px) {
+            .categoria-badge,
+            .estado-badge {
+                padding: 0.375rem 0.75rem;
+                font-size: 0.7rem;
+            }
         }
 
-        .estado-badge.pagado {
-            background: rgba(34, 197, 94, 0.15);
-            color: #16a34a;
+        @media (max-width: 480px) {
+            .categoria-badge,
+            .estado-badge {
+                padding: 0.25rem 0.5rem;
+                font-size: 0.65rem;
+            }
         }
 
-        .initialization-loader {
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: rgba(0, 0, 0, 0.9);
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            z-index: 9999;
-            color: white;
-            font-size: 1.2rem;
+        /* Colores de badges */
+        .categoria-badge.mano-obra { background: rgba(239, 68, 68, 0.15); color: #dc2626; }
+        .categoria-badge.insumos { background: rgba(245, 158, 11, 0.15); color: #d97706; }
+        .categoria-badge.transporte { background: rgba(59, 130, 246, 0.15); color: #2563eb; }
+        .categoria-badge.mantenimiento { background: rgba(139, 92, 246, 0.15); color: #8b5cf6; }
+        .categoria-badge.servicios { background: rgba(34, 197, 94, 0.15); color: #16a34a; }
+
+        .estado-badge.pendiente { background: rgba(245, 158, 11, 0.15); color: #d97706; }
+        .estado-badge.pagado { background: rgba(34, 197, 94, 0.15); color: #16a34a; }
+
+        /* Ajustes para el layout principal responsive */
+        @media (max-width: 1024px) {
+            .main-content-wrapper {
+                margin-left: 0;
+            }
         }
 
-        .initialization-loader.hidden {
-            display: none;
+        @media (max-width: 768px) {
+            .main-content-wrapper {
+                padding: 1rem;
+                margin-top: var(--header-height, 80px);
+            }
         }
 
-        .loader-content {
-            text-align: center;
-            max-width: 400px;
-            padding: 2rem;
+        @media (max-width: 480px) {
+            .main-content-wrapper {
+                padding: 0.75rem;
+            }
         }
 
-        .loader-icon {
-            font-size: 4rem;
-            margin-bottom: 2rem;
-            animation: pulse 2s ease-in-out infinite;
-        }
-
-        .loader-steps {
-            margin-top: 2rem;
-            text-align: left;
-        }
-
-        .loader-step {
-            display: flex;
-            align-items: center;
-            gap: 1rem;
-            margin-bottom: 1rem;
-            opacity: 0.5;
-            transition: opacity 0.3s ease;
-        }
-
-        .loader-step.active {
-            opacity: 1;
-            color: #22c55e;
-        }
-
-        .loader-step.completed {
-            opacity: 0.7;
-            color: #6b7280;
-        }
-
-        @keyframes pulse {
-            0%, 100% { transform: scale(1); }
-            50% { transform: scale(1.1); }
-        }
-
-        /* Estados de conexión */
-        .connection-status {
-            position: fixed;
-            top: 1rem;
-            left: 1rem;
-            padding: 0.5rem 1rem;
-            border-radius: 20px;
-            font-size: 0.75rem;
-            font-weight: 600;
-            z-index: 1000;
-            transition: all 0.3s ease;
-        }
-
-        .connection-status.online {
-            background: rgba(34, 197, 94, 0.15);
-            color: #16a34a;
-            border: 1px solid rgba(34, 197, 94, 0.3);
-        }
-
-        .connection-status.offline {
-            background: rgba(239, 68, 68, 0.15);
-            color: #dc2626;
-            border: 1px solid rgba(239, 68, 68, 0.3);
-        }
-
-        .connection-status.loading {
-            background: rgba(245, 158, 11, 0.15);
-            color: #d97706;
-            border: 1px solid rgba(245, 158, 11, 0.3);
-        }
-
-        /* Animaciones personalizadas */
+        /* Animaciones - Desactivadas en móviles para mejor performance */
         @keyframes fadeInUp {
             from {
                 opacity: 0;
@@ -770,64 +1316,67 @@
             animation: fadeInUp 0.5s ease-out;
         }
 
-        /* Estilos para modales */
-        .modal-overlay {
-            animation: fadeInUp 0.3s ease-out;
-        }
-
-        /* Responsivo - Ajustes adicionales para navegación */
-        @media (max-width: 1024px) {
-            .contenido-principal {
-                grid-template-columns: 1fr;
-            }
-        }
-
         @media (max-width: 768px) {
-            .gastos-header {
-                flex-direction: column;
-                align-items: stretch;
-            }
-            
-            .resumen-financiero {
-                grid-template-columns: repeat(2, 1fr);
-            }
-            
-            .filtros-grid {
-                grid-template-columns: 1fr;
-            }
-            
-            .form-registro-gasto {
-                grid-template-columns: 1fr;
-            }
-
-            .acciones-rapidas {
-                flex-direction: column;
-            }
-
-            .accion-rapida {
-                min-width: unset;
+            .animate-fade-in-up {
+                animation: none; /* Desactivar animaciones en móviles */
             }
         }
 
-        @media (max-width: 480px) {
-            .resumen-financiero {
-                grid-template-columns: 1fr;
-            }
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+        }
 
-            .resumen-valor {
-                font-size: 2rem;
+        /* Scroll indicators para tablas en móvil */
+        @media (max-width: 768px) {
+            .table-container::after {
+                content: '← Desliza para ver más';
+                position: sticky;
+                right: 0;
+                top: 0;
+                background: rgba(0, 0, 0, 0.7);
+                color: white;
+                padding: 0.25rem 0.5rem;
+                font-size: 0.7rem;
+                border-radius: 4px;
+                float: right;
+                margin-top: -2rem;
+                margin-bottom: 1rem;
+                opacity: 0.8;
+                z-index: 1;
             }
+        }
 
-            .title-icon {
-                width: 60px;
-                height: 60px;
-                font-size: 1.5rem;
+        /* Mejoras para touch targets en móviles */
+        @media (max-width: 768px) {
+            .btn {
+                min-height: 44px;
+                min-width: 44px;
+                touch-action: manipulation;
             }
+            
+            input,
+            select,
+            button {
+                min-height: 44px;
+                touch-action: manipulation;
+            }
+        }
+
+        /* Responsive utilities */
+        @media (max-width: 768px) {
+            .hide-mobile { display: none !important; }
+            .show-mobile { display: block !important; }
+        }
+
+        @media (min-width: 769px) {
+            .hide-desktop { display: none !important; }
+            .show-mobile { display: none !important; }
         }
     </style>
 </head>
 <body>
-    <!-- Estado de conexión -->
+    <!-- Estado de conexión - MOVIDO A LA DERECHA -->
     <div class="connection-status loading" id="connectionStatus">
         <i class="fas fa-circle"></i>
         Conectando...
@@ -871,9 +1420,9 @@
                 <div class="title-icon">
                     <i class="fas fa-receipt"></i>
                 </div>
-                <div>
-                    <h1 style="font-size: 2.5rem; font-weight: 800; margin-bottom: 0.5rem;">Gestión de Gastos</h1>
-                    <p style="font-size: 1.1rem; color: var(--text-secondary);">Control financiero y análisis de costos en tiempo real</p>
+                <div class="title-text">
+                    <h1>Gestión de Gastos</h1>
+                    <p>Control financiero y análisis de costos en tiempo real</p>
                 </div>
             </div>
             
@@ -884,15 +1433,21 @@
                 </div>
                 
                 <button class="btn btn-primary" onclick="mostrarFormularioGasto()">
-                    <i class="fas fa-plus"></i> Nuevo Gasto
+                    <i class="fas fa-plus"></i> 
+                    <span class="hide-mobile">Nuevo Gasto</span>
+                    <span class="show-mobile">Nuevo</span>
                 </button>
                 
                 <button class="btn btn-secondary" onclick="accionRapida('presupuesto')">
-                    <i class="fas fa-chart-pie"></i> Presupuestos
+                    <i class="fas fa-chart-pie"></i> 
+                    <span class="hide-mobile">Presupuestos</span>
+                    <span class="show-mobile">Budget</span>
                 </button>
                 
                 <button class="btn btn-success" onclick="exportarReporte()">
-                    <i class="fas fa-file-export"></i> Exportar
+                    <i class="fas fa-file-export"></i> 
+                    <span class="hide-mobile">Exportar</span>
+                    <span class="show-mobile">Export</span>
                 </button>
             </div>
         </header>
@@ -901,7 +1456,7 @@
         <section class="resumen-financiero animate-fade-in-up">
             <div class="resumen-card gastos">
                 <div class="resumen-header">
-                    <div class="resumen-icon" style="background: linear-gradient(135deg, #dc2626, #b91c1c);">
+                    <div class="resumen-icon" style="background: linear-gradient(135deg, var(--gastos-primary), var(--gastos-primary-dark));">
                         <i class="fas fa-money-bill-wave"></i>
                     </div>
                     <div class="resumen-tendencia">
@@ -924,7 +1479,7 @@
             
             <div class="resumen-card presupuesto">
                 <div class="resumen-header">
-                    <div class="resumen-icon" style="background: linear-gradient(135deg, #3b82f6, #1d4ed8);">
+                    <div class="resumen-icon" style="background: linear-gradient(135deg, var(--gastos-secondary), #1d4ed8);">
                         <i class="fas fa-calculator"></i>
                     </div>
                     <div class="resumen-tendencia">
@@ -938,7 +1493,7 @@
             
             <div class="resumen-card proyectado">
                 <div class="resumen-header">
-                    <div class="resumen-icon" style="background: linear-gradient(135deg, #f59e0b, #d97706);">
+                    <div class="resumen-icon" style="background: linear-gradient(135deg, var(--gastos-accent), #d97706);">
                         <i class="fas fa-chart-line"></i>
                     </div>
                     <div class="resumen-tendencia">
@@ -968,7 +1523,7 @@
         <!-- Filtros -->
         <section class="filtros-gastos animate-fade-in-up">
             <h3 style="margin-bottom: 1.5rem; display: flex; align-items: center; gap: 0.75rem;">
-                <i class="fas fa-filter" style="color: var(--primary);"></i> 
+                <i class="fas fa-filter" style="color: var(--gastos-primary);"></i> 
                 Filtros de Análisis
             </h3>
             
@@ -1007,13 +1562,17 @@
                 
                 <div class="filtro-grupo">
                     <button class="btn btn-primary" onclick="aplicarFiltros()">
-                        <i class="fas fa-search"></i> Aplicar Filtros
+                        <i class="fas fa-search"></i> 
+                        <span class="hide-mobile">Aplicar Filtros</span>
+                        <span class="show-mobile">Aplicar</span>
                     </button>
                 </div>
                 
                 <div class="filtro-grupo">
                     <button class="btn btn-secondary" onclick="limpiarFiltros()">
-                        <i class="fas fa-eraser"></i> Limpiar
+                        <i class="fas fa-eraser"></i> 
+                        <span class="hide-mobile">Limpiar</span>
+                        <span class="show-mobile">Reset</span>
                     </button>
                 </div>
             </div>
@@ -1022,50 +1581,50 @@
         <!-- Acciones rápidas -->
         <section class="acciones-rapidas animate-fade-in-up">
             <div class="accion-rapida" onclick="accionRapida('nuevo-gasto')">
-                <div class="accion-icon" style="background: linear-gradient(135deg, #dc2626, #b91c1c);">
+                <div class="accion-icon" style="background: linear-gradient(135deg, var(--gastos-primary), var(--gastos-primary-dark));">
                     <i class="fas fa-plus"></i>
                 </div>
-                <div>
-                    <div style="font-weight: 700; font-size: 1rem;">Registrar Gasto</div>
-                    <div style="font-size: 0.875rem; color: var(--text-secondary);">Nuevo registro rápido</div>
+                <div class="accion-texto">
+                    <div class="accion-titulo">Registrar Gasto</div>
+                    <div class="accion-descripcion">Nuevo registro rápido</div>
                 </div>
             </div>
             
             <div class="accion-rapida" onclick="accionRapida('presupuesto')">
-                <div class="accion-icon" style="background: linear-gradient(135deg, #3b82f6, #1d4ed8);">
+                <div class="accion-icon" style="background: linear-gradient(135deg, var(--gastos-secondary), #1d4ed8);">
                     <i class="fas fa-chart-pie"></i>
                 </div>
-                <div>
-                    <div style="font-weight: 700; font-size: 1rem;">Gestionar Presupuesto</div>
-                    <div style="font-size: 0.875rem; color: var(--text-secondary);">Configurar límites y alertas</div>
+                <div class="accion-texto">
+                    <div class="accion-titulo">Gestionar Presupuesto</div>
+                    <div class="accion-descripcion">Configurar límites y alertas</div>
                 </div>
             </div>
             
             <div class="accion-rapida" onclick="accionRapida('reporte')">
-                <div class="accion-icon" style="background: linear-gradient(135deg, #f59e0b, #d97706);">
+                <div class="accion-icon" style="background: linear-gradient(135deg, var(--gastos-accent), #d97706);">
                     <i class="fas fa-file-chart-line"></i>
                 </div>
-                <div>
-                    <div style="font-weight: 700; font-size: 1rem;">Generar Reporte</div>
-                    <div style="font-size: 0.875rem; color: var(--text-secondary);">Análisis financiero completo</div>
+                <div class="accion-texto">
+                    <div class="accion-titulo">Generar Reporte</div>
+                    <div class="accion-descripcion">Análisis financiero completo</div>
                 </div>
             </div>
 
             <div class="accion-rapida" onclick="window.location.reload()">
-                <div class="accion-icon" style="background: linear-gradient(135deg, #22c55e, #16a34a);">
+                <div class="accion-icon" style="background: linear-gradient(135deg, var(--gastos-success), #16a34a);">
                     <i class="fas fa-sync-alt"></i>
                 </div>
-                <div>
-                    <div style="font-weight: 700; font-size: 1rem;">Sincronizar Datos</div>
-                    <div style="font-size: 0.875rem; color: var(--text-secondary);">Actualizar información</div>
+                <div class="accion-texto">
+                    <div class="accion-titulo">Sincronizar Datos</div>
+                    <div class="accion-descripcion">Actualizar información</div>
                 </div>
             </div>
         </section>
 
         <!-- Registro rápido de gasto -->
         <section class="form-registro-gasto animate-fade-in-up">
-            <h3 style="grid-column: 1 / -1; margin-bottom: 1.5rem; display: flex; align-items: center; gap: 0.75rem;">
-                <i class="fas fa-bolt" style="color: var(--warning);"></i> 
+            <h3>
+                <i class="fas fa-bolt" style="color: var(--gastos-accent);"></i> 
                 Registro Rápido de Gasto
             </h3>
             
@@ -1119,8 +1678,8 @@
                 <div class="grafico-card">
                     <div class="grafico-header">
                         <h3 class="grafico-titulo">
-                            <i class="fas fa-chart-line" style="color: var(--primary);"></i>
-                            Evolución de Gastos Mensual
+                            <i class="fas fa-chart-line" style="color: var(--gastos-primary);"></i>
+                            <span>Evolución de Gastos Mensual</span>
                         </h3>
                         <div style="font-size: 0.875rem; color: var(--text-secondary);">
                             <i class="fas fa-calendar"></i> Últimos 30 días
@@ -1135,8 +1694,8 @@
                 <div class="grafico-card">
                     <div class="grafico-header">
                         <h3 class="grafico-titulo">
-                            <i class="fas fa-chart-pie" style="color: var(--secondary);"></i>
-                            Distribución por Categoría
+                            <i class="fas fa-chart-pie" style="color: var(--gastos-secondary);"></i>
+                            <span>Distribución por Categoría</span>
                         </h3>
                         <div style="font-size: 0.875rem; color: var(--text-secondary);">
                             <i class="fas fa-tags"></i> Mes actual
@@ -1153,8 +1712,8 @@
                 <!-- Categorías de gastos -->
                 <div class="categorias-gastos">
                     <h3 style="margin-bottom: 2rem; display: flex; align-items: center; gap: 0.75rem;">
-                        <i class="fas fa-tags" style="color: var(--success);"></i>
-                        Gastos por Categoría
+                        <i class="fas fa-tags" style="color: var(--gastos-success);"></i>
+                        <span>Gastos por Categoría</span>
                     </h3>
                     
                     <div id="listaCategoriasGastos">
@@ -1171,9 +1730,9 @@
         <!-- Tabla de gastos -->
         <section class="tabla-gastos animate-fade-in-up">
             <div class="tabla-header">
-                <h3 style="display: flex; align-items: center; gap: 0.75rem;">
-                    <i class="fas fa-table" style="color: var(--info);"></i>
-                    Registros de Gastos Recientes
+                <h3 style="display: flex; align-items: center; gap: 0.75rem; margin: 0;">
+                    <i class="fas fa-table" style="color: var(--gastos-info);"></i>
+                    <span>Registros de Gastos Recientes</span>
                 </h3>
                 <div style="font-size: 0.875rem; color: var(--text-secondary);">
                     <i class="fas fa-info-circle"></i> 
@@ -1190,7 +1749,7 @@
                             <th><i class="fas fa-file-text"></i> Concepto</th>
                             <th><i class="fas fa-dollar-sign"></i> Monto</th>
                             <th><i class="fas fa-check-circle"></i> Estado</th>
-                            <th><i class="fas fa-cog"></i> Acciones</th>
+                            <th class="hide-mobile"><i class="fas fa-cog"></i> Acciones</th>
                         </tr>
                     </thead>
                     <tbody id="tablaGastosBody">
@@ -1230,7 +1789,7 @@
                 'connecting': { class: 'loading', icon: 'fa-circle', text: 'Conectando...' },
                 'online': { class: 'online', icon: 'fa-check-circle', text: 'Conectado' },
                 'offline': { class: 'offline', icon: 'fa-times-circle', text: 'Sin conexión' },
-                'firebase': { class: 'online', icon: 'fa-database', text: 'Firebase conectado' }
+                'firebase': { class: 'online', icon: 'fa-database', text: 'Firebase OK' }
             };
             
             const config = statusMap[status] || statusMap.connecting;
@@ -1262,13 +1821,21 @@
             loader.style.opacity = '0';
             setTimeout(() => {
                 loader.classList.add('hidden');
-                // Activar animaciones de los elementos
-                document.querySelectorAll('.animate-fade-in-up').forEach((el, index) => {
-                    setTimeout(() => {
+                // Activar animaciones de los elementos solo en desktop
+                if (window.innerWidth > 768) {
+                    document.querySelectorAll('.animate-fade-in-up').forEach((el, index) => {
+                        setTimeout(() => {
+                            el.style.opacity = '1';
+                            el.style.transform = 'translateY(0)';
+                        }, index * 100);
+                    });
+                } else {
+                    // En móviles mostrar todo inmediatamente
+                    document.querySelectorAll('.animate-fade-in-up').forEach(el => {
                         el.style.opacity = '1';
                         el.style.transform = 'translateY(0)';
-                    }, index * 100);
-                });
+                    });
+                }
             }, 300);
         }
 
@@ -1305,12 +1872,14 @@
                 fechaInput.value = new Date().toISOString().split('T')[0];
             }
 
-            // Configurar elementos con animación
-            document.querySelectorAll('.animate-fade-in-up').forEach(el => {
-                el.style.opacity = '0';
-                el.style.transform = 'translateY(20px)';
-                el.style.transition = 'all 0.5s ease-out';
-            });
+            // Configurar elementos con animación solo en desktop
+            if (window.innerWidth > 768) {
+                document.querySelectorAll('.animate-fade-in-up').forEach(el => {
+                    el.style.opacity = '0';
+                    el.style.transform = 'translateY(20px)';
+                    el.style.transition = 'all 0.5s ease-out';
+                });
+            }
             
             // Eventos de formulario rápido
             ['categoriaGasto', 'conceptoGasto', 'montoGasto'].forEach(id => {
@@ -1336,13 +1905,17 @@
             console.log('✅ Aplicación inicializada');
         });
 
-        // Inicializar gráficos
+        // Inicializar gráficos responsive
         function initializeCharts() {
             try {
                 if (!window.Chart) {
                     console.warn('Chart.js no está disponible');
                     return;
                 }
+
+                // Configuración responsive para gráficos
+                Chart.defaults.responsive = true;
+                Chart.defaults.maintainAspectRatio = false;
 
                 // Gráfico de evolución
                 const ctxEvol = document.getElementById('graficoEvolucion');
@@ -1353,15 +1926,15 @@
                             labels: ['Hace 30d', 'Hace 20d', 'Hace 10d', 'Hoy'],
                             datasets: [{
                                 label: 'Gastos Acumulados (GTQ)',
-                                data: [0, 0, 0, 0], // Se actualizará con datos reales
-                                borderColor: '#dc2626',
+                                data: [0, 0, 0, 0],
+                                borderColor: 'var(--gastos-primary)',
                                 backgroundColor: 'rgba(220, 38, 38, 0.1)',
                                 tension: 0.4,
                                 fill: true,
-                                pointBackgroundColor: '#dc2626',
+                                pointBackgroundColor: 'var(--gastos-primary)',
                                 pointBorderColor: '#ffffff',
                                 pointBorderWidth: 2,
-                                pointRadius: 6
+                                pointRadius: window.innerWidth > 768 ? 6 : 4
                             }]
                         },
                         options: {
@@ -1369,7 +1942,7 @@
                             maintainAspectRatio: false,
                             plugins: {
                                 legend: {
-                                    display: false
+                                    display: window.innerWidth > 640
                                 }
                             },
                             scales: {
@@ -1378,6 +1951,16 @@
                                     ticks: {
                                         callback: function(value) {
                                             return 'Q ' + value.toLocaleString();
+                                        },
+                                        font: {
+                                            size: window.innerWidth > 768 ? 12 : 10
+                                        }
+                                    }
+                                },
+                                x: {
+                                    ticks: {
+                                        font: {
+                                            size: window.innerWidth > 768 ? 12 : 10
                                         }
                                     }
                                 }
@@ -1404,10 +1987,13 @@
                             maintainAspectRatio: false,
                             plugins: {
                                 legend: {
-                                    position: 'bottom',
+                                    position: window.innerWidth > 768 ? 'bottom' : 'top',
                                     labels: {
                                         usePointStyle: true,
-                                        padding: 20
+                                        padding: window.innerWidth > 768 ? 20 : 10,
+                                        font: {
+                                            size: window.innerWidth > 768 ? 12 : 10
+                                        }
                                     }
                                 }
                             }
@@ -1415,7 +2001,7 @@
                     });
                 }
 
-                console.log('📊 Gráficos inicializados');
+                console.log('📊 Gráficos responsive inicializados');
             } catch (error) {
                 console.error('Error inicializando gráficos:', error);
             }
@@ -1432,12 +2018,31 @@
             console.log('🔵 Sin conexión a internet');
         });
 
+        // Responsive handler para gráficos
+        window.addEventListener('resize', () => {
+            // Reinicializar gráficos en cambios de tamaño significativos
+            const shouldReinitialize = 
+                (window.innerWidth <= 768 && window.innerWidth > 640) ||
+                (window.innerWidth <= 640);
+                
+            if (shouldReinitialize) {
+                setTimeout(initializeCharts, 100);
+            }
+        });
+
         // Estado inicial de conexión
         updateConnectionStatus(navigator.onLine ? 'connecting' : 'offline');
 
         // Placeholder functions para mantener funcionalidad
         function mostrarFormularioGasto() {
             console.log('Mostrar formulario de gasto');
+            // Scroll al formulario en móviles
+            if (window.innerWidth <= 768) {
+                document.querySelector('.form-registro-gasto').scrollIntoView({ 
+                    behavior: 'smooth', 
+                    block: 'start' 
+                });
+            }
         }
 
         function accionRapida(tipo) {
@@ -1454,12 +2059,42 @@
 
         function limpiarFiltros() {
             console.log('Limpiar filtros');
+            // Reset formularios
+            document.getElementById('filtroPeriodo').value = 'mes';
+            document.getElementById('filtroCategoria').value = '';
+            document.getElementById('filtroEstado').value = '';
         }
 
         function guardarGastoRapido() {
             console.log('Guardar gasto rápido');
+            
+            // Validación básica
+            const requiredFields = ['fechaGasto', 'categoriaGasto', 'conceptoGasto', 'montoGasto'];
+            let valid = true;
+            
+            requiredFields.forEach(fieldId => {
+                const field = document.getElementById(fieldId);
+                if (!field.value) {
+                    field.style.borderColor = 'var(--gastos-danger)';
+                    valid = false;
+                } else {
+                    field.style.borderColor = '';
+                }
+            });
+            
+            if (!valid) {
+                alert('Por favor completa todos los campos obligatorios');
+                return;
+            }
+            
+            // Aquí iría la lógica de guardado
+            alert('Funcionalidad de guardado pendiente de implementación');
+        }
+
+        // Touch-friendly improvements para móviles
+        if ('ontouchstart' in window) {
+            document.body.classList.add('touch-device');
         }
     </script>
 </body>
 </html>
-
