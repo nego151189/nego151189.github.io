@@ -1,7 +1,8 @@
 // sw.js - Service Worker Inteligente Finca La Herradura
-const CACHE_NAME = 'finca-herradura-v2.1.0';  // ✅ Versión mayor
-const DATA_CACHE_NAME = 'finca-herradura-data-v1.0.0';
-const STATIC_CACHE_NAME = 'finca-herradura-static-v1.0.0';
+// CAMBIAR LA VERSIÓN PARA FORZAR ACTUALIZACIÓN
+const CACHE_NAME = 'finca-herradura-v3.0.0';  // ✅ Versión mayor
+const DATA_CACHE_NAME = 'finca-herradura-data-v2.0.0';
+const STATIC_CACHE_NAME = 'finca-herradura-static-v2.0.0';
 
 // Archivos estáticos a cachear
 const STATIC_FILES = [
@@ -744,4 +745,5 @@ self.addEventListener('message', (event) => {
 async function clearAllCaches() {
   const cacheNames = await caches.keys();
   return Promise.all(cacheNames.map(name => caches.delete(name)));
+
 }
