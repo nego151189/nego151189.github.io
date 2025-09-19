@@ -472,6 +472,11 @@
     </style>
 </head>
 <body>
+
+        <!-- Overlay para sidebar móvil -->
+    <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+    
     <!-- Loader -->
     <div id="loader" class="loader-container">
         <div class="loader">
@@ -489,12 +494,17 @@
     <main class="main-content-wrapper">
         <section id="dashboard" class="dashboard-section">
             <!-- Dashboard Header -->
-            <div class="dashboard-header">
-                <div class="welcome-section">
-                    <h2 id="welcomeMessage">Buenos días, Administrador</h2>
-                    <p id="dateDisplay">Miércoles, 3 de Septiembre 2025</p>
-                </div>
-                
+                <div class="header-content">
+                    <div style="display: flex; align-items: center; gap: 1rem;">
+                        <button class="menu-toggle" id="menuToggle" aria-label="Abrir menú">
+                            <i class="fas fa-bars"></i>
+                        </button>
+                        <div class="welcome-section">
+                            <h2 id="welcomeMessage">Buenos dÃ­as, Administrador</h2>
+                            <p id="dateDisplay">MiÃ©rcoles, 3 de Septiembre 2025</p>
+                        </div>
+                    </div>
+                                
                 <!-- AI Assistant Card -->
                 <div class="ai-assistant-card">
                     <div class="ai-header">
@@ -710,6 +720,41 @@
     <script src="js/clima.js"></script>
     <script src="js/auth.js"></script>
     <script src="js/nav.js"></script>
+
+
+       <script src="js/index.js"></script>
+</body>
+Agregar antes:
+html    <script>
+        // Toggle del menú móvil
+        document.addEventListener('DOMContentLoaded', function() {
+            const menuToggle = document.getElementById('menuToggle');
+            const sidebar = document.querySelector('.sidebar');
+            const sidebarOverlay = document.getElementById('sidebarOverlay');
+            
+            if (menuToggle && sidebar && sidebarOverlay) {
+                menuToggle.addEventListener('click', function() {
+                    sidebar.classList.toggle('open');
+                    sidebarOverlay.classList.toggle('show');
+                });
+                
+                sidebarOverlay.addEventListener('click', function() {
+                    sidebar.classList.remove('open');
+                    sidebarOverlay.classList.remove('show');
+                });
+                
+                // Cerrar al cambiar tamaño de ventana
+                window.addEventListener('resize', function() {
+                    if (window.innerWidth > 768) {
+                        sidebar.classList.remove('open');
+                        sidebarOverlay.classList.remove('show');
+                    }
+                });
+            }
+        });
+    </script>
+    
     <script src="js/index.js"></script>
 </body>
+
 </html>
