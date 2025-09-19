@@ -75,169 +75,398 @@
             pointer-events: none;
         }
 
-        /* SOLO MEJORAS RESPONSIVAS - SIN TOCAR ESTILOS EXISTENTES */
-        
-        /* Responsive para dashboard header */
-        @media (max-width: 1024px) {
+        /* Ajustes para el contenido principal */
+        .main-content-wrapper {
+            margin-left: 280px;
+            min-height: 100vh;
+            padding: 2rem;
+            background: #f8fafc;
+            transition: margin-left 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .dashboard-section {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        /* Dashboard Header */
+        .dashboard-header {
+            display: grid;
+            grid-template-columns: 1fr auto;
+            gap: 2rem;
+            margin-bottom: 2rem;
+            padding: 2rem;
+            background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+            border-radius: 16px;
+            box-shadow: 0 2px 12px rgba(0, 0, 0, 0.05);
+        }
+
+        .welcome-section h2 {
+            font-size: 2rem;
+            font-weight: 700;
+            color: #1e293b;
+            margin-bottom: 0.5rem;
+        }
+
+        .welcome-section p {
+            color: #64748b;
+            font-size: 1rem;
+        }
+
+        /* AI Assistant Card */
+        .ai-assistant-card {
+            background: linear-gradient(135deg, rgba(139, 92, 246, 0.05) 0%, rgba(167, 139, 250, 0.05) 100%);
+            border: 1px solid rgba(139, 92, 246, 0.2);
+            border-radius: 16px;
+            padding: 1.5rem;
+            max-width: 400px;
+        }
+
+        .ai-header {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            margin-bottom: 1rem;
+        }
+
+        .ai-icon {
+            font-size: 1.5rem;
+        }
+
+        .ai-header h3 {
+            font-size: 1rem;
+            font-weight: 600;
+            color: #8b5cf6;
+            margin: 0;
+        }
+
+        .recommendation {
+            display: flex;
+            gap: 0.75rem;
+            margin-bottom: 0.75rem;
+            padding: 0.75rem;
+            background: rgba(255, 255, 255, 0.7);
+            border-radius: 8px;
+        }
+
+        .rec-icon {
+            font-size: 1.2rem;
+            flex-shrink: 0;
+        }
+
+        .recommendation p {
+            font-size: 0.875rem;
+            color: #475569;
+            margin: 0;
+        }
+
+        /* KPIs Grid */
+        .kpi-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .kpi-card {
+            background: #ffffff;
+            border-radius: 16px;
+            padding: 1.5rem;
+            box-shadow: 0 2px 12px rgba(0, 0, 0, 0.05);
+            border: 1px solid #e2e8f0;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+
+        .kpi-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+        }
+
+        .kpi-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+
+        .kpi-icon {
+            font-size: 1.5rem;
+            padding: 0.75rem;
+            background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%);
+            color: white;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .kpi-trend {
+            font-size: 0.875rem;
+            font-weight: 600;
+            padding: 0.25rem 0.75rem;
+            border-radius: 20px;
+            background: rgba(34, 197, 94, 0.1);
+            color: #22c55e;
+        }
+
+        .kpi-value {
+            font-size: 2.25rem;
+            font-weight: 700;
+            color: #1e293b;
+            margin-bottom: 0.5rem;
+        }
+
+        .kpi-label {
+            font-size: 0.875rem;
+            color: #64748b;
+            margin-bottom: 1rem;
+        }
+
+        .kpi-sparkline,
+        .kpi-progress {
+            height: 8px;
+            background: #f1f5f9;
+            border-radius: 4px;
+            overflow: hidden;
+        }
+
+        .progress-bar {
+            height: 100%;
+            background: linear-gradient(90deg, #22c55e, #16a34a);
+            transition: width 0.6s ease;
+        }
+
+        /* Additional Widgets */
+        .additional-widgets {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .widget-card {
+            background: #ffffff;
+            border-radius: 16px;
+            padding: 1.5rem;
+            box-shadow: 0 2px 12px rgba(0, 0, 0, 0.05);
+            border: 1px solid #e2e8f0;
+        }
+
+        .widget-card h3 {
+            margin: 0 0 1rem 0;
+            color: #1e293b;
+            font-size: 1.1rem;
+            font-weight: 600;
+        }
+
+        /* Tank Widget */
+        .tank-visual {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .tank-container {
+            position: relative;
+            width: 60px;
+            height: 120px;
+            background: #f3f4f6;
+            border: 2px solid #d1d5db;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        .tank-fill {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: linear-gradient(180deg, #3b82f6, #1d4ed8);
+            transition: height 0.3s ease;
+        }
+
+        .tank-alert {
+            position: absolute;
+            top: 5px;
+            right: 5px;
+            color: #ef4444;
+            font-size: 16px;
+        }
+
+        .tank-info div {
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: #1e293b;
+            margin-bottom: 0.5rem;
+        }
+
+        /* Finance Widget */
+        .finance-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 0.5rem;
+            padding: 0.5rem 0;
+            border-bottom: 1px solid #f3f4f6;
+        }
+
+        .finance-row:last-of-type {
+            border-bottom: none;
+            font-weight: 600;
+        }
+
+        /* Workers Widget */
+        .workers-count {
+            font-size: 2rem;
+            font-weight: 700;
+            color: #059669;
+            text-align: center;
+            margin: 1rem 0;
+        }
+
+        .last-activity {
+            font-size: 0.9rem;
+            color: #6b7280;
+            text-align: center;
+            margin-bottom: 1rem;
+        }
+
+        .sync-button {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            background: #3b82f6;
+            color: white;
+            border: none;
+            padding: 0.75rem 1rem;
+            border-radius: 8px;
+            cursor: pointer;
+            width: 100%;
+            justify-content: center;
+            font-weight: 500;
+            transition: background-color 0.2s;
+        }
+
+        .sync-button:hover {
+            background: #2563eb;
+        }
+
+        .sync-button .badge {
+            background: #ef4444;
+            color: white;
+            border-radius: 50%;
+            padding: 0.25rem 0.5rem;
+            font-size: 0.75rem;
+            min-width: 20px;
+            text-align: center;
+        }
+
+        /* Charts Grid */
+        .charts-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+            gap: 2rem;
+            margin-bottom: 2rem;
+        }
+
+        .chart-card {
+            background: #ffffff;
+            border-radius: 16px;
+            padding: 1.5rem;
+            box-shadow: 0 2px 12px rgba(0, 0, 0, 0.05);
+            border: 1px solid #e2e8f0;
+        }
+
+        .chart-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+
+        .chart-header h3 {
+            margin: 0;
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: #1e293b;
+        }
+
+        /* Weather Card */
+        .weather-current {
+            margin-bottom: 1rem;
+        }
+
+        .weather-main {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        #weather-icon {
+            font-size: 2.5rem;
+        }
+
+        #current-temp {
+            font-size: 2rem;
+            font-weight: 700;
+            color: #1e293b;
+        }
+
+        .weather-details {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .weather-item {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.875rem;
+            color: #64748b;
+        }
+
+        #weather-desc {
+            text-align: center;
+            color: #64748b;
+            font-size: 0.9rem;
+        }
+
+        /* Map placeholder */
+        .map-placeholder {
+            height: 300px;
+            background: #f8fafc;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #64748b;
+        }
+
+        /* Responsive solo para móviles pequeños */
+        @media (max-width: 768px) {
+            .main-content-wrapper {
+                margin-left: 0;
+                padding: 1rem;
+            }
+
             .dashboard-header {
-                grid-template-columns: 1fr !important;
-                gap: 1.5rem !important;
+                grid-template-columns: 1fr;
+                gap: 1rem;
+                padding: 1.5rem;
             }
-            
-            .ai-assistant-card {
-                max-width: 100% !important;
-            }
-        }
 
-        /* Responsive para KPI grid */
-        @media (max-width: 768px) {
-            .kpi-grid {
-                grid-template-columns: repeat(2, 1fr) !important;
-                gap: 1rem !important;
-            }
-            
-            .kpi-value {
-                font-size: 1.75rem !important;
-            }
-            
-            .kpi-icon {
-                font-size: 1.25rem !important;
-                padding: 0.5rem !important;
-            }
-        }
-
-        @media (max-width: 480px) {
-            .kpi-grid {
-                grid-template-columns: 1fr !important;
-            }
-            
-            .kpi-card {
-                padding: 1rem !important;
-            }
-            
-            .kpi-value {
-                font-size: 1.5rem !important;
-            }
-        }
-
-        /* Responsive para widgets adicionales */
-        @media (max-width: 768px) {
-            .additional-widgets {
-                grid-template-columns: repeat(2, 1fr) !important;
-                gap: 1rem !important;
-            }
-        }
-
-        @media (max-width: 480px) {
-            .additional-widgets {
-                grid-template-columns: 1fr !important;
-            }
-        }
-
-        /* Responsive para charts grid */
-        @media (max-width: 768px) {
+            .kpi-grid,
+            .additional-widgets,
             .charts-grid {
-                grid-template-columns: 1fr !important;
-                gap: 1rem !important;
+                grid-template-columns: 1fr;
             }
-        }
 
-        /* Responsive para textos */
-        @media (max-width: 768px) {
-            .welcome-section h2 {
-                font-size: 1.5rem !important;
-            }
-            
-            .ai-header h3 {
-                font-size: 0.9rem !important;
-            }
-            
-            .recommendation p {
-                font-size: 0.8rem !important;
-            }
-        }
-
-        @media (max-width: 480px) {
-            .welcome-section h2 {
-                font-size: 1.25rem !important;
-            }
-            
-            .welcome-section p {
-                font-size: 0.875rem !important;
-            }
-        }
-
-        /* Tank widget responsive */
-        @media (max-width: 480px) {
-            .tank-container {
-                width: 50px !important;
-                height: 100px !important;
-            }
-            
-            .tank-info div {
-                font-size: 1rem !important;
-            }
-        }
-
-        /* Workers widget responsive */
-        @media (max-width: 480px) {
-            .workers-count {
-                font-size: 1.5rem !important;
-            }
-            
-            .sync-button {
-                padding: 0.625rem !important;
-                font-size: 0.8rem !important;
-            }
-        }
-
-        /* Finance widget responsive */
-        @media (max-width: 480px) {
-            .finance-row {
-                font-size: 0.875rem !important;
-            }
-        }
-
-        /* Weather responsive */
-        @media (max-width: 480px) {
-            #weather-icon {
-                font-size: 2rem !important;
-            }
-            
-            #current-temp {
-                font-size: 1.5rem !important;
-            }
-            
-            .weather-item {
-                font-size: 0.75rem !important;
-            }
-        }
-
-        /* Chart headers responsive */
-        @media (max-width: 480px) {
-            .chart-header h3 {
-                font-size: 1rem !important;
-            }
-            
-            .chart-header {
-                flex-direction: column !important;
-                align-items: flex-start !important;
-                gap: 0.5rem !important;
-            }
-        }
-
-        /* Mantener chart canvas responsive */
-        .chart-card canvas {
-            max-width: 100% !important;
-            height: auto !important;
-        }
-
-        /* Profit summary responsive */
-        @media (max-width: 480px) {
-            .profit-summary {
-                flex-direction: column !important;
-                gap: 0.5rem !important;
-                text-align: left !important;
+            .chart-card {
+                min-width: unset;
             }
         }
     </style>
