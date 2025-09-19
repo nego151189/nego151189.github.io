@@ -1270,6 +1270,7 @@
                     console.log(`✅ ${manager.name} cargado`);
                 } catch (error) {
                     console.warn(`⚠️ ${manager.name} no disponible:`, error);
+                    // NO fallar si un manager no está disponible
                 }
             }
         }
@@ -1284,26 +1285,34 @@
                     if (window[managerName]) {
                         clearTimeout(timeoutId);
                         resolve(window[managerName]);
+                        return;
                     }
                 };
                 
+                // Verificar inmediatamente
                 if (window[managerName]) {
                     clearTimeout(timeoutId);
                     resolve(window[managerName]);
                     return;
                 }
                 
-                // Verificar cada 100ms
+                // Verificar cada 100ms pero con límite de intentos
+                let attempts = 0;
+                const maxAttempts = timeout / 100;
+                
                 const interval = setInterval(() => {
+                    attempts++;
                     if (window[managerName]) {
                         clearInterval(interval);
                         clearTimeout(timeoutId);
                         resolve(window[managerName]);
+                    } else if (attempts >= maxAttempts) {
+                        clearInterval(interval);
+                        // No rechazar, resolver con null para continuar
+                        clearTimeout(timeoutId);
+                        resolve(null);
                     }
                 }, 100);
-                
-                // Cleanup en timeout
-                setTimeout(() => clearInterval(interval), timeout);
             });
         }
 
@@ -2567,6 +2576,7 @@ ${datos.ubicacion.lat ? `• GPS: ${datos.ubicacion.lat.toFixed(4)}, ${datos.ubi
     </script>
 </body>
 </html>
+
 
 
 
