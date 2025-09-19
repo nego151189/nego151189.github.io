@@ -854,10 +854,13 @@ class NavigationManager {
     }
 }
 
+
+
 // Auto-inicializar cuando se carga el script
 document.addEventListener('DOMContentLoaded', () => {
     window.navigationManager = new NavigationManager();
 });
 
 // Exportar para uso global
+
 window.NavigationManager = NavigationManager;
