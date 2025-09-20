@@ -1,6 +1,6 @@
 /* ========================================
-   FINCA LA HERRADURA - SISTEMA OFFLINE MEJORADO
-   Sin warnings de IndexedDB deprecation
+   FINCA LA HERRADURA - SISTEMA OFFLINE CORREGIDO
+   Sin errors que interfieran con Firebase Auth
    ======================================== */
 
 class OfflineManager {
@@ -8,7 +8,7 @@ class OfflineManager {
         this.isInitialized = false;
         this.db = null;
         this.dbName = 'FincaLaHerradura';
-        this.dbVersion = 3; // Incrementado para nueva estructura
+        this.dbVersion = 3;
         this.collections = new Map();
         this.syncQueue = [];
         this.isOnline = navigator.onLine;
@@ -31,8 +31,8 @@ class OfflineManager {
             // Inicializar IndexedDB
             await this.initIndexedDB();
             
-            // Registrar Service Worker
-            await this.setupServiceWorker();
+            // NO registrar Service Worker automáticamente para evitar conflictos
+            // await this.setupServiceWorker();
             
             // Vincular managers
             this.linkManagers();
@@ -74,7 +74,6 @@ class OfflineManager {
                 
                 console.log(`Almacenamiento: ${usedMB}MB usados de ${totalMB}MB (${percentUsed}%)`);
                 
-                // Advertir si se está quedando sin espacio
                 if (percentUsed > 80) {
                     console.warn('Advertencia: Almacenamiento casi lleno');
                 }
@@ -155,7 +154,8 @@ class OfflineManager {
         });
     }
 
-    //async setupServiceWorker() {
+    // ✅ FUNCIÓN CORREGIDA - Sin comentario que rompe la sintaxis
+    async setupServiceWorker() {
         try {
             if ('serviceWorker' in navigator) {
                 const registration = await navigator.serviceWorker.register('/sw.js', {
@@ -230,7 +230,7 @@ class OfflineManager {
     }
 
     // ==========================================
-    // OPERACIONES CRUD MEJORADAS
+    // OPERACIONES CRUD
     // ==========================================
 
     async saveData(collection, id, data) {
@@ -458,7 +458,7 @@ class OfflineManager {
 }
 
 // ==========================================
-// INICIALIZACIÓN GLOBAL
+// INICIALIZACIÓN GLOBAL MEJORADA
 // ==========================================
 
 let offlineManager = null;
@@ -492,30 +492,37 @@ async function initializeOfflineManager() {
     }
 }
 
-// Auto-inicialización
+// ✅ INICIALIZACIÓN MEJORADA - Esperar Firebase primero
 if (typeof window !== 'undefined') {
     const autoInit = () => {
+        // Esperar a que Firebase esté completamente listo
+        const waitForFirebase = () => {
+            if (window.firebase && window.auth && window.db) {
+                console.log('Firebase listo, inicializando OfflineManager...');
+                setTimeout(initializeOfflineManager, 100); // Pequeño delay para seguridad
+            } else {
+                setTimeout(waitForFirebase, 100);
+            }
+        };
+        
         if (document.readyState === 'loading') {
-            document.addEventListener('DOMContentLoaded', () => {
-                setTimeout(initializeOfflineManager, 500);
-            });
+            document.addEventListener('DOMContentLoaded', waitForFirebase);
         } else {
-            setTimeout(initializeOfflineManager, 500);
+            waitForFirebase();
         }
     };
     
     autoInit();
 }
 
-// Escuchar eventos de Firebase
+// Escuchar eventos de Firebase sin interferir
 if (typeof window !== 'undefined') {
     window.addEventListener('firebaseReady', () => {
-        console.log('Firestore conectado correctamente');
+        console.log('Firebase listo para sincronización');
         if (offlineManager) {
             offlineManager.processSyncQueue();
         }
     });
 }
 
-console.log('Sistema offline mejorado cargado');
-
+console.log('Sistema offline corregido cargado');
