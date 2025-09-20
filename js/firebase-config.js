@@ -95,13 +95,13 @@ async function initializeFirebase(retryCount = 0, maxRetries = 3) {
 // ==========================================
 
 async function configureFirebaseServices() {
-    // Firestore con configuración optimizada
+    // Firestore con configuración básica que funciona
     db = firebase.firestore();
     
-    // Configuración optimizada de Firestore
+    // Configuración simple sin cambios arriesgados
     db.settings({
         cacheSizeBytes: firebase.firestore.CACHE_SIZE_UNLIMITED,
-        experimentalForceLongPolling: false, // Usar WebChannel en lugar de WebSocket
+        experimentalForceLongPolling: false,
         merge: true
     });
     
@@ -115,43 +115,28 @@ async function configureFirebaseServices() {
 }
 
 // ==========================================
-// CONFIGURACIÓN DE PERSISTENCIA MEJORADA
+// CONFIGURACIÓN DE PERSISTENCIA SIMPLIFICADA
 // ==========================================
 
 async function setupPersistence() {
     try {
-        // USAR LA NUEVA API - NO LA DEPRECATED
-        const settings = {
-            cache: {
-                // Usar la nueva configuración de cache
-                localCache: firebase.firestore.MemoryLocalCache ? 
-                    firebase.firestore.MemoryLocalCache.withGarbageCollection() :
-                    undefined
-            }
-        };
+        // Usar método que sabemos que funciona
+        await db.enablePersistence({
+            synchronizeTabs: true
+        });
         
-        db.settings(settings);
-        
-        console.log('💾 Persistencia offline habilitada (nueva API)');
+        console.log('💾 Persistencia offline habilitada');
         
     } catch (error) {
-        console.warn('⚠️ Error configurando persistencia con nueva API, intentando método legacy:', error);
-        
-        // Fallback al método anterior solo si falla el nuevo
-        try {
-            await db.enablePersistence({
-                synchronizeTabs: true
-            });
-            console.log('💾 Persistencia habilitada (método legacy)');
-        } catch (legacyError) {
-            if (legacyError.code === 'failed-precondition') {
-                console.warn('⚠️ Persistencia falló: múltiples pestañas abiertas');
-            } else if (legacyError.code === 'unimplemented') {
-                console.warn('⚠️ Persistencia no soportada en este navegador');
-            } else {
-                console.warn('⚠️ Error configurando persistencia:', legacyError);
-            }
+        if (error.code === 'failed-precondition') {
+            console.warn('⚠️ Persistencia falló: múltiples pestañas abiertas');
+        } else if (error.code === 'unimplemented') {
+            console.warn('⚠️ Persistencia no soportada en este navegador');
+        } else {
+            console.warn('⚠️ Error configurando persistencia:', error);
         }
+        
+        // Continuar sin persistencia
     }
 }
 
