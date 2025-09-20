@@ -1487,32 +1487,34 @@ async function waitForSystemManagers() {
     return results;
 }
 
-function waitForManager(managerName, timeout = 10000) {
+function waitForManager(managerName, timeout = 3000) {
     return new Promise((resolve) => {
         const startTime = Date.now();
         let attempts = 0;
-        const maxAttempts = timeout / 100;
+        const maxAttempts = timeout / 50; // Check every 50ms instead of 100ms
         
         const checkManager = () => {
             attempts++;
             const elapsed = Date.now() - startTime;
             
             // Verificar si el manager está disponible
-            if (window[managerName]) {
-                console.log(`✅ ${managerName} encontrado después de ${elapsed}ms`);
+            if (window[managerName] && 
+                (window[managerName].isInitialized === true || 
+                 typeof window[managerName].isInitialized === 'undefined')) {
+                console.log(`Manager ${managerName} encontrado después de ${elapsed}ms`);
                 resolve(window[managerName]);
                 return;
             }
             
             // Si excede el tiempo, resolver con null (no rechazar)
             if (elapsed >= timeout || attempts >= maxAttempts) {
-                console.warn(`⏰ Timeout esperando ${managerName} (${elapsed}ms)`);
+                console.log(`Timeout esperando ${managerName} (${elapsed}ms) - continuando sin él`);
                 resolve(null);
                 return;
             }
             
             // Continuar buscando
-            setTimeout(checkManager, 100);
+            setTimeout(checkManager, 50);
         };
         
         checkManager();
