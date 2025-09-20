@@ -133,9 +133,14 @@ async function networkFirst(request) {
     try {
         const networkResponse = await fetch(request);
         
-        if (networkResponse.ok) {
-            const cache = await caches.open(CACHE_NAME);
-            cache.put(request, networkResponse.clone());
+        // Solo cachear GET requests exitosos
+        if (networkResponse.ok && request.method === 'GET') {
+            try {
+                const cache = await caches.open(CACHE_NAME);
+                await cache.put(request, networkResponse.clone());
+            } catch (cacheError) {
+                console.warn('No se pudo cachear:', request.url, cacheError.message);
+            }
         }
         
         return networkResponse;
@@ -167,9 +172,14 @@ async function cacheFirst(request) {
     try {
         const networkResponse = await fetch(request);
         
-        if (networkResponse.ok) {
-            const cache = await caches.open(CACHE_NAME);
-            cache.put(request, networkResponse.clone());
+        // Solo cachear GET requests exitosos
+        if (networkResponse.ok && request.method === 'GET') {
+            try {
+                const cache = await caches.open(CACHE_NAME);
+                await cache.put(request, networkResponse.clone());
+            } catch (cacheError) {
+                console.warn('No se pudo cachear:', request.url, cacheError.message);
+            }
         }
         
         return networkResponse;
@@ -184,31 +194,46 @@ async function staleWhileRevalidate(request) {
     const cache = await caches.open(CACHE_NAME);
     const cachedResponse = await cache.match(request);
     
-    // Buscar en red en background
-    const fetchPromise = fetch(request).then(networkResponse => {
-        if (networkResponse.ok) {
-            cache.put(request, networkResponse.clone());
-        }
-        return networkResponse;
-    }).catch(error => {
-        console.log('📡 Background fetch failed:', request.url);
-        return null;
-    });
+    // Buscar en red en background (solo para GET requests)
+    if (request.method === 'GET') {
+        const fetchPromise = fetch(request).then(networkResponse => {
+            if (networkResponse.ok) {
+                cache.put(request, networkResponse.clone()).catch(error => {
+                    console.warn('Error cacheando en background:', request.url, error.message);
+                });
+            }
+            return networkResponse;
+        }).catch(error => {
+            console.log('📡 Background fetch failed:', request.url);
+            return null;
+        });
+    }
     
     // Retornar cache inmediatamente si existe
     if (cachedResponse) {
         return cachedResponse;
     }
     
-    // Si no hay cache, esperar la red
-    try {
-        return await fetchPromise;
-    } catch (error) {
-        // Si es una página y falla todo, mostrar offline
-        if (request.destination === 'document') {
-            return cache.match(OFFLINE_URL);
+    // Si no hay cache, esperar la red (solo para GET)
+    if (request.method === 'GET') {
+        try {
+            const networkResponse = await fetch(request);
+            if (networkResponse.ok) {
+                cache.put(request, networkResponse.clone()).catch(error => {
+                    console.warn('Error cacheando response:', error.message);
+                });
+            }
+            return networkResponse;
+        } catch (error) {
+            // Si es una página y falla todo, mostrar offline
+            if (request.destination === 'document') {
+                return cache.match(OFFLINE_URL);
+            }
+            throw error;
         }
-        throw error;
+    } else {
+        // Para métodos no-GET, pasar directamente a la red
+        return fetch(request);
     }
 }
 
