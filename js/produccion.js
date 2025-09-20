@@ -303,58 +303,97 @@ async function loadTimeline() {
 }
 
 // INICIALIZAR GRÁFICOS
+// INICIALIZAR GRÁFICOS (VERSIÓN OPTIMIZADA)
 function initializeCharts() {
     try {
-        // Gráfico de producción
-        const ctxProd = document.getElementById('graficoProduccion');
-        if (ctxProd && typeof Chart !== 'undefined') {
-            charts.produccion = new Chart(ctxProd, {
-                type: 'line',
-                data: {
-                    labels: ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'],
-                    datasets: [{
-                        label: 'Producción (kg)',
-                        data: [45, 52, 38, 61, 48, 35, 42],
-                        borderColor: '#16a34a',
-                        backgroundColor: 'rgba(22, 163, 74, 0.1)',
-                        tension: 0.4,
-                        fill: true
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false
-                }
-            });
+        // Esperar a que la página esté completamente cargada
+        if (document.readyState === 'complete') {
+            createCharts();
+        } else {
+            window.addEventListener('load', createCharts);
         }
-        
-        // Gráfico de rendimiento
-        const ctxRend = document.getElementById('graficoRendimiento');
-        if (ctxRend && typeof Chart !== 'undefined') {
-            charts.rendimiento = new Chart(ctxRend, {
-                type: 'bar',
-                data: {
-                    labels: ['Norte', 'Sur', 'Este', 'Oeste'],
-                    datasets: [{
-                        label: 'Rendimiento (kg)',
-                        data: [45, 38, 52, 29],
-                        backgroundColor: 'rgba(59, 130, 246, 0.6)',
-                        borderColor: '#3b82f6',
-                        borderWidth: 1
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false
-                }
-            });
-        }
-        
-        console.log('Gráficos inicializados');
         
     } catch (error) {
         console.error('Error inicializando gráficos:', error);
     }
+}
+
+// CREAR GRÁFICOS CON OPCIONES OPTIMIZADAS
+function createCharts() {
+    // Gráfico de producción
+    const ctxProd = document.getElementById('graficoProduccion');
+    if (ctxProd && typeof Chart !== 'undefined') {
+        // Usar opciones optimizadas para rendimiento
+        charts.produccion = new Chart(ctxProd, {
+            type: 'line',
+            data: {
+                labels: ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'],
+                datasets: [{
+                    label: 'Producción (kg)',
+                    data: [45, 52, 38, 61, 48, 35, 42],
+                    borderColor: '#16a34a',
+                    backgroundColor: 'rgba(22, 163, 74, 0.1)',
+                    tension: 0.4,
+                    fill: true
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                // OPCIONES DE OPTIMIZACIÓN
+                animation: {
+                    duration: 1000, // Reducir duración de animación
+                    easing: 'linear' // Usar easing más simple
+                },
+                elements: {
+                    point: {
+                        radius: 2, // Puntos más pequeños
+                        hoverRadius: 4
+                    }
+                },
+                plugins: {
+                    legend: {
+                        display: true,
+                        position: 'top'
+                    }
+                }
+            }
+        });
+    }
+    
+    // Gráfico de rendimiento
+    const ctxRend = document.getElementById('graficoRendimiento');
+    if (ctxRend && typeof Chart !== 'undefined') {
+        charts.rendimiento = new Chart(ctxRend, {
+            type: 'bar',
+            data: {
+                labels: ['Norte', 'Sur', 'Este', 'Oeste'],
+                datasets: [{
+                    label: 'Rendimiento (kg)',
+                    data: [45, 38, 52, 29],
+                    backgroundColor: 'rgba(59, 130, 246, 0.6)',
+                    borderColor: '#3b82f6',
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                // OPCIONES DE OPTIMIZACIÓN
+                animation: {
+                    duration: 800, // Animación más corta
+                    easing: 'easeOutQuart'
+                },
+                plugins: {
+                    legend: {
+                        display: false // Ocultar leyenda para simplificar
+                    }
+                }
+            }
+        });
+    }
+    
+    console.log('Gráficos inicializados con configuración optimizada');
 }
 
 // CONFIGURAR FORMULARIOS
@@ -654,3 +693,4 @@ window.cerrarModal = cerrarModal;
 window.exportarDatos = exportarDatos;
 
 console.log('Sistema de producción funcional cargado');
+
