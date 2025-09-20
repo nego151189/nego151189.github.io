@@ -155,7 +155,7 @@ class OfflineManager {
         });
     }
 
-    async setupServiceWorker() {
+    //async setupServiceWorker() {
         try {
             if ('serviceWorker' in navigator) {
                 const registration = await navigator.serviceWorker.register('/sw.js', {
@@ -518,3 +518,4 @@ if (typeof window !== 'undefined') {
 }
 
 console.log('Sistema offline mejorado cargado');
+
