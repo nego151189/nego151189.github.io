@@ -1447,7 +1447,7 @@ async function waitForSystemManagers() {
     
     const managers = [
         { name: 'treeManager', timeout: 3000, essential: true },
-        { name: 'climateManager', timeout: 1000, essential: false } // Reducido a 1 segundo
+        { name: 'climateManager', timeout: 1000, essential: false } // REALMENTE 1 segundo
     ];
     
     const results = {};
