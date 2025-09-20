@@ -1446,8 +1446,8 @@ async function waitForSystemManagers() {
     console.log('⏳ Esperando managers del sistema...');
     
     const managers = [
-        { name: 'treeManager', timeout: 10000 },
-        { name: 'climateManager', timeout: 5000 }
+        { name: 'treeManager', timeout: 3000, essential: true },
+        { name: 'climateManager', timeout: 1000, essential: false } // Reducido a 1 segundo
     ];
     
     const results = {};
@@ -1461,11 +1461,19 @@ async function waitForSystemManagers() {
                 results[manager.name] = result;
                 console.log(`✅ ${manager.name} cargado correctamente`);
             } else {
-                console.warn(`⚠️ ${manager.name} no disponible, continuando sin él`);
+                if (manager.essential) {
+                    console.warn(`⚠️ ${manager.name} (esencial) no disponible, continuando sin él`);
+                } else {
+                    console.log(`ℹ️ ${manager.name} (opcional) no disponible, continuando sin él`);
+                }
                 results[manager.name] = null;
             }
         } catch (error) {
-            console.warn(`⚠️ ${manager.name} falló:`, error.message);
+            if (manager.essential) {
+                console.warn(`⚠️ ${manager.name} (esencial) falló:`, error.message);
+            } else {
+                console.log(`ℹ️ ${manager.name} (opcional) falló, continuando sin él`);
+            }
             results[manager.name] = null;
         }
     }
@@ -1474,7 +1482,8 @@ async function waitForSystemManagers() {
     treeManagerRef = results.treeManager;
     climateManagerRef = results.climateManager;
     
-    console.log('📋 Managers cargados:', Object.keys(results).filter(k => results[k]));
+    const loadedManagers = Object.keys(results).filter(k => results[k]);
+    console.log('📋 Managers cargados:', loadedManagers.length > 0 ? loadedManagers : 'Ninguno');
     return results;
 }
 
