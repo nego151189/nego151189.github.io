@@ -1,6 +1,6 @@
 /* ========================================
    FINCA LA HERRADURA - SISTEMA CLIMÁTICO
-   Integración con OpenMeteo, análisis IA y predicciones v1
+   Integración con OpenMeteo, análisis IA y predicciones v3
    ======================================== */
 
 class ClimateManager {
@@ -920,7 +920,7 @@ class ClimateManager {
       shortTerm: this.analyzeShortTermForecast(3), // 3 días
       mediumTerm: this.analyzeMediumTermForecast(7), // 7 días
       longTerm: this.analyzeLongTermForecast(14), // 14 días
-      recommendations: this.generateForecastRecommendations(),
+      recommendations: this.generateForecastRecommendations(), // CORREGIDO: Ya no causa recursión
       alerts: this.generateForecastAlerts()
     };
     
@@ -1206,12 +1206,14 @@ class ClimateManager {
   }
 
   generateForecastRecommendations() {
-    const analysis = this.analyzeForecast();
+    // CORRECCIÓN: Eliminada la llamada recursiva a analyzeForecast()
+    const shortTerm = this.forecastData ? this.analyzeShortTermForecast(3) : null;
+    
     const recommendations = [];
     
-    if (analysis && analysis.shortTerm) {
+    if (shortTerm) {
       // Recomendaciones basadas en pronóstico a corto plazo
-      if (analysis.shortTerm.totalRainfall < 5) {
+      if (shortTerm.totalRainfall < 5) {
         recommendations.push({
           type: 'irrigation',
           priority: 'high',
@@ -1220,7 +1222,7 @@ class ClimateManager {
         });
       }
       
-      if (analysis.shortTerm.maxTemp > 32) {
+      if (shortTerm.maxTemp > 32) {
         recommendations.push({
           type: 'protection',
           priority: 'medium',
