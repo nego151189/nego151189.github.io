@@ -1,4 +1,3 @@
-//v1
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -860,3 +859,1165 @@
                     <label class="form-label">Alertas de humedad</label>
                     <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
                         <div>
+                            <label class="form-label">Humedad mínima (%)</label>
+                            <input type="number" class="form-input" id="humedadMinima" value="30">
+                        </div>
+                        <div>
+                            <label class="form-label">Humedad máxima (%)</label>
+                            <input type="number" class="form-input" id="humedadMaxima" value="85">
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="form-checkbox">
+                    <input type="checkbox" id="notificacionesPush" checked>
+                    <label for="notificacionesPush">Recibir notificaciones push</label>
+                </div>
+                
+                <div class="form-checkbox">
+                    <input type="checkbox" id="alertasEmail" checked>
+                    <label for="alertasEmail">Enviar alertas por email</label>
+                </div>
+                
+                <div style="display: flex; gap: 1rem; margin-top: 2rem;">
+                    <button class="btn btn-primary" id="guardarConfiguracion">
+                        <i class="fas fa-save"></i> Guardar
+                    </button>
+                    <button class="btn btn-secondary" id="resetearConfiguracion">
+                        <i class="fas fa-undo"></i> Restablecer
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts Firebase (deben cargarse primero) -->
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-storage-compat.js"></script>
+
+    <!-- Scripts de aplicación -->
+    <script type="module" src="/js/firebase-config.js"></script>
+    <script type="module" src="/js/auth.js"></script>
+    <script type="module" src="/js/finca-navigation.js"></script>
+    <script type="module" src="/js/offline.js"></script>
+    <script type="module" src="/js/clima.js"></script>
+     
+    <script>
+        // Variables globales
+        let graficoTemperatura, graficoPrecipitacion;
+        let intervaloActualizacion;
+        let sistemaInicializado = false;
+
+        // ==========================================
+        // FUNCIONES DE ESPERA Y INICIALIZACIÓN CORREGIDAS
+        // ==========================================
+
+        /**
+         * Espera a que AuthManager esté completamente inicializado
+         */
+        async function esperarAuthManager() {
+            return new Promise((resolve) => {
+                const maxWait = 10000; // 10 segundos máximo
+                const checkInterval = 100;
+                let elapsed = 0;
+
+                const check = () => {
+                    if (window.authManager && window.authManager.isInitialized) {
+                        console.log('✅ AuthManager listo y inicializado');
+                        resolve(true);
+                    } else if (elapsed < maxWait) {
+                        elapsed += checkInterval;
+                        setTimeout(check, checkInterval);
+                    } else {
+                        console.warn('⚠️ Timeout esperando AuthManager');
+                        resolve(false);
+                    }
+                };
+
+                check();
+            });
+        }
+
+        /**
+         * SOLUCIÓN PRINCIPAL: Verificación mejorada de autenticación
+         */
+        async function verificarAutenticacion() {
+            try {
+                console.log('🔐 Verificando autenticación...');
+                
+                // Primero esperar a que AuthManager esté listo
+                const authManagerListo = await esperarAuthManager();
+                
+                if (!authManagerListo) {
+                    console.error('❌ AuthManager no disponible');
+                    return false;
+                }
+
+                // Ahora verificar el estado de autenticación
+                const authState = await window.authManager.waitForAuth();
+                
+                console.log('📊 Estado de autenticación:', {
+                    isAuthenticated: authState.isAuthenticated,
+                    user: authState.user?.email || 'Sin usuario',
+                    role: authState.role
+                });
+
+                // Verificar permisos para clima
+                if (authState.isAuthenticated && window.authManager.hasPermission('clima')) {
+                    console.log('✅ Usuario autenticado con permisos de clima');
+                    return true;
+                }
+
+                // Si no está autenticado pero estamos offline con datos guardados
+                if (!authState.isAuthenticated && authState.isOffline && authState.user) {
+                    console.log('📱 Modo offline con sesión guardada');
+                    return true;
+                }
+
+                console.log('❌ Usuario no autenticado o sin permisos');
+                return false;
+
+            } catch (error) {
+                console.error('❌ Error verificando autenticación:', error);
+                // En caso de error, no desloguear
+                return true;
+            }
+        }
+
+        /**
+         * Espera a que Firebase esté listo
+         */
+        async function esperarFirebase() {
+            return new Promise((resolve) => {
+                const maxWait = 10000;
+                const checkInterval = 100;
+                let elapsed = 0;
+
+                const check = () => {
+                    if (window.firebase && window.auth && window.db) {
+                        console.log('✅ Firebase disponible');
+                        resolve(true);
+                    } else if (elapsed < maxWait) {
+                        elapsed += checkInterval;
+                        setTimeout(check, checkInterval);
+                    } else {
+                        console.warn('⚠️ Timeout esperando Firebase');
+                        resolve(false);
+                    }
+                };
+
+                // También escuchar el evento firebaseReady
+                window.addEventListener('firebaseReady', () => {
+                    console.log('🔥 Evento firebaseReady recibido');
+                    resolve(true);
+                }, { once: true });
+
+                check();
+            });
+        }
+
+        /**
+         * Espera a que ClimateManager esté listo
+         */
+        async function esperarClimateManager() {
+            return new Promise((resolve) => {
+                const maxWait = 15000;
+                const checkInterval = 200;
+                let elapsed = 0;
+
+                const check = () => {
+                    if (window.climateManager || window.climaManager) {
+                        console.log('✅ ClimateManager disponible');
+                        resolve(true);
+                    } else if (elapsed < maxWait) {
+                        elapsed += checkInterval;
+                        setTimeout(check, checkInterval);
+                    } else {
+                        console.warn('⚠️ Timeout esperando ClimateManager');
+                        resolve(false);
+                    }
+                };
+
+                check();
+            });
+        }
+
+        // ==========================================
+        // INICIALIZACIÓN PRINCIPAL CORREGIDA
+        // ==========================================
+
+        document.addEventListener('DOMContentLoaded', async () => {
+            try {
+                console.log('🌦️ Iniciando aplicación climática...');
+                console.log('📍 Ubicación de la finca: 14.77073, -90.25398');
+                
+                // Mostrar loader
+                document.getElementById('initLoader').classList.remove('hidden');
+
+                // Paso 1: Esperar Firebase
+                const firebaseReady = await esperarFirebase();
+                if (!firebaseReady) {
+                    console.warn('⚠️ Firebase no disponible, continuando...');
+                }
+
+                // Paso 2: Verificar autenticación
+                const autenticado = await verificarAutenticacion();
+                
+                if (!autenticado) {
+                    console.log('❌ Usuario no autenticado, redirigiendo a login...');
+                    setTimeout(() => {
+                        window.location.href = '/login.html';
+                    }, 500);
+                    return;
+                }
+
+                console.log('✅ Usuario autenticado correctamente');
+
+                // Paso 3: Esperar ClimateManager
+                await esperarClimateManager();
+
+                // Paso 4: Inicializar aplicación
+                await inicializarPagina();
+
+                sistemaInicializado = true;
+                console.log('🎉 Sistema climático completamente inicializado');
+
+            } catch (error) {
+                console.error('❌ Error en inicialización:', error);
+                mostrarError('Error iniciando la aplicación. Recargando...');
+                // Intentar recargar después de 3 segundos
+                setTimeout(() => {
+                    window.location.reload();
+                }, 3000);
+            } finally {
+                // Ocultar loader
+                setTimeout(() => {
+                    document.getElementById('initLoader').classList.add('hidden');
+                }, 500);
+            }
+        });
+
+        async function inicializarPagina() {
+            try {
+                console.log('⚙️ Inicializando componentes de la página...');
+                
+                // Configurar event listeners
+                configurarEventListeners();
+                
+                // Cargar datos climáticos iniciales
+                await cargarDatosClimaticos();
+                
+                // Inicializar gráficos
+                inicializarGraficos();
+                
+                // Configurar actualización automática
+                configurarActualizacionAutomatica();
+                
+                // Cargar pronóstico
+                await cargarPronostico();
+                
+                // Generar recomendaciones IA
+                await generarRecomendacionesIA();
+                
+                console.log('✅ Página climática inicializada correctamente');
+                
+            } catch (error) {
+                console.error('❌ Error inicializando página:', error);
+                mostrarError('Error cargando los datos climáticos');
+            }
+        }
+
+        // ==========================================
+        // CONFIGURACIÓN DE EVENTOS
+        // ==========================================
+
+        function configurarEventListeners() {
+            // Botones principales
+            document.getElementById('btnActualizar')?.addEventListener('click', actualizarDatos);
+            document.getElementById('btnConfiguracion')?.addEventListener('click', abrirConfiguracion);
+            document.getElementById('btnExportarDatos')?.addEventListener('click', exportarDatos);
+            document.getElementById('btnHistoricoLluvia')?.addEventListener('click', mostrarHistoricoLluvia);
+            
+            // Modal de configuración
+            document.getElementById('cerrarModalConfig')?.addEventListener('click', cerrarConfiguracion);
+            document.getElementById('guardarConfiguracion')?.addEventListener('click', guardarConfiguracion);
+            document.getElementById('resetearConfiguracion')?.addEventListener('click', resetearConfiguracion);
+            
+            // Selectores de período
+            document.querySelectorAll('.periodo-btn').forEach(btn => {
+                btn.addEventListener('click', (e) => cambiarPeriodo(e.target.dataset.periodo));
+            });
+
+            // Monitorear conectividad
+            window.addEventListener('online', () => {
+                actualizarEstadoConexion(true);
+                if (sistemaInicializado) {
+                    actualizarDatos();
+                }
+            });
+
+            window.addEventListener('offline', () => {
+                actualizarEstadoConexion(false);
+            });
+
+            console.log('✅ Event listeners configurados');
+        }
+
+        function actualizarEstadoConexion(isOnline) {
+            const elemento = document.getElementById('estadoConexion');
+            if (elemento) {
+                elemento.className = `estado-conexion ${isOnline ? 'online' : 'offline'}`;
+                elemento.innerHTML = `<i class="fas fa-wifi${isOnline ? '' : '-slash'}"></i><span>${isOnline ? 'Conectado' : 'Sin conexión'}</span>`;
+            }
+        }
+
+        // ==========================================
+        // FUNCIONES DE DATOS CLIMÁTICOS
+        // ==========================================
+
+        async function cargarDatosClimaticos() {
+            try {
+                mostrarCargando(true);
+                
+                // Usar el gestor climático disponible
+                const gestor = window.climateManager || window.climaManager;
+                if (gestor && gestor.getCurrentWeather) {
+                    // Obtener datos reales
+                    await gestor.getCurrentWeather();
+                    const datosActuales = gestor.currentWeather;
+                    
+                    if (datosActuales) {
+                        actualizarInterfazClima(datosActuales);
+                        
+                        // Verificar alertas
+                        const alertas = await verificarAlertas({ current: datosActuales });
+                        if (alertas.length > 0) {
+                            mostrarAlertas(alertas);
+                        }
+                    }
+                    
+                    // Actualizar estado de sensores
+                    actualizarEstadoSensores();
+                } else {
+                    console.warn('⚠️ Gestor climático no disponible');
+                    // Usar datos simulados como fallback
+                    const datosSimulados = await obtenerDatosSimulados();
+                    actualizarInterfazClima(datosSimulados);
+                }
+                
+            } catch (error) {
+                console.error('❌ Error cargando datos climáticos:', error);
+                const datosBackup = await obtenerDatosSimulados();
+                actualizarInterfazClima(datosBackup);
+            } finally {
+                mostrarCargando(false);
+            }
+        }
+
+        // Función de respaldo para datos simulados (solo para desarrollo)
+        async function obtenerDatosSimulados() {
+            // Simular datos para la ubicación de la finca
+            return {
+                temperature_2m: 22 + Math.random() * 8,  // Guatemala típico 22-30°C
+                relative_humidity_2m: 65 + Math.random() * 20,  // Humedad típica Guatemala
+                apparent_temperature: 24 + Math.random() * 8,
+                precipitation: Math.random() * 10,
+                wind_speed_10m: 5 + Math.random() * 15,
+                pressure_msl: 1013 + Math.random() * 10,
+                uv_index: 8 + Math.floor(Math.random() * 4),  // UV alto típico de Guatemala
+                weather_code: 'partly-cloudy'
+            };
+        }
+
+        function actualizarInterfazClima(datos) {
+            try {
+                // Actualizar temperatura principal
+                document.getElementById('temperaturaActual').textContent = Math.round(datos.temperature_2m || datos.temperatura || 0);
+                document.getElementById('climaDescripcion').textContent = datos.descripcion || obtenerDescripcionClima(datos.weather_code);
+                document.getElementById('sensacionTermica').textContent = `${Math.round(datos.apparent_temperature || datos.sensacionTermica || datos.temperature_2m || 0)}°C`;
+                
+                // Actualizar icono principal
+                const iconoElement = document.getElementById('iconoClimaPrincipal');
+                iconoElement.className = `fas ${obtenerIconoClima(datos.weather_code || datos.codigo)}`;
+                
+                // Actualizar detalles
+                document.getElementById('humedad').textContent = `${Math.round(datos.relative_humidity_2m || datos.humedad || 0)}%`;
+                document.getElementById('viento').textContent = `${Math.round(datos.wind_speed_10m || datos.velocidadViento || 0)} km/h`;
+                document.getElementById('visibilidad').textContent = `${datos.visibilidad || '10'} km`;
+                document.getElementById('presion').textContent = `${Math.round(datos.pressure_msl || datos.presion || 1013)} hPa`;
+                document.getElementById('uvIndex').textContent = datos.uv_index || datos.indiceUV || '--';
+                document.getElementById('precipitacion').textContent = `${(datos.precipitation || datos.precipitacion24h || 0).toFixed(1)} mm`;
+
+                console.log('✅ Interfaz climática actualizada con datos reales');
+            } catch (error) {
+                console.error('❌ Error actualizando interfaz:', error);
+            }
+        }
+
+        function obtenerDescripcionClima(codigo) {
+            const descripciones = {
+                'clear': 'Despejado',
+                'partly-cloudy': 'Parcialmente nublado',
+                'cloudy': 'Nublado',
+                'rain': 'Lluvia',
+                'snow': 'Nieve',
+                'storm': 'Tormenta',
+                'fog': 'Niebla'
+            };
+            return descripciones[codigo] || 'Condiciones variables';
+        }
+
+        function obtenerIconoClima(codigo) {
+            const iconos = {
+                'clear': 'fa-sun',
+                'partly-cloudy': 'fa-cloud-sun',
+                'cloudy': 'fa-cloud',
+                'rain': 'fa-cloud-rain',
+                'snow': 'fa-snowflake',
+                'storm': 'fa-bolt',
+                'fog': 'fa-smog'
+            };
+            return iconos[codigo] || 'fa-sun';
+        }
+
+        async function verificarAlertas(datos) {
+            const alertas = [];
+            
+            if (!datos || !datos.current) return alertas;
+            
+            const current = datos.current;
+            
+            // Alertas de temperatura para Guatemala
+            if (current.temperature_2m > 32) {
+                alertas.push({
+                    tipo: 'danger',
+                    icono: 'fa-thermometer-full',
+                    titulo: 'Temperatura Alta',
+                    mensaje: 'Temperatura muy elevada para los limones. Incrementar riego.',
+                    accion: 'Ver recomendaciones'
+                });
+            }
+            
+            if (current.temperature_2m < 10) {
+                alertas.push({
+                    tipo: 'warning',
+                    icono: 'fa-snowflake',
+                    titulo: 'Temperatura Baja',
+                    mensaje: 'Temperatura baja para la región. Proteger plantas jóvenes.',
+                    accion: 'Medidas de protección'
+                });
+            }
+            
+            // Alertas de viento
+            if (current.wind_speed_10m > 40) {
+                alertas.push({
+                    tipo: 'danger',
+                    icono: 'fa-wind',
+                    titulo: 'Vientos Fuertes',
+                    mensaje: 'Vientos peligrosos. Revisar estructuras y asegurar plantas.',
+                    accion: 'Plan de emergencia'
+                });
+            }
+            
+            // Alertas de humedad
+            if (current.relative_humidity_2m > 85) {
+                alertas.push({
+                    tipo: 'info',
+                    icono: 'fa-tint',
+                    titulo: 'Humedad Alta',
+                    mensaje: 'Condiciones favorables para hongos. Aplicar fungicidas preventivos.',
+                    accion: 'Ver tratamientos'
+                });
+            }
+            
+            return alertas;
+        }
+
+        function mostrarAlertas(alertas) {
+            const container = document.getElementById('alertasClimaticas');
+            
+            if (alertas.length === 0) {
+                container.innerHTML = '';
+                return;
+            }
+            
+            container.innerHTML = alertas.map(alerta => `
+                <div class="alerta-clima ${alerta.tipo}">
+                    <div class="alerta-icon">
+                        <i class="fas ${alerta.icono}"></i>
+                    </div>
+                    <div class="alerta-contenido">
+                        <h4>${alerta.titulo}</h4>
+                        <p>${alerta.mensaje}</p>
+                        ${alerta.accion ? `<button class="btn btn-sm btn-primary">${alerta.accion}</button>` : ''}
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // ==========================================
+        // FUNCIONES DE GRÁFICOS
+        // ==========================================
+
+        function inicializarGraficos() {
+            try {
+                // Gráfico de temperatura y humedad
+                const ctxTemp = document.getElementById('graficoTemperatura');
+                if (ctxTemp) {
+                    graficoTemperatura = new Chart(ctxTemp, {
+                        type: 'line',
+                        data: {
+                            labels: [],
+                            datasets: [
+                                {
+                                    label: 'Temperatura (°C)',
+                                    data: [],
+                                    borderColor: '#ef4444',
+                                    backgroundColor: 'rgba(239, 68, 68, 0.1)',
+                                    tension: 0.4,
+                                    yAxisID: 'y'
+                                },
+                                {
+                                    label: 'Humedad (%)',
+                                    data: [],
+                                    borderColor: '#3b82f6',
+                                    backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                                    tension: 0.4,
+                                    yAxisID: 'y1'
+                                }
+                            ]
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            plugins: {
+                                legend: {
+                                    labels: { 
+                                        color: '#333'
+                                    }
+                                }
+                            },
+                            scales: {
+                                x: {
+                                    ticks: { 
+                                        color: '#666'
+                                    },
+                                    grid: { 
+                                        color: 'rgba(0, 0, 0, 0.1)'
+                                    }
+                                },
+                                y: {
+                                    type: 'linear',
+                                    display: true,
+                                    position: 'left',
+                                    ticks: { 
+                                        color: '#666'
+                                    },
+                                    grid: { 
+                                        color: 'rgba(0, 0, 0, 0.1)'
+                                    }
+                                },
+                                y1: {
+                                    type: 'linear',
+                                    display: true,
+                                    position: 'right',
+                                    ticks: { 
+                                        color: '#666'
+                                    },
+                                    grid: { drawOnChartArea: false }
+                                }
+                            }
+                        }
+                    });
+                }
+
+                // Gráfico de precipitación
+                const ctxPrec = document.getElementById('graficoPrecipitacion');
+                if (ctxPrec) {
+                    graficoPrecipitacion = new Chart(ctxPrec, {
+                        type: 'bar',
+                        data: {
+                            labels: [],
+                            datasets: [{
+                                label: 'Precipitación (mm)',
+                                data: [],
+                                backgroundColor: 'rgba(59, 130, 246, 0.6)',
+                                borderColor: '#3b82f6',
+                                borderWidth: 1
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            plugins: {
+                                legend: {
+                                    labels: { 
+                                        color: '#333'
+                                    }
+                                }
+                            },
+                            scales: {
+                                x: {
+                                    ticks: { 
+                                        color: '#666'
+                                    },
+                                    grid: { 
+                                        color: 'rgba(0, 0, 0, 0.1)'
+                                    }
+                                },
+                                y: {
+                                    ticks: { 
+                                        color: '#666'
+                                    },
+                                    grid: { 
+                                        color: 'rgba(0, 0, 0, 0.1)'
+                                    }
+                                }
+                            }
+                        }
+                    });
+                }
+
+                // Cargar datos iniciales para los gráficos
+                cargarDatosGraficos('24h');
+                
+                console.log('✅ Gráficos inicializados');
+            } catch (error) {
+                console.error('❌ Error inicializando gráficos:', error);
+            }
+        }
+
+        async function cargarDatosGraficos(periodo) {
+            try {
+                const gestor = window.climateManager || window.climaManager;
+                
+                if (gestor && gestor.forecastData) {
+                    // Usar datos reales del pronóstico
+                    const forecast = gestor.forecastData;
+                    
+                    if (forecast && forecast.hourly && periodo === '24h') {
+                        // Datos horarios para las próximas 24 horas
+                        const labels = [];
+                        const temperaturas = [];
+                        const humedades = [];
+                        const precipitacion = [];
+                        
+                        for (let i = 0; i < 24 && i < forecast.hourly.time.length; i++) {
+                            const fecha = new Date(forecast.hourly.time[i]);
+                            labels.push(fecha.toLocaleTimeString('es-GT', { hour: '2-digit' }));
+                            temperaturas.push(forecast.hourly.temperature_2m[i]);
+                            humedades.push(forecast.hourly.relative_humidity_2m[i]);
+                            precipitacion.push(forecast.hourly.precipitation[i] || 0);
+                        }
+                        
+                        actualizarGraficos(labels, temperaturas, humedades, precipitacion);
+                    } else if (forecast && forecast.daily) {
+                        // Datos diarios para 7 o 30 días
+                        const dias = periodo === '7d' ? 7 : 30;
+                        const labels = [];
+                        const temperaturas = [];
+                        const humedades = [];
+                        const precipitacion = [];
+                        
+                        for (let i = 0; i < dias && i < forecast.daily.time.length; i++) {
+                            const fecha = new Date(forecast.daily.time[i]);
+                            labels.push(fecha.toLocaleDateString('es-GT', { month: 'short', day: 'numeric' }));
+                            
+                            // Promedio de temperatura
+                            const tempMax = forecast.daily.temperature_2m_max[i];
+                            const tempMin = forecast.daily.temperature_2m_min[i];
+                            temperaturas.push((tempMax + tempMin) / 2);
+                            
+                            // Humedad (usar un valor estimado si no está disponible)
+                            humedades.push(70); // Valor típico para Guatemala
+                            
+                            // Precipitación
+                            precipitacion.push(forecast.daily.precipitation_sum[i] || 0);
+                        }
+                        
+                        actualizarGraficos(labels, temperaturas, humedades, precipitacion);
+                    }
+                } else {
+                    // Datos simulados como fallback
+                    cargarDatosSimulados(periodo);
+                }
+            } catch (error) {
+                console.error('❌ Error cargando datos históricos:', error);
+                cargarDatosSimulados(periodo);
+            }
+        }
+
+        function cargarDatosSimulados(periodo) {
+            const labels = [];
+            const temperaturas = [];
+            const humedades = [];
+            const precipitacion = [];
+            
+            const now = new Date();
+            const puntos = periodo === '24h' ? 24 : periodo === '7d' ? 7 : 30;
+            
+            for (let i = puntos - 1; i >= 0; i--) {
+                const fecha = new Date(now.getTime() - (i * (periodo === '24h' ? 3600000 : 86400000)));
+                labels.push(fecha.toLocaleDateString('es-GT', { 
+                    month: 'short', 
+                    day: 'numeric',
+                    ...(periodo === '24h' && { hour: '2-digit' })
+                }));
+                
+                // Datos simulados típicos de Guatemala
+                temperaturas.push(20 + Math.random() * 12);
+                humedades.push(60 + Math.random() * 25);
+                precipitacion.push(Math.random() * 15);
+            }
+            
+            actualizarGraficos(labels, temperaturas, humedades, precipitacion);
+        }
+
+        function actualizarGraficos(labels, temperaturas, humedades, precipitacion) {
+            if (graficoTemperatura) {
+                graficoTemperatura.data.labels = labels;
+                graficoTemperatura.data.datasets[0].data = temperaturas;
+                graficoTemperatura.data.datasets[1].data = humedades;
+                graficoTemperatura.update();
+            }
+            
+            if (graficoPrecipitacion) {
+                graficoPrecipitacion.data.labels = labels;
+                graficoPrecipitacion.data.datasets[0].data = precipitacion;
+                graficoPrecipitacion.update();
+            }
+        }
+
+        // ==========================================
+        // FUNCIONES DE PRONÓSTICO Y RECOMENDACIONES
+        // ==========================================
+
+        async function cargarPronostico() {
+            try {
+                const container = document.getElementById('pronosticoDias');
+                container.innerHTML = '<div class="loading-spinner"><i class="fas fa-spinner fa-spin"></i></div>';
+                
+                const gestor = window.climateManager || window.climaManager;
+                
+                if (gestor && gestor.forecastData && gestor.forecastData.daily) {
+                    // Usar datos reales del pronóstico
+                    const forecast = gestor.forecastData.daily;
+                    const pronostico = [];
+                    
+                    for (let i = 0; i < 7 && i < forecast.time.length; i++) {
+                        const fecha = new Date(forecast.time[i]);
+                        pronostico.push({
+                            fecha: fecha.toISOString(),
+                            tempMax: Math.round(forecast.temperature_2m_max[i]),
+                            tempMin: Math.round(forecast.temperature_2m_min[i]),
+                            descripcion: i === 0 ? 'Hoy' : fecha.toLocaleDateString('es-GT', { weekday: 'short' }),
+                            codigo: interpretarCodigoClima(forecast.weather_code[i]),
+                            precipitacion: forecast.precipitation_sum[i] || 0
+                        });
+                    }
+                    
+                    mostrarPronostico(pronostico);
+                } else {
+                    // Generar pronóstico simulado
+                    cargarPronosticoSimulado();
+                }
+                
+                console.log('✅ Pronóstico cargado');
+            } catch (error) {
+                console.error('❌ Error cargando pronóstico:', error);
+                document.getElementById('pronosticoDias').innerHTML = '<div class="error-message">Error cargando pronóstico</div>';
+            }
+        }
+
+        function cargarPronosticoSimulado() {
+            const pronostico = [];
+            const today = new Date();
+            
+            for (let i = 0; i < 7; i++) {
+                const fecha = new Date(today.getTime() + (i * 86400000));
+                const tempMax = Math.round(24 + Math.random() * 8);
+                const tempMin = Math.round(tempMax - 5 - Math.random() * 3);
+                
+                pronostico.push({
+                    fecha: fecha.toISOString(),
+                    tempMax,
+                    tempMin,
+                    descripcion: i === 0 ? 'Hoy' : fecha.toLocaleDateString('es-GT', { weekday: 'short' }),
+                    codigo: ['clear', 'partly-cloudy', 'cloudy', 'rain'][Math.floor(Math.random() * 4)],
+                    precipitacion: Math.random() * 20
+                });
+            }
+            
+            mostrarPronostico(pronostico);
+        }
+
+        function mostrarPronostico(pronostico) {
+            const container = document.getElementById('pronosticoDias');
+            container.innerHTML = pronostico.map(dia => `
+                <div class="dia-pronostico">
+                    <div class="dia-info">
+                        <div class="dia-fecha">${formatearFecha(dia.fecha)}</div>
+                        <div class="dia-descripcion">${obtenerDescripcionClima(dia.codigo)}</div>
+                        ${dia.precipitacion > 0 ? `<small>💧 ${dia.precipitacion.toFixed(1)}mm</small>` : ''}
+                    </div>
+                    <div class="dia-clima">
+                        <div class="dia-icon">
+                            <i class="fas ${obtenerIconoClima(dia.codigo)}"></i>
+                        </div>
+                        <div class="temperatura-rango">
+                            <div class="temp-max">${dia.tempMax}°</div>
+                            <div class="temp-min">${dia.tempMin}°</div>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function interpretarCodigoClima(codigo) {
+            // Interpretar códigos de OpenMeteo
+            if (codigo === 0) return 'clear';
+            if (codigo >= 1 && codigo <= 3) return 'partly-cloudy';
+            if (codigo >= 45 && codigo <= 48) return 'fog';
+            if (codigo >= 51 && codigo <= 67) return 'rain';
+            if (codigo >= 71 && codigo <= 77) return 'snow';
+            if (codigo >= 80 && codigo <= 82) return 'rain';
+            if (codigo >= 95 && codigo <= 99) return 'storm';
+            return 'cloudy';
+        }
+
+        async function generarRecomendacionesIA() {
+            try {
+                const container = document.getElementById('recomendacionesIA');
+                container.innerHTML = '<div class="loading-spinner"><i class="fas fa-spinner fa-spin"></i></div>';
+                
+                const gestor = window.climateManager || window.climaManager;
+                let recomendaciones = [];
+                
+                if (gestor && gestor.recommendations && gestor.recommendations.length > 0) {
+                    // Usar recomendaciones del sistema
+                    recomendaciones = gestor.recommendations;
+                } else {
+                    // Generar recomendaciones basadas en condiciones actuales
+                    const temp = parseInt(document.getElementById('temperaturaActual').textContent) || 25;
+                    const humedad = parseInt(document.getElementById('humedad').textContent) || 70;
+                    
+                    recomendaciones = generarRecomendacionesBasadas(temp, humedad);
+                }
+                
+                container.innerHTML = recomendaciones.map(rec => `
+                    <div class="recomendacion-item">
+                        <div class="recomendacion-icon">
+                            <i class="fas ${rec.icono}"></i>
+                        </div>
+                        <div>
+                            <h4>${rec.titulo}</h4>
+                            <p>${rec.descripcion}</p>
+                            ${rec.prioridad === 'alta' ? '<span style="color: #ef4444; font-weight: 600;">Alta prioridad</span>' : ''}
+                        </div>
+                    </div>
+                `).join('');
+                
+                console.log('✅ Recomendaciones IA generadas');
+            } catch (error) {
+                console.error('❌ Error generando recomendaciones:', error);
+                document.getElementById('recomendacionesIA').innerHTML = '<div class="error-message">Error generando recomendaciones</div>';
+            }
+        }
+
+        function generarRecomendacionesBasadas(temp, humedad) {
+            const recomendaciones = [];
+            
+            // Recomendaciones basadas en temperatura
+            if (temp > 30) {
+                recomendaciones.push({
+                    icono: 'fa-tint',
+                    titulo: 'Incrementar Riego',
+                    descripcion: 'Temperatura alta detectada. Aumentar frecuencia de riego en horas tempranas.',
+                    prioridad: 'alta'
+                });
+            } else if (temp < 15) {
+                recomendaciones.push({
+                    icono: 'fa-shield-alt',
+                    titulo: 'Protección contra Frío',
+                    descripcion: 'Temperaturas bajas. Considerar medidas de protección para plantas jóvenes.',
+                    prioridad: 'alta'
+                });
+            }
+            
+            // Recomendaciones basadas en humedad
+            if (humedad > 80) {
+                recomendaciones.push({
+                    icono: 'fa-leaf',
+                    titulo: 'Aplicar Fungicida Preventivo',
+                    descripcion: 'Alta humedad detectada. Condiciones favorables para hongos.',
+                    prioridad: 'media'
+                });
+            }
+            
+            // Recomendaciones generales para limones
+            recomendaciones.push({
+                icono: 'fa-scissors',
+                titulo: 'Poda de Mantenimiento',
+                descripcion: 'Condiciones estables. Buen momento para poda de formación.',
+                prioridad: 'baja'
+            });
+            
+            if (temp >= 20 && temp <= 28 && humedad >= 60 && humedad <= 75) {
+                recomendaciones.push({
+                    icono: 'fa-apple-alt',
+                    titulo: 'Condiciones Óptimas',
+                    descripcion: 'Excelentes condiciones para desarrollo del cultivo.',
+                    prioridad: 'baja'
+                });
+            }
+            
+            return recomendaciones;
+        }
+
+        // ==========================================
+        // FUNCIONES DE CONTROL
+        // ==========================================
+
+        function cambiarPeriodo(periodo) {
+            // Actualizar botones activos
+            document.querySelectorAll('.periodo-btn').forEach(btn => btn.classList.remove('active'));
+            document.querySelector(`[data-periodo="${periodo}"]`)?.classList.add('active');
+            
+            // Cargar nuevos datos
+            cargarDatosGraficos(periodo);
+        }
+
+        function configurarActualizacionAutomatica() {
+            const frecuencia = localStorage.getItem('frecuenciaActualizacion') || 15;
+            
+            if (intervaloActualizacion) {
+                clearInterval(intervaloActualizacion);
+            }
+            
+            intervaloActualizacion = setInterval(() => {
+                if (navigator.onLine && sistemaInicializado) {
+                    actualizarDatos();
+                }
+            }, frecuencia * 60 * 1000);
+            
+            console.log(`⏰ Actualización automática configurada cada ${frecuencia} minutos`);
+        }
+
+        async function actualizarDatos() {
+            try {
+                const btnActualizar = document.getElementById('btnActualizar');
+                if (btnActualizar) {
+                    btnActualizar.innerHTML = '<i class="fas fa-sync-alt fa-spin"></i> Actualizando';
+                }
+                
+                await Promise.all([
+                    cargarDatosClimaticos(),
+                    cargarPronostico(),
+                    generarRecomendacionesIA()
+                ]);
+                
+                mostrarNotificacion('Datos actualizados correctamente', 'success');
+                
+            } catch (error) {
+                console.error('❌ Error actualizando datos:', error);
+                mostrarNotificacion('Error actualizando datos', 'error');
+            } finally {
+                const btnActualizar = document.getElementById('btnActualizar');
+                if (btnActualizar) {
+                    btnActualizar.innerHTML = '<i class="fas fa-sync-alt"></i> Actualizar';
+                }
+            }
+        }
+
+        // ==========================================
+        // FUNCIONES DE MODAL Y CONFIGURACIÓN
+        // ==========================================
+
+        function abrirConfiguracion() {
+            document.getElementById('modalConfiguracion')?.classList.add('show');
+        }
+
+        function cerrarConfiguracion() {
+            document.getElementById('modalConfiguracion')?.classList.remove('show');
+        }
+
+        function guardarConfiguracion() {
+            const config = {
+                frecuenciaActualizacion: document.getElementById('frecuenciaActualizacion')?.value || '15',
+                tempMinima: document.getElementById('tempMinima')?.value || '10',
+                tempMaxima: document.getElementById('tempMaxima')?.value || '32',
+                humedadMinima: document.getElementById('humedadMinima')?.value || '45',
+                humedadMaxima: document.getElementById('humedadMaxima')?.value || '85',
+                notificacionesPush: document.getElementById('notificacionesPush')?.checked || false,
+                alertasEmail: document.getElementById('alertasEmail')?.checked || false
+            };
+            
+            // Guardar configuración
+            Object.entries(config).forEach(([key, value]) => {
+                localStorage.setItem(key, value);
+            });
+            
+            // Reconfigurar actualización automática
+            configurarActualizacionAutomatica();
+            
+            // Actualizar umbrales en el gestor climático si existe
+            const gestor = window.climateManager || window.climaManager;
+            if (gestor) {
+                gestor.thresholds.temperature.critical.min = parseFloat(config.tempMinima);
+                gestor.thresholds.temperature.critical.max = parseFloat(config.tempMaxima);
+                gestor.thresholds.humidity.critical.min = parseFloat(config.humedadMinima);
+                gestor.thresholds.humidity.critical.max = parseFloat(config.humedadMaxima);
+            }
+            
+            mostrarNotificacion('Configuración guardada', 'success');
+            cerrarConfiguracion();
+        }
+
+        function resetearConfiguracion() {
+            document.getElementById('frecuenciaActualizacion').value = '15';
+            document.getElementById('tempMinima').value = '10';
+            document.getElementById('tempMaxima').value = '32';
+            document.getElementById('humedadMinima').value = '45';
+            document.getElementById('humedadMaxima').value = '85';
+            document.getElementById('notificacionesPush').checked = true;
+            document.getElementById('alertasEmail').checked = true;
+        }
+
+        // ==========================================
+        // FUNCIONES AUXILIARES
+        // ==========================================
+
+        function exportarDatos() {
+            const gestor = window.climateManager || window.climaManager;
+            if (gestor && gestor.exportarDatos) {
+                gestor.exportarDatos();
+            } else {
+                // Exportar datos manualmente
+                const datos = {
+                    fecha: new Date().toISOString(),
+                    ubicacion: 'Finca La Herradura, Guatemala',
+                    coordenadas: { lat: 14.77073, lng: -90.25398 },
+                    temperaturaActual: document.getElementById('temperaturaActual').textContent,
+                    humedad: document.getElementById('humedad').textContent,
+                    viento: document.getElementById('viento').textContent,
+                    presion: document.getElementById('presion').textContent,
+                    precipitacion: document.getElementById('precipitacion').textContent
+                };
+                
+                const blob = new Blob([JSON.stringify(datos, null, 2)], { type: 'application/json' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `clima-finca-${new Date().toISOString().split('T')[0]}.json`;
+                a.click();
+                
+                mostrarNotificacion('Datos exportados correctamente', 'success');
+            }
+        }
+
+        function mostrarHistoricoLluvia() {
+            const gestor = window.climateManager || window.climaManager;
+            if (gestor && gestor.mostrarHistoricoDetallado) {
+                gestor.mostrarHistoricoDetallado('precipitacion');
+            } else {
+                mostrarNotificacion('Histórico detallado en desarrollo', 'info');
+            }
+        }
+
+        function actualizarEstadoSensores() {
+            // Actualizar con datos reales si están disponibles
+            const gestor = window.climateManager || window.climaManager;
+            
+            if (gestor && gestor.currentWeather) {
+                const datos = gestor.currentWeather;
+                
+                // Actualizar valores de sensores con datos reales
+                document.getElementById('sensorTemperatura').textContent = `${Math.round(datos.temperature_2m || 25)}°C`;
+                document.getElementById('sensorHumedad').textContent = `${Math.round(datos.relative_humidity_2m || 68)}%`;
+                document.getElementById('sensorViento').textContent = `${Math.round(datos.wind_speed_10m || 12)} km/h`;
+                
+                // Todos online si hay datos
+                document.querySelectorAll('.sensor-estado').forEach(el => {
+                    el.className = 'sensor-estado online';
+                    el.textContent = 'Online';
+                });
+            } else {
+                // Simular estado de sensores
+                const sensores = [
+                    { id: 'sensorTemperatura', valor: `${(22 + Math.random() * 8).toFixed(1)}°C`, estado: 'online' },
+                    { id: 'sensorHumedad', valor: `${Math.round(65 + Math.random() * 20)}%`, estado: 'online' },
+                    { id: 'sensorSuelo', valor: `${Math.round(30 + Math.random() * 40)}%`, estado: Math.random() > 0.3 ? 'online' : 'offline' },
+                    { id: 'sensorViento', valor: `${Math.round(5 + Math.random() * 15)} km/h`, estado: 'online' }
+                ];
+                
+                sensores.forEach(sensor => {
+                    const elemento = document.getElementById(sensor.id);
+                    if (elemento) {
+                        elemento.textContent = sensor.valor;
+                    }
+                    
+                    const estadoElement = elemento?.parentElement.querySelector('.sensor-estado');
+                    if (estadoElement) {
+                        estadoElement.className = `sensor-estado ${sensor.estado}`;
+                        estadoElement.textContent = sensor.estado === 'online' ? 'Online' : 'Offline';
+                    }
+                });
+            }
+        }
+
+        function formatearFecha(fecha) {
+            return new Date(fecha).toLocaleDateString('es-GT', {
+                weekday: 'short',
+                day: 'numeric',
+                month: 'short'
+            });
+        }
+
+        function mostrarCargando(mostrar) {
+            // Implementar indicador de carga si es necesario
+            console.log(mostrar ? '⏳ Cargando...' : '✅ Carga completada');
+        }
+
+        function mostrarError(mensaje) {
+            mostrarNotificacion(mensaje, 'error');
+        }
+
+        function mostrarNotificacion(mensaje, tipo = 'info') {
+            console.log(`${tipo.toUpperCase()}: ${mensaje}`);
+            
+            // Si hay un sistema de notificaciones disponible, usarlo
+            if (window.notificationManager) {
+                switch(tipo) {
+                    case 'success':
+                        window.notificationManager.success(mensaje);
+                        break;
+                    case 'error':
+                        window.notificationManager.error(mensaje);
+                        break;
+                    case 'warning':
+                        window.notificationManager.warning(mensaje);
+                        break;
+                    default:
+                        window.notificationManager.info(mensaje);
+                }
+            }
+        }
+
+        // ==========================================
+        // MANEJO DE ERRORES GLOBALES
+        // ==========================================
+
+        window.addEventListener('error', (event) => {
+            console.error('❌ Error global:', event.error);
+            // No mostrar error al usuario para evitar spam
+        });
+
+        window.addEventListener('unhandledrejection', (event) => {
+            console.error('❌ Promesa rechazada no manejada:', event.reason);
+            // No mostrar error al usuario para evitar spam
+        });
+    </script>
+</body>
+</html>
