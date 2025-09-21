@@ -1,12 +1,13 @@
 /* ========================================
-   PRODUCCIÓN JS - FUNCIONAL SIN PROBLEMAS AUTH
-   Versión que NO interfiere con autenticación
+   PRODUCCIÓN JS - OPTIMIZADO SIN DATOS FICTICIOS
+   Versión optimizada para rendimiento y datos reales únicamente
    ======================================== */
 
 // Variables globales
 let isProductionReady = false;
 let productionData = [];
 let charts = {};
+let chartsInitialized = false;
 let managers = {
     tree: null,
     offline: null,
@@ -30,14 +31,14 @@ document.addEventListener('DOMContentLoaded', async () => {
         // Configurar eventos
         setupEventListeners();
         
-        // Cargar datos iniciales
-        await loadInitialData();
-        
-        // Inicializar gráficos
-        initializeCharts();
+        // Cargar datos REALES únicamente
+        await loadRealDataOnly();
         
         // Configurar formularios
         setupForms();
+        
+        // Inicializar gráficos de forma lazy y optimizada
+        setTimeout(() => initializeChartsOptimized(), 1000);
         
         isProductionReady = true;
         console.log('Producción inicializada correctamente');
@@ -116,31 +117,64 @@ function setupEventListeners() {
     console.log('Event listeners configurados');
 }
 
-// CARGAR DATOS INICIALES
-async function loadInitialData() {
+// CARGAR SOLO DATOS REALES
+async function loadRealDataOnly() {
     try {
-        // Cargar opciones de formularios
-        await loadFormOptions();
+        // Primero cargar datos de producción desde Firebase
+        await loadProductionDataFromFirebase();
         
-        // Cargar KPIs
-        await loadKPIs();
+        // Cargar opciones de formularios desde TreeManager
+        await loadFormOptionsFromDatabase();
         
-        // Cargar timeline
-        await loadTimeline();
+        // Cargar KPIs basados en datos reales
+        await loadRealKPIs();
+        
+        // Cargar timeline con datos reales
+        await loadRealTimeline();
         
         // Configurar fecha actual
         setCurrentDate();
         
-        console.log('Datos iniciales cargados');
+        console.log('Datos REALES cargados exitosamente');
         
     } catch (error) {
-        console.error('Error cargando datos:', error);
-        loadFallbackData();
+        console.error('Error cargando datos reales:', error);
+        showEmptyStates();
     }
 }
 
-// CARGAR OPCIONES DE FORMULARIOS
-async function loadFormOptions() {
+// CARGAR DATOS DE PRODUCCIÓN DESDE FIREBASE
+async function loadProductionDataFromFirebase() {
+    if (!window.db) {
+        console.log('Firebase no disponible, sin datos de producción');
+        productionData = [];
+        return;
+    }
+    
+    try {
+        const snapshot = await window.db.collection('cosechas')
+            .orderBy('timestamp', 'desc')
+            .limit(100)
+            .get();
+        
+        productionData = [];
+        snapshot.forEach(doc => {
+            productionData.push({
+                id: doc.id,
+                ...doc.data()
+            });
+        });
+        
+        console.log(`Datos de producción cargados: ${productionData.length} registros`);
+        
+    } catch (error) {
+        console.error('Error cargando datos de Firebase:', error);
+        productionData = [];
+    }
+}
+
+// CARGAR OPCIONES DE FORMULARIOS DESDE BASE DE DATOS
+async function loadFormOptionsFromDatabase() {
     try {
         let options = [];
         
@@ -159,7 +193,7 @@ async function loadFormOptions() {
                     });
                 });
                 
-                // Agregar árboles
+                // Agregar árboles activos únicamente
                 trees.forEach(tree => {
                     if (tree.active !== false) {
                         const sectorName = sectors.find(s => s.id === tree.blockId)?.name || 'Sin sector';
@@ -171,21 +205,18 @@ async function loadFormOptions() {
                     }
                 });
                 
-                console.log(`Opciones cargadas: ${options.length}`);
+                console.log(`Opciones reales cargadas: ${options.length}`);
                 
             } catch (error) {
                 console.warn('Error obteniendo datos del TreeManager:', error);
             }
         }
         
-        // Fallback si no hay opciones
+        // Si no hay opciones, mostrar estado vacío
         if (options.length === 0) {
-            options = [
-                { value: 'SECTOR_NORTE', label: '📦 Sector Norte (Fallback)', type: 'sector' },
-                { value: 'SECTOR_SUR', label: '📦 Sector Sur (Fallback)', type: 'sector' },
-                { value: 'ARBOL_001', label: '🌳 Árbol 001 - Norte', type: 'tree' },
-                { value: 'ARBOL_002', label: '🌳 Árbol 002 - Sur', type: 'tree' }
-            ];
+            console.log('No hay opciones disponibles desde la base de datos');
+            showEmptyFormOptions();
+            return;
         }
         
         // Ordenar: sectores primero
@@ -201,7 +232,24 @@ async function loadFormOptions() {
         
     } catch (error) {
         console.error('Error cargando opciones:', error);
+        showEmptyFormOptions();
     }
+}
+
+// MOSTRAR ESTADO VACÍO PARA OPCIONES DE FORMULARIO
+function showEmptyFormOptions() {
+    updateSelect('arbolCorte', []);
+    updateSelect('arbolCompleto', []);
+    
+    // Agregar mensaje informativo
+    const selects = ['arbolCorte', 'arbolCompleto'];
+    selects.forEach(selectId => {
+        const select = document.getElementById(selectId);
+        if (select) {
+            select.innerHTML = '<option value="">No hay árboles/sectores disponibles</option>';
+            select.disabled = true;
+        }
+    });
 }
 
 // ACTUALIZAR SELECT
@@ -211,6 +259,7 @@ function updateSelect(selectId, options) {
     
     const currentValue = select.value;
     select.innerHTML = '<option value="">Seleccionar...</option>';
+    select.disabled = false;
     
     options.forEach(option => {
         const opt = document.createElement('option');
@@ -225,182 +274,308 @@ function updateSelect(selectId, options) {
     }
 }
 
-// CARGAR KPIS
-async function loadKPIs() {
+// CARGAR KPIS REALES ÚNICAMENTE
+async function loadRealKPIs() {
     try {
+        if (productionData.length === 0) {
+            showEmptyKPIs();
+            return;
+        }
+        
         const now = new Date();
         const thisMonth = now.getMonth();
         const thisYear = now.getFullYear();
         
-        // Calcular KPIs desde datos reales
+        // Filtrar datos del mes actual
         const monthlyData = productionData.filter(record => {
             const recordDate = new Date(record.fecha);
             return recordDate.getMonth() === thisMonth && 
                    recordDate.getFullYear() === thisYear;
         });
         
+        // Calcular KPIs desde datos reales
         const produccionMes = monthlyData.reduce((sum, record) => sum + (record.cantidad || 0), 0);
-        const rendimientoPromedio = monthlyData.length > 0 ? produccionMes / monthlyData.length : 0;
-        const calidadPromedio = monthlyData.length > 0 ? 
-            monthlyData.reduce((sum, record) => sum + (record.calidad || 85), 0) / monthlyData.length : 85;
-        const ingresosMes = produccionMes * 7.5; // Precio promedio
+        const numRegistros = monthlyData.length;
+        const rendimientoPromedio = numRegistros > 0 ? produccionMes / numRegistros : 0;
+        const calidadPromedio = numRegistros > 0 ? 
+            monthlyData.reduce((sum, record) => sum + (record.calidad || 0), 0) / numRegistros : 0;
+        const ingresosMes = produccionMes * 7.5; // Precio promedio por kg
         
-        // Actualizar UI
-        updateElement('produccionMes', `${Math.round(produccionMes)} kg`);
-        updateElement('rendimientoPromedio', `${Math.round(rendimientoPromedio * 100) / 100} kg/árbol`);
-        updateElement('calidadPromedio', `${Math.round(calidadPromedio)}%`);
-        updateElement('ingresosMes', `Q ${Math.round(ingresosMes).toLocaleString()}`);
+        // Actualizar UI con datos reales
+        updateElement('produccionMes', produccionMes > 0 ? `${Math.round(produccionMes)} kg` : '0 kg');
+        updateElement('rendimientoPromedio', rendimientoPromedio > 0 ? `${Math.round(rendimientoPromedio * 100) / 100} kg/registro` : '0 kg/registro');
+        updateElement('calidadPromedio', calidadPromedio > 0 ? `${Math.round(calidadPromedio)}%` : 'N/A');
+        updateElement('ingresosMes', ingresosMes > 0 ? `Q ${Math.round(ingresosMes).toLocaleString()}` : 'Q 0');
+        
+        console.log(`KPIs calculados con ${monthlyData.length} registros del mes`);
         
     } catch (error) {
         console.error('Error cargando KPIs:', error);
-        // KPIs de fallback
-        updateElement('produccionMes', '3,250 kg');
-        updateElement('rendimientoPromedio', '22.5 kg/árbol');
-        updateElement('calidadPromedio', '87%');
-        updateElement('ingresosMes', 'Q 32,500');
+        showEmptyKPIs();
     }
 }
 
-// CARGAR TIMELINE
-async function loadTimeline() {
+// MOSTRAR KPIS VACÍOS
+function showEmptyKPIs() {
+    updateElement('produccionMes', '0 kg');
+    updateElement('rendimientoPromedio', '0 kg/registro');
+    updateElement('calidadPromedio', 'N/A');
+    updateElement('ingresosMes', 'Q 0');
+}
+
+// CARGAR TIMELINE REAL ÚNICAMENTE
+async function loadRealTimeline() {
     const container = document.getElementById('timelineProduccion');
     if (!container) return;
     
     try {
-        if (productionData.length > 0) {
-            const recentData = productionData
-                .sort((a, b) => new Date(b.fecha) - new Date(a.fecha))
-                .slice(0, 5);
-                
-            container.innerHTML = recentData.map(record => `
-                <div style="padding: 1rem; border-left: 3px solid #3b82f6; margin-bottom: 1rem;">
-                    <div style="font-size: 0.75rem; color: #6b7280; margin-bottom: 0.5rem;">
-                        ${formatDate(record.fecha)}
-                    </div>
-                    <div style="font-weight: 600;">${record.descripcion || 'Cosecha registrada'}</div>
-                    <div style="font-size: 1.125rem; font-weight: 700; color: #16a34a; margin-top: 0.5rem;">
-                        ${record.cantidad} kg
-                    </div>
-                </div>
-            `).join('');
-        } else {
+        if (productionData.length === 0) {
             container.innerHTML = `
-                <div style="padding: 1rem; border-left: 3px solid #3b82f6; margin-bottom: 1rem;">
-                    <div style="font-size: 0.75rem; color: #6b7280; margin-bottom: 0.5rem;">
-                        Hoy, 14:30
-                    </div>
-                    <div style="font-weight: 600;">Cosecha de demostración</div>
-                    <div style="font-size: 1.125rem; font-weight: 700; color: #16a34a; margin-top: 0.5rem;">
-                        45 kg
-                    </div>
+                <div style="text-align: center; padding: 2rem; color: #6b7280;">
+                    <i class="fas fa-seedling" style="font-size: 2rem; margin-bottom: 1rem; display: block;"></i>
+                    <p>No hay registros de producción aún</p>
+                    <p style="font-size: 0.875rem;">Los registros aparecerán aquí cuando registres tu primera cosecha</p>
                 </div>
             `;
+            return;
         }
+        
+        // Mostrar solo datos reales
+        const recentData = productionData
+            .sort((a, b) => new Date(b.fecha) - new Date(a.fecha))
+            .slice(0, 5);
+            
+        container.innerHTML = recentData.map(record => `
+            <div style="padding: 1rem; border-left: 3px solid #3b82f6; margin-bottom: 1rem;">
+                <div style="font-size: 0.75rem; color: #6b7280; margin-bottom: 0.5rem;">
+                    ${formatDate(record.fecha)}
+                </div>
+                <div style="font-weight: 600;">${record.descripcion || 'Cosecha registrada'}</div>
+                <div style="font-size: 1.125rem; font-weight: 700; color: #16a34a; margin-top: 0.5rem;">
+                    ${record.cantidad} kg
+                </div>
+                ${record.calidad ? `<div style="font-size: 0.875rem; color: #6b7280;">Calidad: ${record.calidad}%</div>` : ''}
+            </div>
+        `).join('');
+        
     } catch (error) {
         console.error('Error cargando timeline:', error);
-        container.innerHTML = '<p>Error cargando actividades</p>';
+        container.innerHTML = '<p style="color: #dc2626;">Error cargando actividades</p>';
     }
 }
 
-// INICIALIZAR GRÁFICOS
-// INICIALIZAR GRÁFICOS (VERSIÓN OPTIMIZADA)
-function initializeCharts() {
+// MOSTRAR ESTADOS VACÍOS
+function showEmptyStates() {
+    console.log('Mostrando estados vacíos - sin datos ficticios');
+    showEmptyKPIs();
+    
+    const container = document.getElementById('timelineProduccion');
+    if (container) {
+        container.innerHTML = `
+            <div style="text-align: center; padding: 2rem; color: #6b7280;">
+                <i class="fas fa-database" style="font-size: 2rem; margin-bottom: 1rem; display: block;"></i>
+                <p>Sin conexión a la base de datos</p>
+                <p style="font-size: 0.875rem;">Verifica tu conexión e intenta recargar la página</p>
+            </div>
+        `;
+    }
+}
+
+// INICIALIZAR GRÁFICOS OPTIMIZADOS (SIN requestAnimationFrame PESADO)
+function initializeChartsOptimized() {
+    if (chartsInitialized) return;
+    
     try {
-        // Esperar a que la página esté completamente cargada
-        if (document.readyState === 'complete') {
-            createCharts();
+        // Solo crear gráficos si hay datos reales
+        if (productionData.length === 0) {
+            showEmptyCharts();
+            return;
+        }
+        
+        // Usar requestIdleCallback si está disponible, sino setTimeout
+        if (window.requestIdleCallback) {
+            requestIdleCallback(() => createOptimizedCharts(), { timeout: 2000 });
         } else {
-            window.addEventListener('load', createCharts);
+            setTimeout(() => createOptimizedCharts(), 100);
         }
         
     } catch (error) {
         console.error('Error inicializando gráficos:', error);
+        showEmptyCharts();
     }
 }
 
-// CREAR GRÁFICOS CON OPCIONES OPTIMIZADAS
-function createCharts() {
-    // Gráfico de producción
-    const ctxProd = document.getElementById('graficoProduccion');
-    if (ctxProd && typeof Chart !== 'undefined') {
-        // Usar opciones optimizadas para rendimiento
-        charts.produccion = new Chart(ctxProd, {
-            type: 'line',
-            data: {
-                labels: ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'],
-                datasets: [{
-                    label: 'Producción (kg)',
-                    data: [45, 52, 38, 61, 48, 35, 42],
-                    borderColor: '#16a34a',
-                    backgroundColor: 'rgba(22, 163, 74, 0.1)',
-                    tension: 0.4,
-                    fill: true
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                // OPCIONES DE OPTIMIZACIÓN
-                animation: {
-                    duration: 1000, // Reducir duración de animación
-                    easing: 'linear' // Usar easing más simple
+// CREAR GRÁFICOS OPTIMIZADOS CON DATOS REALES
+function createOptimizedCharts() {
+    if (!window.Chart || chartsInitialized) return;
+    
+    try {
+        // Preparar datos reales para gráficos
+        const chartData = prepareRealChartData();
+        
+        // Gráfico de producción - OPTIMIZADO
+        const ctxProd = document.getElementById('graficoProduccion');
+        if (ctxProd && chartData.production.length > 0) {
+            charts.produccion = new Chart(ctxProd, {
+                type: 'line',
+                data: {
+                    labels: chartData.production.map(d => d.label),
+                    datasets: [{
+                        label: 'Producción (kg)',
+                        data: chartData.production.map(d => d.value),
+                        borderColor: '#16a34a',
+                        backgroundColor: 'rgba(22, 163, 74, 0.1)',
+                        tension: 0.4,
+                        fill: true,
+                        pointRadius: 2,
+                        pointHoverRadius: 4
+                    }]
                 },
-                elements: {
-                    point: {
-                        radius: 2, // Puntos más pequeños
-                        hoverRadius: 4
-                    }
-                },
-                plugins: {
-                    legend: {
-                        display: true,
-                        position: 'top'
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    // OPCIONES DE OPTIMIZACIÓN CRÍTICAS
+                    animation: false, // DESHABILITAR ANIMACIONES
+                    interaction: {
+                        intersect: false,
+                        mode: 'index'
+                    },
+                    plugins: {
+                        legend: {
+                            display: true,
+                            position: 'top'
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true
+                        }
                     }
                 }
-            }
-        });
-    }
-    
-    // Gráfico de rendimiento
-    const ctxRend = document.getElementById('graficoRendimiento');
-    if (ctxRend && typeof Chart !== 'undefined') {
-        charts.rendimiento = new Chart(ctxRend, {
-            type: 'bar',
-            data: {
-                labels: ['Norte', 'Sur', 'Este', 'Oeste'],
-                datasets: [{
-                    label: 'Rendimiento (kg)',
-                    data: [45, 38, 52, 29],
-                    backgroundColor: 'rgba(59, 130, 246, 0.6)',
-                    borderColor: '#3b82f6',
-                    borderWidth: 1
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                // OPCIONES DE OPTIMIZACIÓN
-                animation: {
-                    duration: 800, // Animación más corta
-                    easing: 'easeOutQuart'
+            });
+        }
+        
+        // Gráfico de rendimiento - OPTIMIZADO
+        const ctxRend = document.getElementById('graficoRendimiento');
+        if (ctxRend && chartData.sectors.length > 0) {
+            charts.rendimiento = new Chart(ctxRend, {
+                type: 'bar',
+                data: {
+                    labels: chartData.sectors.map(d => d.label),
+                    datasets: [{
+                        label: 'Rendimiento (kg)',
+                        data: chartData.sectors.map(d => d.value),
+                        backgroundColor: 'rgba(59, 130, 246, 0.6)',
+                        borderColor: '#3b82f6',
+                        borderWidth: 1
+                    }]
                 },
-                plugins: {
-                    legend: {
-                        display: false // Ocultar leyenda para simplificar
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    // OPCIONES DE OPTIMIZACIÓN CRÍTICAS
+                    animation: false, // DESHABILITAR ANIMACIONES
+                    plugins: {
+                        legend: {
+                            display: false
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true
+                        }
                     }
                 }
-            }
-        });
+            });
+        }
+        
+        chartsInitialized = true;
+        console.log('Gráficos optimizados creados con datos reales');
+        
+    } catch (error) {
+        console.error('Error creando gráficos:', error);
+        showEmptyCharts();
     }
+}
+
+// PREPARAR DATOS REALES PARA GRÁFICOS
+function prepareRealChartData() {
+    const chartData = {
+        production: [],
+        sectors: []
+    };
     
-    console.log('Gráficos inicializados con configuración optimizada');
+    if (productionData.length === 0) return chartData;
+    
+    // Agrupar por fecha para gráfico de producción (últimos 7 días)
+    const last7Days = Array.from({length: 7}, (_, i) => {
+        const date = new Date();
+        date.setDate(date.getDate() - i);
+        return date;
+    }).reverse();
+    
+    chartData.production = last7Days.map(date => {
+        const dayData = productionData.filter(record => {
+            const recordDate = new Date(record.fecha);
+            return recordDate.toDateString() === date.toDateString();
+        });
+        
+        const totalKg = dayData.reduce((sum, record) => sum + (record.cantidad || 0), 0);
+        
+        return {
+            label: date.toLocaleDateString('es-GT', { weekday: 'short' }),
+            value: totalKg
+        };
+    });
+    
+    // Agrupar por sector/árbol para gráfico de rendimiento
+    const sectorData = {};
+    productionData.forEach(record => {
+        const key = record.arbolId || 'Sin especificar';
+        if (!sectorData[key]) {
+            sectorData[key] = 0;
+        }
+        sectorData[key] += record.cantidad || 0;
+    });
+    
+    chartData.sectors = Object.entries(sectorData)
+        .sort(([,a], [,b]) => b - a)
+        .slice(0, 6) // Solo top 6
+        .map(([key, value]) => ({
+            label: key.length > 15 ? key.substring(0, 15) + '...' : key,
+            value: value
+        }));
+    
+    return chartData;
+}
+
+// MOSTRAR GRÁFICOS VACÍOS
+function showEmptyCharts() {
+    const containers = ['graficoProduccion', 'graficoRendimiento'];
+    
+    containers.forEach(containerId => {
+        const container = document.getElementById(containerId);
+        if (container) {
+            const parent = container.parentElement;
+            if (parent) {
+                parent.innerHTML = `
+                    <h3>${containerId === 'graficoProduccion' ? 'Evolución de la Producción' : 'Rendimiento por Sector'}</h3>
+                    <div style="display: flex; align-items: center; justify-content: center; height: 200px; color: #6b7280; text-align: center;">
+                        <div>
+                            <i class="fas fa-chart-${containerId === 'graficoProduccion' ? 'line' : 'bar'}" style="font-size: 2rem; margin-bottom: 1rem; display: block;"></i>
+                            <p>Sin datos para mostrar</p>
+                            <p style="font-size: 0.875rem;">Registra tu primera cosecha para ver gráficos</p>
+                        </div>
+                    </div>
+                `;
+            }
+        }
+    });
 }
 
 // CONFIGURAR FORMULARIOS
 function setupForms() {
-    // Establecer fecha actual
     setCurrentDate();
-    
     console.log('Formularios configurados');
 }
 
@@ -444,7 +619,7 @@ async function handleNuevoCorte(event) {
             timestamp: new Date().toISOString()
         };
         
-        productionData.push(registro);
+        productionData.unshift(registro); // Agregar al inicio
         
         // Guardar si hay managers disponibles
         if (managers.offline && managers.offline.saveData) {
@@ -463,8 +638,13 @@ async function handleNuevoCorte(event) {
         showNotification('Corte registrado exitosamente', 'success');
         
         // Actualizar interfaz
-        await loadKPIs();
-        await loadTimeline();
+        await loadRealKPIs();
+        await loadRealTimeline();
+        
+        // Actualizar gráficos si están inicializados
+        if (chartsInitialized) {
+            updateChartsWithNewData();
+        }
         
         // Cerrar modal y limpiar
         cerrarModal('modalNuevoCorte');
@@ -514,7 +694,7 @@ async function handleRegistroCompleto(event) {
             timestamp: new Date().toISOString()
         };
         
-        productionData.push(registro);
+        productionData.unshift(registro); // Agregar al inicio
         
         // Guardar si hay managers disponibles
         if (managers.offline && managers.offline.saveData) {
@@ -533,8 +713,13 @@ async function handleRegistroCompleto(event) {
         showNotification('Registro completo guardado exitosamente', 'success');
         
         // Actualizar interfaz
-        await loadKPIs();
-        await loadTimeline();
+        await loadRealKPIs();
+        await loadRealTimeline();
+        
+        // Actualizar gráficos si están inicializados
+        if (chartsInitialized) {
+            updateChartsWithNewData();
+        }
         
         // Cerrar modal y limpiar
         cerrarModal('modalRegistroCompleto');
@@ -547,6 +732,32 @@ async function handleRegistroCompleto(event) {
     }
 }
 
+// ACTUALIZAR GRÁFICOS CON NUEVOS DATOS (SIN ANIMACIONES)
+function updateChartsWithNewData() {
+    if (!chartsInitialized) return;
+    
+    try {
+        const chartData = prepareRealChartData();
+        
+        // Actualizar gráfico de producción
+        if (charts.produccion && chartData.production.length > 0) {
+            charts.produccion.data.labels = chartData.production.map(d => d.label);
+            charts.produccion.data.datasets[0].data = chartData.production.map(d => d.value);
+            charts.produccion.update('none'); // Sin animación
+        }
+        
+        // Actualizar gráfico de rendimiento
+        if (charts.rendimiento && chartData.sectors.length > 0) {
+            charts.rendimiento.data.labels = chartData.sectors.map(d => d.label);
+            charts.rendimiento.data.datasets[0].data = chartData.sectors.map(d => d.value);
+            charts.rendimiento.update('none'); // Sin animación
+        }
+        
+    } catch (error) {
+        console.error('Error actualizando gráficos:', error);
+    }
+}
+
 // ACCIONES RÁPIDAS
 async function accionRapida(accion) {
     switch (accion) {
@@ -555,25 +766,42 @@ async function accionRapida(accion) {
             break;
             
         case 'control-calidad':
-            showNotification('Iniciando control de calidad...', 'info');
+            if (productionData.length === 0) {
+                showNotification('No hay datos de producción para analizar', 'warning');
+                return;
+            }
+            
+            showNotification('Analizando datos de calidad...', 'info');
             setTimeout(() => {
-                showNotification('Control de calidad completado - Grado: AA', 'success');
-            }, 2000);
+                const recentData = productionData.slice(0, 10);
+                const avgQuality = recentData.reduce((sum, record) => sum + (record.calidad || 0), 0) / recentData.length;
+                if (avgQuality > 0) {
+                    showNotification(`Calidad promedio reciente: ${Math.round(avgQuality)}%`, 'success');
+                } else {
+                    showNotification('No hay datos de calidad registrados', 'warning');
+                }
+            }, 1500);
             break;
             
         case 'reporte-diario':
-            showNotification('Generando reporte diario...', 'info');
+            if (productionData.length === 0) {
+                showNotification('No hay datos para generar reporte', 'warning');
+                return;
+            }
+            
+            showNotification('Generando reporte con datos reales...', 'info');
             setTimeout(() => {
-                const totalKg = productionData.reduce((sum, record) => sum + (record.cantidad || 0), 0);
-                showNotification(`Reporte generado: ${totalKg}kg cosechados total`, 'success');
+                const today = new Date().toDateString();
+                const todayData = productionData.filter(record => {
+                    return new Date(record.fecha).toDateString() === today;
+                });
+                const totalKg = todayData.reduce((sum, record) => sum + (record.cantidad || 0), 0);
+                showNotification(`Reporte: ${totalKg}kg cosechados hoy`, 'success');
             }, 1500);
             break;
             
         case 'planificar-cosecha':
-            showNotification('Generando plan inteligente de cosecha...', 'info');
-            setTimeout(() => {
-                showNotification('Plan de cosecha generado exitosamente', 'success');
-            }, 2500);
+            showNotification('Función de planificación en desarrollo', 'info');
             break;
             
         default:
@@ -589,7 +817,7 @@ function abrirModal(modalId) {
         
         // Recargar opciones si es necesario
         if (modalId.includes('Corte') || modalId.includes('Completo')) {
-            loadFormOptions();
+            loadFormOptionsFromDatabase();
         }
     }
 }
@@ -601,10 +829,15 @@ function cerrarModal(modalId) {
     }
 }
 
-// EXPORTAR DATOS
+// EXPORTAR DATOS REALES
 async function exportarDatos() {
     try {
-        showNotification('Exportando datos...', 'info');
+        if (productionData.length === 0) {
+            showNotification('No hay datos para exportar', 'warning');
+            return;
+        }
+        
+        showNotification('Exportando datos reales...', 'info');
         
         const dataToExport = {
             fecha_exportacion: new Date().toISOString(),
@@ -617,10 +850,10 @@ async function exportarDatos() {
         
         const link = document.createElement('a');
         link.href = URL.createObjectURL(dataBlob);
-        link.download = `produccion_${new Date().toISOString().split('T')[0]}.json`;
+        link.download = `produccion_real_${new Date().toISOString().split('T')[0]}.json`;
         link.click();
         
-        showNotification('Datos exportados correctamente', 'success');
+        showNotification(`${productionData.length} registros exportados correctamente`, 'success');
         
     } catch (error) {
         console.error('Error exportando:', error);
@@ -669,28 +902,10 @@ function showNotification(mensaje, tipo = 'info') {
     }, 4000);
 }
 
-function loadFallbackData() {
-    console.log('Cargando datos de fallback');
-    
-    // Datos de ejemplo
-    productionData = [
-        {
-            id: 'demo1',
-            fecha: new Date().toISOString(),
-            arbolId: 'ARBOL_001',
-            cantidad: 45,
-            tipo: 'principal',
-            descripcion: 'Cosecha demo',
-            timestamp: new Date().toISOString()
-        }
-    ];
-}
-
 // HACER FUNCIONES GLOBALES
 window.accionRapida = accionRapida;
 window.abrirModal = abrirModal;
 window.cerrarModal = cerrarModal;
 window.exportarDatos = exportarDatos;
 
-console.log('Sistema de producción funcional cargado');
-
+console.log('Sistema de producción optimizado cargado - Solo datos reales');
