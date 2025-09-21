@@ -1,6 +1,6 @@
 /* ========================================
    FINCA LA HERRADURA - SISTEMA DE AUTENTICACIÓN
-   Sistema integrado con Firebase y gestión offline
+   Sistema integrado con Firebase y gestión offline v1
    ======================================== */
 
 class AuthManager {
@@ -743,7 +743,7 @@ class AuthManager {
   }
 
   // ==========================================
-  // NAVEGACIÓN Y REDIRECCIÓN
+  // NAVEGACIÓN Y REDIRECCIÓN - CORREGIDO
   // ==========================================
 
   handleLoginRedirect() {
@@ -759,21 +759,32 @@ class AuthManager {
     }
   }
 
-handleLogoutRedirect() {
-  // Solo redirigir si estamos en páginas que requieren autenticación
-  const currentPage = window.location.pathname;
-  const protectedPages = ['/produccion.html', '/gastos.html', '/ventas.html', '/usuarios.html'];
-  
-  // NO redirigir desde index.html (dashboard principal)
-  if (currentPage.includes('index.html') || currentPage === '/') {
-    return; // No hacer nada, permitir acceso al dashboard
+  handleLogoutRedirect() {
+    // CORRECCIÓN: Incluir clima.html en páginas protegidas
+    const currentPage = window.location.pathname;
+    const protectedPages = [
+      '/clima.html',      // AGREGADO
+      '/produccion.html', 
+      '/gastos.html', 
+      '/ventas.html', 
+      '/usuarios.html',
+      '/tratamientos.html',
+      '/recordatorios.html'
+    ];
+    
+    // NO redirigir desde index.html o dashboard
+    if (currentPage.includes('index.html') || 
+        currentPage === '/' || 
+        currentPage.includes('dashboard')) {
+      return; // No hacer nada, permitir acceso al dashboard
+    }
+    
+    // Solo redirigir desde páginas protegidas
+    if (protectedPages.some(page => currentPage.includes(page))) {
+      console.log('Redirigiendo a login desde página protegida:', currentPage);
+      window.location.href = '/login.html';
+    }
   }
-  
-  // Solo redirigir desde páginas protegidas
-  if (protectedPages.some(page => currentPage.includes(page))) {
-    window.location.href = '/login.html';
-  }
-}
 
   getTargetPageForRole() {
     switch (this.userRole) {
