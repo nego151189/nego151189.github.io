@@ -1,7 +1,7 @@
 /* ========================================
    FINCA LA HERRADURA - GESTIÓN DE PRODUCCIÓN COMPLETA
    Sistema completo integrado con tree-manager y correlativos
-   Todas las funcionalidades implementadas
+   Todas las funcionalidades implementadas vr
    ======================================== */
 
 // ==========================================
