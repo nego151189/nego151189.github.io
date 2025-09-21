@@ -943,48 +943,42 @@
         /**
          * SOLUCIÓN PRINCIPAL: Verificación mejorada de autenticación
          */
-        async function verificarAutenticacion() {
-            try {
-                console.log('🔐 Verificando autenticación...');
-                
-                // Primero esperar a que AuthManager esté listo
-                const authManagerListo = await esperarAuthManager();
-                
-                if (!authManagerListo) {
-                    console.error('❌ AuthManager no disponible');
-                    return false;
-                }
-
-                // Ahora verificar el estado de autenticación
-                const authState = await window.authManager.waitForAuth();
-                
-                console.log('📊 Estado de autenticación:', {
-                    isAuthenticated: authState.isAuthenticated,
-                    user: authState.user?.email || 'Sin usuario',
-                    role: authState.role
-                });
-
-                // Verificar permisos para clima
-                if (authState.isAuthenticated && window.authManager.hasPermission('clima')) {
-                    console.log('✅ Usuario autenticado con permisos de clima');
-                    return true;
-                }
-
-                // Si no está autenticado pero estamos offline con datos guardados
-                if (!authState.isAuthenticated && authState.isOffline && authState.user) {
-                    console.log('📱 Modo offline con sesión guardada');
-                    return true;
-                }
-
-                console.log('❌ Usuario no autenticado o sin permisos');
-                return false;
-
-            } catch (error) {
-                console.error('❌ Error verificando autenticación:', error);
-                // En caso de error, no desloguear
-                return true;
-            }
+async function verificarAutenticacion() {
+    try {
+        console.log('🔐 Verificando autenticación...');
+        
+        // Esperar a que AuthManager esté completamente inicializado
+        const authManagerListo = await esperarAuthManager();
+        
+        if (!authManagerListo) {
+            console.log('⚠️ AuthManager no disponible, continuando en modo offline');
+            return true; // Permitir acceso en modo offline
         }
+
+        // Verificar el estado de autenticación
+        const authState = window.authManager.getAuthState();
+        
+        console.log('📊 Estado de autenticación:', {
+            isAuthenticated: authState.isAuthenticated,
+            user: authState.user?.email || 'Sin usuario',
+            role: authState.role
+        });
+
+        // Permitir acceso si está autenticado o en modo offline
+        if (authState.isAuthenticated || authState.isOffline) {
+            console.log('✅ Acceso permitido (autenticado o modo offline)');
+            return true;
+        }
+
+        console.log('❌ Usuario no autenticado');
+        return false;
+
+    } catch (error) {
+        console.error('❌ Error verificando autenticación:', error);
+        // En caso de error, permitir acceso para no bloquear la aplicación
+        return true;
+    }
+}
 
         /**
          * Espera a que Firebase esté listo
@@ -2021,3 +2015,4 @@
     </script>
 </body>
 </html>
+
