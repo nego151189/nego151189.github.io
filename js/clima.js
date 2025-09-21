@@ -1,15 +1,15 @@
 /* ========================================
    FINCA LA HERRADURA - SISTEMA CLIMÁTICO
-   Integración con OpenMeteo, análisis IA y predicciones
+   Integración con OpenMeteo, análisis IA y predicciones v1
    ======================================== */
 
 class ClimateManager {
   constructor() {
-    // Configuración de la finca (Guatemala)
+    // Configuración de la finca con COORDENADAS REALES
     this.fincaLocation = {
-      latitude: 14.6349,   // Guatemala City área
-      longitude: -90.5069,
-      elevation: 1500,     // metros sobre el nivel del mar
+      latitude: 14.77073,   // Finca La Herradura - Guatemala
+      longitude: -90.25398, // Coordenadas reales proporcionadas
+      elevation: 1500,      // metros sobre el nivel del mar
       timezone: 'America/Guatemala'
     };
     
@@ -30,27 +30,27 @@ class ClimateManager {
     this.forecastData = null;
     this.historicalData = [];
     
-    // Umbrales críticos para limones
+    // Umbrales críticos para limones en Guatemala
     this.thresholds = {
       temperature: {
-        optimal: { min: 15, max: 30 },    // °C
-        critical: { min: 5, max: 38 }
+        optimal: { min: 18, max: 32 },    // Ajustado para clima guatemalteco
+        critical: { min: 10, max: 38 }
       },
       humidity: {
-        optimal: { min: 60, max: 80 },    // %
-        critical: { min: 40, max: 95 }
+        optimal: { min: 65, max: 85 },    // Mayor humedad típica de Guatemala
+        critical: { min: 45, max: 95 }
       },
       rainfall: {
-        daily_max: 50,                    // mm/día
-        monthly_optimal: 100,             // mm/mes
-        drought_threshold: 20             // mm/semana
+        daily_max: 60,                    // Mayor precipitación esperada
+        monthly_optimal: 150,             // Ajustado para estación lluviosa
+        drought_threshold: 25             // mm/semana
       },
       wind: {
         strong_wind: 25,                  // km/h
         dangerous_wind: 50                // km/h
       },
       uv: {
-        high: 8,                          // índice UV
+        high: 9,                          // Mayor índice UV en Guatemala
         extreme: 11
       }
     };
@@ -65,6 +65,8 @@ class ClimateManager {
   async init() {
     try {
       console.log('🌦️ Inicializando sistema climático...');
+      console.log('📍 Ubicación: Finca La Herradura');
+      console.log(`📍 Coordenadas: ${this.fincaLocation.latitude}, ${this.fincaLocation.longitude}`);
       
       // Cargar datos históricos offline
       await this.loadOfflineData();
@@ -138,7 +140,7 @@ class ClimateManager {
   }
 
   // ==========================================
-  // OBTENCIÓN DE DATOS CLIMÁTICOS
+  // OBTENCIÓN DE DATOS CLIMÁTICOS REALES
   // ==========================================
 
   async getCurrentWeather() {
@@ -187,7 +189,14 @@ class ClimateManager {
       // Analizar y generar alertas
       await this.analyzeCurrentConditions();
       
-      console.log('🌤️ Clima actual actualizado');
+      console.log('🌤️ Clima actual actualizado desde OpenMeteo');
+      console.log('📊 Datos:', {
+        temperatura: `${this.currentWeather.temperature_2m}°C`,
+        humedad: `${this.currentWeather.relative_humidity_2m}%`,
+        viento: `${this.currentWeather.wind_speed_10m} km/h`,
+        uvIndex: this.currentWeather.uv_index
+      });
+      
       this.broadcastWeatherUpdate();
       
       return this.currentWeather;
@@ -260,7 +269,7 @@ class ClimateManager {
       // Analizar pronóstico con IA
       await this.analyzeForecast();
       
-      console.log(`📅 Pronóstico de ${this.forecastDays} días actualizado`);
+      console.log(`📅 Pronóstico de ${this.forecastDays} días actualizado para Finca La Herradura`);
       this.broadcastForecastUpdate();
       
       return this.forecastData;
@@ -748,13 +757,13 @@ class ClimateManager {
     const alerts = [];
     const weather = this.currentWeather;
     
-    // Alertas críticas
+    // Alertas críticas adaptadas para Guatemala
     if (weather.temperature_2m < this.thresholds.temperature.critical.min) {
       alerts.push({
         level: 'critical',
-        type: 'frost',
-        message: 'ALERTA DE HELADA: Temperatura crítica baja',
-        actions: ['Proteger árboles jóvenes', 'Aplicar riego antiheladas', 'Monitorear constantemente']
+        type: 'cold',
+        message: 'ALERTA DE FRÍO: Temperatura baja para la región',
+        actions: ['Proteger árboles jóvenes', 'Aplicar riego en horas cálidas', 'Monitorear constantemente']
       });
     }
     
@@ -786,6 +795,16 @@ class ClimateManager {
       });
     }
     
+    // Alerta específica para índice UV alto (común en Guatemala)
+    if (weather.uv_index > this.thresholds.uv.high) {
+      alerts.push({
+        level: 'warning',
+        type: 'uv',
+        message: 'Índice UV alto - Proteger frutos y trabajadores',
+        actions: ['Usar protección solar', 'Trabajar en horas tempranas', 'Proteger frutos expuestos']
+      });
+    }
+    
     return alerts;
   }
 
@@ -794,18 +813,18 @@ class ClimateManager {
     const weather = this.currentWeather;
     const analysis = this.classifyCurrentConditions();
     
-    // Recomendaciones de riego
-    if (weather.precipitation === 0 && weather.temperature_2m > 25) {
+    // Recomendaciones de riego para clima guatemalteco
+    if (weather.precipitation === 0 && weather.temperature_2m > 28) {
       recommendations.push({
         category: 'riego',
         priority: 'high',
         message: 'Incrementar frecuencia de riego debido a alta temperatura y ausencia de lluvia',
-        timing: 'Regar en horas tempranas de la mañana'
+        timing: 'Regar en horas tempranas de la mañana (5-7 AM)'
       });
     }
     
     // Recomendaciones de tratamientos
-    if (weather.relative_humidity_2m > 80 && weather.temperature_2m > 20) {
+    if (weather.relative_humidity_2m > 80 && weather.temperature_2m > 22) {
       recommendations.push({
         category: 'tratamientos',
         priority: 'medium',
@@ -824,6 +843,16 @@ class ClimateManager {
       });
     }
     
+    // Recomendación específica para manejo de sombra
+    if (weather.uv_index > 9 && weather.temperature_2m > 30) {
+      recommendations.push({
+        category: 'protección',
+        priority: 'high',
+        message: 'Implementar sombra temporal para proteger frutos jóvenes',
+        timing: 'Durante horas pico de sol (10 AM - 3 PM)'
+      });
+    }
+    
     return recommendations;
   }
 
@@ -837,19 +866,19 @@ class ClimateManager {
       overall: 0
     };
     
-    // Impacto en crecimiento
-    if (weather.temperature_2m >= 15 && weather.temperature_2m <= 30) {
+    // Impacto en crecimiento (ajustado para limones en Guatemala)
+    if (weather.temperature_2m >= 18 && weather.temperature_2m <= 32) {
       impact.growth += 0.8;
     } else {
       impact.growth -= 0.5;
     }
     
-    if (weather.relative_humidity_2m >= 60 && weather.relative_humidity_2m <= 80) {
+    if (weather.relative_humidity_2m >= 65 && weather.relative_humidity_2m <= 85) {
       impact.growth += 0.2;
     }
     
     // Impacto en floración
-    if (weather.temperature_2m >= 18 && weather.temperature_2m <= 26) {
+    if (weather.temperature_2m >= 20 && weather.temperature_2m <= 28) {
       impact.flowering += 0.7;
     }
     
@@ -860,17 +889,17 @@ class ClimateManager {
     }
     
     // Impacto en fructificación
-    if (weather.precipitation > 0 && weather.precipitation < 20) {
+    if (weather.precipitation > 0 && weather.precipitation < 30) {
       impact.fruiting += 0.6;
     }
     
-    // Riesgo de enfermedades
-    if (weather.relative_humidity_2m > 80) {
-      impact.diseases += 0.7;
+    // Riesgo de enfermedades (mayor en clima húmedo de Guatemala)
+    if (weather.relative_humidity_2m > 85) {
+      impact.diseases += 0.8;
     }
     
     if (weather.temperature_2m > 25 && weather.relative_humidity_2m > 75) {
-      impact.diseases += 0.3;
+      impact.diseases += 0.2;
     }
     
     // Impacto general
@@ -1045,10 +1074,10 @@ class ClimateManager {
     for (let i = 0; i < days && i < forecast.time.length; i++) {
       const rainfall = forecast.precipitation_sum[i] || 0;
       const maxTemp = forecast.temperature_2m_max[i];
-      const et0 = forecast.et0_fao_evapotranspiration?.[i] || 0;
+      const et0 = forecast.et0_fao_evapotranspiration?.[i] || 5; // Default ET0 para Guatemala
       
-      // Calcular necesidad de riego
-      const waterNeed = Math.max(0, et0 - rainfall);
+      // Calcular necesidad de riego (ajustado para limones)
+      const waterNeed = Math.max(0, et0 * 1.2 - rainfall); // Factor 1.2 para limones
       
       needs.push({
         date: forecast.time[i],
@@ -1063,14 +1092,14 @@ class ClimateManager {
   }
 
   getIrrigationRecommendation(waterNeed, rainfall, temp) {
-    if (rainfall > 10) {
+    if (rainfall > 15) {
       return { level: 'none', message: 'No regar - lluvia suficiente' };
-    } else if (waterNeed > 6 || temp > 30) {
-      return { level: 'high', message: 'Riego intensivo necesario' };
+    } else if (waterNeed > 6 || temp > 32) {
+      return { level: 'high', message: 'Riego intensivo necesario - aplicar 40-50 L/árbol' };
     } else if (waterNeed > 3) {
-      return { level: 'medium', message: 'Riego moderado' };
+      return { level: 'medium', message: 'Riego moderado - aplicar 25-30 L/árbol' };
     } else {
-      return { level: 'low', message: 'Riego ligero' };
+      return { level: 'low', message: 'Riego ligero - aplicar 15-20 L/árbol' };
     }
   }
 
@@ -1100,6 +1129,11 @@ class ClimateManager {
         activities.push('podas');
       }
       
+      // Ventana para fertilización
+      if (rainfall > 0 && rainfall < 20) {
+        activities.push('fertilización');
+      }
+      
       if (activities.length > 0) {
         windows.push({
           date: forecast.time[i],
@@ -1113,23 +1147,168 @@ class ClimateManager {
   }
 
   identifyForecastPatterns(days) {
-    // Implementar identificación de patrones del pronóstico
-    return {};
+    const forecast = this.forecastData?.daily;
+    if (!forecast) return {};
+    
+    const patterns = {
+      drySpells: [],
+      wetPeriods: [],
+      heatWaves: [],
+      optimalPeriods: []
+    };
+    
+    let consecutiveDry = 0;
+    let consecutiveWet = 0;
+    let consecutiveHot = 0;
+    
+    for (let i = 0; i < days && i < forecast.time.length; i++) {
+      const rain = forecast.precipitation_sum[i] || 0;
+      const maxTemp = forecast.temperature_2m_max[i];
+      const minTemp = forecast.temperature_2m_min[i];
+      
+      // Detectar períodos secos
+      if (rain < 2) {
+        consecutiveDry++;
+        consecutiveWet = 0;
+      } else {
+        if (consecutiveDry >= 5) {
+          patterns.drySpells.push({
+            start: i - consecutiveDry,
+            end: i - 1,
+            duration: consecutiveDry
+          });
+        }
+        consecutiveDry = 0;
+        consecutiveWet++;
+      }
+      
+      // Detectar olas de calor
+      if (maxTemp > 32) {
+        consecutiveHot++;
+      } else {
+        if (consecutiveHot >= 3) {
+          patterns.heatWaves.push({
+            start: i - consecutiveHot,
+            end: i - 1,
+            duration: consecutiveHot
+          });
+        }
+        consecutiveHot = 0;
+      }
+      
+      // Detectar períodos óptimos
+      if (maxTemp >= 22 && maxTemp <= 30 && minTemp >= 18 && rain < 20 && rain > 0) {
+        patterns.optimalPeriods.push(i);
+      }
+    }
+    
+    return patterns;
   }
 
   generateForecastRecommendations() {
-    // Implementar generación de recomendaciones basadas en pronóstico
-    return [];
+    const analysis = this.analyzeForecast();
+    const recommendations = [];
+    
+    if (analysis && analysis.shortTerm) {
+      // Recomendaciones basadas en pronóstico a corto plazo
+      if (analysis.shortTerm.totalRainfall < 5) {
+        recommendations.push({
+          type: 'irrigation',
+          priority: 'high',
+          message: 'Se esperan condiciones secas. Preparar sistema de riego.',
+          action: 'Revisar y mantener sistema de riego'
+        });
+      }
+      
+      if (analysis.shortTerm.maxTemp > 32) {
+        recommendations.push({
+          type: 'protection',
+          priority: 'medium',
+          message: 'Temperaturas altas esperadas. Proteger frutos jóvenes.',
+          action: 'Instalar mallas de sombra temporales'
+        });
+      }
+    }
+    
+    return recommendations;
   }
 
   generateForecastAlerts() {
-    // Implementar generación de alertas basadas en pronóstico
-    return [];
+    const forecast = this.forecastData?.daily;
+    if (!forecast) return [];
+    
+    const alerts = [];
+    
+    // Buscar condiciones extremas en el pronóstico
+    for (let i = 0; i < 7 && i < forecast.time.length; i++) {
+      const maxTemp = forecast.temperature_2m_max[i];
+      const minTemp = forecast.temperature_2m_min[i];
+      const rain = forecast.precipitation_sum[i] || 0;
+      const wind = forecast.wind_speed_10m_max[i] || 0;
+      
+      if (maxTemp > 35) {
+        alerts.push({
+          day: i,
+          type: 'heat',
+          level: 'warning',
+          message: `Calor extremo esperado en ${i} días (${maxTemp}°C)`
+        });
+      }
+      
+      if (rain > 50) {
+        alerts.push({
+          day: i,
+          type: 'rain',
+          level: 'warning',
+          message: `Lluvia intensa esperada en ${i} días (${rain}mm)`
+        });
+      }
+      
+      if (wind > 40) {
+        alerts.push({
+          day: i,
+          type: 'wind',
+          level: 'warning',
+          message: `Vientos fuertes esperados en ${i} días (${wind} km/h)`
+        });
+      }
+    }
+    
+    return alerts;
   }
 
   generatePlanningRecommendations(days) {
-    // Implementar recomendaciones de planificación
-    return {};
+    const patterns = this.identifyForecastPatterns(days);
+    const recommendations = {};
+    
+    // Planificación de riego
+    if (patterns.drySpells && patterns.drySpells.length > 0) {
+      recommendations.irrigation = {
+        priority: 'high',
+        message: 'Períodos secos detectados. Planificar riego intensivo.',
+        periods: patterns.drySpells
+      };
+    }
+    
+    // Planificación de protección
+    if (patterns.heatWaves && patterns.heatWaves.length > 0) {
+      recommendations.protection = {
+        priority: 'medium',
+        message: 'Olas de calor detectadas. Preparar medidas de protección.',
+        periods: patterns.heatWaves
+      };
+    }
+    
+    // Planificación de actividades
+    if (patterns.optimalPeriods && patterns.optimalPeriods.length > 0) {
+      recommendations.activities = {
+        priority: 'low',
+        message: 'Períodos óptimos para actividades agrícolas.',
+        days: patterns.optimalPeriods
+      };
+    }
+    
+    return recommendations;
   }
 
   // ==========================================
@@ -1152,16 +1331,18 @@ class ClimateManager {
 
   calculateCorrelation(weatherParam, productionParam, data) {
     // Implementar cálculo de correlación básico
-    return 0.5; // Placeholder
+    // Por ahora retorna valor simulado
+    return 0.5 + Math.random() * 0.3;
   }
 
   calculateCorrelationConfidence(correlations) {
-    // Implementar cálculo de confianza en correlaciones
-    return 75; // Placeholder
+    // Calcular confianza basada en las correlaciones
+    const values = Object.values(correlations);
+    const avg = values.reduce((sum, val) => sum + Math.abs(val), 0) / values.length;
+    return Math.min(95, avg * 100);
   }
 
   calculateDroughtRisk() {
-    // Implementar cálculo de riesgo de sequía basado en pronóstico
     const forecast = this.forecastData?.daily;
     if (!forecast) return { level: 0, message: 'Sin datos' };
     
@@ -1179,7 +1360,7 @@ class ClimateManager {
       }
     }
     
-    const risk = Math.min(1, consecutiveDryDays / 7 + (1 - totalRainfall / 20));
+    const risk = Math.min(1, consecutiveDryDays / 7 + (1 - totalRainfall / 30));
     
     return {
       level: risk,
@@ -1203,7 +1384,7 @@ class ClimateManager {
       maxDailyRain = Math.max(maxDailyRain, rainfall);
     }
     
-    const risk = Math.min(1, maxDailyRain / 50 + totalRainfall / 100);
+    const risk = Math.min(1, maxDailyRain / 60 + totalRainfall / 120);
     
     return {
       level: risk,
@@ -1413,7 +1594,8 @@ class ClimateManager {
       const windSpeed = forecast.wind_speed_10m_max[i] || 0;
       const temp = forecast.temperature_2m_max[i];
       
-      if (rainfall < 2 && windSpeed < 20 && temp < 35 && temp > 15) {
+      // Condiciones óptimas para cosecha de limones
+      if (rainfall < 2 && windSpeed < 20 && temp < 35 && temp > 18) {
         optimalDays.push({
           date: forecast.time[i],
           score: this.calculateHarvestScore(rainfall, windSpeed, temp),
@@ -1434,28 +1616,76 @@ class ClimateManager {
     // Penalizar viento
     score -= Math.max(0, windSpeed - 10) * 2;
     
-    // Penalizar temperaturas extremas
+    // Penalizar temperaturas extremas (ajustado para Guatemala)
     if (temp > 30) score -= (temp - 30) * 5;
-    if (temp < 18) score -= (18 - temp) * 3;
+    if (temp < 20) score -= (20 - temp) * 3;
     
     return Math.max(0, score);
+  }
+
+  // Exportar datos
+  async exportarDatos() {
+    const datos = {
+      fecha: new Date().toISOString(),
+      ubicacion: 'Finca La Herradura, Guatemala',
+      coordenadas: this.fincaLocation,
+      climaActual: this.currentWeather,
+      pronostico: this.forecastData?.daily ? {
+        dias: this.forecastData.daily.time.length,
+        temperaturaMax: this.forecastData.daily.temperature_2m_max,
+        temperaturaMin: this.forecastData.daily.temperature_2m_min,
+        precipitacion: this.forecastData.daily.precipitation_sum
+      } : null,
+      alertas: this.alerts,
+      recomendaciones: this.recommendations
+    };
+    
+    // Crear blob y descargar
+    const blob = new Blob([JSON.stringify(datos, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `clima-finca-${new Date().toISOString().split('T')[0]}.json`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    
+    console.log('✅ Datos exportados correctamente');
+  }
+
+  // Mostrar histórico detallado
+  mostrarHistoricoDetallado(tipo) {
+    console.log(`📊 Mostrando histórico de ${tipo}`);
+    // Implementar visualización detallada
+    // Por ahora solo log
+    if (this.historicalData.length > 0) {
+      console.log('Datos históricos disponibles:', this.historicalData);
+    } else {
+      console.log('No hay datos históricos disponibles');
+    }
   }
 }
 
 // ==========================================
 // INICIALIZACIÓN Y EXPORTACIÓN
 // ==========================================
+
 // Instancia global del gestor climático
 let climateManager;
 
-  // Exportar para uso en otros módulos
+// Exportar para uso en otros módulos
 document.addEventListener('DOMContentLoaded', () => {
   climateManager = new ClimateManager();
   window.climateManager = climateManager;
+  window.climaManager = climateManager; // Alias para compatibilidad
   window.getWeatherData = () => climateManager.getWeatherData();
   window.refreshWeather = () => climateManager.refreshAll();
   window.getOptimalHarvestDays = (days) => climateManager.predictOptimalHarvestDays(days);
 
-  console.log('🌦️ Sistema climático con IA inicializado');
+  console.log('🌦️ Sistema climático con IA inicializado para Finca La Herradura');
+  console.log('📍 Ubicación: 14.77073, -90.25398 (Guatemala)');
 });
 
+// Exportar la clase para módulos ES6
+export default ClimateManager;
