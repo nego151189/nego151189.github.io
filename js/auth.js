@@ -1,6 +1,6 @@
 /* ========================================
    FINCA LA HERRADURA - SISTEMA DE AUTENTICACIÓN
-   Sistema integrado con Firebase y gestión offline v1
+   Sistema integrado con Firebase y gestión offline v2
    ======================================== */
 
 class AuthManager {
