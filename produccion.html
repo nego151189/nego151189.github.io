@@ -208,6 +208,33 @@
         .notification.error { background: #dc2626; }
         .notification.warning { background: #d97706; }
         .notification.info { background: #3b82f6; }
+
+        /* ESTILOS ESPECÍFICOS PARA OPTIMIZACIÓN DE GRÁFICOS */
+        .chart-container {
+            background: white;
+            padding: 1.5rem;
+            border-radius: 12px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            margin-bottom: 1rem;
+            /* DIMENSIONES FIJAS PARA EVITAR REDRAWS */
+            width: 100%;
+            height: 280px;
+            position: relative;
+        }
+
+        .chart-container canvas {
+            /* FORZAR DIMENSIONES FIJAS */
+            width: 100% !important;
+            height: 200px !important;
+            max-width: none !important;
+            max-height: 200px !important;
+        }
+
+        .chart-container h3 {
+            margin: 0 0 1rem 0;
+            font-size: 1.125rem;
+            font-weight: 600;
+        }
     </style>
 </head>
 <body>
@@ -282,16 +309,18 @@
 
         <!-- Contenido Principal -->
         <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 2rem;">
-            <!-- Gráficos -->
+            <!-- Gráficos CON CONTENEDORES OPTIMIZADOS -->
             <div>
-                <div style="background: white; padding: 1.5rem; border-radius: 12px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); margin-bottom: 1rem;">
+                <!-- CONTENEDOR OPTIMIZADO PARA GRÁFICO DE PRODUCCIÓN -->
+                <div class="chart-container">
                     <h3>Evolución de la Producción</h3>
-                    <canvas id="graficoProduccion" width="400" height="200"></canvas>
+                    <canvas id="graficoProduccion"></canvas>
                 </div>
                 
-                <div style="background: white; padding: 1.5rem; border-radius: 12px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+                <!-- CONTENEDOR OPTIMIZADO PARA GRÁFICO DE RENDIMIENTO -->
+                <div class="chart-container">
                     <h3>Rendimiento por Sector</h3>
-                    <canvas id="graficoRendimiento" width="400" height="200"></canvas>
+                    <canvas id="graficoRendimiento"></canvas>
                 </div>
             </div>
 
