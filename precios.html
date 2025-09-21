@@ -1,3 +1,4 @@
+//v12
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -17,6 +18,11 @@
     <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-storage-compat.js"></script>
     
+    <!-- Tus estilos CSS -->
+    <link rel="stylesheet" href="css/styles.css">
+    <link rel="stylesheet" href="css/navigation.css">
+    <link rel="stylesheet" href="css/precios.css">
+    
     <style>
         /* Variables CSS */
         :root {
@@ -35,213 +41,28 @@
             --text-secondary: #64748b;
             --border: #e2e8f0;
             --shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
-            
-            /* Variables para navegación */
-            --sidebar-width: 280px;
-            --sidebar-collapsed-width: 70px;
         }
 
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        body {
-            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            background: var(--bg-secondary);
-            color: var(--text-primary);
-            line-height: 1.6;
-        }
-
-        .main-content-wrapper {
-            padding: 2rem;
-            max-width: 1400px;
-            margin: 0 auto;
-            margin-left: var(--sidebar-width);
-            transition: margin-left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-        }
-
-        /* Ajuste para sidebar colapsado */
-        @media (max-width: 1024px) {
-            .main-content-wrapper {
-                margin-left: var(--sidebar-collapsed-width);
-            }
-        }
-
-        @media (max-width: 768px) {
-            .main-content-wrapper {
-                margin-left: 0;
-                padding: 1rem;
-                padding-top: 6rem; /* Espacio para el header fijo */
-            }
-        }
-
-        /* Estilos básicos */
-        .btn {
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            gap: 0.5rem;
-            padding: 0.75rem 1.5rem;
-            font-size: 0.875rem;
-            font-weight: 600;
-            border-radius: 8px;
-            border: none;
-            cursor: pointer;
-            transition: all 0.2s ease;
-            text-decoration: none;
-            white-space: nowrap;
-        }
-
-        .btn:disabled {
-            opacity: 0.6;
-            cursor: not-allowed;
-        }
-
-        .btn-primary {
-            background: var(--primary);
-            color: white;
-        }
-
-        .btn-primary:hover:not(:disabled) {
-            background: #d97706;
-            transform: translateY(-1px);
-        }
-
-        .btn-secondary {
-            background: var(--secondary);
-            color: white;
-        }
-
-        .btn-secondary:hover:not(:disabled) {
-            background: #1d4ed8;
-            transform: translateY(-1px);
-        }
-
-        .btn-success {
-            background: var(--success);
-            color: white;
-        }
-
-        .btn-success:hover:not(:disabled) {
-            background: #16a34a;
-            transform: translateY(-1px);
-        }
-
-        .btn-danger {
-            background: var(--danger);
-            color: white;
-        }
-
-        .btn-danger:hover:not(:disabled) {
-            background: #dc2626;
-            transform: translateY(-1px);
-        }
-
-        .btn-sm {
-            padding: 0.5rem 0.75rem;
-            font-size: 0.75rem;
-        }
-
-        .form-input, .form-select {
-            width: 100%;
-            padding: 0.75rem;
-            border: 2px solid var(--border);
-            border-radius: 8px;
-            font-size: 1rem;
-            transition: border-color 0.2s ease;
-        }
-
-        .form-input:focus, .form-select:focus {
-            outline: none;
-            border-color: var(--primary);
-        }
-
-        .form-label {
-            display: block;
-            margin-bottom: 0.5rem;
-            font-weight: 600;
-            color: var(--text-primary);
-        }
-
-        .form-group {
-            margin-bottom: 1rem;
-        }
-
-        .table {
-            width: 100%;
-            border-collapse: collapse;
-            background: white;
-            border-radius: 8px;
-            overflow: hidden;
-            box-shadow: var(--shadow);
-        }
-
-        .table th,
-        .table td {
-            padding: 1rem;
-            text-align: left;
-            border-bottom: 1px solid var(--border);
-        }
-
-        .table th {
-            background: var(--bg-secondary);
-            font-weight: 600;
-            color: var(--text-primary);
-        }
-
-        .table tr:hover {
-            background: #f8fafc;
-        }
-
-        /* Precios específicos */
-        .precios-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 2rem;
-            flex-wrap: wrap;
-            gap: 1rem;
-        }
-
-        .page-title {
-            display: flex;
-            align-items: center;
-            gap: 1rem;
-        }
-
-        .title-icon {
-            width: 60px;
-            height: 60px;
-            background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
-            border-radius: 16px;
+        .initialization-loader {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.8);
             display: flex;
             align-items: center;
             justify-content: center;
+            z-index: 9999;
             color: white;
-            font-size: 1.5rem;
+            font-size: 1.2rem;
         }
 
-        .header-actions {
-            display: flex;
-            gap: 1rem;
-            align-items: center;
-            flex-wrap: wrap;
+        .initialization-loader.hidden {
+            display: none;
         }
 
-        .actualizacion-precios {
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-            padding: 0.75rem 1.5rem;
-            border-radius: 20px;
-            font-weight: 600;
-            background: rgba(34, 197, 94, 0.2);
-            color: #16a34a;
-            border: 1px solid rgba(34, 197, 94, 0.3);
-        }
-
+        /* Ajustes específicos para precios */
         .precio-actual-card {
             background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
             color: white;
@@ -260,6 +81,14 @@
             margin-bottom: 2rem;
             position: relative;
             z-index: 1;
+        }
+
+        @media (max-width: 1024px) {
+            .precio-principal {
+                grid-template-columns: 1fr;
+                text-align: center;
+                gap: 1rem;
+            }
         }
 
         .precio-valor {
@@ -448,6 +277,12 @@
             margin-bottom: 2rem;
         }
 
+        @media (max-width: 1024px) {
+            .contenido-principal {
+                grid-template-columns: 1fr;
+            }
+        }
+
         .graficos-precios {
             display: grid;
             gap: 2rem;
@@ -461,6 +296,19 @@
             height: 400px;
             display: flex;
             flex-direction: column;
+        }
+
+        @media (max-width: 1024px) {
+            .grafico-card {
+                height: 350px;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .grafico-card {
+                height: 320px;
+                padding: 1rem;
+            }
         }
 
         .grafico-header {
@@ -486,6 +334,20 @@
             height: 300px;
             max-height: 300px;
             overflow: hidden;
+        }
+
+        @media (max-width: 1024px) {
+            .chart-container {
+                height: 250px;
+                max-height: 250px;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .chart-container {
+                height: 220px;
+                max-height: 220px;
+            }
         }
 
         .chart-container canvas {
@@ -593,6 +455,12 @@
             box-shadow: var(--shadow);
         }
 
+        @media (max-width: 768px) {
+            .form-precio {
+                grid-template-columns: 1fr;
+            }
+        }
+
         .tabla-precios {
             background: var(--bg-card);
             border-radius: 16px;
@@ -627,25 +495,6 @@
         .tipo-precio-badge.finca {
             background: rgba(34, 197, 94, 0.2);
             color: #16a34a;
-        }
-
-        .initialization-loader {
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: rgba(0, 0, 0, 0.8);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            z-index: 9999;
-            color: white;
-            font-size: 1.2rem;
-        }
-
-        .initialization-loader.hidden {
-            display: none;
         }
 
         .acciones-precios {
@@ -699,157 +548,47 @@
             gap: 1rem;
             align-items: end;
         }
-
-        /* Modal styles */
-        .modal-overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: rgba(0, 0, 0, 0.7);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            z-index: 10000;
-        }
-
-        .modal-content {
-            background: white;
-            border-radius: 16px;
-            width: 90%;
-            max-width: 600px;
-            padding: 2rem;
-            box-shadow: 0 20px 40px rgba(0,0,0,0.3);
-            max-height: 90vh;
-            overflow-y: auto;
-        }
-
-        .modal-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 1.5rem;
-            padding-bottom: 1rem;
-            border-bottom: 2px solid var(--border);
-        }
-
-        .modal-close {
-            background: none;
-            border: none;
-            font-size: 1.5rem;
-            cursor: pointer;
-            color: var(--text-secondary);
-            padding: 0.5rem;
-            border-radius: 50%;
-            transition: all 0.2s ease;
-        }
-
-        .modal-close:hover {
-            background: var(--bg-secondary);
-            color: var(--text-primary);
-        }
-
-        /* Responsivo - Ajustes adicionales para navegación */
-        @media (max-width: 1024px) {
-            .contenido-principal {
-                grid-template-columns: 1fr;
-            }
-            
-            .precio-principal {
-                grid-template-columns: 1fr;
-                text-align: center;
-                gap: 1rem;
-            }
-
-            .grafico-card {
-                height: 350px;
-            }
-
-            .chart-container {
-                height: 250px;
-                max-height: 250px;
-            }
-        }
-
-        @media (max-width: 768px) {
-            .precios-header {
-                flex-direction: column;
-                align-items: stretch;
-            }
-            
-            .mercados-grid {
-                grid-template-columns: 1fr;
-            }
-            
-            .form-precio {
-                grid-template-columns: 1fr;
-            }
-            
-            .comparacion-precios {
-                grid-template-columns: repeat(2, 1fr);
-            }
-
-            .grafico-card {
-                height: 320px;
-                padding: 1rem;
-            }
-
-            .chart-container {
-                height: 220px;
-                max-height: 220px;
-            }
-            
-            .title-icon {
-                width: 48px;
-                height: 48px;
-                font-size: 1.2rem;
-            }
-            
-            .header-actions {
-                flex-direction: column;
-                width: 100%;
-                gap: 0.5rem;
-            }
-            
-            .header-actions .btn {
-                width: 100%;
-                justify-content: center;
-            }
-        }
-<!-- Overlay para sidebar móvil -->
-    <div class="sidebar-overlay" id="sidebarOverlay"></div>
-    
-    <!-- Sidebar temporal para testing -->
-    <nav class="sidebar" id="sidebar">
-        <div style="padding: 2rem 1rem;">
-            <h3 style="color: #2d5016; margin-bottom: 1rem;">Finca La Herradura</h3>
-            <ul style="list-style: none; padding: 0;">
-                <li style="margin-bottom: 0.5rem;">
-                    <a href="/" style="display: block; padding: 0.75rem; text-decoration: none; color: #374151; border-radius: 8px; transition: background 0.2s;">
-                        <i class="fas fa-home" style="margin-right: 0.75rem;"></i>Dashboard
-                    </a>
-                </li>
-                <li style="margin-bottom: 0.5rem;">
-                    <a href="/precios.html" style="display: block; padding: 0.75rem; text-decoration: none; color: #374151; border-radius: 8px; transition: background 0.2s;">
-                        <i class="fas fa-chart-line" style="margin-right: 0.75rem;"></i>Precios
-                    </a>
-                </li>
-                <li style="margin-bottom: 0.5rem;">
-                    <a href="/negocios.html" style="display: block; padding: 0.75rem; text-decoration: none; color: #374151; border-radius: 8px; transition: background 0.2s;">
-                        <i class="fas fa-handshake" style="margin-right: 0.75rem;"></i>Negocios
-                    </a>
-                </li>
-            </ul>
+    </style>
+</head>
+<body>
+    <!-- Navegación principal -->
+    <nav class="main-nav">
+        <div class="nav-container">
+            <div class="nav-brand">
+                <i class="fas fa-leaf"></i>
+                <span>Finca La Herradura</span>
+            </div>
+            <button class="nav-toggle" id="navToggle">
+                <i class="fas fa-bars"></i>
+            </button>
+            <div class="nav-menu">
+                <a href="index.html" class="nav-link">
+                    <i class="fas fa-home"></i> Inicio
+                </a>
+                <a href="precios.html" class="nav-link active">
+                    <i class="fas fa-chart-line"></i> Precios
+                </a>
+                <a href="produccion.html" class="nav-link">
+                    <i class="fas fa-seedling"></i> Producción
+                </a>
+                <a href="gastos.html" class="nav-link">
+                    <i class="fas fa-money-bill-wave"></i> Gastos
+                </a>
+                <a href="ventas.html" class="nav-link">
+                    <i class="fas fa-shopping-cart"></i> Ventas
+                </a>
+                <div class="nav-user">
+                    <img src="assets/user-avatar.png" alt="Usuario" class="user-avatar">
+                    <span class="user-name">Usuario</span>
+                    <i class="fas fa-chevron-down"></i>
+                </div>
+            </div>
         </div>
     </nav>
 
-        
-</head>
-<body>
     <!-- Overlay para sidebar móvil -->
     <div class="sidebar-overlay" id="sidebarOverlay"></div>
-    
+
     <!-- Loader de inicialización -->
     <div class="initialization-loader" id="initLoader">
         <div style="text-align: center;">
@@ -1332,8 +1071,8 @@
 
     <!-- Scripts -->
     <script src="js/firebase-config.js"></script>
-     <script src="js/finca-navigation.js"></script>
-        <script src="js/precios.js"></script>
+    <script src="js/finca-navigation.js"></script>
+    <script src="js/precios.js"></script>
 
     <script>
         // Variables globales
@@ -1534,30 +1273,6 @@
                 console.warn('⚠️ Chart.js no disponible');
             }
             
-            // Toggle del menú móvil
-            const menuToggle = document.getElementById('menuToggle');
-            const sidebar = document.querySelector('.sidebar');
-            const sidebarOverlay = document.getElementById('sidebarOverlay');
-            
-            if (menuToggle && sidebar && sidebarOverlay) {
-                menuToggle.addEventListener('click', function() {
-                    sidebar.classList.toggle('open');
-                    sidebarOverlay.classList.toggle('show');
-                });
-                
-                sidebarOverlay.addEventListener('click', function() {
-                    sidebar.classList.remove('open');
-                    sidebarOverlay.classList.remove('show');
-                });
-                
-                window.addEventListener('resize', function() {
-                    if (window.innerWidth > 768) {
-                        sidebar.classList.remove('open');
-                        sidebarOverlay.classList.remove('show');
-                    }
-                });
-            }
-            
             console.log('✅ Sistema de gestión de precios inicializado correctamente');
             console.log(`📊 ${precios.size} precios cargados en memoria`);
         });
@@ -1617,6 +1332,3 @@
     </script>
 </body>
 </html>
-
-
-
