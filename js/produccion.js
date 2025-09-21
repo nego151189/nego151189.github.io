@@ -1,11 +1,13 @@
 /* ========================================
-   PRODUCCIÓN JS - SIN CHART.JS - SOLO DATOS REALES
-   Versión que elimina Chart.js para evitar RAF issues
+   PRODUCCIÓN JS - GRÁFICOS CSS CONTROLADOS
+   Versión que previene crecimiento desmedido de gráficos
    ======================================== */
 
 // Variables globales
 let isProductionReady = false;
 let productionData = [];
+let chartUpdateTimeout = null;
+let chartsCreated = false;
 let managers = {
     tree: null,
     offline: null,
@@ -14,29 +16,21 @@ let managers = {
 
 // Configuración
 const LIMONES_POR_KG = 7;
+const CHART_UPDATE_DEBOUNCE = 2000; // 2 segundos de debounce
 
 // INICIALIZACIÓN PRINCIPAL
 document.addEventListener('DOMContentLoaded', async () => {
     console.log('Inicializando página de producción...');
     
     try {
-        // Esperar a que Firebase esté listo (SIN interferir con auth)
         await waitForFirebase();
-        
-        // Inicializar managers disponibles
         await initializeManagers();
-        
-        // Configurar eventos
         setupEventListeners();
-        
-        // Cargar datos REALES únicamente
         await loadRealDataOnly();
-        
-        // Configurar formularios
         setupForms();
         
-        // Crear gráficos CSS (sin Chart.js)
-        setTimeout(() => createCSSCharts(), 1000);
+        // Crear gráficos una sola vez con dimensiones fijas
+        setTimeout(() => createFixedSizeCharts(), 1000);
         
         isProductionReady = true;
         console.log('Producción inicializada correctamente');
@@ -350,29 +344,48 @@ function showEmptyStates() {
     }
 }
 
-// CREAR GRÁFICOS CSS (SIN CHART.JS)
-function createCSSCharts() {
+// CREAR GRÁFICOS CON TAMAÑO FIJO Y CONTROLADO
+function createFixedSizeCharts() {
+    if (chartsCreated) {
+        console.log('Gráficos ya creados, evitando duplicación');
+        return;
+    }
+    
     try {
-        createProductionChart();
-        createPerformanceChart();
-        console.log('Gráficos CSS creados exitosamente');
+        clearExistingCharts();
+        createFixedProductionChart();
+        createFixedPerformanceChart();
+        chartsCreated = true;
+        console.log('Gráficos de tamaño fijo creados exitosamente');
     } catch (error) {
-        console.error('Error creando gráficos CSS:', error);
+        console.error('Error creando gráficos de tamaño fijo:', error);
         showEmptyCharts();
     }
 }
 
-// CREAR GRÁFICO DE PRODUCCIÓN CON CSS
-function createProductionChart() {
+// LIMPIAR GRÁFICOS EXISTENTES
+function clearExistingCharts() {
+    const containers = ['graficoProduccion', 'graficoRendimiento'];
+    
+    containers.forEach(containerId => {
+        const container = document.getElementById(containerId);
+        if (container && container.parentElement) {
+            // Limpiar completamente el contenido
+            container.parentElement.innerHTML = `
+                <h3>${containerId === 'graficoProduccion' ? 'Evolución de la Producción' : 'Rendimiento por Sector'}</h3>
+                <div id="${containerId}"></div>
+            `;
+        }
+    });
+}
+
+// CREAR GRÁFICO DE PRODUCCIÓN CON TAMAÑO FIJO
+function createFixedProductionChart() {
     const container = document.getElementById('graficoProduccion');
     if (!container) return;
     
-    const parent = container.parentElement;
-    if (!parent) return;
-    
     if (productionData.length === 0) {
-        parent.innerHTML = `
-            <h3>Evolución de la Producción</h3>
+        container.innerHTML = `
             <div style="display: flex; align-items: center; justify-content: center; height: 200px; color: #6b7280; text-align: center;">
                 <div>
                     <i class="fas fa-chart-line" style="font-size: 2rem; margin-bottom: 1rem; display: block;"></i>
@@ -407,26 +420,68 @@ function createProductionChart() {
     
     const maxValue = Math.max(...chartData.map(d => d.value), 1);
     
-    parent.innerHTML = `
-        <h3>Evolución de la Producción</h3>
-        <div style="height: 200px; display: flex; align-items: end; justify-content: space-between; padding: 20px; border: 1px solid #e5e7eb; border-radius: 8px; background: #f9fafb;">
-            ${chartData.map(data => `
-                <div style="display: flex; flex-direction: column; align-items: center; flex: 1;">
+    // CONTENEDOR CON DIMENSIONES ABSOLUTAMENTE FIJAS
+    container.innerHTML = `
+        <div style="
+            height: 200px; 
+            max-height: 200px;
+            min-height: 200px;
+            width: 100%;
+            max-width: 100%;
+            display: flex; 
+            align-items: end; 
+            justify-content: space-between; 
+            padding: 20px; 
+            border: 1px solid #e5e7eb; 
+            border-radius: 8px; 
+            background: #f9fafb;
+            overflow: hidden;
+            box-sizing: border-box;
+        ">
+            ${chartData.map((data, index) => `
+                <div style="
+                    display: flex; 
+                    flex-direction: column; 
+                    align-items: center; 
+                    flex: 1;
+                    max-width: calc(100% / 7);
+                    height: 100%;
+                    justify-content: flex-end;
+                ">
                     <div style="
                         background: linear-gradient(to top, #16a34a, #22c55e);
-                        width: 30px;
-                        height: ${(data.value / maxValue) * 150}px;
+                        width: 24px;
+                        max-width: 24px;
+                        min-width: 24px;
+                        height: ${Math.min((data.value / maxValue) * 120, 120)}px;
+                        max-height: 120px;
                         min-height: 2px;
-                        border-radius: 4px 4px 0 0;
+                        border-radius: 3px 3px 0 0;
                         position: relative;
                         margin-bottom: 8px;
-                        transition: all 0.3s ease;
                     " title="${data.value} kg">
                     </div>
-                    <div style="font-size: 0.75rem; color: #6b7280; text-align: center;">
+                    <div style="
+                        font-size: 0.7rem; 
+                        color: #6b7280; 
+                        text-align: center;
+                        white-space: nowrap;
+                        overflow: hidden;
+                        text-overflow: ellipsis;
+                        max-width: 100%;
+                    ">
                         ${data.label}
                     </div>
-                    <div style="font-size: 0.625rem; color: #16a34a; font-weight: 600; text-align: center;">
+                    <div style="
+                        font-size: 0.6rem; 
+                        color: #16a34a; 
+                        font-weight: 600; 
+                        text-align: center;
+                        white-space: nowrap;
+                        overflow: hidden;
+                        text-overflow: ellipsis;
+                        max-width: 100%;
+                    ">
                         ${data.value}kg
                     </div>
                 </div>
@@ -435,17 +490,13 @@ function createProductionChart() {
     `;
 }
 
-// CREAR GRÁFICO DE RENDIMIENTO CON CSS
-function createPerformanceChart() {
+// CREAR GRÁFICO DE RENDIMIENTO CON TAMAÑO FIJO
+function createFixedPerformanceChart() {
     const container = document.getElementById('graficoRendimiento');
     if (!container) return;
     
-    const parent = container.parentElement;
-    if (!parent) return;
-    
     if (productionData.length === 0) {
-        parent.innerHTML = `
-            <h3>Rendimiento por Sector</h3>
+        container.innerHTML = `
             <div style="display: flex; align-items: center; justify-content: center; height: 200px; color: #6b7280; text-align: center;">
                 <div>
                     <i class="fas fa-chart-bar" style="font-size: 2rem; margin-bottom: 1rem; display: block;"></i>
@@ -471,31 +522,79 @@ function createPerformanceChart() {
         .sort(([,a], [,b]) => b - a)
         .slice(0, 6)
         .map(([key, value]) => ({
-            label: key.length > 12 ? key.substring(0, 12) + '...' : key,
+            label: key.length > 10 ? key.substring(0, 10) + '...' : key,
             value: value
         }));
     
     const maxValue = Math.max(...chartData.map(d => d.value), 1);
     
-    parent.innerHTML = `
-        <h3>Rendimiento por Sector</h3>
-        <div style="height: 200px; display: flex; align-items: end; justify-content: space-between; padding: 20px; border: 1px solid #e5e7eb; border-radius: 8px; background: #f9fafb;">
+    // CONTENEDOR CON DIMENSIONES ABSOLUTAMENTE FIJAS
+    container.innerHTML = `
+        <div style="
+            height: 200px; 
+            max-height: 200px;
+            min-height: 200px;
+            width: 100%;
+            max-width: 100%;
+            display: flex; 
+            align-items: end; 
+            justify-content: space-between; 
+            padding: 20px; 
+            border: 1px solid #e5e7eb; 
+            border-radius: 8px; 
+            background: #f9fafb;
+            overflow: hidden;
+            box-sizing: border-box;
+        ">
             ${chartData.map((data, index) => `
-                <div style="display: flex; flex-direction: column; align-items: center; flex: 1; margin: 0 4px;">
+                <div style="
+                    display: flex; 
+                    flex-direction: column; 
+                    align-items: center; 
+                    flex: 1; 
+                    margin: 0 2px;
+                    max-width: calc(100% / ${chartData.length});
+                    height: 100%;
+                    justify-content: flex-end;
+                ">
                     <div style="
                         background: linear-gradient(to top, #3b82f6, #60a5fa);
-                        width: 40px;
-                        height: ${(data.value / maxValue) * 150}px;
-                        min-height: 5px;
-                        border-radius: 4px 4px 0 0;
+                        width: 32px;
+                        max-width: 32px;
+                        min-width: 20px;
+                        height: ${Math.min((data.value / maxValue) * 120, 120)}px;
+                        max-height: 120px;
+                        min-height: 3px;
+                        border-radius: 3px 3px 0 0;
                         margin-bottom: 8px;
-                        transition: all 0.3s ease;
                     " title="${data.value} kg">
                     </div>
-                    <div style="font-size: 0.625rem; color: #6b7280; text-align: center; writing-mode: vertical-rl; text-orientation: mixed;">
+                    <div style="
+                        font-size: 0.6rem; 
+                        color: #6b7280; 
+                        text-align: center;
+                        transform: rotate(-45deg);
+                        transform-origin: center;
+                        white-space: nowrap;
+                        overflow: hidden;
+                        text-overflow: ellipsis;
+                        max-width: 80px;
+                        height: 20px;
+                        line-height: 20px;
+                    ">
                         ${data.label}
                     </div>
-                    <div style="font-size: 0.625rem; color: #3b82f6; font-weight: 600; text-align: center; margin-top: 4px;">
+                    <div style="
+                        font-size: 0.6rem; 
+                        color: #3b82f6; 
+                        font-weight: 600; 
+                        text-align: center;
+                        margin-top: 4px;
+                        white-space: nowrap;
+                        overflow: hidden;
+                        text-overflow: ellipsis;
+                        max-width: 100%;
+                    ">
                         ${Math.round(data.value)}kg
                     </div>
                 </div>
@@ -511,21 +610,32 @@ function showEmptyCharts() {
     containers.forEach(containerId => {
         const container = document.getElementById(containerId);
         if (container) {
-            const parent = container.parentElement;
-            if (parent) {
-                parent.innerHTML = `
-                    <h3>${containerId === 'graficoProduccion' ? 'Evolución de la Producción' : 'Rendimiento por Sector'}</h3>
-                    <div style="display: flex; align-items: center; justify-content: center; height: 200px; color: #6b7280; text-align: center;">
-                        <div>
-                            <i class="fas fa-chart-${containerId === 'graficoProduccion' ? 'line' : 'bar'}" style="font-size: 2rem; margin-bottom: 1rem; display: block;"></i>
-                            <p>Sin datos para mostrar</p>
-                            <p style="font-size: 0.875rem;">Registra tu primera cosecha para ver gráficos</p>
-                        </div>
+            container.innerHTML = `
+                <div style="display: flex; align-items: center; justify-content: center; height: 200px; color: #6b7280; text-align: center;">
+                    <div>
+                        <i class="fas fa-chart-${containerId === 'graficoProduccion' ? 'line' : 'bar'}" style="font-size: 2rem; margin-bottom: 1rem; display: block;"></i>
+                        <p>Sin datos para mostrar</p>
+                        <p style="font-size: 0.875rem;">Registra tu primera cosecha para ver gráficos</p>
                     </div>
-                `;
-            }
+                </div>
+            `;
         }
     });
+}
+
+// ACTUALIZAR GRÁFICOS CON DEBOUNCE
+function scheduleChartUpdate() {
+    if (chartUpdateTimeout) {
+        clearTimeout(chartUpdateTimeout);
+    }
+    
+    chartUpdateTimeout = setTimeout(() => {
+        if (chartsCreated) {
+            console.log('Actualizando gráficos con nuevos datos...');
+            chartsCreated = false; // Permitir recreación
+            createFixedSizeCharts();
+        }
+    }, CHART_UPDATE_DEBOUNCE);
 }
 
 // CONFIGURAR FORMULARIOS
@@ -592,8 +702,8 @@ async function handleNuevoCorte(event) {
         await loadRealKPIs();
         await loadRealTimeline();
         
-        // Actualizar gráficos CSS
-        setTimeout(() => createCSSCharts(), 100);
+        // Actualizar gráficos con debounce
+        scheduleChartUpdate();
         
         cerrarModal('modalNuevoCorte');
         document.getElementById('formNuevoCorte').reset();
@@ -660,8 +770,8 @@ async function handleRegistroCompleto(event) {
         await loadRealKPIs();
         await loadRealTimeline();
         
-        // Actualizar gráficos CSS
-        setTimeout(() => createCSSCharts(), 100);
+        // Actualizar gráficos con debounce
+        scheduleChartUpdate();
         
         cerrarModal('modalRegistroCompleto');
         document.getElementById('formRegistroCompleto').reset();
@@ -822,4 +932,4 @@ window.abrirModal = abrirModal;
 window.cerrarModal = cerrarModal;
 window.exportarDatos = exportarDatos;
 
-console.log('Sistema de producción sin Chart.js cargado - Sin RAF issues');
+console.log('Sistema de producción con gráficos de tamaño fijo cargado');
