@@ -1,14 +1,11 @@
 /* ========================================
-   PRODUCCIÓN JS - ULTRA OPTIMIZADO SIN RAF ISSUES
-   Versión que elimina problemas de requestAnimationFrame
+   PRODUCCIÓN JS - SIN CHART.JS - SOLO DATOS REALES
+   Versión que elimina Chart.js para evitar RAF issues
    ======================================== */
 
 // Variables globales
 let isProductionReady = false;
 let productionData = [];
-let charts = {};
-let chartsInitialized = false;
-let chartUpdateTimeout = null;
 let managers = {
     tree: null,
     offline: null,
@@ -17,7 +14,6 @@ let managers = {
 
 // Configuración
 const LIMONES_POR_KG = 7;
-const CHART_UPDATE_DEBOUNCE = 1000; // 1 segundo de debounce
 
 // INICIALIZACIÓN PRINCIPAL
 document.addEventListener('DOMContentLoaded', async () => {
@@ -39,8 +35,8 @@ document.addEventListener('DOMContentLoaded', async () => {
         // Configurar formularios
         setupForms();
         
-        // Inicializar gráficos con mayor delay y optimización extrema
-        setTimeout(() => initializeChartsUltraOptimized(), 2000);
+        // Crear gráficos CSS (sin Chart.js)
+        setTimeout(() => createCSSCharts(), 1000);
         
         isProductionReady = true;
         console.log('Producción inicializada correctamente');
@@ -81,19 +77,16 @@ async function waitForFirebase() {
 
 // INICIALIZAR MANAGERS DISPONIBLES
 async function initializeManagers() {
-    // Tree Manager (opcional)
     if (window.treeManager) {
         managers.tree = window.treeManager;
         console.log('TreeManager disponible');
     }
     
-    // Offline Manager (opcional)
     if (window.offlineManager) {
         managers.offline = window.offlineManager;
         console.log('OfflineManager disponible');
     }
     
-    // Climate Manager (opcional) - NO esperar
     if (window.climateManager) {
         managers.climate = window.climateManager;
         console.log('ClimateManager disponible');
@@ -104,64 +97,26 @@ async function initializeManagers() {
 
 // CONFIGURAR EVENT LISTENERS
 function setupEventListeners() {
-    // Formulario nuevo corte
     const formCorte = document.getElementById('formNuevoCorte');
     if (formCorte) {
         formCorte.addEventListener('submit', handleNuevoCorte);
     }
     
-    // Formulario registro completo
     const formCompleto = document.getElementById('formRegistroCompleto');
     if (formCompleto) {
         formCompleto.addEventListener('submit', handleRegistroCompleto);
     }
     
-    // Prevenir múltiples inicializaciones de gráficos
-    window.addEventListener('resize', debounceChartResize);
-    
     console.log('Event listeners configurados');
-}
-
-// DEBOUNCE PARA RESIZE DE GRÁFICOS
-function debounceChartResize() {
-    if (chartUpdateTimeout) {
-        clearTimeout(chartUpdateTimeout);
-    }
-    
-    chartUpdateTimeout = setTimeout(() => {
-        if (chartsInitialized && charts.produccion) {
-            try {
-                charts.produccion.resize();
-            } catch (error) {
-                console.warn('Error resizing chart:', error);
-            }
-        }
-        if (chartsInitialized && charts.rendimiento) {
-            try {
-                charts.rendimiento.resize();
-            } catch (error) {
-                console.warn('Error resizing chart:', error);
-            }
-        }
-    }, CHART_UPDATE_DEBOUNCE);
 }
 
 // CARGAR SOLO DATOS REALES
 async function loadRealDataOnly() {
     try {
-        // Primero cargar datos de producción desde Firebase
         await loadProductionDataFromFirebase();
-        
-        // Cargar opciones de formularios desde TreeManager
         await loadFormOptionsFromDatabase();
-        
-        // Cargar KPIs basados en datos reales
         await loadRealKPIs();
-        
-        // Cargar timeline con datos reales
         await loadRealTimeline();
-        
-        // Configurar fecha actual
         setCurrentDate();
         
         console.log('Datos REALES cargados exitosamente');
@@ -207,13 +162,11 @@ async function loadFormOptionsFromDatabase() {
     try {
         let options = [];
         
-        // Intentar cargar desde TreeManager
         if (managers.tree && managers.tree.getAllSectors && managers.tree.getAllTrees) {
             try {
                 const sectors = await managers.tree.getAllSectors();
                 const trees = await managers.tree.getAllTrees();
                 
-                // Agregar sectores
                 sectors.forEach(sector => {
                     options.push({
                         value: sector.id,
@@ -222,7 +175,6 @@ async function loadFormOptionsFromDatabase() {
                     });
                 });
                 
-                // Agregar árboles activos únicamente
                 trees.forEach(tree => {
                     if (tree.active !== false) {
                         const sectorName = sectors.find(s => s.id === tree.blockId)?.name || 'Sin sector';
@@ -241,21 +193,18 @@ async function loadFormOptionsFromDatabase() {
             }
         }
         
-        // Si no hay opciones, mostrar estado vacío
         if (options.length === 0) {
             console.log('No hay opciones disponibles desde la base de datos');
             showEmptyFormOptions();
             return;
         }
         
-        // Ordenar: sectores primero
         options.sort((a, b) => {
             if (a.type === 'sector' && b.type === 'tree') return -1;
             if (a.type === 'tree' && b.type === 'sector') return 1;
             return a.label.localeCompare(b.label);
         });
         
-        // Actualizar selects
         updateSelect('arbolCorte', options);
         updateSelect('arbolCompleto', options);
         
@@ -267,10 +216,6 @@ async function loadFormOptionsFromDatabase() {
 
 // MOSTRAR ESTADO VACÍO PARA OPCIONES DE FORMULARIO
 function showEmptyFormOptions() {
-    updateSelect('arbolCorte', []);
-    updateSelect('arbolCompleto', []);
-    
-    // Agregar mensaje informativo
     const selects = ['arbolCorte', 'arbolCompleto'];
     selects.forEach(selectId => {
         const select = document.getElementById(selectId);
@@ -297,7 +242,6 @@ function updateSelect(selectId, options) {
         select.appendChild(opt);
     });
     
-    // Restaurar valor si era válido
     if (currentValue && options.some(opt => opt.value === currentValue)) {
         select.value = currentValue;
     }
@@ -315,22 +259,19 @@ async function loadRealKPIs() {
         const thisMonth = now.getMonth();
         const thisYear = now.getFullYear();
         
-        // Filtrar datos del mes actual
         const monthlyData = productionData.filter(record => {
             const recordDate = new Date(record.fecha);
             return recordDate.getMonth() === thisMonth && 
                    recordDate.getFullYear() === thisYear;
         });
         
-        // Calcular KPIs desde datos reales
         const produccionMes = monthlyData.reduce((sum, record) => sum + (record.cantidad || 0), 0);
         const numRegistros = monthlyData.length;
         const rendimientoPromedio = numRegistros > 0 ? produccionMes / numRegistros : 0;
         const calidadPromedio = numRegistros > 0 ? 
             monthlyData.reduce((sum, record) => sum + (record.calidad || 0), 0) / numRegistros : 0;
-        const ingresosMes = produccionMes * 7.5; // Precio promedio por kg
+        const ingresosMes = produccionMes * 7.5;
         
-        // Actualizar UI con datos reales
         updateElement('produccionMes', produccionMes > 0 ? `${Math.round(produccionMes)} kg` : '0 kg');
         updateElement('rendimientoPromedio', rendimientoPromedio > 0 ? `${Math.round(rendimientoPromedio * 100) / 100} kg/registro` : '0 kg/registro');
         updateElement('calidadPromedio', calidadPromedio > 0 ? `${Math.round(calidadPromedio)}%` : 'N/A');
@@ -369,7 +310,6 @@ async function loadRealTimeline() {
             return;
         }
         
-        // Mostrar solo datos reales
         const recentData = productionData
             .sort((a, b) => new Date(b.fecha) - new Date(a.fecha))
             .slice(0, 5);
@@ -410,242 +350,48 @@ function showEmptyStates() {
     }
 }
 
-// INICIALIZAR GRÁFICOS ULTRA OPTIMIZADOS
-function initializeChartsUltraOptimized() {
-    if (chartsInitialized) return;
-    
+// CREAR GRÁFICOS CSS (SIN CHART.JS)
+function createCSSCharts() {
     try {
-        // Solo crear gráficos si hay datos reales
-        if (productionData.length === 0) {
-            showEmptyCharts();
-            return;
-        }
-        
-        // Verificar que Chart.js esté disponible
-        if (!window.Chart) {
-            console.warn('Chart.js no disponible');
-            showEmptyCharts();
-            return;
-        }
-        
-        // Configurar Chart.js para máximo rendimiento
-        Chart.defaults.animation = false;
-        Chart.defaults.responsive = false;
-        Chart.defaults.maintainAspectRatio = false;
-        Chart.defaults.interaction.intersect = false;
-        Chart.defaults.interaction.mode = 'index';
-        
-        // Crear gráficos con configuración extremadamente optimizada
-        createUltraOptimizedCharts();
-        
+        createProductionChart();
+        createPerformanceChart();
+        console.log('Gráficos CSS creados exitosamente');
     } catch (error) {
-        console.error('Error inicializando gráficos:', error);
+        console.error('Error creando gráficos CSS:', error);
         showEmptyCharts();
     }
 }
 
-// CREAR GRÁFICOS ULTRA OPTIMIZADOS
-function createUltraOptimizedCharts() {
-    try {
-        // Destruir gráficos existentes si los hay
-        destroyExistingCharts();
-        
-        // Preparar datos reales para gráficos
-        const chartData = prepareRealChartData();
-        
-        // Configurar dimensiones fijas para evitar redraws
-        setupFixedChartDimensions();
-        
-        // Gráfico de producción - ULTRA OPTIMIZADO
-        const ctxProd = document.getElementById('graficoProduccion');
-        if (ctxProd && chartData.production.length > 0) {
-            charts.produccion = new Chart(ctxProd, {
-                type: 'line',
-                data: {
-                    labels: chartData.production.map(d => d.label),
-                    datasets: [{
-                        label: 'Producción (kg)',
-                        data: chartData.production.map(d => d.value),
-                        borderColor: '#16a34a',
-                        backgroundColor: 'rgba(22, 163, 74, 0.1)',
-                        tension: 0.2, // Reducir tensión para mejor rendimiento
-                        fill: false, // Deshabilitar fill para mejor rendimiento
-                        pointRadius: 1, // Puntos más pequeños
-                        pointHoverRadius: 3,
-                        borderWidth: 2
-                    }]
-                },
-                options: {
-                    // CONFIGURACIÓN ULTRA OPTIMIZADA
-                    animation: false,
-                    responsive: false,
-                    maintainAspectRatio: false,
-                    interaction: {
-                        intersect: false,
-                        mode: 'nearest'
-                    },
-                    elements: {
-                        point: {
-                            radius: 1,
-                            hoverRadius: 3
-                        },
-                        line: {
-                            tension: 0.2
-                        }
-                    },
-                    plugins: {
-                        legend: {
-                            display: true,
-                            position: 'top',
-                            labels: {
-                                usePointStyle: false,
-                                boxWidth: 12
-                            }
-                        },
-                        tooltip: {
-                            enabled: true,
-                            mode: 'nearest',
-                            intersect: false
-                        }
-                    },
-                    scales: {
-                        x: {
-                            display: true,
-                            grid: {
-                                display: false
-                            }
-                        },
-                        y: {
-                            display: true,
-                            beginAtZero: true,
-                            grid: {
-                                display: true,
-                                color: 'rgba(0,0,0,0.1)'
-                            }
-                        }
-                    },
-                    // DESHABILITAR TODAS LAS ANIMACIONES
-                    events: ['mousemove', 'mouseout', 'click'], // Minimizar eventos
-                    onResize: null // Deshabilitar resize automático
-                }
-            });
-        }
-        
-        // Gráfico de rendimiento - ULTRA OPTIMIZADO
-        const ctxRend = document.getElementById('graficoRendimiento');
-        if (ctxRend && chartData.sectors.length > 0) {
-            charts.rendimiento = new Chart(ctxRend, {
-                type: 'bar',
-                data: {
-                    labels: chartData.sectors.map(d => d.label),
-                    datasets: [{
-                        label: 'Rendimiento (kg)',
-                        data: chartData.sectors.map(d => d.value),
-                        backgroundColor: 'rgba(59, 130, 246, 0.6)',
-                        borderColor: '#3b82f6',
-                        borderWidth: 1
-                    }]
-                },
-                options: {
-                    // CONFIGURACIÓN ULTRA OPTIMIZADA
-                    animation: false,
-                    responsive: false,
-                    maintainAspectRatio: false,
-                    interaction: {
-                        intersect: false,
-                        mode: 'nearest'
-                    },
-                    plugins: {
-                        legend: {
-                            display: false
-                        },
-                        tooltip: {
-                            enabled: true,
-                            mode: 'nearest',
-                            intersect: false
-                        }
-                    },
-                    scales: {
-                        x: {
-                            display: true,
-                            grid: {
-                                display: false
-                            }
-                        },
-                        y: {
-                            display: true,
-                            beginAtZero: true,
-                            grid: {
-                                display: true,
-                                color: 'rgba(0,0,0,0.1)'
-                            }
-                        }
-                    },
-                    // DESHABILITAR TODAS LAS ANIMACIONES
-                    events: ['mousemove', 'mouseout', 'click'], // Minimizar eventos
-                    onResize: null // Deshabilitar resize automático
-                }
-            });
-        }
-        
-        chartsInitialized = true;
-        console.log('Gráficos ultra optimizados creados con datos reales');
-        
-    } catch (error) {
-        console.error('Error creando gráficos:', error);
-        showEmptyCharts();
+// CREAR GRÁFICO DE PRODUCCIÓN CON CSS
+function createProductionChart() {
+    const container = document.getElementById('graficoProduccion');
+    if (!container) return;
+    
+    const parent = container.parentElement;
+    if (!parent) return;
+    
+    if (productionData.length === 0) {
+        parent.innerHTML = `
+            <h3>Evolución de la Producción</h3>
+            <div style="display: flex; align-items: center; justify-content: center; height: 200px; color: #6b7280; text-align: center;">
+                <div>
+                    <i class="fas fa-chart-line" style="font-size: 2rem; margin-bottom: 1rem; display: block;"></i>
+                    <p>Sin datos para mostrar</p>
+                    <p style="font-size: 0.875rem;">Registra tu primera cosecha para ver gráficos</p>
+                </div>
+            </div>
+        `;
+        return;
     }
-}
-
-// DESTRUIR GRÁFICOS EXISTENTES
-function destroyExistingCharts() {
-    try {
-        if (charts.produccion) {
-            charts.produccion.destroy();
-            charts.produccion = null;
-        }
-        if (charts.rendimiento) {
-            charts.rendimiento.destroy();
-            charts.rendimiento = null;
-        }
-    } catch (error) {
-        console.warn('Error destruyendo gráficos:', error);
-    }
-}
-
-// CONFIGURAR DIMENSIONES FIJAS PARA GRÁFICOS
-function setupFixedChartDimensions() {
-    const chartContainers = ['graficoProduccion', 'graficoRendimiento'];
     
-    chartContainers.forEach(containerId => {
-        const canvas = document.getElementById(containerId);
-        if (canvas) {
-            // Establecer dimensiones fijas
-            canvas.style.width = '100%';
-            canvas.style.height = '200px';
-            canvas.width = canvas.offsetWidth;
-            canvas.height = 200;
-        }
-    });
-}
-
-// PREPARAR DATOS REALES PARA GRÁFICOS
-function prepareRealChartData() {
-    const chartData = {
-        production: [],
-        sectors: []
-    };
-    
-    if (productionData.length === 0) return chartData;
-    
-    // Agrupar por fecha para gráfico de producción (últimos 7 días)
+    // Preparar datos de los últimos 7 días
     const last7Days = Array.from({length: 7}, (_, i) => {
         const date = new Date();
         date.setDate(date.getDate() - i);
         return date;
     }).reverse();
     
-    chartData.production = last7Days.map(date => {
+    const chartData = last7Days.map(date => {
         const dayData = productionData.filter(record => {
             const recordDate = new Date(record.fecha);
             return recordDate.toDateString() === date.toDateString();
@@ -659,7 +405,59 @@ function prepareRealChartData() {
         };
     });
     
-    // Agrupar por sector/árbol para gráfico de rendimiento
+    const maxValue = Math.max(...chartData.map(d => d.value), 1);
+    
+    parent.innerHTML = `
+        <h3>Evolución de la Producción</h3>
+        <div style="height: 200px; display: flex; align-items: end; justify-content: space-between; padding: 20px; border: 1px solid #e5e7eb; border-radius: 8px; background: #f9fafb;">
+            ${chartData.map(data => `
+                <div style="display: flex; flex-direction: column; align-items: center; flex: 1;">
+                    <div style="
+                        background: linear-gradient(to top, #16a34a, #22c55e);
+                        width: 30px;
+                        height: ${(data.value / maxValue) * 150}px;
+                        min-height: 2px;
+                        border-radius: 4px 4px 0 0;
+                        position: relative;
+                        margin-bottom: 8px;
+                        transition: all 0.3s ease;
+                    " title="${data.value} kg">
+                    </div>
+                    <div style="font-size: 0.75rem; color: #6b7280; text-align: center;">
+                        ${data.label}
+                    </div>
+                    <div style="font-size: 0.625rem; color: #16a34a; font-weight: 600; text-align: center;">
+                        ${data.value}kg
+                    </div>
+                </div>
+            `).join('')}
+        </div>
+    `;
+}
+
+// CREAR GRÁFICO DE RENDIMIENTO CON CSS
+function createPerformanceChart() {
+    const container = document.getElementById('graficoRendimiento');
+    if (!container) return;
+    
+    const parent = container.parentElement;
+    if (!parent) return;
+    
+    if (productionData.length === 0) {
+        parent.innerHTML = `
+            <h3>Rendimiento por Sector</h3>
+            <div style="display: flex; align-items: center; justify-content: center; height: 200px; color: #6b7280; text-align: center;">
+                <div>
+                    <i class="fas fa-chart-bar" style="font-size: 2rem; margin-bottom: 1rem; display: block;"></i>
+                    <p>Sin datos para mostrar</p>
+                    <p style="font-size: 0.875rem;">Registra tu primera cosecha para ver gráficos</p>
+                </div>
+            </div>
+        `;
+        return;
+    }
+    
+    // Agrupar por sector/árbol
     const sectorData = {};
     productionData.forEach(record => {
         const key = record.arbolId || 'Sin especificar';
@@ -669,15 +467,41 @@ function prepareRealChartData() {
         sectorData[key] += record.cantidad || 0;
     });
     
-    chartData.sectors = Object.entries(sectorData)
+    const chartData = Object.entries(sectorData)
         .sort(([,a], [,b]) => b - a)
-        .slice(0, 6) // Solo top 6
+        .slice(0, 6)
         .map(([key, value]) => ({
-            label: key.length > 15 ? key.substring(0, 15) + '...' : key,
+            label: key.length > 12 ? key.substring(0, 12) + '...' : key,
             value: value
         }));
     
-    return chartData;
+    const maxValue = Math.max(...chartData.map(d => d.value), 1);
+    
+    parent.innerHTML = `
+        <h3>Rendimiento por Sector</h3>
+        <div style="height: 200px; display: flex; align-items: end; justify-content: space-between; padding: 20px; border: 1px solid #e5e7eb; border-radius: 8px; background: #f9fafb;">
+            ${chartData.map((data, index) => `
+                <div style="display: flex; flex-direction: column; align-items: center; flex: 1; margin: 0 4px;">
+                    <div style="
+                        background: linear-gradient(to top, #3b82f6, #60a5fa);
+                        width: 40px;
+                        height: ${(data.value / maxValue) * 150}px;
+                        min-height: 5px;
+                        border-radius: 4px 4px 0 0;
+                        margin-bottom: 8px;
+                        transition: all 0.3s ease;
+                    " title="${data.value} kg">
+                    </div>
+                    <div style="font-size: 0.625rem; color: #6b7280; text-align: center; writing-mode: vertical-rl; text-orientation: mixed;">
+                        ${data.label}
+                    </div>
+                    <div style="font-size: 0.625rem; color: #3b82f6; font-weight: 600; text-align: center; margin-top: 4px;">
+                        ${Math.round(data.value)}kg
+                    </div>
+                </div>
+            `).join('')}
+        </div>
+    `;
 }
 
 // MOSTRAR GRÁFICOS VACÍOS
@@ -731,7 +555,6 @@ async function handleNuevoCorte(event) {
             tipo: document.getElementById('tipoCorte').value
         };
         
-        // Validaciones
         if (!datos.fecha || !datos.arbolId || !datos.cantidad || !datos.tipo) {
             showNotification('Por favor completa todos los campos', 'warning');
             return;
@@ -742,7 +565,6 @@ async function handleNuevoCorte(event) {
             return;
         }
         
-        // Agregar a datos locales
         const registro = {
             id: generateId(),
             ...datos,
@@ -750,14 +572,12 @@ async function handleNuevoCorte(event) {
             timestamp: new Date().toISOString()
         };
         
-        productionData.unshift(registro); // Agregar al inicio
+        productionData.unshift(registro);
         
-        // Guardar si hay managers disponibles
         if (managers.offline && managers.offline.saveData) {
             await managers.offline.saveData('cosechas', registro.id, registro);
         }
         
-        // Guardar en Firebase si está disponible
         if (window.db) {
             try {
                 await window.db.collection('cosechas').add(registro);
@@ -772,10 +592,9 @@ async function handleNuevoCorte(event) {
         await loadRealKPIs();
         await loadRealTimeline();
         
-        // Actualizar gráficos con debounce
-        scheduleChartUpdate();
+        // Actualizar gráficos CSS
+        setTimeout(() => createCSSCharts(), 100);
         
-        // Cerrar modal y limpiar
         cerrarModal('modalNuevoCorte');
         document.getElementById('formNuevoCorte').reset();
         setCurrentDate();
@@ -799,7 +618,6 @@ async function handleRegistroCompleto(event) {
             observaciones: document.getElementById('observacionesCompletas').value
         };
         
-        // Validaciones
         if (!datos.fecha || !datos.arbolId || !datos.cantidad) {
             showNotification('Por favor completa los campos obligatorios', 'warning');
             return;
@@ -815,7 +633,6 @@ async function handleRegistroCompleto(event) {
             return;
         }
         
-        // Agregar a datos locales
         const registro = {
             id: generateId(),
             ...datos,
@@ -823,14 +640,12 @@ async function handleRegistroCompleto(event) {
             timestamp: new Date().toISOString()
         };
         
-        productionData.unshift(registro); // Agregar al inicio
+        productionData.unshift(registro);
         
-        // Guardar si hay managers disponibles
         if (managers.offline && managers.offline.saveData) {
             await managers.offline.saveData('cosechas', registro.id, registro);
         }
         
-        // Guardar en Firebase si está disponible
         if (window.db) {
             try {
                 await window.db.collection('cosechas').add(registro);
@@ -845,10 +660,9 @@ async function handleRegistroCompleto(event) {
         await loadRealKPIs();
         await loadRealTimeline();
         
-        // Actualizar gráficos con debounce
-        scheduleChartUpdate();
+        // Actualizar gráficos CSS
+        setTimeout(() => createCSSCharts(), 100);
         
-        // Cerrar modal y limpiar
         cerrarModal('modalRegistroCompleto');
         document.getElementById('formRegistroCompleto').reset();
         setCurrentDate();
@@ -856,40 +670,6 @@ async function handleRegistroCompleto(event) {
     } catch (error) {
         console.error('Error registrando completo:', error);
         showNotification('Error registrando: ' + error.message, 'error');
-    }
-}
-
-// PROGRAMAR ACTUALIZACIÓN DE GRÁFICOS CON DEBOUNCE
-function scheduleChartUpdate() {
-    if (chartUpdateTimeout) {
-        clearTimeout(chartUpdateTimeout);
-    }
-    
-    chartUpdateTimeout = setTimeout(() => {
-        recreateChartsWithNewData();
-    }, CHART_UPDATE_DEBOUNCE);
-}
-
-// RECREAR GRÁFICOS CON NUEVOS DATOS (EVITA RAF ISSUES)
-function recreateChartsWithNewData() {
-    if (!chartsInitialized) return;
-    
-    try {
-        console.log('Recreando gráficos con nuevos datos...');
-        
-        // Destruir gráficos existentes
-        destroyExistingCharts();
-        
-        // Marcar como no inicializados
-        chartsInitialized = false;
-        
-        // Recrear con datos actualizados
-        setTimeout(() => {
-            createUltraOptimizedCharts();
-        }, 100);
-        
-    } catch (error) {
-        console.error('Error recreando gráficos:', error);
     }
 }
 
@@ -950,7 +730,6 @@ function abrirModal(modalId) {
     if (modal) {
         modal.classList.add('show');
         
-        // Recargar opciones si es necesario
         if (modalId.includes('Corte') || modalId.includes('Completo')) {
             loadFormOptionsFromDatabase();
         }
@@ -1043,4 +822,4 @@ window.abrirModal = abrirModal;
 window.cerrarModal = cerrarModal;
 window.exportarDatos = exportarDatos;
 
-console.log('Sistema de producción ultra optimizado cargado - Sin RAF issues');
+console.log('Sistema de producción sin Chart.js cargado - Sin RAF issues');
