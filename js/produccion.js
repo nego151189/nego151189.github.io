@@ -1,6 +1,6 @@
 /* ========================================
-   PRODUCCIÓN JS - OPTIMIZADO SIN DATOS FICTICIOS
-   Versión optimizada para rendimiento y datos reales únicamente
+   PRODUCCIÓN JS - ULTRA OPTIMIZADO SIN RAF ISSUES
+   Versión que elimina problemas de requestAnimationFrame
    ======================================== */
 
 // Variables globales
@@ -8,6 +8,7 @@ let isProductionReady = false;
 let productionData = [];
 let charts = {};
 let chartsInitialized = false;
+let chartUpdateTimeout = null;
 let managers = {
     tree: null,
     offline: null,
@@ -16,6 +17,7 @@ let managers = {
 
 // Configuración
 const LIMONES_POR_KG = 7;
+const CHART_UPDATE_DEBOUNCE = 1000; // 1 segundo de debounce
 
 // INICIALIZACIÓN PRINCIPAL
 document.addEventListener('DOMContentLoaded', async () => {
@@ -37,8 +39,8 @@ document.addEventListener('DOMContentLoaded', async () => {
         // Configurar formularios
         setupForms();
         
-        // Inicializar gráficos de forma lazy y optimizada
-        setTimeout(() => initializeChartsOptimized(), 1000);
+        // Inicializar gráficos con mayor delay y optimización extrema
+        setTimeout(() => initializeChartsUltraOptimized(), 2000);
         
         isProductionReady = true;
         console.log('Producción inicializada correctamente');
@@ -114,7 +116,34 @@ function setupEventListeners() {
         formCompleto.addEventListener('submit', handleRegistroCompleto);
     }
     
+    // Prevenir múltiples inicializaciones de gráficos
+    window.addEventListener('resize', debounceChartResize);
+    
     console.log('Event listeners configurados');
+}
+
+// DEBOUNCE PARA RESIZE DE GRÁFICOS
+function debounceChartResize() {
+    if (chartUpdateTimeout) {
+        clearTimeout(chartUpdateTimeout);
+    }
+    
+    chartUpdateTimeout = setTimeout(() => {
+        if (chartsInitialized && charts.produccion) {
+            try {
+                charts.produccion.resize();
+            } catch (error) {
+                console.warn('Error resizing chart:', error);
+            }
+        }
+        if (chartsInitialized && charts.rendimiento) {
+            try {
+                charts.rendimiento.resize();
+            } catch (error) {
+                console.warn('Error resizing chart:', error);
+            }
+        }
+    }, CHART_UPDATE_DEBOUNCE);
 }
 
 // CARGAR SOLO DATOS REALES
@@ -381,8 +410,8 @@ function showEmptyStates() {
     }
 }
 
-// INICIALIZAR GRÁFICOS OPTIMIZADOS (SIN requestAnimationFrame PESADO)
-function initializeChartsOptimized() {
+// INICIALIZAR GRÁFICOS ULTRA OPTIMIZADOS
+function initializeChartsUltraOptimized() {
     if (chartsInitialized) return;
     
     try {
@@ -392,12 +421,22 @@ function initializeChartsOptimized() {
             return;
         }
         
-        // Usar requestIdleCallback si está disponible, sino setTimeout
-        if (window.requestIdleCallback) {
-            requestIdleCallback(() => createOptimizedCharts(), { timeout: 2000 });
-        } else {
-            setTimeout(() => createOptimizedCharts(), 100);
+        // Verificar que Chart.js esté disponible
+        if (!window.Chart) {
+            console.warn('Chart.js no disponible');
+            showEmptyCharts();
+            return;
         }
+        
+        // Configurar Chart.js para máximo rendimiento
+        Chart.defaults.animation = false;
+        Chart.defaults.responsive = false;
+        Chart.defaults.maintainAspectRatio = false;
+        Chart.defaults.interaction.intersect = false;
+        Chart.defaults.interaction.mode = 'index';
+        
+        // Crear gráficos con configuración extremadamente optimizada
+        createUltraOptimizedCharts();
         
     } catch (error) {
         console.error('Error inicializando gráficos:', error);
@@ -405,15 +444,19 @@ function initializeChartsOptimized() {
     }
 }
 
-// CREAR GRÁFICOS OPTIMIZADOS CON DATOS REALES
-function createOptimizedCharts() {
-    if (!window.Chart || chartsInitialized) return;
-    
+// CREAR GRÁFICOS ULTRA OPTIMIZADOS
+function createUltraOptimizedCharts() {
     try {
+        // Destruir gráficos existentes si los hay
+        destroyExistingCharts();
+        
         // Preparar datos reales para gráficos
         const chartData = prepareRealChartData();
         
-        // Gráfico de producción - OPTIMIZADO
+        // Configurar dimensiones fijas para evitar redraws
+        setupFixedChartDimensions();
+        
+        // Gráfico de producción - ULTRA OPTIMIZADO
         const ctxProd = document.getElementById('graficoProduccion');
         if (ctxProd && chartData.production.length > 0) {
             charts.produccion = new Chart(ctxProd, {
@@ -425,37 +468,70 @@ function createOptimizedCharts() {
                         data: chartData.production.map(d => d.value),
                         borderColor: '#16a34a',
                         backgroundColor: 'rgba(22, 163, 74, 0.1)',
-                        tension: 0.4,
-                        fill: true,
-                        pointRadius: 2,
-                        pointHoverRadius: 4
+                        tension: 0.2, // Reducir tensión para mejor rendimiento
+                        fill: false, // Deshabilitar fill para mejor rendimiento
+                        pointRadius: 1, // Puntos más pequeños
+                        pointHoverRadius: 3,
+                        borderWidth: 2
                     }]
                 },
                 options: {
-                    responsive: true,
+                    // CONFIGURACIÓN ULTRA OPTIMIZADA
+                    animation: false,
+                    responsive: false,
                     maintainAspectRatio: false,
-                    // OPCIONES DE OPTIMIZACIÓN CRÍTICAS
-                    animation: false, // DESHABILITAR ANIMACIONES
                     interaction: {
                         intersect: false,
-                        mode: 'index'
+                        mode: 'nearest'
+                    },
+                    elements: {
+                        point: {
+                            radius: 1,
+                            hoverRadius: 3
+                        },
+                        line: {
+                            tension: 0.2
+                        }
                     },
                     plugins: {
                         legend: {
                             display: true,
-                            position: 'top'
+                            position: 'top',
+                            labels: {
+                                usePointStyle: false,
+                                boxWidth: 12
+                            }
+                        },
+                        tooltip: {
+                            enabled: true,
+                            mode: 'nearest',
+                            intersect: false
                         }
                     },
                     scales: {
+                        x: {
+                            display: true,
+                            grid: {
+                                display: false
+                            }
+                        },
                         y: {
-                            beginAtZero: true
+                            display: true,
+                            beginAtZero: true,
+                            grid: {
+                                display: true,
+                                color: 'rgba(0,0,0,0.1)'
+                            }
                         }
-                    }
+                    },
+                    // DESHABILITAR TODAS LAS ANIMACIONES
+                    events: ['mousemove', 'mouseout', 'click'], // Minimizar eventos
+                    onResize: null // Deshabilitar resize automático
                 }
             });
         }
         
-        // Gráfico de rendimiento - OPTIMIZADO
+        // Gráfico de rendimiento - ULTRA OPTIMIZADO
         const ctxRend = document.getElementById('graficoRendimiento');
         if (ctxRend && chartData.sectors.length > 0) {
             charts.rendimiento = new Chart(ctxRend, {
@@ -471,31 +547,86 @@ function createOptimizedCharts() {
                     }]
                 },
                 options: {
-                    responsive: true,
+                    // CONFIGURACIÓN ULTRA OPTIMIZADA
+                    animation: false,
+                    responsive: false,
                     maintainAspectRatio: false,
-                    // OPCIONES DE OPTIMIZACIÓN CRÍTICAS
-                    animation: false, // DESHABILITAR ANIMACIONES
+                    interaction: {
+                        intersect: false,
+                        mode: 'nearest'
+                    },
                     plugins: {
                         legend: {
                             display: false
+                        },
+                        tooltip: {
+                            enabled: true,
+                            mode: 'nearest',
+                            intersect: false
                         }
                     },
                     scales: {
+                        x: {
+                            display: true,
+                            grid: {
+                                display: false
+                            }
+                        },
                         y: {
-                            beginAtZero: true
+                            display: true,
+                            beginAtZero: true,
+                            grid: {
+                                display: true,
+                                color: 'rgba(0,0,0,0.1)'
+                            }
                         }
-                    }
+                    },
+                    // DESHABILITAR TODAS LAS ANIMACIONES
+                    events: ['mousemove', 'mouseout', 'click'], // Minimizar eventos
+                    onResize: null // Deshabilitar resize automático
                 }
             });
         }
         
         chartsInitialized = true;
-        console.log('Gráficos optimizados creados con datos reales');
+        console.log('Gráficos ultra optimizados creados con datos reales');
         
     } catch (error) {
         console.error('Error creando gráficos:', error);
         showEmptyCharts();
     }
+}
+
+// DESTRUIR GRÁFICOS EXISTENTES
+function destroyExistingCharts() {
+    try {
+        if (charts.produccion) {
+            charts.produccion.destroy();
+            charts.produccion = null;
+        }
+        if (charts.rendimiento) {
+            charts.rendimiento.destroy();
+            charts.rendimiento = null;
+        }
+    } catch (error) {
+        console.warn('Error destruyendo gráficos:', error);
+    }
+}
+
+// CONFIGURAR DIMENSIONES FIJAS PARA GRÁFICOS
+function setupFixedChartDimensions() {
+    const chartContainers = ['graficoProduccion', 'graficoRendimiento'];
+    
+    chartContainers.forEach(containerId => {
+        const canvas = document.getElementById(containerId);
+        if (canvas) {
+            // Establecer dimensiones fijas
+            canvas.style.width = '100%';
+            canvas.style.height = '200px';
+            canvas.width = canvas.offsetWidth;
+            canvas.height = 200;
+        }
+    });
 }
 
 // PREPARAR DATOS REALES PARA GRÁFICOS
@@ -641,10 +772,8 @@ async function handleNuevoCorte(event) {
         await loadRealKPIs();
         await loadRealTimeline();
         
-        // Actualizar gráficos si están inicializados
-        if (chartsInitialized) {
-            updateChartsWithNewData();
-        }
+        // Actualizar gráficos con debounce
+        scheduleChartUpdate();
         
         // Cerrar modal y limpiar
         cerrarModal('modalNuevoCorte');
@@ -716,10 +845,8 @@ async function handleRegistroCompleto(event) {
         await loadRealKPIs();
         await loadRealTimeline();
         
-        // Actualizar gráficos si están inicializados
-        if (chartsInitialized) {
-            updateChartsWithNewData();
-        }
+        // Actualizar gráficos con debounce
+        scheduleChartUpdate();
         
         // Cerrar modal y limpiar
         cerrarModal('modalRegistroCompleto');
@@ -732,29 +859,37 @@ async function handleRegistroCompleto(event) {
     }
 }
 
-// ACTUALIZAR GRÁFICOS CON NUEVOS DATOS (SIN ANIMACIONES)
-function updateChartsWithNewData() {
+// PROGRAMAR ACTUALIZACIÓN DE GRÁFICOS CON DEBOUNCE
+function scheduleChartUpdate() {
+    if (chartUpdateTimeout) {
+        clearTimeout(chartUpdateTimeout);
+    }
+    
+    chartUpdateTimeout = setTimeout(() => {
+        recreateChartsWithNewData();
+    }, CHART_UPDATE_DEBOUNCE);
+}
+
+// RECREAR GRÁFICOS CON NUEVOS DATOS (EVITA RAF ISSUES)
+function recreateChartsWithNewData() {
     if (!chartsInitialized) return;
     
     try {
-        const chartData = prepareRealChartData();
+        console.log('Recreando gráficos con nuevos datos...');
         
-        // Actualizar gráfico de producción
-        if (charts.produccion && chartData.production.length > 0) {
-            charts.produccion.data.labels = chartData.production.map(d => d.label);
-            charts.produccion.data.datasets[0].data = chartData.production.map(d => d.value);
-            charts.produccion.update('none'); // Sin animación
-        }
+        // Destruir gráficos existentes
+        destroyExistingCharts();
         
-        // Actualizar gráfico de rendimiento
-        if (charts.rendimiento && chartData.sectors.length > 0) {
-            charts.rendimiento.data.labels = chartData.sectors.map(d => d.label);
-            charts.rendimiento.data.datasets[0].data = chartData.sectors.map(d => d.value);
-            charts.rendimiento.update('none'); // Sin animación
-        }
+        // Marcar como no inicializados
+        chartsInitialized = false;
+        
+        // Recrear con datos actualizados
+        setTimeout(() => {
+            createUltraOptimizedCharts();
+        }, 100);
         
     } catch (error) {
-        console.error('Error actualizando gráficos:', error);
+        console.error('Error recreando gráficos:', error);
     }
 }
 
@@ -908,4 +1043,4 @@ window.abrirModal = abrirModal;
 window.cerrarModal = cerrarModal;
 window.exportarDatos = exportarDatos;
 
-console.log('Sistema de producción optimizado cargado - Solo datos reales');
+console.log('Sistema de producción ultra optimizado cargado - Sin RAF issues');
