@@ -1042,57 +1042,65 @@ async function verificarAutenticacion() {
         // INICIALIZACIÓN PRINCIPAL CORREGIDA
         // ==========================================
 
-        document.addEventListener('DOMContentLoaded', async () => {
-            try {
-                console.log('🌦️ Iniciando aplicación climática...');
-                console.log('📍 Ubicación de la finca: 14.77073, -90.25398');
-                
-                // Mostrar loader
-                document.getElementById('initLoader').classList.remove('hidden');
+       document.addEventListener('DOMContentLoaded', async () => {
+    try {
+        console.log('🌦️ Iniciando aplicación climática...');
+        console.log('📍 Ubicación de la finca: 14.77073, -90.25398');
+        
+        // Mostrar loader
+        document.getElementById('initLoader').classList.remove('hidden');
 
-                // Paso 1: Esperar Firebase
-                const firebaseReady = await esperarFirebase();
-                if (!firebaseReady) {
-                    console.warn('⚠️ Firebase no disponible, continuando...');
-                }
+        // Paso 1: Esperar Firebase
+        const firebaseReady = await esperarFirebase();
+        if (!firebaseReady) {
+            console.warn('⚠️ Firebase no disponible, continuando...');
+        }
 
-                // Paso 2: Verificar autenticación
-                const autenticado = await verificarAutenticacion();
-                
-                if (!autenticado) {
-                    console.log('❌ Usuario no autenticado, redirigiendo a login...');
-                    setTimeout(() => {
-                        window.location.href = '/login.html';
-                    }, 500);
-                    return;
-                }
-
-                console.log('✅ Usuario autenticado correctamente');
-
-                // Paso 3: Esperar ClimateManager
-                await esperarClimateManager();
-
-                // Paso 4: Inicializar aplicación
-                await inicializarPagina();
-
-                sistemaInicializado = true;
-                console.log('🎉 Sistema climático completamente inicializado');
-
-            } catch (error) {
-                console.error('❌ Error en inicialización:', error);
-                mostrarError('Error iniciando la aplicación. Recargando...');
-                // Intentar recargar después de 3 segundos
-                setTimeout(() => {
-                    window.location.reload();
-                }, 3000);
-            } finally {
-                // Ocultar loader
-                setTimeout(() => {
-                    document.getElementById('initLoader').classList.add('hidden');
-                }, 500);
-            }
+        // Paso 2: Verificar autenticación (PERMITIR ACCESO A CLIMA.HTML SIEMPRE)
+        console.log('🔐 Verificando autenticación para clima.html...');
+        
+        // Esperar a que AuthManager esté completamente inicializado
+        await esperarAuthManager();
+        
+        // Obtener estado de autenticación pero NO redirigir
+        const authState = window.authManager ? window.authManager.getAuthState() : { 
+            isAuthenticated: false, 
+            isOffline: true 
+        };
+        
+        console.log('📊 Estado de autenticación:', {
+            isAuthenticated: authState.isAuthenticated,
+            isOffline: authState.isOffline,
+            user: authState.user ? authState.user.email : 'Sin usuario'
         });
 
+        // Paso 3: Esperar ClimateManager
+        await esperarClimateManager();
+
+        // Paso 4: Inicializar aplicación
+        await inicializarPagina();
+
+        sistemaInicializado = true;
+        console.log('🎉 Sistema climático completamente inicializado');
+
+    } catch (error) {
+        console.error('❌ Error en inicialización:', error);
+        mostrarError('Error iniciando la aplicación climática');
+        
+        // Intentar inicializar en modo offline
+        try {
+            await inicializarPagina();
+            sistemaInicializado = true;
+        } catch (fallbackError) {
+            console.error('❌ Error también en modo offline:', fallbackError);
+        }
+    } finally {
+        // Ocultar loader
+        setTimeout(() => {
+            document.getElementById('initLoader').classList.add('hidden');
+        }, 500);
+    }
+});
         async function inicializarPagina() {
             try {
                 console.log('⚙️ Inicializando componentes de la página...');
@@ -2015,4 +2023,5 @@ async function verificarAutenticacion() {
     </script>
 </body>
 </html>
+
 
