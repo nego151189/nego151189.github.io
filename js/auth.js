@@ -759,32 +759,33 @@ class AuthManager {
     }
   }
 
-  handleLogoutRedirect() {
-    // CORRECCIÓN: Incluir clima.html en páginas protegidas
+handleLogoutRedirect() {
+    // CORRECCIÓN: Excluir clima.html de páginas protegidas para redirección
     const currentPage = window.location.pathname;
     const protectedPages = [
-      '/clima.html',      // AGREGADO
-      '/produccion.html', 
-      '/gastos.html', 
-      '/ventas.html', 
-      '/usuarios.html',
-      '/tratamientos.html',
-      '/recordatorios.html'
+        // REMOVER clima.html de esta lista
+        '/produccion.html', 
+        '/gastos.html', 
+        '/ventas.html', 
+        '/usuarios.html',
+        '/tratamientos.html',
+        '/recordatorios.html'
     ];
     
-    // NO redirigir desde index.html o dashboard
+    // NO redirigir desde index.html, dashboard O clima.html
     if (currentPage.includes('index.html') || 
         currentPage === '/' || 
-        currentPage.includes('dashboard')) {
-      return; // No hacer nada, permitir acceso al dashboard
+        currentPage.includes('dashboard') ||
+        currentPage.includes('clima.html')) {  // AGREGAR esta condición
+        return; // No hacer nada, permitir acceso
     }
     
     // Solo redirigir desde páginas protegidas
     if (protectedPages.some(page => currentPage.includes(page))) {
-      console.log('Redirigiendo a login desde página protegida:', currentPage);
-      window.location.href = '/login.html';
+        console.log('Redirigiendo a login desde página protegida:', currentPage);
+        window.location.href = '/login.html';
     }
-  }
+}
 
   getTargetPageForRole() {
     switch (this.userRole) {
@@ -906,3 +907,4 @@ document.addEventListener('DOMContentLoaded', () => {
 if (typeof module !== 'undefined' && module.exports) {
   module.exports = AuthManager;
 }
+
