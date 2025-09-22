@@ -1,1334 +1,282 @@
-//v1
-<!DOCTYPE html>
-<html lang="es">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gestión de Precios - Finca La Herradura</title>
-    
-    <!-- Font Awesome -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    
-    <!-- Chart.js para gráficos -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
-    
-    <!-- Firebase SDK -->
-    <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-auth-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-storage-compat.js"></script>
-    
-    <!-- Tus estilos CSS -->
-    <link rel="stylesheet" href="css/styles.css">
-    <link rel="stylesheet" href="css/navigation.css">
-    <link rel="stylesheet" href="css/precios.css">
-    
-    <style>
-        /* Variables CSS */
-        :root {
-            --primary: #f59e0b;
-            --secondary: #3b82f6;
-            --success: #22c55e;
-            --warning: #f59e0b;
-            --danger: #ef4444;
-            --info: #3b82f6;
-            --light: #f8fafc;
-            --dark: #1e293b;
-            --bg-primary: #ffffff;
-            --bg-secondary: #f8fafc;
-            --bg-card: #ffffff;
-            --text-primary: #1e293b;
-            --text-secondary: #64748b;
-            --border: #e2e8f0;
-            --shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
-        }
-
-        .initialization-loader {
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: rgba(0, 0, 0, 0.8);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            z-index: 9999;
-            color: white;
-            font-size: 1.2rem;
-        }
-
-        .initialization-loader.hidden {
-            display: none;
-        }
-
-        /* Ajustes específicos para precios */
-        .precio-actual-card {
-            background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
-            color: white;
-            border-radius: 24px;
-            padding: 2rem;
-            margin-bottom: 2rem;
-            position: relative;
-            overflow: hidden;
-        }
-
-        .precio-principal {
-            display: grid;
-            grid-template-columns: auto 1fr auto;
-            align-items: center;
-            gap: 2rem;
-            margin-bottom: 2rem;
-            position: relative;
-            z-index: 1;
-        }
-
-        @media (max-width: 1024px) {
-            .precio-principal {
-                grid-template-columns: 1fr;
-                text-align: center;
-                gap: 1rem;
-            }
-        }
-
-        .precio-valor {
-            font-size: 4rem;
-            font-weight: 300;
-            margin: 0;
-            display: flex;
-            align-items: flex-start;
-        }
-
-        .precio-moneda {
-            font-size: 2rem;
-            margin-top: 0.5rem;
-            margin-right: 0.5rem;
-        }
-
-        .precio-info {
-            text-align: center;
-        }
-
-        .precio-descripcion {
-            font-size: 1.25rem;
-            margin-bottom: 0.5rem;
-            font-weight: 500;
-        }
-
-        .precio-fecha {
-            opacity: 0.9;
-            font-size: 0.875rem;
-        }
-
-        .precio-tendencia {
-            display: flex;
-            align-items: center;
-            gap: 1rem;
-            font-size: 2rem;
-        }
-
-        .tendencia-positiva {
-            color: #22c55e;
-        }
-
-        .tendencia-negativa {
-            color: #ef4444;
-        }
-
-        .comparacion-precios {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
-            gap: 1.5rem;
-            position: relative;
-            z-index: 1;
-        }
-
-        .comparacion-item {
-            text-align: center;
-            padding: 1rem;
-            background: rgba(255, 255, 255, 0.1);
-            border-radius: 16px;
-            backdrop-filter: blur(10px);
-            border: 1px solid rgba(255, 255, 255, 0.2);
-        }
-
-        .comp-icon {
-            font-size: 1.5rem;
-            margin-bottom: 0.5rem;
-            opacity: 0.9;
-        }
-
-        .comp-valor {
-            font-size: 1.25rem;
-            font-weight: 600;
-            margin-bottom: 0.25rem;
-        }
-
-        .comp-label {
-            font-size: 0.75rem;
-            opacity: 0.8;
-        }
-
-        .mercados-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-            gap: 1.5rem;
-            margin-bottom: 2rem;
-        }
-
-        .mercado-card {
-            background: var(--bg-card);
-            border-radius: 16px;
-            padding: 1.5rem;
-            position: relative;
-            overflow: hidden;
-            transition: transform 0.3s ease;
-            box-shadow: var(--shadow);
-        }
-
-        .mercado-card:hover {
-            transform: translateY(-4px);
-        }
-
-        .mercado-card::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            height: 4px;
-        }
-
-        .mercado-card.mayorista::before {
-            background: linear-gradient(90deg, #ef4444, #dc2626);
-        }
-
-        .mercado-card.minorista::before {
-            background: linear-gradient(90deg, #3b82f6, #1d4ed8);
-        }
-
-        .mercado-card.exportacion::before {
-            background: linear-gradient(90deg, #8b5cf6, #7c3aed);
-        }
-
-        .mercado-card.finca::before {
-            background: linear-gradient(90deg, #22c55e, #16a34a);
-        }
-
-        .mercado-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 1rem;
-        }
-
-        .mercado-nombre {
-            font-size: 1.125rem;
-            font-weight: 600;
-            color: var(--text-primary);
-        }
-
-        .mercado-estado {
-            padding: 0.25rem 0.75rem;
-            border-radius: 20px;
-            font-size: 0.75rem;
-            font-weight: 600;
-            text-transform: uppercase;
-        }
-
-        .mercado-estado.activo {
-            background: rgba(34, 197, 94, 0.2);
-            color: #16a34a;
-        }
-
-        .mercado-precio {
-            font-size: 2rem;
-            font-weight: 700;
-            color: var(--text-primary);
-            margin-bottom: 0.5rem;
-        }
-
-        .mercado-cambio {
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-            font-size: 0.875rem;
-            font-weight: 600;
-        }
-
-        .mercado-cambio.positiva {
-            color: #22c55e;
-        }
-
-        .mercado-cambio.negativa {
-            color: #ef4444;
-        }
-
-        .mercado-fecha {
-            font-size: 0.75rem;
-            color: var(--text-secondary);
-            margin-top: 0.5rem;
-        }
-
-        .contenido-principal {
-            display: grid;
-            grid-template-columns: 2fr 1fr;
-            gap: 2rem;
-            margin-bottom: 2rem;
-        }
-
-        @media (max-width: 1024px) {
-            .contenido-principal {
-                grid-template-columns: 1fr;
-            }
-        }
-
-        .graficos-precios {
-            display: grid;
-            gap: 2rem;
-        }
-
-        .grafico-card {
-            background: var(--bg-card);
-            border-radius: 16px;
-            padding: 1.5rem;
-            box-shadow: var(--shadow);
-            height: 400px;
-            display: flex;
-            flex-direction: column;
-        }
-
-        @media (max-width: 1024px) {
-            .grafico-card {
-                height: 350px;
-            }
-        }
-
-        @media (max-width: 768px) {
-            .grafico-card {
-                height: 320px;
-                padding: 1rem;
-            }
-        }
-
-        .grafico-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 1rem;
-            flex-shrink: 0;
-        }
-
-        .grafico-titulo {
-            font-size: 1.125rem;
-            font-weight: 600;
-            color: var(--text-primary);
-            display: flex;
-            align-items: center;
-            gap: 0.75rem;
-        }
-
-        .chart-container {
-            position: relative;
-            flex: 1;
-            height: 300px;
-            max-height: 300px;
-            overflow: hidden;
-        }
-
-        @media (max-width: 1024px) {
-            .chart-container {
-                height: 250px;
-                max-height: 250px;
-            }
-        }
-
-        @media (max-width: 768px) {
-            .chart-container {
-                height: 220px;
-                max-height: 220px;
-            }
-        }
-
-        .chart-container canvas {
-            width: 100% !important;
-            height: 100% !important;
-            max-width: 100% !important;
-            max-height: 100% !important;
-        }
-
-        .alertas-precio {
-            background: var(--bg-card);
-            border-radius: 16px;
-            padding: 1.5rem;
-            box-shadow: var(--shadow);
-            margin-bottom: 1.5rem;
-        }
-
-        .alerta-item {
-            display: flex;
-            align-items: flex-start;
-            gap: 1rem;
-            padding: 1rem;
-            margin-bottom: 1rem;
-            border-radius: 12px;
-            border-left: 4px solid;
-        }
-
-        .alerta-item:last-child {
-            margin-bottom: 0;
-        }
-
-        .alerta-item.oportunidad {
-            background: rgba(34, 197, 94, 0.1);
-            border-left-color: #22c55e;
-        }
-
-        .alerta-item.advertencia {
-            background: rgba(245, 158, 11, 0.1);
-            border-left-color: #f59e0b;
-        }
-
-        .alerta-item.critica {
-            background: rgba(239, 68, 68, 0.1);
-            border-left-color: #ef4444;
-        }
-
-        .alerta-item.info {
-            background: rgba(59, 130, 246, 0.1);
-            border-left-color: #3b82f6;
-        }
-
-        .alerta-icon {
-            width: 40px;
-            height: 40px;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: white;
-            font-size: 1rem;
-            flex-shrink: 0;
-        }
-
-        .alerta-item.oportunidad .alerta-icon {
-            background: #22c55e;
-        }
-
-        .alerta-item.advertencia .alerta-icon {
-            background: #f59e0b;
-        }
-
-        .alerta-item.critica .alerta-icon {
-            background: #ef4444;
-        }
-
-        .alerta-item.info .alerta-icon {
-            background: #3b82f6;
-        }
-
-        .alerta-info {
-            flex: 1;
-        }
-
-        .alerta-info h4 {
-            margin: 0 0 0.5rem 0;
-            font-weight: 600;
-            color: var(--text-primary);
-        }
-
-        .alerta-info p {
-            margin: 0 0 0.5rem 0;
-            font-size: 0.875rem;
-            color: var(--text-secondary);
-        }
-
-        .form-precio {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-            gap: 1rem;
-            align-items: end;
-            background: var(--bg-card);
-            border-radius: 16px;
-            padding: 2rem;
-            margin-bottom: 2rem;
-            box-shadow: var(--shadow);
-        }
-
-        @media (max-width: 768px) {
-            .form-precio {
-                grid-template-columns: 1fr;
-            }
-        }
-
-        .tabla-precios {
-            background: var(--bg-card);
-            border-radius: 16px;
-            padding: 1.5rem;
-            margin-top: 2rem;
-            box-shadow: var(--shadow);
-        }
-
-        .tipo-precio-badge {
-            padding: 0.25rem 0.75rem;
-            border-radius: 20px;
-            font-size: 0.75rem;
-            font-weight: 600;
-            text-transform: uppercase;
-        }
-
-        .tipo-precio-badge.mayorista {
-            background: rgba(239, 68, 68, 0.2);
-            color: #dc2626;
-        }
-
-        .tipo-precio-badge.minorista {
-            background: rgba(59, 130, 246, 0.2);
-            color: #2563eb;
-        }
-
-        .tipo-precio-badge.exportacion {
-            background: rgba(139, 92, 246, 0.2);
-            color: #8b5cf6;
-        }
-
-        .tipo-precio-badge.finca {
-            background: rgba(34, 197, 94, 0.2);
-            color: #16a34a;
-        }
-
-        .acciones-precios {
-            display: flex;
-            gap: 1rem;
-            margin-bottom: 2rem;
-            flex-wrap: wrap;
-        }
-
-        .accion-precio {
-            background: var(--bg-card);
-            border-radius: 12px;
-            padding: 1rem 1.5rem;
-            display: flex;
-            align-items: center;
-            gap: 0.75rem;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            border: 2px solid transparent;
-            min-width: 200px;
-            box-shadow: var(--shadow);
-        }
-
-        .accion-precio:hover {
-            border-color: var(--primary);
-            transform: translateY(-2px);
-        }
-
-        .accion-icon {
-            width: 40px;
-            height: 40px;
-            border-radius: 8px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: white;
-            font-size: 1rem;
-        }
-
-        .filtros-precios {
-            background: var(--bg-card);
-            border-radius: 16px;
-            padding: 1.5rem;
-            margin-bottom: 2rem;
-            box-shadow: var(--shadow);
-        }
-
-        .filtros-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-            gap: 1rem;
-            align-items: end;
-        }
-    </style>
-</head>
-<body>
-    <!-- Navegación principal -->
-    <nav class="main-nav">
-        <div class="nav-container">
-            <div class="nav-brand">
-                <i class="fas fa-leaf"></i>
-                <span>Finca La Herradura</span>
-            </div>
-            <button class="nav-toggle" id="navToggle">
-                <i class="fas fa-bars"></i>
-            </button>
-            <div class="nav-menu">
-                <a href="index.html" class="nav-link">
-                    <i class="fas fa-home"></i> Inicio
-                </a>
-                <a href="precios.html" class="nav-link active">
-                    <i class="fas fa-chart-line"></i> Precios
-                </a>
-                <a href="produccion.html" class="nav-link">
-                    <i class="fas fa-seedling"></i> Producción
-                </a>
-                <a href="gastos.html" class="nav-link">
-                    <i class="fas fa-money-bill-wave"></i> Gastos
-                </a>
-                <a href="ventas.html" class="nav-link">
-                    <i class="fas fa-shopping-cart"></i> Ventas
-                </a>
-                <div class="nav-user">
-                    <img src="assets/user-avatar.png" alt="Usuario" class="user-avatar">
-                    <span class="user-name">Usuario</span>
-                    <i class="fas fa-chevron-down"></i>
-                </div>
-            </div>
-        </div>
-    </nav>
-
-    <!-- Overlay para sidebar móvil -->
-    <div class="sidebar-overlay" id="sidebarOverlay"></div>
-
-    <!-- Loader de inicialización -->
-    <div class="initialization-loader" id="initLoader">
-        <div style="text-align: center;">
-            <div style="font-size: 3rem; margin-bottom: 1rem;">
-                <i class="fas fa-chart-line fa-spin"></i>
-            </div>
-            <div>Inicializando sistema de precios...</div>
-        </div>
-    </div>
-
-    <!-- Contenido principal -->
-    <main class="main-content-wrapper">
-        <!-- Header de la página -->
-        <header class="precios-header">
-            <div style="display: flex; align-items: center; gap: 1rem; width: 100%;">
-                <button class="menu-toggle" id="menuToggle" aria-label="Abrir menú">
-                    <i class="fas fa-bars"></i>
-                </button>
-                <div class="page-title">
-                    <div class="title-icon">
-                        <i class="fas fa-chart-line"></i>
-                    </div>
-                    <div>
-                        <h1>Gestión de Precios</h1>
-                        <p>Monitoreo de mercado y análisis de tendencias</p>
-                    </div>
-                </div>
-            </div>
-            
-            <div class="header-actions">
-                <div class="actualizacion-precios" id="estadoActualizacion">
-                    <i class="fas fa-sync-alt"></i>
-                    <span>Actualizado hace 5 min</span>
-                </div>
-                
-                <button class="btn btn-primary" id="btnActualizarPrecios">
-                    <i class="fas fa-refresh"></i> Actualizar
-                </button>
-                
-                <button class="btn btn-success" id="btnNuevoPrecio">
-                    <i class="fas fa-plus"></i> Nuevo Precio
-                </button>
-                
-                <button class="btn btn-secondary" id="btnExportarAnalisis">
-                    <i class="fas fa-download"></i> Exportar
-                </button>
-            </div>
-        </header>
-
-        <!-- Precio actual destacado -->
-        <section class="precio-actual-card">
-            <div class="precio-principal">
-                <div class="precio-valor">
-                    <span class="precio-moneda">Q</span>
-                    <span id="precioActual">12.50</span>
-                </div>
-                
-                <div class="precio-info">
-                    <div class="precio-descripcion">Precio Promedio Actual</div>
-                    <div class="precio-fecha">Limón por kilogramo</div>
-                    <div class="precio-fecha">Último update: <span id="ultimaActualizacion">Hoy 14:30</span></div>
-                </div>
-                
-                <div class="precio-tendencia">
-                    <div id="tendenciaIcon" class="tendencia-positiva">
-                        <i class="fas fa-arrow-up"></i>
-                    </div>
-                    <div>
-                        <div style="font-size: 1.5rem; font-weight: 600;" id="cambioAbsoluto">+Q 0.75</div>
-                        <div style="font-size: 1rem; opacity: 0.9;" id="cambioRelativo">+6.4%</div>
-                    </div>
-                </div>
-            </div>
-            
-            <div class="comparacion-precios">
-                <div class="comparacion-item">
-                    <div class="comp-icon">
-                        <i class="fas fa-calendar-day"></i>
-                    </div>
-                    <div class="comp-valor" id="precioHoy">Q 12.50</div>
-                    <div class="comp-label">Hoy</div>
-                </div>
-                
-                <div class="comparacion-item">
-                    <div class="comp-icon">
-                        <i class="fas fa-calendar-week"></i>
-                    </div>
-                    <div class="comp-valor" id="precioSemana">Q 11.80</div>
-                    <div class="comp-label">Promedio Semanal</div>
-                </div>
-                
-                <div class="comparacion-item">
-                    <div class="comp-icon">
-                        <i class="fas fa-calendar-alt"></i>
-                    </div>
-                    <div class="comp-valor" id="precioMes">Q 11.25</div>
-                    <div class="comp-label">Promedio Mensual</div>
-                </div>
-                
-                <div class="comparacion-item">
-                    <div class="comp-icon">
-                        <i class="fas fa-chart-bar"></i>
-                    </div>
-                    <div class="comp-valor" id="precioMaximo">Q 15.00</div>
-                    <div class="comp-label">Máximo Mensual</div>
-                </div>
-                
-                <div class="comparacion-item">
-                    <div class="comp-icon">
-                        <i class="fas fa-chart-bar"></i>
-                    </div>
-                    <div class="comp-valor" id="precioMinimo">Q 9.50</div>
-                    <div class="comp-label">Mínimo Mensual</div>
-                </div>
-            </div>
-        </section>
-
-        <!-- Precios por mercado -->
-        <section class="mercados-grid">
-            <div class="mercado-card mayorista">
-                <div class="mercado-header">
-                    <div class="mercado-nombre">
-                        <i class="fas fa-warehouse"></i> Mercado Mayorista
-                    </div>
-                    <div class="mercado-estado activo">Activo</div>
-                </div>
-                <div class="mercado-precio" id="precioMayorista">Q 11.80</div>
-                <div class="mercado-cambio positiva">
-                    <i class="fas fa-arrow-up"></i>
-                    <span>+Q 0.50 (4.4%)</span>
-                </div>
-                <div class="mercado-fecha">Actualizado: Hoy 13:45</div>
-            </div>
-            
-            <div class="mercado-card minorista">
-                <div class="mercado-header">
-                    <div class="mercado-nombre">
-                        <i class="fas fa-store"></i> Mercado Minorista
-                    </div>
-                    <div class="mercado-estado activo">Activo</div>
-                </div>
-                <div class="mercado-precio" id="precioMinorista">Q 15.00</div>
-                <div class="mercado-cambio positiva">
-                    <i class="fas fa-arrow-up"></i>
-                    <span>+Q 0.25 (1.7%)</span>
-                </div>
-                <div class="mercado-fecha">Actualizado: Hoy 14:20</div>
-            </div>
-            
-            <div class="mercado-card exportacion">
-                <div class="mercado-header">
-                    <div class="mercado-nombre">
-                        <i class="fas fa-shipping-fast"></i> Exportación
-                    </div>
-                    <div class="mercado-estado activo">Consulta</div>
-                </div>
-                <div class="mercado-precio" id="precioExportacion">Q 18.50</div>
-                <div class="mercado-cambio positiva">
-                    <i class="fas fa-arrow-up"></i>
-                    <span>+Q 1.00 (5.7%)</span>
-                </div>
-                <div class="mercado-fecha">Actualizado: Hoy 16:00</div>
-            </div>
-            
-            <div class="mercado-card finca">
-                <div class="mercado-header">
-                    <div class="mercado-nombre">
-                        <i class="fas fa-seedling"></i> Precio Finca
-                    </div>
-                    <div class="mercado-estado activo">Nuestro</div>
-                </div>
-                <div class="mercado-precio" id="precioFinca">Q 12.75</div>
-                <div class="mercado-cambio positiva">
-                    <i class="fas fa-arrow-up"></i>
-                    <span>+Q 0.25 (2.0%)</span>
-                </div>
-                <div class="mercado-fecha">Actualizado: Hoy 15:00</div>
-            </div>
-        </section>
-
-        <!-- Filtros -->
-        <section class="filtros-precios">
-            <h3 style="margin-bottom: 1rem;">
-                <i class="fas fa-filter"></i> Filtros de Análisis
-            </h3>
-            
-            <div class="filtros-grid">
-                <div class="filtro-grupo">
-                    <label class="form-label">Período</label>
-                    <select class="form-input" id="filtroPeriodo">
-                        <option value="semana">Última Semana</option>
-                        <option value="mes" selected>Último Mes</option>
-                        <option value="trimestre">Último Trimestre</option>
-                        <option value="ano">Último Año</option>
-                    </select>
-                </div>
-                
-                <div class="filtro-grupo">
-                    <label class="form-label">Mercado</label>
-                    <select class="form-input" id="filtroMercado">
-                        <option value="">Todos los mercados</option>
-                        <option value="mayorista">Mayorista</option>
-                        <option value="minorista">Minorista</option>
-                        <option value="exportacion">Exportación</option>
-                        <option value="finca">Precio Finca</option>
-                    </select>
-                </div>
-                
-                <div class="filtro-grupo">
-                    <label class="form-label">Tipo de Análisis</label>
-                    <select class="form-input" id="filtroAnalisis">
-                        <option value="tendencia">Tendencias</option>
-                        <option value="volatilidad">Volatilidad</option>
-                        <option value="correlacion">Correlaciones</option>
-                        <option value="estacional">Estacionalidad</option>
-                    </select>
-                </div>
-                
-                <div class="filtro-grupo">
-                    <button class="btn btn-primary" id="aplicarFiltros">
-                        <i class="fas fa-search"></i> Analizar
-                    </button>
-                    <button class="btn btn-secondary" id="limpiarFiltros" style="margin-top: 0.5rem;">
-                        <i class="fas fa-times"></i> Limpiar
-                    </button>
-                </div>
-            </div>
-        </section>
-
-        <!-- Acciones rápidas -->
-        <section class="acciones-precios">
-            <div class="accion-precio" data-accion="actualizar">
-                <div class="accion-icon" style="background: #f59e0b;">
-                    <i class="fas fa-sync-alt"></i>
-                </div>
-                <div>
-                    <div style="font-weight: 600;">Actualizar Precios</div>
-                    <div style="font-size: 0.75rem; color: var(--text-secondary);">Obtener últimos datos</div>
-                </div>
-            </div>
-            
-            <div class="accion-precio" data-accion="comparar">
-                <div class="accion-icon" style="background: #3b82f6;">
-                    <i class="fas fa-balance-scale"></i>
-                </div>
-                <div>
-                    <div style="font-weight: 600;">Comparar Mercados</div>
-                    <div style="font-size: 0.75rem; color: var(--text-secondary);">Análisis comparativo</div>
-                </div>
-            </div>
-            
-            <div class="accion-precio" data-accion="prediccion">
-                <div class="accion-icon" style="background: #8b5cf6;">
-                    <i class="fas fa-crystal-ball"></i>
-                </div>
-                <div>
-                    <div style="font-weight: 600;">Predicción IA</div>
-                    <div style="font-size: 0.75rem; color: var(--text-secondary);">Proyección de precios</div>
-                </div>
-            </div>
-            
-            <div class="accion-precio" data-accion="optimizar">
-                <div class="accion-icon" style="background: #22c55e;">
-                    <i class="fas fa-bullseye"></i>
-                </div>
-                <div>
-                    <div style="font-weight: 600;">Optimizar Ventas</div>
-                    <div style="font-size: 0.75rem; color: var(--text-secondary);">Mejor momento</div>
-                </div>
-            </div>
-        </section>
-
-        <!-- Registro rápido de precio -->
-        <section class="form-precio">
-            <h3 style="grid-column: 1 / -1; margin-bottom: 1.5rem;">
-                <i class="fas fa-plus"></i> Registro Manual de Precio
-            </h3>
-            
-            <div class="form-group">
-                <label class="form-label">Fecha</label>
-                <input type="date" class="form-input" id="fechaPrecio" required>
-            </div>
-            
-            <div class="form-group">
-                <label class="form-label">Mercado</label>
-                <select class="form-input" id="mercadoPrecio" required>
-                    <option value="">Seleccionar...</option>
-                    <option value="mayorista">Mayorista</option>
-                    <option value="minorista">Minorista</option>
-                    <option value="exportacion">Exportación</option>
-                    <option value="finca">Precio Finca</option>
-                </select>
-            </div>
-            
-            <div class="form-group">
-                <label class="form-label">Precio (Q/kg)</label>
-                <input type="number" class="form-input" id="valorPrecio" step="0.01" min="0" required>
-            </div>
-            
-            <div class="form-group">
-                <label class="form-label">Fuente</label>
-                <input type="text" class="form-input" id="fuentePrecio" placeholder="Ej: Mercado La Terminal">
-            </div>
-            
-            <div class="form-group">
-                <label class="form-label">Observaciones</label>
-                <input type="text" class="form-input" id="observacionesPrecio" placeholder="Observaciones opcionales">
-            </div>
-            
-            <div class="form-group">
-                <button type="button" class="btn btn-success" id="guardarPrecio">
-                    <i class="fas fa-save"></i> Registrar
-                </button>
-            </div>
-        </section>
-
-        <!-- Contenido principal -->
-        <div class="contenido-principal">
-            <!-- Gráficos -->
-            <div class="graficos-precios">
-                <!-- Gráfico de evolución de precios -->
-                <div class="grafico-card">
-                    <div class="grafico-header">
-                        <h3 class="grafico-titulo">
-                            <i class="fas fa-chart-line"></i>
-                            Evolución de Precios
-                        </h3>
-                        <button class="btn btn-sm btn-secondary" id="btnDetalleEvolucion">
-                            <i class="fas fa-expand"></i> Detalle
-                        </button>
-                    </div>
-                    <div class="chart-container">
-                        <canvas id="graficoEvolucion"></canvas>
-                    </div>
-                </div>
-                
-                <!-- Gráfico comparativo de mercados -->
-                <div class="grafico-card">
-                    <div class="grafico-header">
-                        <h3 class="grafico-titulo">
-                            <i class="fas fa-chart-bar"></i>
-                            Comparación de Mercados
-                        </h3>
-                        <button class="btn btn-sm btn-secondary" id="btnDetalleComparacion">
-                            <i class="fas fa-expand"></i> Detalle
-                        </button>
-                    </div>
-                    <div class="chart-container">
-                        <canvas id="graficoComparativo"></canvas>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Panel lateral -->
-            <div>
-                <!-- Alertas de precios -->
-                <div class="alertas-precio">
-                    <h3 style="margin-bottom: 1.5rem;">
-                        <i class="fas fa-bell"></i>
-                        Alertas de Precios
-                    </h3>
-                    
-                    <div id="listaAlertasPrecios">
-                        <div class="alerta-item oportunidad">
-                            <div class="alerta-icon">
-                                <i class="fas fa-arrow-up"></i>
-                            </div>
-                            <div class="alerta-info">
-                                <h4>Oportunidad de Venta</h4>
-                                <p>Los precios han subido 6.4% esta semana. Buen momento para vender.</p>
-                                <button class="btn btn-sm btn-success" onclick="verAnalisisDetallado('oportunidad')">Ver Análisis</button>
-                            </div>
-                        </div>
-                        
-                        <div class="alerta-item advertencia">
-                            <div class="alerta-icon">
-                                <i class="fas fa-exclamation-triangle"></i>
-                            </div>
-                            <div class="alerta-info">
-                                <h4>Volatilidad Alta</h4>
-                                <p>El mercado mayorista muestra alta volatilidad. Monitorear de cerca.</p>
-                                <button class="btn btn-sm btn-primary" onclick="verDetallesVolatilidad()">Ver Detalles</button>
-                            </div>
-                        </div>
-                        
-                        <div class="alerta-item critica">
-                            <div class="alerta-icon">
-                                <i class="fas fa-exclamation-circle"></i>
-                            </div>
-                            <div class="alerta-info">
-                                <h4>Precio Bajo Competencia</h4>
-                                <p>Nuestro precio está 8% por debajo de la competencia en exportación.</p>
-                                <button class="btn btn-sm btn-danger" onclick="ajustarPrecio('exportacion')">Ajustar Precio</button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Tabla de historial de precios -->
-        <section class="tabla-precios">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
-                <h3>
-                    <i class="fas fa-table"></i>
-                    Historial de Precios
-                </h3>
-                <button class="btn btn-sm btn-secondary" id="btnVistaDetallada">
-                    <i class="fas fa-expand"></i> Vista Detallada
-                </button>
-            </div>
-            
-            <div class="table-container">
-                <table class="table" id="tablaPrecios">
-                    <thead>
-                        <tr>
-                            <th>Fecha</th>
-                            <th>Mercado</th>
-                            <th>Precio (Q/kg)</th>
-                            <th>Cambio</th>
-                            <th>Fuente</th>
-                            <th>Observaciones</th>
-                            <th>Acciones</th>
-                        </tr>
-                    </thead>
-                    <tbody id="tablaPreciosBody">
-                        <tr>
-                            <td>Hoy</td>
-                            <td><span class="tipo-precio-badge mayorista">mayorista</span></td>
-                            <td>Q 11.80</td>
-                            <td style="color: #22c55e;">+4.4%</td>
-                            <td>Mercado La Terminal</td>
-                            <td>Precio estable</td>
-                            <td>
-                                <button class="btn btn-sm btn-primary" onclick="editarPrecio('PRECIO_001')" title="Editar">
-                                    <i class="fas fa-edit"></i>
-                                </button>
-                                <button class="btn btn-sm btn-danger" onclick="eliminarPrecio('PRECIO_001')" title="Eliminar">
-                                    <i class="fas fa-trash"></i>
-                                </button>
-                            </td>
-                        </tr>
-                        <tr>
-                            <td>Hoy</td>
-                            <td><span class="tipo-precio-badge minorista">minorista</span></td>
-                            <td>Q 15.00</td>
-                            <td style="color: #22c55e;">+1.7%</td>
-                            <td>Supermercados</td>
-                            <td>Demanda alta</td>
-                            <td>
-                                <button class="btn btn-sm btn-primary" onclick="editarPrecio('PRECIO_002')" title="Editar">
-                                    <i class="fas fa-edit"></i>
-                                </button>
-                                <button class="btn btn-sm btn-danger" onclick="eliminarPrecio('PRECIO_002')" title="Eliminar">
-                                    <i class="fas fa-trash"></i>
-                                </button>
-                            </td>
-                        </tr>
-                        <tr>
-                            <td>Hoy</td>
-                            <td><span class="tipo-precio-badge exportacion">exportacion</span></td>
-                            <td>Q 18.50</td>
-                            <td style="color: #22c55e;">+5.7%</td>
-                            <td>Exportadora Maya</td>
-                            <td>Precio premium</td>
-                            <td>
-                                <button class="btn btn-sm btn-primary" onclick="editarPrecio('PRECIO_003')" title="Editar">
-                                    <i class="fas fa-edit"></i>
-                                </button>
-                                <button class="btn btn-sm btn-danger" onclick="eliminarPrecio('PRECIO_003')" title="Eliminar">
-                                    <i class="fas fa-trash"></i>
-                                </button>
-                            </td>
-                        </tr>
-                    </tbody>
-                </table>
-            </div>
-        </section>
-    </main>
-
-    <!-- Scripts -->
-    <script src="js/firebase-config.js"></script>
-    <script src="js/finca-navigation.js"></script>
-    <script src="js/precios.js"></script>
-
-    <script>
-        // Variables globales
-        let precios = new Map();
-        let graficoEvolucion, graficoComparativo;
-        let nextPrecioId = 5;
-        let filtrosActivos = {
-            periodo: 'mes',
-            mercado: '',
-            analisis: 'tendencia'
-        };
-
-        // Datos iniciales mejorados
-        const initialPrecios = [
-            {
-                id: 'PRECIO_001',
-                fecha: new Date().toISOString().split('T')[0],
-                mercado: 'mayorista',
-                valor: 11.80,
-                fuente: 'Mercado La Terminal',
-                observaciones: 'Precio estable',
-                cambio: 4.4
-            },
-            {
-                id: 'PRECIO_002',
-                fecha: new Date().toISOString().split('T')[0],
-                mercado: 'minorista',
-                valor: 15.00,
-                fuente: 'Supermercados',
-                observaciones: 'Demanda alta',
-                cambio: 1.7
-            },
-            {
-                id: 'PRECIO_003',
-                fecha: new Date().toISOString().split('T')[0],
-                mercado: 'exportacion',
-                valor: 18.50,
-                fuente: 'Exportadora Maya',
-                observaciones: 'Precio premium',
-                cambio: 5.7
-            },
-            {
-                id: 'PRECIO_004',
-                fecha: new Date().toISOString().split('T')[0],
-                mercado: 'finca',
-                valor: 12.75,
-                fuente: 'Precio Interno',
-                observaciones: 'Ajustado a mercado',
-                cambio: 2.0
-            }
-        ];
-
-        // Cargar datos iniciales
-        initialPrecios.forEach(precio => {
-            precios.set(precio.id, precio);
+/* ========================================
+   FIREBASE CONFIG CORREGIDO - SIN STORAGE
+   Configuracion sin firebase.storage para evitar errores v1
+   ======================================== */
+
+const firebaseConfig = {
+    apiKey: "AIzaSyDm_DenNbuG-zLS-8tupO8BZEpfo5z3MY8",
+    authDomain: "fincalaherradura-c5229.firebaseapp.com",
+    projectId: "fincalaherradura-c5229",
+    storageBucket: "fincalaherradura-c5229.firebasestorage.app",
+    messagingSenderId: "453253173599",
+    appId: "1:453253173599:web:f5f31e55fc1a93e7f5a6ea"
+};
+
+// Estado global simplificado
+const FirebaseState = {
+    initialized: false,
+    initializing: false,
+    app: null,
+    auth: null,
+    db: null,
+    storage: null,
+    attempts: 0,
+    maxAttempts: 3
+};
+
+// Inicializacion principal
+async function initializeFirebase() {
+    if (FirebaseState.initialized) {
+        console.log('✅ Firebase ya inicializado');
+        return getFirebaseServices();
+    }
+
+    if (FirebaseState.initializing) {
+        console.log('⏳ Firebase inicializandose...');
+        return new Promise((resolve) => {
+            const checkReady = () => {
+                if (FirebaseState.initialized) {
+                    resolve(getFirebaseServices());
+                } else {
+                    setTimeout(checkReady, 100);
+                }
+            };
+            checkReady();
         });
+    }
 
-        // Inicialización principal
-        document.addEventListener('DOMContentLoaded', () => {
-            console.log('🌱 Iniciando aplicación de gestión de precios...');
-            
-            // Ocultar loader después de un breve momento
-            setTimeout(() => {
-                document.getElementById('initLoader').classList.add('hidden');
-            }, 1200);
-            
-            // Configurar fecha por defecto
-            document.getElementById('fechaPrecio').value = new Date().toISOString().split('T')[0];
-            
-            // ===== EVENT LISTENERS PRINCIPALES =====
-            document.getElementById('btnActualizarPrecios').addEventListener('click', actualizarPrecios);
-            document.getElementById('btnNuevoPrecio').addEventListener('click', mostrarFormularioPrecio);
-            document.getElementById('btnExportarAnalisis').addEventListener('click', exportarAnalisis);
-            document.getElementById('guardarPrecio').addEventListener('click', guardarPrecioRapido);
-            document.getElementById('btnVistaDetallada').addEventListener('click', mostrarVistaDetallada);
-            
-            // Filtros
-            document.getElementById('aplicarFiltros').addEventListener('click', aplicarFiltros);
-            document.getElementById('limpiarFiltros').addEventListener('click', limpiarFiltros);
-            
-            // Acciones rápidas con data-accion
-            document.querySelectorAll('.accion-precio').forEach(accion => {
-                accion.addEventListener('click', () => {
-                    const accionTipo = accion.getAttribute('data-accion');
-                    if (accionTipo) {
-                        ejecutarAccion(accionTipo);
-                    }
-                });
-            });
-            
-            // ===== INICIALIZAR GRÁFICOS CON CHART.JS =====
-            if (window.Chart) {
-                // Configuración global de Chart.js
-                Chart.defaults.font.family = 'Inter, sans-serif';
-                Chart.defaults.color = '#64748b';
-                Chart.defaults.borderColor = '#e2e8f0';
-                
-                // Gráfico de evolución
-                const ctxEvol = document.getElementById('graficoEvolucion');
-                if (ctxEvol) {
-                    graficoEvolucion = new Chart(ctxEvol, {
-                        type: 'line',
-                        data: {
-                            labels: ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'],
-                            datasets: [{
-                                label: 'Precio Promedio (Q)',
-                                data: [10.80, 11.25, 11.80, 12.50, 12.30, 12.75, 13.10],
-                                borderColor: '#f59e0b',
-                                backgroundColor: 'rgba(245, 158, 11, 0.1)',
-                                tension: 0.4,
-                                fill: true,
-                                pointBackgroundColor: '#f59e0b',
-                                pointBorderColor: '#ffffff',
-                                pointBorderWidth: 2,
-                                pointRadius: 5,
-                                pointHoverRadius: 7
-                            }]
-                        },
-                        options: {
-                            responsive: true,
-                            maintainAspectRatio: false,
-                            plugins: {
-                                legend: {
-                                    display: true,
-                                    position: 'top',
-                                    labels: {
-                                        usePointStyle: true,
-                                        padding: 20
-                                    }
-                                }
-                            },
-                            scales: {
-                                y: {
-                                    beginAtZero: false,
-                                    min: 10,
-                                    ticks: {
-                                        callback: function(value) {
-                                            return 'Q ' + value.toFixed(2);
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    });
-                }
-                
-                // Gráfico comparativo
-                const ctxComp = document.getElementById('graficoComparativo');
-                if (ctxComp) {
-                    graficoComparativo = new Chart(ctxComp, {
-                        type: 'bar',
-                        data: {
-                            labels: ['Mayorista', 'Minorista', 'Exportación', 'Finca'],
-                            datasets: [{
-                                label: 'Precio Actual (Q)',
-                                data: [11.80, 15.00, 18.50, 12.75],
-                                backgroundColor: [
-                                    'rgba(239, 68, 68, 0.8)',
-                                    'rgba(59, 130, 246, 0.8)',
-                                    'rgba(139, 92, 246, 0.8)',
-                                    'rgba(34, 197, 94, 0.8)'
-                                ],
-                                borderColor: [
-                                    '#ef4444',
-                                    '#3b82f6',
-                                    '#8b5cf6',
-                                    '#22c55e'
-                                ],
-                                borderWidth: 2,
-                                borderRadius: 8
-                            }]
-                        },
-                        options: {
-                            responsive: true,
-                            maintainAspectRatio: false,
-                            plugins: {
-                                legend: {
-                                    display: false
-                                }
-                            },
-                            scales: {
-                                y: {
-                                    beginAtZero: false,
-                                    min: 10,
-                                    ticks: {
-                                        callback: function(value) {
-                                            return 'Q ' + value.toFixed(2);
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    });
-                }
-                
-                console.log('📊 Gráficos inicializados correctamente');
+    FirebaseState.initializing = true;
+    FirebaseState.attempts++;
+
+    console.log(`🔄 Iniciando Firebase (intento ${FirebaseState.attempts})`);
+
+    try {
+        // Verificar SDK
+        if (typeof firebase === 'undefined') {
+            throw new Error('Firebase SDK no disponible');
+        }
+
+        // Inicializar app
+        if (firebase.apps.length === 0) {
+            FirebaseState.app = firebase.initializeApp(firebaseConfig);
+        } else {
+            FirebaseState.app = firebase.apps[0];
+        }
+
+        // Inicializar servicios básicos (sin storage por ahora)
+        FirebaseState.auth = firebase.auth();
+        FirebaseState.db = firebase.firestore();
+        
+        // Intentar storage solo si está disponible
+        try {
+            if (firebase.storage && typeof firebase.storage === 'function') {
+                FirebaseState.storage = firebase.storage();
+                console.log('✅ Firebase Storage inicializado');
             } else {
-                console.warn('⚠️ Chart.js no disponible');
+                console.log('⚠️ Firebase Storage no disponible, continuando sin él');
+                FirebaseState.storage = null;
             }
+        } catch (storageError) {
+            console.warn('⚠️ Error inicializando Storage, continuando sin él:', storageError.message);
+            FirebaseState.storage = null;
+        }
+
+        // Configurar persistencia
+        await configureFirestore();
+        configureAuth();
+
+        // Exponer globalmente
+        window.firebase = firebase;
+        window.firebaseApp = FirebaseState.app;
+        window.auth = FirebaseState.auth;
+        window.db = FirebaseState.db;
+        if (FirebaseState.storage) {
+            window.storage = FirebaseState.storage;
+        }
+
+        FirebaseState.initialized = true;
+        FirebaseState.initializing = false;
+
+        console.log('✅ Firebase inicializado correctamente');
+        console.log(`📊 Servicios disponibles: Auth ✅, Firestore ✅, Storage ${FirebaseState.storage ? '✅' : '❌'}`);
+
+        // Disparar evento
+        window.dispatchEvent(new CustomEvent('firebaseReady', {
+            detail: getFirebaseServices()
+        }));
+
+        return getFirebaseServices();
+
+    } catch (error) {
+        console.error('❌ Error en Firebase:', error);
+        FirebaseState.initializing = false;
+
+        if (FirebaseState.attempts < FirebaseState.maxAttempts) {
+            console.log(`🔄 Reintentando en 2 segundos... (${FirebaseState.attempts}/${FirebaseState.maxAttempts})`);
+            setTimeout(() => {
+                initializeFirebase();
+            }, 2000);
+        } else {
+            console.error('❌ Máximo de intentos alcanzado para Firebase');
             
-            console.log('✅ Sistema de gestión de precios inicializado correctamente');
-            console.log(`📊 ${precios.size} precios cargados en memoria`);
+            // Crear servicios mock para continuar sin Firebase
+            createMockServices();
+            
+            window.dispatchEvent(new CustomEvent('firebaseError', {
+                detail: { error: error.message, hasMockServices: true }
+            }));
+        }
+
+        throw error;
+    }
+}
+
+function createMockServices() {
+    console.log('🔧 Creando servicios mock para continuar sin Firebase...');
+    
+    // Mock básico para Firestore
+    const mockDB = {
+        collection: (name) => ({
+            doc: (id) => ({
+                set: (data) => Promise.resolve(),
+                update: (data) => Promise.resolve(),
+                get: () => Promise.resolve({ exists: false, data: () => null })
+            }),
+            add: (data) => Promise.resolve({ id: 'mock-' + Date.now() }),
+            get: () => Promise.resolve({ docs: [], empty: true }),
+            orderBy: () => mockDB.collection(name),
+            where: () => mockDB.collection(name),
+            limit: () => mockDB.collection(name)
+        })
+    };
+
+    // Mock básico para Auth
+    const mockAuth = {
+        currentUser: null,
+        onAuthStateChanged: (callback) => {
+            setTimeout(() => callback(null), 100);
+            return () => {}; // unsubscribe function
+        },
+        signOut: () => Promise.resolve()
+    };
+
+    window.db = mockDB;
+    window.auth = mockAuth;
+    
+    FirebaseState.db = mockDB;
+    FirebaseState.auth = mockAuth;
+    FirebaseState.initialized = true;
+    FirebaseState.initializing = false;
+    
+    console.log('✅ Servicios mock creados - La aplicación puede continuar');
+    
+    // Disparar evento indicando que tenemos servicios mock
+    window.dispatchEvent(new CustomEvent('firebaseReady', {
+        detail: { ...getFirebaseServices(), isMock: true }
+    }));
+}
+
+function getFirebaseServices() {
+    return {
+        app: FirebaseState.app,
+        auth: FirebaseState.auth,
+        db: FirebaseState.db,
+        storage: FirebaseState.storage,
+        initialized: FirebaseState.initialized,
+        isMock: !FirebaseState.app // Indica si son servicios mock
+    };
+}
+
+async function configureFirestore() {
+    if (!FirebaseState.db || !FirebaseState.db.enablePersistence) return;
+
+    try {
+        await FirebaseState.db.enablePersistence({
+            synchronizeTabs: false
         });
-
-        // Funciones placeholder para mantener funcionalidad
-        function actualizarPrecios() {
-            console.log('Actualizar precios');
+        console.log('✅ Persistencia Firestore habilitada');
+    } catch (error) {
+        if (error.code === 'failed-precondition') {
+            console.warn('⚠️ Persistencia no habilitada - múltiples tabs abiertos');
+        } else if (error.code === 'unimplemented') {
+            console.warn('⚠️ Persistencia no soportada en este navegador');
+        } else {
+            console.warn('⚠️ Error configurando persistencia:', error.message);
         }
+    }
+}
 
-        function mostrarFormularioPrecio() {
-            console.log('Mostrar formulario de precio');
-        }
+function configureAuth() {
+    if (!FirebaseState.auth || !FirebaseState.auth.languageCode) return;
 
-        function exportarAnalisis() {
-            console.log('Exportar análisis');
+    try {
+        FirebaseState.auth.languageCode = 'es';
+        if (FirebaseState.auth.setPersistence && firebase.auth.Auth.Persistence) {
+            FirebaseState.auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL);
         }
+        console.log('✅ Auth configurado correctamente');
+    } catch (error) {
+        console.warn('⚠️ Error configurando auth:', error.message);
+    }
+}
 
-        function guardarPrecioRapido() {
-            console.log('Guardar precio rápido');
-        }
+// API global simplificada y mejorada
+window.FirebaseConfig = {
+    initialize: initializeFirebase,
+    getServices: getFirebaseServices,
+    get initialized() { return FirebaseState.initialized; },
+    get status() { 
+        return {
+            initialized: FirebaseState.initialized,
+            initializing: FirebaseState.initializing,
+            attempts: FirebaseState.attempts,
+            hasStorage: !!FirebaseState.storage,
+            isMock: !FirebaseState.app
+        };
+    },
+    // Función de utilidad para verificar disponibilidad
+    isAvailable: () => FirebaseState.initialized,
+    hasRealFirebase: () => FirebaseState.initialized && !!FirebaseState.app
+};
 
-        function mostrarVistaDetallada() {
-            console.log('Mostrar vista detallada');
+// Auto-inicializacion mejorada
+function autoInit() {
+    const startInit = () => {
+        if (typeof firebase !== 'undefined') {
+            console.log('🚀 Iniciando auto-inicialización de Firebase...');
+            initializeFirebase().catch(error => {
+                console.error('❌ Error crítico en inicialización, creando servicios mock:', error);
+                // Los servicios mock ya se crean en initializeFirebase en caso de error
+            });
+        } else {
+            console.log('⏳ Esperando Firebase SDK...');
+            setTimeout(startInit, 200);
         }
+    };
 
-        function aplicarFiltros() {
-            console.log('Aplicar filtros');
-        }
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', startInit);
+    } else {
+        startInit();
+    }
+}
 
-        function limpiarFiltros() {
-            console.log('Limpiar filtros');
+// Listeners de conectividad mejorados
+if (typeof window !== 'undefined') {
+    window.addEventListener('online', () => {
+        console.log('🌐 Conexión restaurada');
+        if (FirebaseState.db && FirebaseState.db.disableNetwork && !FirebaseState.isMock) {
+            FirebaseState.db.disableNetwork()
+                .then(() => FirebaseState.db.enableNetwork())
+                .then(() => console.log('✅ Firestore reconectado'))
+                .catch(error => console.warn('⚠️ Error reconectando Firestore:', error));
         }
+    });
 
-        function ejecutarAccion(accion) {
-            console.log('Ejecutar acción:', accion);
-        }
+    window.addEventListener('offline', () => {
+        console.log('📴 Modo offline activado');
+    });
+}
 
-        function editarPrecio(id) {
-            console.log('Editar precio:', id);
-        }
-
-        function eliminarPrecio(id) {
-            console.log('Eliminar precio:', id);
-        }
-
-        function verAnalisisDetallado(tipo) {
-            console.log('Ver análisis detallado:', tipo);
-        }
-
-        function verDetallesVolatilidad() {
-            console.log('Ver detalles de volatilidad');
-        }
-
-        function ajustarPrecio(mercado) {
-            console.log('Ajustar precio del mercado:', mercado);
-        }
-    </script>
-</body>
-</html>
+console.log('🔧 Firebase config corregido cargado');
+autoInit();
