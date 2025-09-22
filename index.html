@@ -1,3 +1,4 @@
+//vfull
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -11,18 +12,23 @@
     <!-- Chart.js para gráficos -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
     
-    <!-- Firebase SDK v8 (MISMO QUE GASTOS.HTML) -->
+    <!-- Firebase SDK v8 (MISMO QUE TUS ARCHIVOS BASE) -->
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-storage.js"></script>
     
-    <!-- CSS Files Externos -->
+    <!-- CSS Files de tus archivos base -->
     <link rel="stylesheet" href="css/main.css">
     <link rel="stylesheet" href="css/style.css">
     
     <style>
-        /* Variables específicas para dashboard - Complementan main.css */
+        /* ========================================
+           ESTILOS ESPECÍFICOS PARA DASHBOARD
+           Complementan tus archivos base CSS
+           ======================================== */
+
+        /* Variables específicas para dashboard */
         :root {
             --dashboard-primary: #22c55e;
             --dashboard-secondary: #3b82f6;
@@ -32,7 +38,7 @@
             --dashboard-info: #3b82f6;
         }
 
-        /* Override específico para evitar conflictos con navegación */
+        /* Layout principal compatible con finca-navigation.js */
         body {
             margin: 0;
             padding: 0;
@@ -42,7 +48,6 @@
             line-height: 1.6;
         }
 
-        /* Main wrapper compatible con el sistema de navegación */
         .main-content-wrapper {
             margin-left: var(--sidebar-width, 280px);
             margin-top: var(--header-height, 80px);
@@ -53,19 +58,179 @@
             background: var(--light-gray, #f8f9fa);
         }
 
-        /* Estados de conexión - MOVIDO A LA DERECHA IGUAL QUE GASTOS */
+        /* SISTEMA DE LOADER UNIFICADO - IGUAL QUE GASTOS.JS */
+        #sistemaLoader {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 10000;
+            color: white;
+            font-size: 1.1rem;
+            transition: all 0.5s ease;
+        }
+
+        #sistemaLoader.oculto {
+            opacity: 0;
+            transform: translateY(-20px);
+        }
+
+        .loader-container {
+            text-align: center;
+            max-width: 500px;
+            padding: 3rem;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 24px;
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+        }
+
+        .loader-icon {
+            font-size: 4rem;
+            margin-bottom: 2rem;
+            animation: pulse 2s ease-in-out infinite;
+            color: var(--dashboard-primary);
+        }
+
+        .loader-title {
+            font-size: 2rem;
+            font-weight: 800;
+            margin-bottom: 1rem;
+            background: linear-gradient(135deg, #22c55e, #3b82f6);
+            background-clip: text;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            text-align: center;
+        }
+
+        .loader-subtitle {
+            font-size: 1.1rem;
+            margin-bottom: 2rem;
+            opacity: 0.9;
+        }
+
+        .loader-progress {
+            margin-bottom: 2rem;
+        }
+
+        .progress-bar-container {
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 15px;
+            height: 12px;
+            overflow: hidden;
+            margin-bottom: 1rem;
+            position: relative;
+        }
+
+        .progress-bar {
+            height: 100%;
+            background: linear-gradient(90deg, var(--dashboard-primary), var(--dashboard-secondary));
+            border-radius: 15px;
+            width: 0%;
+            transition: width 0.5s ease;
+            position: relative;
+        }
+
+        .progress-bar::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+            animation: shimmer 2s infinite;
+        }
+
+        .progress-info {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 0.5rem;
+        }
+
+        .progress-text {
+            font-size: 0.9rem;
+            opacity: 0.8;
+        }
+
+        .progress-percentage {
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: var(--dashboard-primary);
+        }
+
+        /* Pasos de carga */
+        .loading-steps {
+            margin-top: 2rem;
+            display: grid;
+            gap: 0.75rem;
+        }
+
+        .paso-item {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            padding: 0.75rem 1rem;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            transition: all 0.3s ease;
+        }
+
+        .paso-item.activo {
+            background: rgba(34, 197, 94, 0.2);
+            border-left: 4px solid var(--dashboard-primary);
+        }
+
+        .paso-item.completado {
+            background: rgba(34, 197, 94, 0.15);
+            opacity: 0.8;
+        }
+
+        .paso-icon {
+            width: 24px;
+            height: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.2);
+            flex-shrink: 0;
+        }
+
+        .paso-item.activo .paso-icon {
+            background: var(--dashboard-primary);
+        }
+
+        .paso-item.completado .paso-icon {
+            background: var(--dashboard-primary);
+        }
+
+        .paso-texto {
+            font-size: 0.9rem;
+            font-weight: 500;
+        }
+
+        /* Estados de conexión mejorados */
         .connection-status {
             position: fixed;
             top: 1.25rem;
-            right: 1.5rem; /* Más margen a la derecha */
+            right: 1.5rem;
             padding: 0.6rem 1rem;
             border-radius: 20px;
             font-size: 0.8rem;
             font-weight: 600;
             z-index: 999;
-            transition: all var(--transition-normal, 0.3s ease);
+            transition: all 0.3s ease;
             backdrop-filter: blur(10px);
-            box-shadow: var(--shadow-md, 0 4px 8px rgba(0,0,0,0.15));
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
             min-width: 120px;
             text-align: center;
         }
@@ -88,89 +253,7 @@
             border: 1px solid rgba(245, 158, 11, 0.4);
         }
 
-        /* Responsive para conexión status */
-        @media (max-width: 1024px) {
-            .connection-status {
-                top: 1rem;
-                right: 1rem;
-                padding: 0.5rem 0.8rem;
-                font-size: 0.75rem;
-                min-width: 100px;
-            }
-        }
-
-        @media (max-width: 768px) {
-            .connection-status {
-                top: 0.75rem;
-                right: 0.75rem;
-                padding: 0.4rem 0.6rem;
-                font-size: 0.7rem;
-                min-width: 90px;
-                z-index: 998; /* Bajo el header de navegación */
-            }
-        }
-
-        @media (max-width: 480px) {
-            .connection-status {
-                top: 0.5rem;
-                right: 0.5rem;
-                padding: 0.35rem 0.5rem;
-                font-size: 0.65rem;
-                min-width: 80px;
-                border-radius: 15px;
-            }
-        }
-
-        /* Loader de inicialización - Responsive */
-        .initialization-loader {
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: rgba(0, 0, 0, 0.95);
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            z-index: 10000;
-            color: white;
-            font-size: 1.2rem;
-            backdrop-filter: blur(5px);
-        }
-
-        .initialization-loader.hidden {
-            display: none;
-        }
-
-        .loader-content {
-            text-align: center;
-            max-width: 400px;
-            padding: 2rem;
-        }
-
-        @media (max-width: 768px) {
-            .loader-content {
-                max-width: 300px;
-                padding: 1.5rem;
-                font-size: 1rem;
-            }
-        }
-
-        .loader-icon {
-            font-size: 4rem;
-            margin-bottom: 2rem;
-            animation: pulse 2s ease-in-out infinite;
-        }
-
-        @media (max-width: 768px) {
-            .loader-icon {
-                font-size: 3rem;
-                margin-bottom: 1.5rem;
-            }
-        }
-
-        /* Header del dashboard - Completamente responsive */
+        /* Header del dashboard responsive */
         .dashboard-header {
             display: flex;
             justify-content: space-between;
@@ -180,34 +263,11 @@
             gap: 1.5rem;
         }
 
-        @media (max-width: 1024px) {
-            .dashboard-header {
-                gap: 1rem;
-            }
-        }
-
-        @media (max-width: 768px) {
-            .dashboard-header {
-                flex-direction: column;
-                align-items: stretch;
-                gap: 1rem;
-                margin-bottom: 1.5rem;
-            }
-        }
-
         .page-title {
             display: flex;
             align-items: center;
             gap: 1.5rem;
             flex: 1;
-        }
-
-        @media (max-width: 640px) {
-            .page-title {
-                flex-direction: column;
-                text-align: center;
-                gap: 1rem;
-            }
         }
 
         .title-icon {
@@ -220,26 +280,8 @@
             justify-content: center;
             color: white;
             font-size: 1.8rem;
-            box-shadow: var(--shadow-lg);
+            box-shadow: 0 8px 25px rgba(34, 197, 94, 0.3);
             flex-shrink: 0;
-        }
-
-        @media (max-width: 768px) {
-            .title-icon {
-                width: 60px;
-                height: 60px;
-                font-size: 1.5rem;
-                border-radius: 16px;
-            }
-        }
-
-        @media (max-width: 480px) {
-            .title-icon {
-                width: 50px;
-                height: 50px;
-                font-size: 1.25rem;
-                border-radius: 12px;
-            }
         }
 
         .title-text h1 {
@@ -255,25 +297,6 @@
             margin: 0;
         }
 
-        @media (max-width: 768px) {
-            .title-text h1 {
-                font-size: 2rem;
-            }
-            .title-text p {
-                font-size: 1rem;
-            }
-        }
-
-        @media (max-width: 480px) {
-            .title-text h1 {
-                font-size: 1.75rem;
-            }
-            .title-text p {
-                font-size: 0.9rem;
-            }
-        }
-
-        /* Header actions - Responsive */
         .header-actions {
             display: flex;
             gap: 1rem;
@@ -281,27 +304,6 @@
             flex-wrap: wrap;
         }
 
-        @media (max-width: 768px) {
-            .header-actions {
-                width: 100%;
-                justify-content: center;
-                gap: 0.75rem;
-            }
-        }
-
-        @media (max-width: 640px) {
-            .header-actions {
-                flex-direction: column;
-                align-items: stretch;
-            }
-            
-            .header-actions .btn {
-                width: 100%;
-                justify-content: center;
-            }
-        }
-
-        /* Estado sistema - Responsive */
         .estado-sistema {
             display: flex;
             align-items: center;
@@ -312,7 +314,7 @@
             background: rgba(34, 197, 94, 0.15);
             color: #16a34a;
             border: 2px solid rgba(34, 197, 94, 0.3);
-            box-shadow: var(--shadow);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
             transition: all 0.3s ease;
             white-space: nowrap;
         }
@@ -329,22 +331,6 @@
             border-color: rgba(239, 68, 68, 0.3);
         }
 
-        @media (max-width: 768px) {
-            .estado-sistema {
-                padding: 0.75rem 1.25rem;
-                font-size: 0.9rem;
-            }
-        }
-
-        @media (max-width: 480px) {
-            .estado-sistema {
-                padding: 0.625rem 1rem;
-                font-size: 0.8rem;
-                white-space: normal;
-                text-align: center;
-            }
-        }
-
         /* KPIs Dashboard - Grid completamente responsive */
         .kpis-dashboard {
             display: grid;
@@ -353,63 +339,19 @@
             margin-bottom: 2rem;
         }
 
-        @media (max-width: 1200px) {
-            .kpis-dashboard {
-                grid-template-columns: repeat(2, 1fr);
-                gap: 1.5rem;
-            }
-        }
-
-        @media (max-width: 768px) {
-            .kpis-dashboard {
-                grid-template-columns: repeat(2, 1fr);
-                gap: 1rem;
-            }
-        }
-
-        @media (max-width: 640px) {
-            .kpis-dashboard {
-                grid-template-columns: 1fr;
-                gap: 1rem;
-            }
-        }
-
-        /* KPI Cards - Responsive */
         .kpi-card {
             background: var(--white, #ffffff);
             border-radius: 20px;
             padding: 2rem;
             position: relative;
             overflow: hidden;
-            box-shadow: var(--shadow-lg);
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
             transition: all 0.3s ease;
         }
 
         .kpi-card:hover {
             transform: translateY(-4px);
-            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
-        }
-
-        @media (max-width: 768px) {
-            .kpi-card {
-                padding: 1.5rem;
-                border-radius: 16px;
-            }
-            
-            .kpi-card:hover {
-                transform: translateY(-2px);
-            }
-        }
-
-        @media (max-width: 480px) {
-            .kpi-card {
-                padding: 1.25rem;
-                border-radius: 12px;
-            }
-            
-            .kpi-card:hover {
-                transform: none; /* Desactivar hover en móviles pequeños */
-            }
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
         }
 
         .kpi-card::before {
@@ -422,20 +364,11 @@
             border-radius: 20px 20px 0 0;
         }
 
-        @media (max-width: 768px) {
-            .kpi-card::before {
-                height: 4px;
-                border-radius: 16px 16px 0 0;
-            }
-        }
-
-        /* Colores específicos para cada KPI */
         .kpi-card.produccion::before { background: linear-gradient(90deg, var(--dashboard-primary), #16a34a); }
         .kpi-card.ingresos::before { background: linear-gradient(90deg, var(--dashboard-secondary), #1d4ed8); }
         .kpi-card.arboles::before { background: linear-gradient(90deg, var(--dashboard-warning), #d97706); }
         .kpi-card.gastos::before { background: linear-gradient(90deg, var(--dashboard-danger), #b91c1c); }
 
-        /* Header de KPI card */
         .kpi-header {
             display: flex;
             justify-content: space-between;
@@ -443,15 +376,6 @@
             margin-bottom: 1.5rem;
             flex-wrap: wrap;
             gap: 0.5rem;
-        }
-
-        @media (max-width: 640px) {
-            .kpi-header {
-                flex-direction: column;
-                align-items: center;
-                text-align: center;
-                margin-bottom: 1rem;
-            }
         }
 
         .kpi-icon {
@@ -463,25 +387,7 @@
             justify-content: center;
             color: white;
             font-size: 1.5rem;
-            box-shadow: var(--shadow);
-        }
-
-        @media (max-width: 768px) {
-            .kpi-icon {
-                width: 50px;
-                height: 50px;
-                font-size: 1.25rem;
-                border-radius: 12px;
-            }
-        }
-
-        @media (max-width: 480px) {
-            .kpi-icon {
-                width: 45px;
-                height: 45px;
-                font-size: 1.125rem;
-                border-radius: 10px;
-            }
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
         }
 
         .kpi-tendencia {
@@ -496,20 +402,6 @@
             border-radius: 20px;
         }
 
-        @media (max-width: 768px) {
-            .kpi-tendencia {
-                font-size: 0.8rem;
-                padding: 0.4rem 0.8rem;
-            }
-        }
-
-        @media (max-width: 480px) {
-            .kpi-tendencia {
-                font-size: 0.75rem;
-                padding: 0.35rem 0.7rem;
-            }
-        }
-
         .kpi-valor {
             font-size: 2.5rem;
             font-weight: 800;
@@ -518,31 +410,13 @@
             letter-spacing: -0.025em;
         }
 
-        @media (max-width: 768px) {
-            .kpi-valor {
-                font-size: 2rem;
-            }
-        }
-
-        @media (max-width: 480px) {
-            .kpi-valor {
-                font-size: 1.75rem;
-            }
-        }
-
         .kpi-label {
             color: var(--text-secondary, #64748b);
             font-size: 1rem;
             font-weight: 500;
         }
 
-        @media (max-width: 480px) {
-            .kpi-label {
-                font-size: 0.9rem;
-            }
-        }
-
-        /* Widgets Dashboard - Layout responsivo */
+        /* Widgets Dashboard responsive */
         .widgets-dashboard {
             display: grid;
             grid-template-columns: 2fr 1fr;
@@ -550,78 +424,27 @@
             margin-bottom: 2rem;
         }
 
-        @media (max-width: 1200px) {
-            .widgets-dashboard {
-                grid-template-columns: 3fr 2fr;
-                gap: 1.5rem;
-            }
-        }
-
-        @media (max-width: 1024px) {
-            .widgets-dashboard {
-                grid-template-columns: 1fr;
-                gap: 1.5rem;
-            }
-        }
-
-        @media (max-width: 768px) {
-            .widgets-dashboard {
-                gap: 1rem;
-            }
-        }
-
-        /* Widget Principal */
         .widget-principal {
             display: grid;
             gap: 2rem;
         }
 
-        @media (max-width: 768px) {
-            .widget-principal {
-                gap: 1.5rem;
-            }
+        .panel-lateral {
+            display: grid;
+            gap: 1.5rem;
         }
 
-        @media (max-width: 480px) {
-            .widget-principal {
-                gap: 1rem;
-            }
-        }
-
-        /* Widget Cards - Responsive */
         .widget-card {
             background: var(--white, #ffffff);
             border-radius: 20px;
             padding: 2rem;
-            box-shadow: var(--shadow-lg);
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
             transition: all 0.3s ease;
         }
 
         .widget-card:hover {
             transform: translateY(-2px);
-            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
-        }
-
-        @media (max-width: 768px) {
-            .widget-card {
-                padding: 1.5rem;
-                border-radius: 16px;
-            }
-            
-            .widget-card:hover {
-                transform: translateY(-1px);
-            }
-        }
-
-        @media (max-width: 480px) {
-            .widget-card {
-                padding: 1.25rem;
-                border-radius: 12px;
-            }
-            
-            .widget-card:hover {
-                transform: none; /* Desactivar hover en móviles */
-            }
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
         }
 
         .widget-header {
@@ -635,14 +458,6 @@
             gap: 0.5rem;
         }
 
-        @media (max-width: 640px) {
-            .widget-header {
-                flex-direction: column;
-                align-items: flex-start;
-                margin-bottom: 1rem;
-            }
-        }
-
         .widget-titulo {
             font-size: 1.25rem;
             font-weight: 700;
@@ -652,23 +467,7 @@
             gap: 1rem;
         }
 
-        @media (max-width: 768px) {
-            .widget-titulo {
-                font-size: 1.125rem;
-                gap: 0.75rem;
-            }
-        }
-
-        @media (max-width: 480px) {
-            .widget-titulo {
-                font-size: 1rem;
-                gap: 0.5rem;
-                flex-direction: column;
-                align-items: flex-start;
-            }
-        }
-
-        /* Widget del Clima - Responsive */
+        /* Widget del Clima específico */
         .clima-widget {
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
             color: white !important;
@@ -685,33 +484,12 @@
             margin-top: 1rem;
         }
 
-        @media (max-width: 640px) {
-            .clima-detalles-clima {
-                grid-template-columns: 1fr;
-                gap: 0.75rem;
-            }
-        }
-
         .clima-detalle {
             text-align: center;
             padding: 0.75rem;
             background: rgba(255, 255, 255, 0.1);
             border-radius: 12px;
             backdrop-filter: blur(10px);
-        }
-
-        @media (max-width: 768px) {
-            .clima-detalle {
-                padding: 0.625rem;
-                border-radius: 10px;
-            }
-        }
-
-        @media (max-width: 480px) {
-            .clima-detalle {
-                padding: 0.5rem;
-                border-radius: 8px;
-            }
         }
 
         .clima-detalle-valor {
@@ -726,40 +504,12 @@
             margin-top: 0.25rem;
         }
 
-        @media (max-width: 768px) {
-            .clima-detalle-valor {
-                font-size: 1.125rem;
-            }
-            
-            .clima-detalle-label {
-                font-size: 0.7rem;
-            }
-        }
-
-        @media (max-width: 480px) {
-            .clima-detalle-valor {
-                font-size: 1rem;
-            }
-            
-            .clima-detalle-label {
-                font-size: 0.65rem;
-            }
-        }
-
-        /* Widget del Tanque - Responsive */
+        /* Widget del Tanque */
         .tanque-container {
             display: flex;
             align-items: center;
             gap: 1.5rem;
             margin-bottom: 1rem;
-        }
-
-        @media (max-width: 640px) {
-            .tanque-container {
-                flex-direction: column;
-                text-align: center;
-                gap: 1rem;
-            }
         }
 
         .tanque-visual {
@@ -771,20 +521,6 @@
             border-radius: 8px;
             overflow: hidden;
             flex-shrink: 0;
-        }
-
-        @media (max-width: 768px) {
-            .tanque-visual {
-                width: 70px;
-                height: 120px;
-            }
-        }
-
-        @media (max-width: 480px) {
-            .tanque-visual {
-                width: 60px;
-                height: 100px;
-            }
         }
 
         .tanque-fill {
@@ -815,39 +551,22 @@
             color: var(--dashboard-secondary);
         }
 
-        @media (max-width: 768px) {
-            .tanque-nivel {
-                font-size: 1.25rem;
-            }
-            
-            .tanque-porcentaje {
-                font-size: 1.125rem;
-            }
+        /* Estados de datos */
+        .data-loading {
+            color: #6b7280;
+            font-style: italic;
         }
 
-        @media (max-width: 480px) {
-            .tanque-nivel {
-                font-size: 1.125rem;
-            }
-            
-            .tanque-porcentaje {
-                font-size: 1rem;
-            }
+        .data-error {
+            color: var(--dashboard-danger);
+            font-weight: 500;
         }
 
-        /* Panel Lateral - Responsive */
-        .panel-lateral {
-            display: grid;
-            gap: 1.5rem;
+        .data-real {
+            color: inherit;
         }
 
-        @media (max-width: 768px) {
-            .panel-lateral {
-                gap: 1rem;
-            }
-        }
-
-        /* Resumen Financiero - Grid responsive */
+        /* Resumen Financiero */
         .resumen-financiero-grid {
             display: grid;
             gap: 1rem;
@@ -867,14 +586,7 @@
             color: var(--text-primary, #1e293b);
         }
 
-        @media (max-width: 480px) {
-            .resumen-item {
-                padding: 0.5rem 0;
-                font-size: 0.9rem;
-            }
-        }
-
-        /* Estado Firebase - Grid responsive */
+        /* Estado Firebase */
         .firebase-status-grid {
             display: grid;
             gap: 0.75rem;
@@ -890,24 +602,11 @@
             font-size: 0.875rem;
         }
 
-        @media (max-width: 480px) {
-            .firebase-status-item {
-                padding: 0.4rem;
-                font-size: 0.8rem;
-            }
-        }
-
-        /* Contadores de registros - Grid responsive */
+        /* Contadores de registros */
         .registros-grid {
             display: grid;
             grid-template-columns: repeat(2, 1fr);
             gap: 1rem;
-        }
-
-        @media (max-width: 480px) {
-            .registros-grid {
-                gap: 0.75rem;
-            }
         }
 
         .registro-item {
@@ -915,20 +614,6 @@
             padding: 1rem;
             background: var(--light-gray, #f8fafc);
             border-radius: 12px;
-        }
-
-        @media (max-width: 768px) {
-            .registro-item {
-                padding: 0.875rem;
-                border-radius: 10px;
-            }
-        }
-
-        @media (max-width: 480px) {
-            .registro-item {
-                padding: 0.75rem;
-                border-radius: 8px;
-            }
         }
 
         .registro-valor {
@@ -942,45 +627,27 @@
             color: var(--text-secondary, #64748b);
         }
 
-        @media (max-width: 768px) {
-            .registro-valor {
-                font-size: 1.25rem;
+        /* RESPONSIVE BREAKPOINTS */
+        @media (max-width: 1200px) {
+            .kpis-dashboard {
+                grid-template-columns: repeat(2, 1fr);
+                gap: 1.5rem;
             }
             
-            .registro-label {
-                font-size: 0.7rem;
+            .widgets-dashboard {
+                grid-template-columns: 3fr 2fr;
+                gap: 1.5rem;
             }
         }
 
-        @media (max-width: 480px) {
-            .registro-valor {
-                font-size: 1.125rem;
-            }
-            
-            .registro-label {
-                font-size: 0.65rem;
-            }
-        }
-
-        /* Estados de datos */
-        .data-loading {
-            color: #6b7280;
-            font-style: italic;
-        }
-
-        .data-error {
-            color: var(--dashboard-danger);
-            font-weight: 500;
-        }
-
-        .data-real {
-            color: inherit;
-        }
-
-        /* Ajustes para el layout principal responsive */
         @media (max-width: 1024px) {
             .main-content-wrapper {
                 margin-left: 0;
+            }
+            
+            .widgets-dashboard {
+                grid-template-columns: 1fr;
+                gap: 1.5rem;
             }
         }
 
@@ -989,15 +656,219 @@
                 padding: 1rem;
                 margin-top: var(--header-height, 80px);
             }
+            
+            .dashboard-header {
+                flex-direction: column;
+                align-items: stretch;
+                gap: 1rem;
+                margin-bottom: 1.5rem;
+            }
+            
+            .page-title {
+                flex-direction: column;
+                text-align: center;
+                gap: 1rem;
+            }
+            
+            .title-icon {
+                width: 60px;
+                height: 60px;
+                font-size: 1.5rem;
+                border-radius: 16px;
+            }
+            
+            .title-text h1 {
+                font-size: 2rem;
+            }
+            
+            .header-actions {
+                width: 100%;
+                justify-content: center;
+                gap: 0.75rem;
+            }
+            
+            .kpis-dashboard {
+                grid-template-columns: repeat(2, 1fr);
+                gap: 1rem;
+            }
+            
+            .kpi-card {
+                padding: 1.5rem;
+                border-radius: 16px;
+            }
+            
+            .kpi-card:hover {
+                transform: translateY(-2px);
+            }
+            
+            .kpi-icon {
+                width: 50px;
+                height: 50px;
+                font-size: 1.25rem;
+                border-radius: 12px;
+            }
+            
+            .kpi-valor {
+                font-size: 2rem;
+            }
+            
+            .widget-card {
+                padding: 1.5rem;
+                border-radius: 16px;
+            }
+            
+            .widget-card:hover {
+                transform: translateY(-1px);
+            }
+            
+            .connection-status {
+                top: 1rem;
+                right: 1rem;
+                padding: 0.5rem 0.8rem;
+                font-size: 0.75rem;
+                min-width: 100px;
+                z-index: 998;
+            }
+            
+            .estado-sistema {
+                padding: 0.75rem 1.25rem;
+                font-size: 0.9rem;
+            }
+        }
+
+        @media (max-width: 640px) {
+            .kpis-dashboard {
+                grid-template-columns: 1fr;
+                gap: 1rem;
+            }
+            
+            .kpi-header {
+                flex-direction: column;
+                align-items: center;
+                text-align: center;
+                margin-bottom: 1rem;
+            }
+            
+            .header-actions {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            
+            .header-actions .btn {
+                width: 100%;
+                justify-content: center;
+            }
+            
+            .clima-detalles-clima {
+                grid-template-columns: 1fr;
+                gap: 0.75rem;
+            }
+            
+            .tanque-container {
+                flex-direction: column;
+                text-align: center;
+                gap: 1rem;
+            }
+            
+            .widget-header {
+                flex-direction: column;
+                align-items: flex-start;
+                margin-bottom: 1rem;
+            }
+            
+            .widget-titulo {
+                font-size: 1rem;
+                gap: 0.5rem;
+                flex-direction: column;
+                align-items: flex-start;
+            }
         }
 
         @media (max-width: 480px) {
             .main-content-wrapper {
                 padding: 0.75rem;
             }
+            
+            .title-icon {
+                width: 50px;
+                height: 50px;
+                font-size: 1.25rem;
+                border-radius: 12px;
+            }
+            
+            .title-text h1 {
+                font-size: 1.75rem;
+            }
+            
+            .title-text p {
+                font-size: 0.9rem;
+            }
+            
+            .kpi-card {
+                padding: 1.25rem;
+                border-radius: 12px;
+            }
+            
+            .kpi-card:hover {
+                transform: none;
+            }
+            
+            .kpi-icon {
+                width: 45px;
+                height: 45px;
+                font-size: 1.125rem;
+                border-radius: 10px;
+            }
+            
+            .kpi-valor {
+                font-size: 1.75rem;
+            }
+            
+            .kpi-label {
+                font-size: 0.9rem;
+            }
+            
+            .widget-card {
+                padding: 1.25rem;
+                border-radius: 12px;
+            }
+            
+            .connection-status {
+                top: 0.5rem;
+                right: 0.5rem;
+                padding: 0.35rem 0.5rem;
+                font-size: 0.65rem;
+                min-width: 80px;
+                border-radius: 15px;
+            }
+            
+            .estado-sistema {
+                padding: 0.625rem 1rem;
+                font-size: 0.8rem;
+                white-space: normal;
+                text-align: center;
+            }
+            
+            .loader-container {
+                padding: 2rem;
+                border-radius: 20px;
+            }
+            
+            .loader-icon {
+                font-size: 3rem;
+                margin-bottom: 1.5rem;
+            }
+            
+            .loader-title {
+                font-size: 1.5rem;
+            }
+            
+            .loader-subtitle {
+                font-size: 1rem;
+            }
         }
 
-        /* Animaciones - Desactivadas en móviles para mejor performance */
+        /* Animaciones */
         @keyframes fadeInUp {
             from {
                 opacity: 0;
@@ -1013,18 +884,36 @@
             animation: fadeInUp 0.5s ease-out;
         }
 
-        @media (max-width: 768px) {
-            .animate-fade-in-up {
-                animation: none; /* Desactivar animaciones en móviles */
+        @keyframes pulse {
+            0%, 100% { 
+                transform: scale(1); 
+                opacity: 1; 
+            }
+            50% { 
+                transform: scale(1.05); 
+                opacity: 0.8; 
             }
         }
 
-        @keyframes pulse {
-            0%, 100% { transform: scale(1); }
-            50% { transform: scale(1.1); }
+        @keyframes shimmer {
+            0% { transform: translateX(-100%); }
+            100% { transform: translateX(100%); }
         }
 
-        /* Mejoras para touch targets en móviles */
+        /* Desactivar animaciones en móviles para mejor performance */
+        @media (max-width: 768px) {
+            .animate-fade-in-up {
+                animation: none;
+            }
+            
+            * {
+                animation-duration: 0.01ms !important;
+                animation-delay: 0.01ms !important;
+                transition-duration: 0.01ms !important;
+            }
+        }
+
+        /* Touch targets mejorados para móviles */
         @media (max-width: 768px) {
             .btn {
                 min-height: 44px;
@@ -1038,7 +927,7 @@
             }
         }
 
-        /* Responsive utilities */
+        /* Utilities responsive */
         @media (max-width: 768px) {
             .hide-mobile { display: none !important; }
             .show-mobile { display: block !important; }
@@ -1051,21 +940,76 @@
     </style>
 </head>
 <body>
-    <!-- Estado de conexión - MOVIDO A LA DERECHA -->
-    <div class="connection-status loading" id="connectionStatus">
-        <i class="fas fa-circle"></i>
-        Conectando...
-    </div>
-
-    <!-- Loader de inicialización -->
-    <div class="initialization-loader" id="initLoader">
-        <div class="loader-content">
+    <!-- Sistema de carga unificado - IGUAL QUE GASTOS.JS -->
+    <div id="sistemaLoader">
+        <div class="loader-container">
             <div class="loader-icon">
                 <i class="fas fa-tachometer-alt fa-spin"></i>
             </div>
-            <h2>Inicializando Dashboard Inteligente</h2>
-            <p>Conectando con Firebase - Solo datos reales...</p>
+            
+            <div class="loader-title">Dashboard Inteligente</div>
+            <div class="loader-subtitle" id="loaderTexto">Iniciando sistema...</div>
+            
+            <div class="loader-progress">
+                <div class="progress-bar-container">
+                    <div class="progress-bar" id="loaderBarra"></div>
+                </div>
+                <div class="progress-info">
+                    <span class="progress-text" id="loaderSubtexto">Conectando con Firebase...</span>
+                    <span class="progress-percentage" id="loaderPorcentaje">0%</span>
+                </div>
+            </div>
+            
+            <div class="loading-steps">
+                <div class="paso-item" id="paso-firebase">
+                    <div class="paso-icon">
+                        <i class="fas fa-database"></i>
+                    </div>
+                    <div class="paso-texto">Conectando Firebase</div>
+                </div>
+                
+                <div class="paso-item" id="paso-auth">
+                    <div class="paso-icon">
+                        <i class="fas fa-user-check"></i>
+                    </div>
+                    <div class="paso-texto">Verificando Acceso</div>
+                </div>
+                
+                <div class="paso-item" id="paso-managers">
+                    <div class="paso-icon">
+                        <i class="fas fa-cogs"></i>
+                    </div>
+                    <div class="paso-texto">Cargando Sistemas Base</div>
+                </div>
+                
+                <div class="paso-item" id="paso-datos">
+                    <div class="paso-icon">
+                        <i class="fas fa-sync"></i>
+                    </div>
+                    <div class="paso-texto">Sincronizando Datos REALES</div>
+                </div>
+                
+                <div class="paso-item" id="paso-externos">
+                    <div class="paso-icon">
+                        <i class="fas fa-cloud-sun"></i>
+                    </div>
+                    <div class="paso-texto">Cargando Clima y Precios</div>
+                </div>
+                
+                <div class="paso-item" id="paso-finalizacion">
+                    <div class="paso-icon">
+                        <i class="fas fa-check-circle"></i>
+                    </div>
+                    <div class="paso-texto">Finalizando Dashboard</div>
+                </div>
+            </div>
         </div>
+    </div>
+
+    <!-- Estado de conexión -->
+    <div class="connection-status loading" id="connectionStatus">
+        <i class="fas fa-circle"></i>
+        Conectando...
     </div>
 
     <!-- Contenido principal -->
@@ -1319,102 +1263,46 @@
         </div>
     </main>
 
-    <!-- Scripts -->
+    <!-- Scripts - TUS ARCHIVOS BASE PRIMERO -->
     <script src="js/firebase-config.js"></script>
-    <script src="notifications.js"></script> 
-    <script src="js/firebase-integration.js"></script>  
+    <script src="js/auth.js"></script>
+    <script src="js/offline.js"></script>
+    <script src="js/firebase-integration.js"></script>
     <script src="js/finca-navigation.js"></script>
+    <script src="js/tree-manager.js"></script>
+    <script src="js/presupuesto-manager.js"></script>
+    
+    <!-- Notificaciones si existe -->
+    <script src="js/notifications.js"></script>
+    
+    <!-- Sistema de Dashboard - AL FINAL -->
     <script src="js/index.js"></script>
     
     <script>
-        // Sistema de inicialización
-        let initSteps = {
-            firebase: false,
-            datos: false
-        };
-
-        function updateConnectionStatus(status) {
-            const statusEl = document.getElementById('connectionStatus');
-            const statusMap = {
-                'connecting': { class: 'loading', icon: 'fa-circle', text: 'Conectando...' },
-                'online': { class: 'online', icon: 'fa-check-circle', text: 'Conectado' },
-                'offline': { class: 'offline', icon: 'fa-times-circle', text: 'Sin conexión' },
-                'firebase': { class: 'online', icon: 'fa-database', text: 'Firebase OK' }
-            };
-            
-            const config = statusMap[status] || statusMap.connecting;
-            statusEl.className = `connection-status ${config.class}`;
-            statusEl.innerHTML = `<i class="fas ${config.icon}"></i> ${config.text}`;
-        }
-
-        function hideLoader() {
-            const loader = document.getElementById('initLoader');
-            loader.style.opacity = '0';
-            setTimeout(() => {
-                loader.classList.add('hidden');
-                // Activar animaciones solo en desktop
-                if (window.innerWidth > 768) {
-                    document.querySelectorAll('.animate-fade-in-up').forEach((el, index) => {
-                        setTimeout(() => {
-                            el.style.opacity = '1';
-                            el.style.transform = 'translateY(0)';
-                        }, index * 100);
-                    });
-                } else {
-                    // En móviles mostrar todo inmediatamente
-                    document.querySelectorAll('.animate-fade-in-up').forEach(el => {
-                        el.style.opacity = '1';
-                        el.style.transform = 'translateY(0)';
-                    });
-                }
-            }, 300);
-        }
-
-        function updateSystemStatus(status, message) {
-            const statusEl = document.getElementById('estadoSistema');
-            if (statusEl) {
-                statusEl.className = `estado-sistema ${status}`;
-                
-                let icon = 'fa-sync-alt fa-spin';
-                if (status === 'online') icon = 'fa-check-circle';
-                else if (status === 'error') icon = 'fa-times-circle';
-                
-                statusEl.innerHTML = `<i class="fas ${icon}"></i><span>${message}</span>`;
-            }
-        }
-
-        // Event listeners para Firebase
-        window.addEventListener('firebaseReady', (event) => {
-            console.log('Firebase está listo');
-            updateConnectionStatus('firebase');
-            initSteps.firebase = true;
-        });
-
-        window.addEventListener('firebaseError', (event) => {
-            console.error('Error en Firebase:', event.detail);
-            updateConnectionStatus('offline');
-            initSteps.firebase = true; // Continuar sin Firebase
-        });
-
-        window.addEventListener('firebaseDataReady', (event) => {
-            console.log('Datos de Firebase sincronizados');
-            initSteps.datos = true;
-        });
-
-        // Inicialización principal
+        // Configuración inicial y fecha
         document.addEventListener('DOMContentLoaded', () => {
-            console.log('🚀 Iniciando dashboard inteligente');
+            console.log('🚀 Iniciando Dashboard Inteligente - Finca La Herradura');
             
             // Configurar fecha actual
             const currentDateEl = document.getElementById('current-date');
             if (currentDateEl) {
                 const now = new Date();
-                currentDateEl.textContent = now.toLocaleDateString('es-GT', {
+                const opciones = {
                     weekday: 'long',
-                    year: 'numeric',
+                    year: 'numeric', 
                     month: 'long',
-                    day: 'numeric'
-                }) + ' - ' + now.toLocaleTimeString('es-GT');
+                    day: 'numeric',
+                    timeZone: 'America/Guatemala'
+                };
+                
+                const fecha = now.toLocaleDateString('es-GT', opciones);
+                const hora = now.toLocaleTimeString('es-GT', {
+                    hour: '2-digit',
+                    minute: '2-digit',
+                    timeZone: 'America/Guatemala'
+                });
+                
+                currentDateEl.textContent = `${fecha} - ${hora}`;
             }
 
             // Configurar elementos con animación solo en desktop
@@ -1426,35 +1314,33 @@
                 });
             }
             
-            // Ocultar loader después de 2 segundos
-            setTimeout(() => {
-                hideLoader();
-                updateSystemStatus('online', 'Sistema conectado');
-            }, 2000);
-
-            console.log('✅ Dashboard inicializado');
+            console.log('✅ Configuración inicial del Dashboard completada');
         });
 
         // Manejo de conectividad
         window.addEventListener('online', () => {
-            updateConnectionStatus('online');
-            updateSystemStatus('online', 'Conexión restaurada');
-            console.log('🌐 Conexión restaurada');
+            console.log('🌐 Conexión restaurada en dashboard');
+            if (window.actualizarDashboard) {
+                setTimeout(window.actualizarDashboard, 1000);
+            }
         });
 
         window.addEventListener('offline', () => {
-            updateConnectionStatus('offline');
-            updateSystemStatus('error', 'Sin conexión');
-            console.log('🔵 Sin conexión a internet');
+            console.log('🔵 Sin conexión a internet en dashboard');
         });
-
-        // Estado inicial de conexión
-        updateConnectionStatus(navigator.onLine ? 'connecting' : 'offline');
 
         // Touch-friendly improvements para móviles
         if ('ontouchstart' in window) {
             document.body.classList.add('touch-device');
         }
+
+        // Prevenir zoom en inputs para móviles
+        if (window.innerWidth <= 768) {
+            const viewport = document.querySelector('meta[name=viewport]');
+            viewport.setAttribute('content', 'width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no');
+        }
+        
+        console.log('📱 Dashboard configurado para dispositivos móviles');
     </script>
 </body>
 </html>
