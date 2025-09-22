@@ -1,3 +1,4 @@
+//vfull
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -5,382 +6,191 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Gestión de Gastos - Finca La Herradura</title>
     
+    <!-- Meta tags -->
+    <meta name="description" content="Sistema de control financiero y gestión de gastos para optimizar costos operativos">
+    <meta name="keywords" content="gastos, presupuesto, finanzas, control, costos, agricultura">
+    
+    <!-- Favicon y PWA -->
+    <link rel="icon" type="image/x-icon" href="/icons/favicon.ico">
+    <link rel="manifest" href="/manifest.json">
+    
+    <!-- CSS BASE RESPONSIVE -->
+    <link rel="stylesheet" href="/css/main.css">
+    <link rel="stylesheet" href="/css/style.css">
+    
     <!-- Font Awesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
-    <!-- Chart.js para gráficos -->
+    <!-- Chart.js optimizado -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
     
-    <!-- Firebase SDK -->
-    <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-auth-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-storage-compat.js"></script>
-    
-    <!-- CSS Externos -->
-    <link rel="stylesheet" href="main.css">
-    <link rel="stylesheet" href="style.css">
-    
     <style>
-        /* Variables específicas para gastos - Complementan main.css */
-        :root {
-            --gastos-primary: #dc2626;
-            --gastos-primary-light: #f87171;
-            --gastos-primary-dark: #b91c1c;
-            --gastos-secondary: #3b82f6;
-            --gastos-accent: #f59e0b;
-            --gastos-success: #22c55e;
-            --gastos-danger: #ef4444;
-            --gastos-warning: #f59e0b;
-            --gastos-info: #3b82f6;
-        }
-
-        /* Override específico para evitar conflictos con navegación */
-        body {
-            margin: 0;
-            padding: 0;
-            font-family: var(--font-primary, 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif);
-            background: var(--light-gray, #f8f9fa);
-            color: var(--dark-gray, #343a40);
-            line-height: 1.6;
-        }
-
-        /* Main wrapper compatible con el sistema de navegación */
-        .main-content-wrapper {
-            margin-left: var(--sidebar-width, 280px);
-            margin-top: var(--header-height, 80px);
-            padding: 2rem;
-            max-width: none;
-            transition: margin-left var(--transition-normal, 0.3s ease);
-            min-height: calc(100vh - var(--header-height, 80px));
-            background: var(--light-gray, #f8f9fa);
-        }
-
-        /* Estados de conexión - COMPLETAMENTE A LA DERECHA SIN INTERFERIR */
-        .connection-status {
-            position: fixed;
-            top: 1.25rem;
-            right: 1.5rem; /* Más margen a la derecha */
-            padding: 0.6rem 1rem;
-            border-radius: 20px;
-            font-size: 0.8rem;
-            font-weight: 600;
-            z-index: 999;
-            transition: all var(--transition-normal, 0.3s ease);
-            backdrop-filter: blur(10px);
-            box-shadow: var(--shadow-md, 0 4px 8px rgba(0,0,0,0.15));
-            min-width: 120px;
-            text-align: center;
-        }
-
-        .connection-status.online {
-            background: rgba(34, 197, 94, 0.95);
-            color: white;
-            border: 1px solid rgba(34, 197, 94, 0.4);
-        }
-
-        .connection-status.offline {
-            background: rgba(239, 68, 68, 0.95);
-            color: white;
-            border: 1px solid rgba(239, 68, 68, 0.4);
-        }
-
-        .connection-status.loading {
-            background: rgba(245, 158, 11, 0.95);
-            color: white;
-            border: 1px solid rgba(245, 158, 11, 0.4);
-        }
-
-        /* Responsive para conexión status - MÁS SEPARACIÓN */
-        @media (max-width: 1024px) {
-            .connection-status {
-                top: 1rem;
-                right: 1rem;
-                padding: 0.5rem 0.8rem;
-                font-size: 0.75rem;
-                min-width: 100px;
-            }
-        }
-
-        @media (max-width: 768px) {
-            .connection-status {
-                top: 0.75rem;
-                right: 0.75rem;
-                padding: 0.4rem 0.6rem;
-                font-size: 0.7rem;
-                min-width: 90px;
-                z-index: 998; /* Bajo el header de navegación */
-            }
-        }
-
-        @media (max-width: 480px) {
-            .connection-status {
-                top: 0.5rem;
-                right: 0.5rem;
-                padding: 0.35rem 0.5rem;
-                font-size: 0.65rem;
-                min-width: 80px;
-                border-radius: 15px;
-            }
-        }
-
-        /* Loader de inicialización - Responsive */
-        .initialization-loader {
+        /* ==================== SISTEMA DE CARGA UNIFICADO ==================== */
+        .sistema-cargando {
             position: fixed;
             top: 0;
             left: 0;
             right: 0;
             bottom: 0;
-            background: rgba(0, 0, 0, 0.95);
+            background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            z-index: 10000;
+            z-index: 99999;
             color: white;
-            font-size: 1.2rem;
-            backdrop-filter: blur(5px);
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            transition: opacity 0.5s ease, visibility 0.5s ease;
         }
 
-        .initialization-loader.hidden {
-            display: none;
+        .sistema-cargando.oculto {
+            opacity: 0;
+            visibility: hidden;
+            pointer-events: none;
         }
 
-        .loader-content {
+        .loader-spinner {
+            width: 80px;
+            height: 80px;
+            border: 4px solid rgba(255, 255, 255, 0.3);
+            border-top: 4px solid white;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-bottom: 2rem;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .loader-texto {
+            font-size: 1.5rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+            text-align: center;
+        }
+
+        .loader-subtexto {
+            font-size: 1rem;
+            opacity: 0.9;
             text-align: center;
             max-width: 400px;
-            padding: 2rem;
+            line-height: 1.5;
         }
 
-        @media (max-width: 768px) {
-            .loader-content {
-                max-width: 300px;
-                padding: 1.5rem;
-                font-size: 1rem;
-            }
-        }
-
-        .loader-icon {
-            font-size: 4rem;
-            margin-bottom: 2rem;
-            animation: pulse 2s ease-in-out infinite;
-        }
-
-        @media (max-width: 768px) {
-            .loader-icon {
-                font-size: 3rem;
-                margin-bottom: 1.5rem;
-            }
-        }
-
-        .loader-steps {
+        .loader-progreso {
+            width: 300px;
+            height: 4px;
+            background: rgba(255, 255, 255, 0.3);
+            border-radius: 2px;
             margin-top: 2rem;
-            text-align: left;
+            overflow: hidden;
+            position: relative;
         }
 
-        .loader-step {
-            display: flex;
-            align-items: center;
-            gap: 1rem;
-            margin-bottom: 1rem;
-            opacity: 0.5;
-            transition: opacity 0.3s ease;
+        .loader-barra {
+            height: 100%;
+            background: linear-gradient(90deg, #fff, rgba(255, 255, 255, 0.8));
+            border-radius: 2px;
+            width: 0%;
+            transition: width 0.3s ease;
+        }
+
+        .loader-pasos {
+            margin-top: 1.5rem;
+            text-align: left;
+            max-width: 400px;
             font-size: 0.9rem;
         }
 
-        .loader-step.active {
+        .paso-item {
+            display: flex;
+            align-items: center;
+            margin-bottom: 0.5rem;
+            opacity: 0.5;
+            transition: opacity 0.3s ease;
+        }
+
+        .paso-item.completado {
             opacity: 1;
-            color: var(--gastos-success);
         }
 
-        .loader-step.completed {
-            opacity: 0.7;
-            color: #6b7280;
+        .paso-item.activo {
+            opacity: 1;
+            color: #fbbf24;
         }
 
-        @media (max-width: 480px) {
-            .loader-step {
-                font-size: 0.8rem;
-                gap: 0.75rem;
-            }
+        .paso-icon {
+            width: 20px;
+            margin-right: 0.75rem;
+            text-align: center;
         }
 
-        /* Header de gastos - Completamente responsive */
+        /* ==================== RESPONSIVE GASTOS ESPECÍFICO ==================== */
         .gastos-header {
             display: flex;
             justify-content: space-between;
-            align-items: flex-start;
+            align-items: center;
             margin-bottom: 2rem;
             flex-wrap: wrap;
-            gap: 1.5rem;
-        }
-
-        @media (max-width: 1024px) {
-            .gastos-header {
-                gap: 1rem;
-            }
-        }
-
-        @media (max-width: 768px) {
-            .gastos-header {
-                flex-direction: column;
-                align-items: stretch;
-                gap: 1rem;
-                margin-bottom: 1.5rem;
-            }
+            gap: 1rem;
         }
 
         .page-title {
             display: flex;
             align-items: center;
-            gap: 1.5rem;
-            flex: 1;
-        }
-
-        @media (max-width: 640px) {
-            .page-title {
-                flex-direction: column;
-                text-align: center;
-                gap: 1rem;
-            }
+            gap: 1rem;
         }
 
         .title-icon {
-            width: 70px;
-            height: 70px;
-            background: linear-gradient(135deg, var(--gastos-primary) 0%, var(--gastos-primary-dark) 100%);
-            border-radius: 20px;
+            width: 60px;
+            height: 60px;
+            background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
+            border-radius: 16px;
             display: flex;
             align-items: center;
             justify-content: center;
             color: white;
-            font-size: 1.8rem;
-            box-shadow: var(--shadow-lg);
-            flex-shrink: 0;
+            font-size: 1.5rem;
         }
 
-        @media (max-width: 768px) {
-            .title-icon {
-                width: 60px;
-                height: 60px;
-                font-size: 1.5rem;
-                border-radius: 16px;
-            }
-        }
-
-        @media (max-width: 480px) {
-            .title-icon {
-                width: 50px;
-                height: 50px;
-                font-size: 1.25rem;
-                border-radius: 12px;
-            }
-        }
-
-        .title-text h1 {
-            font-size: 2.5rem;
-            font-weight: 800;
-            margin-bottom: 0.5rem;
-            color: var(--text-primary, #1e293b);
-        }
-
-        .title-text p {
-            font-size: 1.1rem;
-            color: var(--text-secondary, #64748b);
-            margin: 0;
-        }
-
-        @media (max-width: 768px) {
-            .title-text h1 {
-                font-size: 2rem;
-            }
-            .title-text p {
-                font-size: 1rem;
-            }
-        }
-
-        @media (max-width: 480px) {
-            .title-text h1 {
-                font-size: 1.75rem;
-            }
-            .title-text p {
-                font-size: 0.9rem;
-            }
-        }
-
-        /* Header actions - Responsive */
         .header-actions {
             display: flex;
-            gap: 1rem;
+            gap: 0.75rem;
             align-items: center;
             flex-wrap: wrap;
         }
 
-        @media (max-width: 768px) {
-            .header-actions {
-                width: 100%;
-                justify-content: center;
-                gap: 0.75rem;
-            }
-        }
-
-        @media (max-width: 640px) {
-            .header-actions {
-                flex-direction: column;
-                align-items: stretch;
-            }
-            
-            .header-actions .btn {
-                width: 100%;
-                justify-content: center;
-            }
-        }
-
-        /* Estado presupuesto - Responsive */
         .estado-presupuesto {
             display: flex;
             align-items: center;
-            gap: 0.75rem;
-            padding: 1rem 1.5rem;
-            border-radius: 25px;
+            gap: 0.5rem;
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            font-size: 0.875rem;
             font-weight: 600;
-            background: rgba(34, 197, 94, 0.15);
-            color: var(--gastos-success);
-            border: 2px solid rgba(34, 197, 94, 0.3);
-            box-shadow: var(--shadow);
-            transition: all 0.3s ease;
-            white-space: nowrap;
+        }
+
+        .estado-presupuesto.normal {
+            background: rgba(34, 197, 94, 0.2);
+            color: #16a34a;
+            border: 1px solid rgba(34, 197, 94, 0.3);
         }
 
         .estado-presupuesto.alerta {
-            background: rgba(245, 158, 11, 0.15);
-            color: var(--gastos-warning);
-            border-color: rgba(245, 158, 11, 0.3);
+            background: rgba(245, 158, 11, 0.2);
+            color: #d97706;
+            border: 1px solid rgba(245, 158, 11, 0.3);
         }
 
         .estado-presupuesto.critico {
-            background: rgba(239, 68, 68, 0.15);
-            color: var(--gastos-danger);
-            border-color: rgba(239, 68, 68, 0.3);
+            background: rgba(239, 68, 68, 0.2);
+            color: #dc2626;
+            border: 1px solid rgba(239, 68, 68, 0.3);
         }
 
-        @media (max-width: 768px) {
-            .estado-presupuesto {
-                padding: 0.75rem 1.25rem;
-                font-size: 0.9rem;
-            }
-        }
-
-        @media (max-width: 480px) {
-            .estado-presupuesto {
-                padding: 0.625rem 1rem;
-                font-size: 0.8rem;
-                white-space: normal;
-                text-align: center;
-            }
-        }
-
-        /* Resumen financiero - Grid completamente responsive */
+        /* Resumen financiero responsive */
         .resumen-financiero {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
@@ -388,30 +198,8 @@
             margin-bottom: 2rem;
         }
 
-        @media (max-width: 1200px) {
-            .resumen-financiero {
-                grid-template-columns: repeat(2, 1fr);
-                gap: 1.5rem;
-            }
-        }
-
-        @media (max-width: 768px) {
-            .resumen-financiero {
-                grid-template-columns: repeat(2, 1fr);
-                gap: 1rem;
-            }
-        }
-
-        @media (max-width: 640px) {
-            .resumen-financiero {
-                grid-template-columns: 1fr;
-                gap: 1rem;
-            }
-        }
-
-        /* Cards del resumen - Responsive */
         .resumen-card {
-            background: var(--white, #ffffff);
+            background: var(--bg-card);
             border-radius: 20px;
             padding: 2rem;
             position: relative;
@@ -422,29 +210,7 @@
 
         .resumen-card:hover {
             transform: translateY(-4px);
-            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
-        }
-
-        @media (max-width: 768px) {
-            .resumen-card {
-                padding: 1.5rem;
-                border-radius: 16px;
-            }
-            
-            .resumen-card:hover {
-                transform: translateY(-2px);
-            }
-        }
-
-        @media (max-width: 480px) {
-            .resumen-card {
-                padding: 1.25rem;
-                border-radius: 12px;
-            }
-            
-            .resumen-card:hover {
-                transform: none; /* Desactivar hover en móviles pequeños */
-            }
+            box-shadow: var(--shadow-xl);
         }
 
         .resumen-card::before {
@@ -457,20 +223,11 @@
             border-radius: 20px 20px 0 0;
         }
 
-        @media (max-width: 768px) {
-            .resumen-card::before {
-                height: 4px;
-                border-radius: 16px 16px 0 0;
-            }
-        }
-
-        /* Colores específicos para cada card */
-        .resumen-card.gastos::before { background: linear-gradient(90deg, var(--gastos-primary), var(--gastos-primary-dark)); }
-        .resumen-card.presupuesto::before { background: linear-gradient(90deg, var(--gastos-secondary), #1d4ed8); }
-        .resumen-card.proyectado::before { background: linear-gradient(90deg, var(--gastos-accent), #d97706); }
+        .resumen-card.gastos::before { background: linear-gradient(90deg, #dc2626, #b91c1c); }
+        .resumen-card.presupuesto::before { background: linear-gradient(90deg, #3b82f6, #1d4ed8); }
+        .resumen-card.proyectado::before { background: linear-gradient(90deg, #f59e0b, #d97706); }
         .resumen-card.diferencia::before { background: linear-gradient(90deg, #8b5cf6, #7c3aed); }
 
-        /* Header de resumen card */
         .resumen-header {
             display: flex;
             justify-content: space-between;
@@ -478,15 +235,6 @@
             margin-bottom: 1.5rem;
             flex-wrap: wrap;
             gap: 0.5rem;
-        }
-
-        @media (max-width: 640px) {
-            .resumen-header {
-                flex-direction: column;
-                align-items: center;
-                text-align: center;
-                margin-bottom: 1rem;
-            }
         }
 
         .resumen-icon {
@@ -501,91 +249,34 @@
             box-shadow: var(--shadow);
         }
 
-        @media (max-width: 768px) {
-            .resumen-icon {
-                width: 50px;
-                height: 50px;
-                font-size: 1.25rem;
-                border-radius: 12px;
-            }
-        }
-
-        @media (max-width: 480px) {
-            .resumen-icon {
-                width: 45px;
-                height: 45px;
-                font-size: 1.125rem;
-                border-radius: 10px;
-            }
-        }
-
         .resumen-tendencia {
             display: flex;
             align-items: center;
             gap: 0.5rem;
             font-size: 0.875rem;
             font-weight: 600;
-            color: var(--gastos-success);
+            color: #22c55e;
             background: rgba(34, 197, 94, 0.1);
             padding: 0.5rem 1rem;
             border-radius: 20px;
         }
 
-        @media (max-width: 768px) {
-            .resumen-tendencia {
-                font-size: 0.8rem;
-                padding: 0.4rem 0.8rem;
-            }
-        }
-
-        @media (max-width: 480px) {
-            .resumen-tendencia {
-                font-size: 0.75rem;
-                padding: 0.35rem 0.7rem;
-            }
-        }
-
         .resumen-valor {
             font-size: 2.5rem;
             font-weight: 800;
-            color: var(--text-primary, #1e293b);
+            color: var(--text-primary);
             margin-bottom: 0.5rem;
             letter-spacing: -0.025em;
         }
 
-        @media (max-width: 768px) {
-            .resumen-valor {
-                font-size: 2rem;
-            }
-        }
-
-        @media (max-width: 480px) {
-            .resumen-valor {
-                font-size: 1.75rem;
-            }
-        }
-
         .resumen-label {
-            color: var(--text-secondary, #64748b);
+            color: var(--text-secondary);
             font-size: 1rem;
             font-weight: 500;
         }
 
-        @media (max-width: 480px) {
-            .resumen-label {
-                font-size: 0.9rem;
-            }
-        }
-
-        /* Progress bar responsive */
         .progress-presupuesto {
             margin-top: 1.5rem;
-        }
-
-        @media (max-width: 768px) {
-            .progress-presupuesto {
-                margin-top: 1rem;
-            }
         }
 
         .progress-info {
@@ -599,15 +290,6 @@
             gap: 0.5rem;
         }
 
-        @media (max-width: 480px) {
-            .progress-info {
-                font-size: 0.8rem;
-                flex-direction: column;
-                align-items: stretch;
-                text-align: center;
-            }
-        }
-
         .progress-bar {
             width: 100%;
             height: 12px;
@@ -618,251 +300,12 @@
 
         .progress {
             height: 100%;
-            background: linear-gradient(90deg, var(--gastos-success) 0%, var(--gastos-warning) 70%, var(--gastos-danger) 100%);
+            background: linear-gradient(90deg, #22c55e 0%, #f59e0b 70%, #ef4444 100%);
             transition: width 0.5s ease;
             border-radius: 6px;
         }
 
-        @media (max-width: 480px) {
-            .progress-bar {
-                height: 10px;
-            }
-        }
-
-        /* Filtros - Completamente responsive */
-        .filtros-gastos {
-            background: var(--white, #ffffff);
-            border-radius: 20px;
-            padding: 2rem;
-            margin-bottom: 2rem;
-            box-shadow: var(--shadow-lg);
-        }
-
-        @media (max-width: 768px) {
-            .filtros-gastos {
-                padding: 1.5rem;
-                border-radius: 16px;
-                margin-bottom: 1.5rem;
-            }
-        }
-
-        @media (max-width: 480px) {
-            .filtros-gastos {
-                padding: 1.25rem;
-                border-radius: 12px;
-                margin-bottom: 1rem;
-            }
-        }
-
-        .filtros-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 1.5rem;
-            align-items: end;
-        }
-
-        @media (max-width: 768px) {
-            .filtros-grid {
-                grid-template-columns: repeat(2, 1fr);
-                gap: 1rem;
-            }
-        }
-
-        @media (max-width: 640px) {
-            .filtros-grid {
-                grid-template-columns: 1fr;
-                gap: 0.75rem;
-            }
-        }
-
-        /* Acciones rápidas - Grid responsive */
-        .acciones-rapidas {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-            gap: 1.5rem;
-            margin-bottom: 2rem;
-        }
-
-        @media (max-width: 768px) {
-            .acciones-rapidas {
-                grid-template-columns: repeat(2, 1fr);
-                gap: 1rem;
-            }
-        }
-
-        @media (max-width: 640px) {
-            .acciones-rapidas {
-                grid-template-columns: 1fr;
-                gap: 0.75rem;
-            }
-        }
-
-        .accion-rapida {
-            background: var(--white, #ffffff);
-            border-radius: 16px;
-            padding: 1.5rem;
-            display: flex;
-            align-items: center;
-            gap: 1rem;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            border: 2px solid transparent;
-            box-shadow: var(--shadow);
-        }
-
-        .accion-rapida:hover {
-            border-color: var(--gastos-primary);
-            transform: translateY(-4px);
-            box-shadow: var(--shadow-lg);
-        }
-
-        @media (max-width: 768px) {
-            .accion-rapida {
-                padding: 1.25rem;
-                border-radius: 12px;
-            }
-            
-            .accion-rapida:hover {
-                transform: translateY(-2px);
-            }
-        }
-
-        @media (max-width: 480px) {
-            .accion-rapida {
-                padding: 1rem;
-                border-radius: 10px;
-            }
-            
-            .accion-rapida:hover {
-                transform: none; /* Desactivar en móviles */
-            }
-        }
-
-        .accion-icon {
-            width: 50px;
-            height: 50px;
-            border-radius: 12px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: white;
-            font-size: 1.2rem;
-            box-shadow: var(--shadow);
-            flex-shrink: 0;
-        }
-
-        @media (max-width: 768px) {
-            .accion-icon {
-                width: 45px;
-                height: 45px;
-                font-size: 1.125rem;
-                border-radius: 10px;
-            }
-        }
-
-        @media (max-width: 480px) {
-            .accion-icon {
-                width: 40px;
-                height: 40px;
-                font-size: 1rem;
-                border-radius: 8px;
-            }
-        }
-
-        .accion-texto {
-            flex: 1;
-        }
-
-        .accion-titulo {
-            font-weight: 700;
-            font-size: 1rem;
-            margin-bottom: 0.25rem;
-            color: var(--text-primary, #1e293b);
-        }
-
-        .accion-descripcion {
-            font-size: 0.875rem;
-            color: var(--text-secondary, #64748b);
-        }
-
-        @media (max-width: 768px) {
-            .accion-titulo {
-                font-size: 0.9rem;
-            }
-            
-            .accion-descripcion {
-                font-size: 0.8rem;
-            }
-        }
-
-        @media (max-width: 480px) {
-            .accion-titulo {
-                font-size: 0.85rem;
-            }
-            
-            .accion-descripcion {
-                font-size: 0.75rem;
-            }
-        }
-
-        /* Formulario de registro - Responsive grid */
-        .form-registro-gasto {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-            gap: 1.5rem;
-            align-items: end;
-            background: var(--white, #ffffff);
-            border-radius: 20px;
-            padding: 2rem;
-            margin-bottom: 2rem;
-            box-shadow: var(--shadow-lg);
-        }
-
-        @media (max-width: 768px) {
-            .form-registro-gasto {
-                grid-template-columns: repeat(2, 1fr);
-                gap: 1rem;
-                padding: 1.5rem;
-                border-radius: 16px;
-            }
-        }
-
-        @media (max-width: 640px) {
-            .form-registro-gasto {
-                grid-template-columns: 1fr;
-                gap: 0.75rem;
-                padding: 1.25rem;
-                border-radius: 12px;
-            }
-        }
-
-        .form-registro-gasto h3 {
-            grid-column: 1 / -1;
-            margin-bottom: 1.5rem;
-            display: flex;
-            align-items: center;
-            gap: 0.75rem;
-            font-size: 1.25rem;
-            color: var(--text-primary, #1e293b);
-        }
-
-        @media (max-width: 768px) {
-            .form-registro-gasto h3 {
-                font-size: 1.125rem;
-                margin-bottom: 1rem;
-            }
-        }
-
-        @media (max-width: 480px) {
-            .form-registro-gasto h3 {
-                font-size: 1rem;
-                text-align: center;
-                flex-direction: column;
-                gap: 0.5rem;
-            }
-        }
-
-        /* Contenido principal - Layout responsivo */
+        /* Contenido principal responsive */
         .contenido-principal {
             display: grid;
             grid-template-columns: 2fr 1fr;
@@ -870,158 +313,23 @@
             margin-bottom: 2rem;
         }
 
-        @media (max-width: 1200px) {
-            .contenido-principal {
-                grid-template-columns: 3fr 2fr;
-                gap: 1.5rem;
-            }
-        }
-
-        @media (max-width: 1024px) {
-            .contenido-principal {
-                grid-template-columns: 1fr;
-                gap: 1.5rem;
-            }
-        }
-
-        @media (max-width: 768px) {
-            .contenido-principal {
-                gap: 1rem;
-            }
-        }
-
-        /* Gráficos - Completamente responsive */
         .graficos-container {
             display: grid;
             gap: 2rem;
         }
 
-        @media (max-width: 768px) {
-            .graficos-container {
-                gap: 1.5rem;
-            }
-        }
-
-        @media (max-width: 480px) {
-            .graficos-container {
-                gap: 1rem;
-            }
-        }
-
-        .grafico-card {
-            background: var(--white, #ffffff);
-            border-radius: 20px;
-            padding: 2rem;
-            height: 450px;
-            display: flex;
-            flex-direction: column;
-            overflow: hidden;
-            box-shadow: var(--shadow-lg);
-            transition: all 0.3s ease;
-        }
-
-        @media (max-width: 768px) {
-            .grafico-card {
-                height: 400px;
-                padding: 1.5rem;
-                border-radius: 16px;
-            }
-        }
-
-        @media (max-width: 640px) {
-            .grafico-card {
-                height: 350px;
-                padding: 1.25rem;
-                border-radius: 12px;
-            }
-        }
-
-        @media (max-width: 480px) {
-            .grafico-card {
-                height: 300px;
-                padding: 1rem;
-                border-radius: 10px;
-            }
-        }
-
-        .grafico-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 1.5rem;
-            min-height: 40px;
-            flex-shrink: 0;
-            flex-wrap: wrap;
-            gap: 0.5rem;
-        }
-
-        @media (max-width: 640px) {
-            .grafico-header {
-                flex-direction: column;
-                align-items: flex-start;
-                margin-bottom: 1rem;
-            }
-        }
-
-        .grafico-titulo {
-            font-size: 1.25rem;
-            font-weight: 700;
-            color: var(--text-primary, #1e293b);
-            display: flex;
-            align-items: center;
-            gap: 1rem;
-        }
-
-        @media (max-width: 768px) {
-            .grafico-titulo {
-                font-size: 1.125rem;
-                gap: 0.75rem;
-            }
-        }
-
-        @media (max-width: 480px) {
-            .grafico-titulo {
-                font-size: 1rem;
-                gap: 0.5rem;
-                flex-direction: column;
-                align-items: flex-start;
-            }
-        }
-
         .chart-container {
             position: relative;
-            flex: 1;
-            min-height: 200px;
-            overflow: hidden;
+            height: 300px;
+            width: 100%;
         }
 
-        .chart-container canvas {
-            max-width: 100% !important;
-            max-height: 100% !important;
-            width: 100% !important;
-            height: 100% !important;
-        }
-
-        /* Categorías gastos - Panel lateral responsive */
+        /* Categorías panel */
         .categorias-gastos {
-            background: var(--white, #ffffff);
+            background: var(--bg-card);
             border-radius: 20px;
             padding: 2rem;
             box-shadow: var(--shadow-lg);
-        }
-
-        @media (max-width: 768px) {
-            .categorias-gastos {
-                padding: 1.5rem;
-                border-radius: 16px;
-            }
-        }
-
-        @media (max-width: 480px) {
-            .categorias-gastos {
-                padding: 1.25rem;
-                border-radius: 12px;
-            }
         }
 
         .categoria-item {
@@ -1042,33 +350,6 @@
             box-shadow: var(--shadow-lg);
         }
 
-        @media (max-width: 768px) {
-            .categoria-item {
-                padding: 1.25rem;
-                border-radius: 12px;
-                border-left-width: 4px;
-            }
-            
-            .categoria-item:hover {
-                transform: translateX(2px);
-            }
-        }
-
-        @media (max-width: 480px) {
-            .categoria-item {
-                padding: 1rem;
-                border-radius: 10px;
-                border-left-width: 3px;
-                flex-direction: column;
-                gap: 0.75rem;
-            }
-            
-            .categoria-item:hover {
-                transform: none;
-            }
-        }
-
-        /* Colores de categorías */
         .categoria-item.mano-obra { border-left-color: #ef4444; }
         .categoria-item.insumos { border-left-color: #f59e0b; }
         .categoria-item.transporte { border-left-color: #3b82f6; }
@@ -1079,13 +360,6 @@
             display: flex;
             align-items: center;
             gap: 1rem;
-        }
-
-        @media (max-width: 480px) {
-            .categoria-info {
-                width: 100%;
-                justify-content: center;
-            }
         }
 
         .categoria-icon {
@@ -1100,96 +374,125 @@
             box-shadow: var(--shadow);
         }
 
-        @media (max-width: 768px) {
-            .categoria-icon {
-                width: 45px;
-                height: 45px;
-                font-size: 1.125rem;
-                border-radius: 10px;
-            }
-        }
-
-        @media (max-width: 480px) {
-            .categoria-icon {
-                width: 40px;
-                height: 40px;
-                font-size: 1rem;
-                border-radius: 8px;
-            }
-        }
-
         .categoria-datos {
             display: flex;
             flex-direction: column;
             align-items: flex-end;
         }
 
-        @media (max-width: 480px) {
-            .categoria-datos {
-                align-items: center;
-                text-align: center;
-            }
-        }
-
         .categoria-monto {
             font-size: 1.25rem;
             font-weight: 700;
-            color: var(--text-primary, #1e293b);
+            color: var(--text-primary);
         }
 
         .categoria-porcentaje {
             font-size: 0.875rem;
-            color: var(--text-secondary, #64748b);
+            color: var(--text-secondary);
             font-weight: 600;
         }
 
-        @media (max-width: 768px) {
-            .categoria-monto {
-                font-size: 1.125rem;
-            }
-            
-            .categoria-porcentaje {
-                font-size: 0.8rem;
-            }
+        /* Filtros y acciones responsive */
+        .filtros-gastos {
+            background: var(--bg-card);
+            border-radius: 20px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            box-shadow: var(--shadow-lg);
         }
 
-        @media (max-width: 480px) {
-            .categoria-monto {
-                font-size: 1rem;
-            }
-            
-            .categoria-porcentaje {
-                font-size: 0.75rem;
-            }
+        .filtros-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1.5rem;
+            align-items: end;
         }
 
-        /* Tabla de gastos - Completamente responsive */
+        .acciones-rapidas {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .accion-rapida {
+            background: var(--bg-card);
+            border-radius: 16px;
+            padding: 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border: 2px solid transparent;
+            box-shadow: var(--shadow);
+        }
+
+        .accion-rapida:hover {
+            border-color: #dc2626;
+            transform: translateY(-4px);
+            box-shadow: var(--shadow-lg);
+        }
+
+        .accion-icon {
+            width: 50px;
+            height: 50px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 1.2rem;
+            box-shadow: var(--shadow);
+            flex-shrink: 0;
+        }
+
+        .accion-texto {
+            flex: 1;
+        }
+
+        .accion-titulo {
+            font-weight: 700;
+            font-size: 1rem;
+            margin-bottom: 0.25rem;
+            color: var(--text-primary);
+        }
+
+        .accion-descripcion {
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+        }
+
+        /* Formulario registro responsive */
+        .form-registro-gasto {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 1.5rem;
+            align-items: end;
+            background: var(--bg-card);
+            border-radius: 20px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            box-shadow: var(--shadow-lg);
+        }
+
+        .form-registro-gasto h3 {
+            grid-column: 1 / -1;
+            margin-bottom: 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            font-size: 1.25rem;
+            color: var(--text-primary);
+        }
+
+        /* Tabla responsive */
         .tabla-gastos {
-            background: var(--white, #ffffff);
+            background: var(--bg-card);
             border-radius: 20px;
             padding: 2rem;
             margin-top: 2rem;
             box-shadow: var(--shadow-lg);
-        }
-
-        @media (max-width: 768px) {
-            .tabla-gastos {
-                padding: 1.5rem;
-                border-radius: 16px;
-                margin-top: 1.5rem;
-                overflow-x: auto;
-            }
-        }
-
-        @media (max-width: 480px) {
-            .tabla-gastos {
-                padding: 1rem;
-                border-radius: 12px;
-                margin-top: 1rem;
-                margin-left: -1rem;
-                margin-right: -1rem;
-                border-radius: 0;
-            }
         }
 
         .tabla-header {
@@ -1201,16 +504,6 @@
             gap: 1rem;
         }
 
-        @media (max-width: 640px) {
-            .tabla-header {
-                flex-direction: column;
-                align-items: stretch;
-                text-align: center;
-                margin-bottom: 1.5rem;
-            }
-        }
-
-        /* Tabla responsive con scroll horizontal */
         .table-container {
             overflow-x: auto;
             margin: 0 -0.5rem;
@@ -1224,49 +517,29 @@
             border-radius: 12px;
             overflow: hidden;
             box-shadow: var(--shadow);
-            min-width: 600px; /* Ancho mínimo para mantener legibilidad */
-        }
-
-        @media (max-width: 768px) {
-            .table {
-                min-width: 500px;
-                font-size: 0.875rem;
-            }
+            min-width: 600px;
         }
 
         .table th,
         .table td {
             padding: 1rem;
             text-align: left;
-            border-bottom: 1px solid var(--border, #e2e8f0);
+            border-bottom: 1px solid var(--border);
             white-space: nowrap;
         }
 
-        @media (max-width: 768px) {
-            .table th,
-            .table td {
-                padding: 0.75rem 0.5rem;
-            }
-        }
-
         .table th {
-            background: var(--light-gray, #f8fafc);
+            background: var(--bg-secondary);
             font-weight: 600;
-            color: var(--text-primary, #1e293b);
+            color: var(--text-primary);
             font-size: 0.875rem;
-        }
-
-        @media (max-width: 768px) {
-            .table th {
-                font-size: 0.8rem;
-            }
         }
 
         .table tr:hover {
             background: #f8fafc;
         }
 
-        /* Badges para categorías y estados - Responsive */
+        /* Badges responsive */
         .categoria-badge,
         .estado-badge {
             padding: 0.5rem 1rem;
@@ -1278,23 +551,6 @@
             display: inline-block;
         }
 
-        @media (max-width: 768px) {
-            .categoria-badge,
-            .estado-badge {
-                padding: 0.375rem 0.75rem;
-                font-size: 0.7rem;
-            }
-        }
-
-        @media (max-width: 480px) {
-            .categoria-badge,
-            .estado-badge {
-                padding: 0.25rem 0.5rem;
-                font-size: 0.65rem;
-            }
-        }
-
-        /* Colores de badges */
         .categoria-badge.mano-obra { background: rgba(239, 68, 68, 0.15); color: #dc2626; }
         .categoria-badge.insumos { background: rgba(245, 158, 11, 0.15); color: #d97706; }
         .categoria-badge.transporte { background: rgba(59, 130, 246, 0.15); color: #2563eb; }
@@ -1304,183 +560,258 @@
         .estado-badge.pendiente { background: rgba(245, 158, 11, 0.15); color: #d97706; }
         .estado-badge.pagado { background: rgba(34, 197, 94, 0.15); color: #16a34a; }
 
-        /* Ajustes para el layout principal responsive */
+        /* ==================== RESPONSIVE BREAKPOINTS ==================== */
         @media (max-width: 1024px) {
-            .main-content-wrapper {
-                margin-left: 0;
+            .contenido-principal {
+                grid-template-columns: 1fr;
+            }
+
+            .title-icon {
+                width: 50px;
+                height: 50px;
+                font-size: 1.25rem;
             }
         }
 
         @media (max-width: 768px) {
-            .main-content-wrapper {
-                padding: 1rem;
-                margin-top: var(--header-height, 80px);
+            .gastos-header {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            
+            .header-actions {
+                justify-content: center;
+            }
+            
+            .resumen-financiero {
+                grid-template-columns: repeat(2, 1fr);
+                gap: 1rem;
+            }
+            
+            .resumen-card {
+                padding: 1.5rem;
+                border-radius: 16px;
+            }
+            
+            .resumen-card:hover {
+                transform: translateY(-2px);
+            }
+            
+            .filtros-grid {
+                grid-template-columns: repeat(2, 1fr);
+                gap: 1rem;
+            }
+            
+            .acciones-rapidas {
+                grid-template-columns: repeat(2, 1fr);
+                gap: 1rem;
+            }
+            
+            .chart-container {
+                height: 250px;
+            }
+
+            .loader-spinner {
+                width: 60px;
+                height: 60px;
+            }
+
+            .loader-texto {
+                font-size: 1.25rem;
+            }
+
+            .loader-progreso {
+                width: 250px;
+            }
+        }
+
+        @media (max-width: 640px) {
+            .resumen-financiero {
+                grid-template-columns: 1fr;
+            }
+            
+            .filtros-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .acciones-rapidas {
+                grid-template-columns: 1fr;
+            }
+            
+            .form-registro-gasto {
+                grid-template-columns: 1fr;
+                gap: 0.75rem;
+                padding: 1.25rem;
+                border-radius: 12px;
+            }
+            
+            .header-actions {
+                flex-direction: column;
+                width: 100%;
+            }
+            
+            .header-actions .btn {
+                width: 100%;
+                justify-content: center;
             }
         }
 
         @media (max-width: 480px) {
-            .main-content-wrapper {
-                padding: 0.75rem;
-            }
-        }
-
-        /* Animaciones - Desactivadas en móviles para mejor performance */
-        @keyframes fadeInUp {
-            from {
-                opacity: 0;
-                transform: translateY(20px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-
-        .animate-fade-in-up {
-            animation: fadeInUp 0.5s ease-out;
-        }
-
-        @media (max-width: 768px) {
-            .animate-fade-in-up {
-                animation: none; /* Desactivar animaciones en móviles */
-            }
-        }
-
-        @keyframes pulse {
-            0%, 100% { transform: scale(1); }
-            50% { transform: scale(1.1); }
-        }
-
-        /* Scroll indicators para tablas en móvil */
-        @media (max-width: 768px) {
-            .table-container::after {
-                content: '← Desliza para ver más';
-                position: sticky;
-                right: 0;
-                top: 0;
-                background: rgba(0, 0, 0, 0.7);
-                color: white;
-                padding: 0.25rem 0.5rem;
-                font-size: 0.7rem;
-                border-radius: 4px;
-                float: right;
-                margin-top: -2rem;
-                margin-bottom: 1rem;
-                opacity: 0.8;
-                z-index: 1;
-            }
-        }
-
-        /* Mejoras para touch targets en móviles */
-        @media (max-width: 768px) {
-            .btn {
-                min-height: 44px;
-                min-width: 44px;
-                touch-action: manipulation;
+            .resumen-card {
+                padding: 1.25rem;
+                border-radius: 12px;
             }
             
-            input,
-            select,
-            button {
-                min-height: 44px;
-                touch-action: manipulation;
+            .resumen-card:hover {
+                transform: none;
+            }
+            
+            .chart-container {
+                height: 200px;
+            }
+            
+            .categoria-item {
+                padding: 1rem;
+                border-radius: 10px;
+                flex-direction: column;
+                gap: 0.75rem;
+            }
+            
+            .categoria-item:hover {
+                transform: none;
+            }
+            
+            .categoria-info {
+                width: 100%;
+                justify-content: center;
+            }
+            
+            .categoria-dados {
+                align-items: center;
+                text-align: center;
+            }
+
+            .loader-progreso {
+                width: 200px;
+            }
+
+            .loader-pasos {
+                max-width: 300px;
+                font-size: 0.8rem;
             }
         }
 
-        /* Responsive utilities */
-        @media (max-width: 768px) {
-            .hide-mobile { display: none !important; }
-            .show-mobile { display: block !important; }
+        /* Safe area para iOS */
+        @supports (padding: max(0px)) {
+            .sistema-cargando {
+                padding: max(1rem, env(safe-area-inset-top)) max(1rem, env(safe-area-inset-right)) max(1rem, env(safe-area-inset-bottom)) max(1rem, env(safe-area-inset-left));
+            }
         }
 
-        @media (min-width: 769px) {
-            .hide-desktop { display: none !important; }
-            .show-mobile { display: none !important; }
+        /* Modo oscuro */
+        @media (prefers-color-scheme: dark) {
+            .sistema-cargando {
+                background: linear-gradient(135deg, #7f1d1d 0%, #991b1b 100%);
+            }
+        }
+
+        /* Reducir movimiento para accesibilidad */
+        @media (prefers-reduced-motion: reduce) {
+            .loader-spinner,
+            * {
+                animation-duration: 0.01ms !important;
+                animation-iteration-count: 1 !important;
+                transition-duration: 0.01ms !important;
+            }
         }
     </style>
 </head>
 <body>
-    <!-- Estado de conexión - MOVIDO A LA DERECHA -->
-    <div class="connection-status loading" id="connectionStatus">
-        <i class="fas fa-circle"></i>
-        Conectando...
-    </div>
-
-    <!-- Loader de inicialización -->
-    <div class="initialization-loader" id="initLoader">
-        <div class="loader-content">
-            <div class="loader-icon">
-                <i class="fas fa-receipt fa-spin"></i>
+    <!-- ==================== LOADER UNIFICADO ==================== -->
+    <div class="sistema-cargando" id="sistemaLoader">
+        <div class="loader-spinner"></div>
+        
+        <div class="loader-texto" id="loaderTexto">
+            Inicializando Sistema de Gastos
+        </div>
+        
+        <div class="loader-subtexto" id="loaderSubtexto">
+            Conectando con servicios de Finca La Herradura...
+        </div>
+        
+        <div class="loader-progreso">
+            <div class="loader-barra" id="loaderBarra"></div>
+        </div>
+        
+        <div class="loader-pasos" id="loaderPasos">
+            <div class="paso-item" id="paso-firebase">
+                <div class="paso-icon"><i class="fas fa-database"></i></div>
+                <div>Conectando Firebase</div>
             </div>
-            <h2>Inicializando Sistema de Gestión</h2>
-            <p>Preparando todos los componentes...</p>
-            
-            <div class="loader-steps">
-                <div class="loader-step" id="stepFirebase">
-                    <i class="fas fa-database"></i>
-                    <span>Conectando con Firebase</span>
-                </div>
-                <div class="loader-step" id="stepGastos">
-                    <i class="fas fa-receipt"></i>
-                    <span>Cargando sistema de gastos</span>
-                </div>
-                <div class="loader-step" id="stepPresupuestos">
-                    <i class="fas fa-chart-pie"></i>
-                    <span>Inicializando presupuestos</span>
-                </div>
-                <div class="loader-step" id="stepDatos">
-                    <i class="fas fa-sync-alt fa-spin"></i>
-                    <span>Sincronizando datos</span>
-                </div>
+            <div class="paso-item" id="paso-auth">
+                <div class="paso-icon"><i class="fas fa-shield-alt"></i></div>
+                <div>Verificando autenticación</div>
+            </div>
+            <div class="paso-item" id="paso-gastos">
+                <div class="paso-icon"><i class="fas fa-receipt"></i></div>
+                <div>Cargando sistema de gastos</div>
+            </div>
+            <div class="paso-item" id="paso-presupuestos">
+                <div class="paso-icon"><i class="fas fa-chart-pie"></i></div>
+                <div>Inicializando presupuestos</div>
+            </div>
+            <div class="paso-item" id="paso-datos">
+                <div class="paso-icon"><i class="fas fa-sync-alt"></i></div>
+                <div>Sincronizando datos REALES</div>
             </div>
         </div>
     </div>
 
+    <!-- Navegación usando finca-navigation.js -->
+    <nav id="navbar"></nav>
+
     <!-- Contenido principal -->
     <main class="main-content-wrapper">
-        <!-- Header de la página -->
-        <header class="gastos-header animate-fade-in-up">
+        <!-- Header responsive -->
+        <header class="gastos-header">
             <div class="page-title">
                 <div class="title-icon">
                     <i class="fas fa-receipt"></i>
                 </div>
-                <div class="title-text">
+                <div>
                     <h1>Gestión de Gastos</h1>
                     <p>Control financiero y análisis de costos en tiempo real</p>
                 </div>
             </div>
             
             <div class="header-actions">
-                <div class="estado-presupuesto" id="estadoPresupuesto">
-                    <i class="fas fa-check-circle"></i>
+                <div class="estado-presupuesto normal" id="estadoPresupuesto">
+                    <i class="fas fa-sync-alt fa-spin"></i>
                     <span>Cargando estado...</span>
                 </div>
                 
-                <button class="btn btn-primary" onclick="mostrarFormularioGasto()">
+                <button class="btn btn-primary" id="btnNuevoGasto">
                     <i class="fas fa-plus"></i> 
-                    <span class="hide-mobile">Nuevo Gasto</span>
-                    <span class="show-mobile">Nuevo</span>
+                    <span class="btn-text">Nuevo Gasto</span>
                 </button>
                 
-                <button class="btn btn-secondary" onclick="accionRapida('presupuesto')">
+                <button class="btn btn-secondary" id="btnPresupuestos">
                     <i class="fas fa-chart-pie"></i> 
-                    <span class="hide-mobile">Presupuestos</span>
-                    <span class="show-mobile">Budget</span>
+                    <span class="btn-text">Presupuestos</span>
                 </button>
                 
-                <button class="btn btn-success" onclick="exportarReporte()">
+                <button class="btn btn-success" id="btnExportar">
                     <i class="fas fa-file-export"></i> 
-                    <span class="hide-mobile">Exportar</span>
-                    <span class="show-mobile">Export</span>
+                    <span class="btn-text">Exportar</span>
                 </button>
             </div>
         </header>
 
-        <!-- Resumen financiero -->
-        <section class="resumen-financiero animate-fade-in-up">
+        <!-- Resumen financiero responsive -->
+        <section class="resumen-financiero">
             <div class="resumen-card gastos">
                 <div class="resumen-header">
-                    <div class="resumen-icon" style="background: linear-gradient(135deg, var(--gastos-primary), var(--gastos-primary-dark));">
+                    <div class="resumen-icon" style="background: linear-gradient(135deg, #dc2626, #b91c1c);">
                         <i class="fas fa-money-bill-wave"></i>
                     </div>
                     <div class="resumen-tendencia">
@@ -1503,7 +834,7 @@
             
             <div class="resumen-card presupuesto">
                 <div class="resumen-header">
-                    <div class="resumen-icon" style="background: linear-gradient(135deg, var(--gastos-secondary), #1d4ed8);">
+                    <div class="resumen-icon" style="background: linear-gradient(135deg, #3b82f6, #1d4ed8);">
                         <i class="fas fa-calculator"></i>
                     </div>
                     <div class="resumen-tendencia">
@@ -1511,13 +842,13 @@
                         <span>Configurable</span>
                     </div>
                 </div>
-                <div class="resumen-valor" id="presupuestoMensual">Q 15,000</div>
+                <div class="resumen-valor" id="presupuestoMensual">Q 0</div>
                 <div class="resumen-label">Presupuesto Mensual</div>
             </div>
             
             <div class="resumen-card proyectado">
                 <div class="resumen-header">
-                    <div class="resumen-icon" style="background: linear-gradient(135deg, var(--gastos-accent), #d97706);">
+                    <div class="resumen-icon" style="background: linear-gradient(135deg, #f59e0b, #d97706);">
                         <i class="fas fa-chart-line"></i>
                     </div>
                     <div class="resumen-tendencia">
@@ -1539,20 +870,20 @@
                         <span>Disponible</span>
                     </div>
                 </div>
-                <div class="resumen-valor" id="diferenciapresupuesto">Q 15,000</div>
+                <div class="resumen-valor" id="diferenciapresupuesto">Q 0</div>
                 <div class="resumen-label">Diferencia vs Presupuesto</div>
             </div>
         </section>
 
-        <!-- Filtros -->
-        <section class="filtros-gastos animate-fade-in-up">
+        <!-- Filtros responsive -->
+        <section class="filtros-gastos">
             <h3 style="margin-bottom: 1.5rem; display: flex; align-items: center; gap: 0.75rem;">
-                <i class="fas fa-filter" style="color: var(--gastos-primary);"></i> 
+                <i class="fas fa-filter" style="color: #dc2626;"></i> 
                 Filtros de Análisis
             </h3>
             
             <div class="filtros-grid">
-                <div class="filtro-grupo">
+                <div class="form-group">
                     <label class="form-label">Período</label>
                     <select class="form-input" id="filtroPeriodo">
                         <option value="hoy">Hoy</option>
@@ -1563,7 +894,7 @@
                     </select>
                 </div>
                 
-                <div class="filtro-grupo">
+                <div class="form-group">
                     <label class="form-label">Categoría</label>
                     <select class="form-input" id="filtroCategoria">
                         <option value="">Todas las categorías</option>
@@ -1575,7 +906,7 @@
                     </select>
                 </div>
                 
-                <div class="filtro-grupo">
+                <div class="form-group">
                     <label class="form-label">Estado</label>
                     <select class="form-input" id="filtroEstado">
                         <option value="">Todos los estados</option>
@@ -1584,28 +915,26 @@
                     </select>
                 </div>
                 
-                <div class="filtro-grupo">
-                    <button class="btn btn-primary" onclick="aplicarFiltros()">
+                <div class="form-group">
+                    <button class="btn btn-primary" id="btnAplicarFiltros">
                         <i class="fas fa-search"></i> 
-                        <span class="hide-mobile">Aplicar Filtros</span>
-                        <span class="show-mobile">Aplicar</span>
+                        <span class="btn-text">Aplicar</span>
                     </button>
                 </div>
                 
-                <div class="filtro-grupo">
-                    <button class="btn btn-secondary" onclick="limpiarFiltros()">
+                <div class="form-group">
+                    <button class="btn btn-secondary" id="btnLimpiarFiltros">
                         <i class="fas fa-eraser"></i> 
-                        <span class="hide-mobile">Limpiar</span>
-                        <span class="show-mobile">Reset</span>
+                        <span class="btn-text">Limpiar</span>
                     </button>
                 </div>
             </div>
         </section>
 
-        <!-- Acciones rápidas -->
-        <section class="acciones-rapidas animate-fade-in-up">
-            <div class="accion-rapida" onclick="accionRapida('nuevo-gasto')">
-                <div class="accion-icon" style="background: linear-gradient(135deg, var(--gastos-primary), var(--gastos-primary-dark));">
+        <!-- Acciones rápidas responsive -->
+        <section class="acciones-rapidas">
+            <div class="accion-rapida" id="accionNuevoGasto">
+                <div class="accion-icon" style="background: linear-gradient(135deg, #dc2626, #b91c1c);">
                     <i class="fas fa-plus"></i>
                 </div>
                 <div class="accion-texto">
@@ -1614,8 +943,8 @@
                 </div>
             </div>
             
-            <div class="accion-rapida" onclick="accionRapida('presupuesto')">
-                <div class="accion-icon" style="background: linear-gradient(135deg, var(--gastos-secondary), #1d4ed8);">
+            <div class="accion-rapida" id="accionPresupuesto">
+                <div class="accion-icon" style="background: linear-gradient(135deg, #3b82f6, #1d4ed8);">
                     <i class="fas fa-chart-pie"></i>
                 </div>
                 <div class="accion-texto">
@@ -1624,8 +953,8 @@
                 </div>
             </div>
             
-            <div class="accion-rapida" onclick="accionRapida('reporte')">
-                <div class="accion-icon" style="background: linear-gradient(135deg, var(--gastos-accent), #d97706);">
+            <div class="accion-rapida" id="accionReporte">
+                <div class="accion-icon" style="background: linear-gradient(135deg, #f59e0b, #d97706);">
                     <i class="fas fa-file-chart-line"></i>
                 </div>
                 <div class="accion-texto">
@@ -1634,8 +963,8 @@
                 </div>
             </div>
 
-            <div class="accion-rapida" onclick="window.location.reload()">
-                <div class="accion-icon" style="background: linear-gradient(135deg, var(--gastos-success), #16a34a);">
+            <div class="accion-rapida" id="accionSincronizar">
+                <div class="accion-icon" style="background: linear-gradient(135deg, #22c55e, #16a34a);">
                     <i class="fas fa-sync-alt"></i>
                 </div>
                 <div class="accion-texto">
@@ -1645,10 +974,10 @@
             </div>
         </section>
 
-        <!-- Registro rápido de gasto -->
-        <section class="form-registro-gasto animate-fade-in-up">
+        <!-- Registro rápido responsive -->
+        <section class="form-registro-gasto">
             <h3>
-                <i class="fas fa-bolt" style="color: var(--gastos-accent);"></i> 
+                <i class="fas fa-bolt" style="color: #f59e0b;"></i> 
                 Registro Rápido de Gasto
             </h3>
             
@@ -1688,45 +1017,50 @@
             </div>
             
             <div class="form-group">
-                <button type="button" class="btn btn-success" onclick="guardarGastoRapido()">
-                    <i class="fas fa-save"></i> Guardar Gasto
+                <button type="button" class="btn btn-success" id="btnGuardarGasto">
+                    <i class="fas fa-save"></i> 
+                    <span class="btn-text">Guardar Gasto</span>
                 </button>
             </div>
         </section>
 
-        <!-- Contenido principal -->
-        <div class="contenido-principal animate-fade-in-up">
+        <!-- Contenido principal responsive -->
+        <div class="contenido-principal">
             <!-- Gráficos -->
             <div class="graficos-container">
-                <!-- Gráfico de evolución de gastos -->
-                <div class="grafico-card">
-                    <div class="grafico-header">
-                        <h3 class="grafico-titulo">
-                            <i class="fas fa-chart-line" style="color: var(--gastos-primary);"></i>
-                            <span>Evolución de Gastos Mensual</span>
+                <!-- Gráfico de evolución -->
+                <div class="card">
+                    <div class="card-header">
+                        <h3 class="card-title">
+                            <i class="fas fa-chart-line" style="color: #dc2626;"></i>
+                            Evolución de Gastos Mensual
                         </h3>
-                        <div style="font-size: 0.875rem; color: var(--text-secondary);">
+                        <div class="card-subtitle">
                             <i class="fas fa-calendar"></i> Últimos 30 días
                         </div>
                     </div>
-                    <div class="chart-container">
-                        <canvas id="graficoEvolucion"></canvas>
+                    <div class="card-body">
+                        <div class="chart-container">
+                            <canvas id="graficoEvolucion"></canvas>
+                        </div>
                     </div>
                 </div>
                 
-                <!-- Gráfico de gastos por categoría -->
-                <div class="grafico-card">
-                    <div class="grafico-header">
-                        <h3 class="grafico-titulo">
-                            <i class="fas fa-chart-pie" style="color: var(--gastos-secondary);"></i>
-                            <span>Distribución por Categoría</span>
+                <!-- Gráfico de categorías -->
+                <div class="card">
+                    <div class="card-header">
+                        <h3 class="card-title">
+                            <i class="fas fa-chart-pie" style="color: #3b82f6;"></i>
+                            Distribución por Categoría
                         </h3>
-                        <div style="font-size: 0.875rem; color: var(--text-secondary);">
+                        <div class="card-subtitle">
                             <i class="fas fa-tags"></i> Mes actual
                         </div>
                     </div>
-                    <div class="chart-container">
-                        <canvas id="graficoCategorias"></canvas>
+                    <div class="card-body">
+                        <div class="chart-container">
+                            <canvas id="graficoCategorias"></canvas>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -1736,7 +1070,7 @@
                 <!-- Categorías de gastos -->
                 <div class="categorias-gastos">
                     <h3 style="margin-bottom: 2rem; display: flex; align-items: center; gap: 0.75rem;">
-                        <i class="fas fa-tags" style="color: var(--gastos-success);"></i>
+                        <i class="fas fa-tags" style="color: #22c55e;"></i>
                         <span>Gastos por Categoría</span>
                     </h3>
                     
@@ -1744,23 +1078,23 @@
                         <div style="text-align: center; padding: 2rem; color: var(--text-secondary);">
                             <i class="fas fa-sync-alt fa-spin" style="font-size: 2rem; margin-bottom: 1rem;"></i>
                             <br>
-                            Cargando datos...
+                            Cargando datos REALES...
                         </div>
                     </div>
                 </div>
             </div>
         </div>
 
-        <!-- Tabla de gastos -->
-        <section class="tabla-gastos animate-fade-in-up">
+        <!-- Tabla responsive -->
+        <section class="tabla-gastos">
             <div class="tabla-header">
                 <h3 style="display: flex; align-items: center; gap: 0.75rem; margin: 0;">
-                    <i class="fas fa-table" style="color: var(--gastos-info);"></i>
+                    <i class="fas fa-table" style="color: #3b82f6;"></i>
                     <span>Registros de Gastos Recientes</span>
                 </h3>
                 <div style="font-size: 0.875rem; color: var(--text-secondary);">
                     <i class="fas fa-info-circle"></i> 
-                    Últimas 20 transacciones
+                    Datos REALES únicamente
                 </div>
             </div>
             
@@ -1781,7 +1115,7 @@
                             <td colspan="6" style="text-align: center; padding: 3rem; color: var(--text-secondary);">
                                 <i class="fas fa-sync-alt fa-spin" style="font-size: 2rem; margin-bottom: 1rem;"></i>
                                 <br>
-                                Cargando gastos desde la base de datos...
+                                Cargando gastos REALES desde Firebase...
                             </td>
                         </tr>
                     </tbody>
@@ -1790,335 +1124,18 @@
         </section>
     </main>
 
-    <!-- Scripts -->
-    <script src="js/firebase-config.js"></script>
-    <script src="js/firebase-integration.js"></script>  
-    <script src="js/presupuesto-manager.js"></script>
-    <script src="js/gastos.js"></script>
-    <script src="js/finca-navigation.js"></script>
-    
-    <script>
-        // Sistema de inicialización mejorado
-        let initSteps = {
-            firebase: false,
-            gastos: false,
-            presupuestos: false,
-            datos: false
-        };
+    <!-- Scripts Firebase -->
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
 
-        // Actualizar estado de conexión
-        function updateConnectionStatus(status) {
-            const statusEl = document.getElementById('connectionStatus');
-            const statusMap = {
-                'connecting': { class: 'loading', icon: 'fa-circle', text: 'Conectando...' },
-                'online': { class: 'online', icon: 'fa-check-circle', text: 'Conectado' },
-                'offline': { class: 'offline', icon: 'fa-times-circle', text: 'Sin conexión' },
-                'firebase': { class: 'online', icon: 'fa-database', text: 'Firebase OK' }
-            };
-            
-            const config = statusMap[status] || statusMap.connecting;
-            statusEl.className = `connection-status ${config.class}`;
-            statusEl.innerHTML = `<i class="fas ${config.icon}"></i> ${config.text}`;
-        }
-
-        // Actualizar pasos del loader
-        function updateInitStep(step, completed = false) {
-            const stepEl = document.getElementById(`step${step.charAt(0).toUpperCase() + step.slice(1)}`);
-            if (stepEl) {
-                stepEl.className = `loader-step ${completed ? 'completed' : 'active'}`;
-                if (completed) {
-                    const icon = stepEl.querySelector('i');
-                    icon.className = 'fas fa-check';
-                    initSteps[step] = true;
-                }
-            }
-
-            // Verificar si todos los pasos están completos
-            if (Object.values(initSteps).every(step => step)) {
-                setTimeout(hideLoader, 500);
-            }
-        }
-
-        // Ocultar loader
-        function hideLoader() {
-            const loader = document.getElementById('initLoader');
-            loader.style.opacity = '0';
-            setTimeout(() => {
-                loader.classList.add('hidden');
-                // Activar animaciones de los elementos solo en desktop
-                if (window.innerWidth > 768) {
-                    document.querySelectorAll('.animate-fade-in-up').forEach((el, index) => {
-                        setTimeout(() => {
-                            el.style.opacity = '1';
-                            el.style.transform = 'translateY(0)';
-                        }, index * 100);
-                    });
-                } else {
-                    // En móviles mostrar todo inmediatamente
-                    document.querySelectorAll('.animate-fade-in-up').forEach(el => {
-                        el.style.opacity = '1';
-                        el.style.transform = 'translateY(0)';
-                    });
-                }
-            }, 300);
-        }
-
-        // Event listeners para el sistema
-        window.addEventListener('firebaseReady', (event) => {
-            console.log('Firebase está listo');
-            updateConnectionStatus('firebase');
-            updateInitStep('firebase', true);
-        });
-
-        window.addEventListener('firebaseError', (event) => {
-            console.error('Error en Firebase:', event.detail);
-            updateConnectionStatus('offline');
-            updateInitStep('firebase', true); // Continuar sin Firebase
-        });
-
-        window.addEventListener('expenseManagerReady', (event) => {
-            console.log('Sistema de gastos listo');
-            updateInitStep('gastos', true);
-        });
-
-        window.addEventListener('firebaseDataReady', (event) => {
-            console.log('Datos de Firebase sincronizados');
-            updateInitStep('datos', true);
-        });
-
-        // Inicialización principal
-        document.addEventListener('DOMContentLoaded', () => {
-            console.log('🚀 Iniciando aplicación de gestión de gastos');
-            
-            // Configurar fecha por defecto
-            const fechaInput = document.getElementById('fechaGasto');
-            if (fechaInput) {
-                fechaInput.value = new Date().toISOString().split('T')[0];
-            }
-
-            // Configurar elementos con animación solo en desktop
-            if (window.innerWidth > 768) {
-                document.querySelectorAll('.animate-fade-in-up').forEach(el => {
-                    el.style.opacity = '0';
-                    el.style.transform = 'translateY(20px)';
-                    el.style.transition = 'all 0.5s ease-out';
-                });
-            }
-            
-            // Eventos de formulario rápido
-            ['categoriaGasto', 'conceptoGasto', 'montoGasto'].forEach(id => {
-                const input = document.getElementById(id);
-                if (input) {
-                    input.addEventListener('keypress', (e) => {
-                        if (e.key === 'Enter') {
-                            e.preventDefault();
-                            guardarGastoRapido();
-                        }
-                    });
-                }
-            });
-            
-            // Inicializar gráficos cuando Chart.js esté disponible
-            setTimeout(initializeCharts, 2000);
-            
-            // Simular carga de presupuestos
-            setTimeout(() => {
-                updateInitStep('presupuestos', true);
-            }, 1500);
-
-            console.log('✅ Aplicación inicializada');
-        });
-
-        // Inicializar gráficos responsive
-        function initializeCharts() {
-            try {
-                if (!window.Chart) {
-                    console.warn('Chart.js no está disponible');
-                    return;
-                }
-
-                // Configuración responsive para gráficos
-                Chart.defaults.responsive = true;
-                Chart.defaults.maintainAspectRatio = false;
-
-                // Gráfico de evolución
-                const ctxEvol = document.getElementById('graficoEvolucion');
-                if (ctxEvol) {
-                    new Chart(ctxEvol, {
-                        type: 'line',
-                        data: {
-                            labels: ['Hace 30d', 'Hace 20d', 'Hace 10d', 'Hoy'],
-                            datasets: [{
-                                label: 'Gastos Acumulados (GTQ)',
-                                data: [0, 0, 0, 0],
-                                borderColor: 'var(--gastos-primary)',
-                                backgroundColor: 'rgba(220, 38, 38, 0.1)',
-                                tension: 0.4,
-                                fill: true,
-                                pointBackgroundColor: 'var(--gastos-primary)',
-                                pointBorderColor: '#ffffff',
-                                pointBorderWidth: 2,
-                                pointRadius: window.innerWidth > 768 ? 6 : 4
-                            }]
-                        },
-                        options: {
-                            responsive: true,
-                            maintainAspectRatio: false,
-                            plugins: {
-                                legend: {
-                                    display: window.innerWidth > 640
-                                }
-                            },
-                            scales: {
-                                y: {
-                                    beginAtZero: true,
-                                    ticks: {
-                                        callback: function(value) {
-                                            return 'Q ' + value.toLocaleString();
-                                        },
-                                        font: {
-                                            size: window.innerWidth > 768 ? 12 : 10
-                                        }
-                                    }
-                                },
-                                x: {
-                                    ticks: {
-                                        font: {
-                                            size: window.innerWidth > 768 ? 12 : 10
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    });
-                }
-                
-                // Gráfico de categorías
-                const ctxCat = document.getElementById('graficoCategorias');
-                if (ctxCat) {
-                    new Chart(ctxCat, {
-                        type: 'doughnut',
-                        data: {
-                            labels: ['Sin datos'],
-                            datasets: [{
-                                data: [1],
-                                backgroundColor: ['#e5e7eb'],
-                                borderWidth: 0
-                            }]
-                        },
-                        options: {
-                            responsive: true,
-                            maintainAspectRatio: false,
-                            plugins: {
-                                legend: {
-                                    position: window.innerWidth > 768 ? 'bottom' : 'top',
-                                    labels: {
-                                        usePointStyle: true,
-                                        padding: window.innerWidth > 768 ? 20 : 10,
-                                        font: {
-                                            size: window.innerWidth > 768 ? 12 : 10
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    });
-                }
-
-                console.log('📊 Gráficos responsive inicializados');
-            } catch (error) {
-                console.error('Error inicializando gráficos:', error);
-            }
-        }
-
-        // Manejo de eventos de conectividad
-        window.addEventListener('online', () => {
-            updateConnectionStatus('online');
-            console.log('🌐 Conexión restaurada');
-        });
-
-        window.addEventListener('offline', () => {
-            updateConnectionStatus('offline');
-            console.log('🔵 Sin conexión a internet');
-        });
-
-        // Responsive handler para gráficos
-        window.addEventListener('resize', () => {
-            // Reinicializar gráficos en cambios de tamaño significativos
-            const shouldReinitialize = 
-                (window.innerWidth <= 768 && window.innerWidth > 640) ||
-                (window.innerWidth <= 640);
-                
-            if (shouldReinitialize) {
-                setTimeout(initializeCharts, 100);
-            }
-        });
-
-        // Estado inicial de conexión
-        updateConnectionStatus(navigator.onLine ? 'connecting' : 'offline');
-
-        // Placeholder functions para mantener funcionalidad
-        function mostrarFormularioGasto() {
-            console.log('Mostrar formulario de gasto');
-            // Scroll al formulario en móviles
-            if (window.innerWidth <= 768) {
-                document.querySelector('.form-registro-gasto').scrollIntoView({ 
-                    behavior: 'smooth', 
-                    block: 'start' 
-                });
-            }
-        }
-
-        function accionRapida(tipo) {
-            console.log('Acción rápida:', tipo);
-        }
-
-        function exportarReporte() {
-            console.log('Exportar reporte');
-        }
-
-        function aplicarFiltros() {
-            console.log('Aplicar filtros');
-        }
-
-        function limpiarFiltros() {
-            console.log('Limpiar filtros');
-            // Reset formularios
-            document.getElementById('filtroPeriodo').value = 'mes';
-            document.getElementById('filtroCategoria').value = '';
-            document.getElementById('filtroEstado').value = '';
-        }
-
-        function guardarGastoRapido() {
-            console.log('Guardar gasto rápido');
-            
-            // Validación básica
-            const requiredFields = ['fechaGasto', 'categoriaGasto', 'conceptoGasto', 'montoGasto'];
-            let valid = true;
-            
-            requiredFields.forEach(fieldId => {
-                const field = document.getElementById(fieldId);
-                if (!field.value) {
-                    field.style.borderColor = 'var(--gastos-danger)';
-                    valid = false;
-                } else {
-                    field.style.borderColor = '';
-                }
-            });
-            
-            if (!valid) {
-                alert('Por favor completa todos los campos obligatorios');
-                return;
-            }
-            
-            // Aquí iría la lógica de guardado
-            alert('Funcionalidad de guardado pendiente de implementación');
-        }
-
-        // Touch-friendly improvements para móviles
-        if ('ontouchstart' in window) {
-            document.body.classList.add('touch-device');
-        }
-    </script>
+    <!-- Scripts de aplicación en ORDEN CORRECTO -->
+    <script type="module" src="/js/firebase-config.js"></script>
+    <script type="module" src="/js/offline.js"></script>
+    <script type="module" src="/js/auth.js"></script>
+    <script type="module" src="/js/firebase-integration.js"></script>
+    <script type="module" src="/js/presupuesto-manager.js"></script>
+    <script type="module" src="/js/finca-navigation.js"></script>
+    <script type="module" src="/js/gastos.js"></script>
 </body>
 </html>
