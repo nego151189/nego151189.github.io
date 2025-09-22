@@ -35,79 +35,70 @@ class AuthManager {
   // INICIALIZACIÓN
   // ==========================================
 
-  async waitForFirebase() {
+// CORRECCIÓN en auth.js - Mejorar la función waitForFirebase
+async waitForFirebase() {
     return new Promise((resolve, reject) => {
-      const maxAttempts = 50;
-      let attempts = 0;
-      
-      const checkFirebase = () => {
-        attempts++;
+        const maxAttempts = 30; // Reducir intentos
+        let attempts = 0;
         
-        if (window.firebase && window.auth && window.db) {
-          this.auth = window.auth;
-          this.db = window.db;
-          console.log('✅ Firebase disponible para Auth');
-          resolve();
-        } else if (attempts < maxAttempts) {
-          setTimeout(checkFirebase, 100);
-        } else {
-          reject(new Error('Firebase timeout - continuando en modo offline'));
+        const checkFirebase = () => {
+            attempts++;
+            
+            // Verificar si Firebase está disponible
+            if (window.firebase && typeof window.firebase.initializeApp === 'function') {
+                // Si firebase está disponible pero auth/db no, inicializar
+                if (!window.auth || !window.db) {
+                    try {
+                        // Intentar obtener las referencias
+                        window.auth = window.firebase.auth();
+                        window.db = window.firebase.firestore();
+                        console.log('✅ Firebase servicios inicializados para Auth');
+                    } catch (error) {
+                        console.warn('⚠️ Error obteniendo servicios Firebase:', error);
+                    }
+                }
+                
+                if (window.auth && window.db) {
+                    this.auth = window.auth;
+                    this.db = window.db;
+                    console.log('✅ Firebase disponible para Auth');
+                    resolve();
+                    return;
+                }
+            }
+            
+            if (attempts < maxAttempts) {
+                setTimeout(checkFirebase, 200); // Aumentar intervalo
+            } else {
+                console.warn('⚠️ Firebase timeout - continuando en modo offline');
+                this.initOfflineMode();
+                resolve(); // Resolver en lugar de rechazar
+            }
+        };
+        
+        // Verificar si ya está listo
+        if (window.auth && window.db) {
+            this.auth = window.auth;
+            this.db = window.db;
+            resolve();
+            return;
         }
-      };
-      
-      checkFirebase();
-    });
-  }
-
-  async init() {
-    try {
-      console.log('🔐 Inicializando sistema de autenticación...');
-      
-      if (this.auth) {
-        // Configurar listener de estado de auth
-        this.auth.onAuthStateChanged(async (user) => {
-          await this.handleAuthStateChange(user);
-        });
         
-        // Configurar persistencia
-        await this.setupPersistence();
-      }
-      
-      this.isInitialized = true;
-      console.log('✅ Sistema de autenticación inicializado');
-      
-    } catch (error) {
-      console.error('❌ Error inicializando autenticación:', error);
-      this.initOfflineMode();
-    }
-  }
-
-  initOfflineMode() {
-    console.log('📱 Inicializando modo offline para autenticación');
-    
-    // Intentar restaurar sesión offline
-    if (this.offlineData.user) {
-      this.handleOfflineLogin();
-    }
-    
-    this.isInitialized = true;
-  }
-
-  setupConnectionListeners() {
-    window.addEventListener('online', () => this.handleOnline());
-    window.addEventListener('offline', () => this.handleOffline());
-  }
-
-  async setupPersistence() {
-    if (!this.auth) return;
-    
-    try {
-      // Usar persistencia local por defecto
-      await this.auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL);
-    } catch (error) {
-      console.warn('No se pudo configurar persistencia:', error);
-    }
-  }
+        // Escuchar evento de Firebase listo
+        const firebaseReadyHandler = () => {
+            console.log('🔥 Evento firebaseReady recibido en Auth');
+            if (window.auth && window.db) {
+                this.auth = window.auth;
+                this.db = window.db;
+                window.removeEventListener('firebaseReady', firebaseReadyHandler);
+                resolve();
+            }
+        };
+        
+        window.addEventListener('firebaseReady', firebaseReadyHandler);
+        checkFirebase();
+    });
+}
 
   // ==========================================
   // GESTIÓN DE ESTADO DE AUTENTICACIÓN
@@ -907,4 +898,5 @@ document.addEventListener('DOMContentLoaded', () => {
 if (typeof module !== 'undefined' && module.exports) {
   module.exports = AuthManager;
 }
+
 
