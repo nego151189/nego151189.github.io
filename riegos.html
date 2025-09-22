@@ -1,512 +1,2382 @@
-//v1
+//vfull
 <!DOCTYPE html>
 <html lang="es">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sistema de Riego - Finca La Herradura</title>
+    <title>Negocios - Finca La Herradura</title>
     
-    <!-- CSS Framework -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <!-- Meta tags -->
+    <meta name="description" content="Gestión de negocios, contratos, clientes y oportunidades comerciales">
+    <meta name="keywords" content="negocios, contratos, clientes, ventas, oportunidades, comercial">
     
-    <!-- CSS principales - aprovechando tu estructura existente -->
+    <!-- Favicon y PWA -->
+    <link rel="icon" type="image/x-icon" href="icons/favicon.ico">
+    <link rel="manifest" href="manifest.json">
+    
+    <!-- CSS de archivos base -->
     <link rel="stylesheet" href="css/main.css">
     <link rel="stylesheet" href="css/style.css">
     
-    <!-- Firebase SDK -->
-    <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-auth-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-firestore-compat.js"></script>
-</head>
-<body>
-    <!-- Contenido principal con clases responsive de tu CSS -->
-    <div class="main-content-wrapper">
-        <!-- Header responsive optimizado -->
-        <header class="riegos-header page-header">
-            <div class="page-title">
-                <div class="title-icon bg-primary">
-                    <i class="fas fa-tint"></i>
-                </div>
-                <div>
-                    <h1 class="mb-1">Sistema de Riego</h1>
-                    <p class="text-muted mb-0">Control y monitoreo de riego por sectores</p>
-                </div>
-            </div>
-            <div class="header-actions">
-                <button class="btn btn-success" onclick="mostrarModalNuevoRiego()">
-                    <i class="fas fa-plus"></i> 
-                    <span class="d-none d-sm-inline">Programar</span> Riego
-                </button>
-                <button class="btn btn-warning" onclick="pararTodosLosRiegos()">
-                    <i class="fas fa-stop"></i> 
-                    <span class="d-none d-sm-inline">Parar</span> Todo
-                </button>
-                <button class="btn btn-info" onclick="mostrarEstadisticasRiego()">
-                    <i class="fas fa-chart-line"></i> 
-                    <span class="d-none d-md-inline">Estadísticas</span>
-                </button>
-            </div>
-        </header>
-        
-        <!-- Alertas de Estado -->
-        <div id="alertasRiego" class="alert alert-info alert-dismissible fade" style="display: none;" role="alert">
-            <i class="fas fa-info-circle me-2"></i>
-            <span id="mensajeAlerta"></span>
-            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-        </div>
-        
-        <!-- Estado del Sistema usando grid responsive -->
-        <section class="estado-sistema card gradient-bg text-white mb-4">
-            <div class="card-body p-3 p-md-4">
-                <div class="sistema-header">
-                    <h2 class="sistema-titulo mb-0">
-                        <i class="fas fa-tachometer-alt me-2"></i>
-                        Estado del Sistema
-                        <span class="sistema-estado ms-3">
-                            <i class="fas fa-circle text-success me-1"></i>
-                            <span class="d-none d-sm-inline">Sistema</span> Activo
-                        </span>
-                    </h2>
-                </div>
-                
-                <div class="metricas-riego stats-grid mt-3">
-                    <div class="metrica-item text-center">
-                        <div class="metrica-icon">
-                            <i class="fas fa-gauge-high"></i>
-                        </div>
-                        <div class="metrica-valor" id="presionSistema">2.5</div>
-                        <div class="metrica-label">Presión (BAR)</div>
-                        <div class="metrica-cambio">Min: 1.8 | Max: 3.0</div>
-                    </div>
-                    
-                    <div class="metrica-item text-center">
-                        <div class="metrica-icon">
-                            <i class="fas fa-water"></i>
-                        </div>
-                        <div class="metrica-valor" id="caudalActual">0</div>
-                        <div class="metrica-label">Caudal (L/min)</div>
-                        <div class="metrica-cambio">Promedio: <span id="caudalPromedio">45</span> L/min</div>
-                    </div>
-                    
-                    <div class="metrica-item text-center">
-                        <div class="metrica-icon">
-                            <i class="fas fa-map-marker-alt"></i>
-                        </div>
-                        <div class="metrica-valor" id="sectoresTotales">0</div>
-                        <div class="metrica-label">Sectores</div>
-                        <div class="metrica-cambio">Activos: <span id="sectoresActivos">0</span></div>
-                    </div>
-                    
-                    <div class="metrica-item text-center">
-                        <div class="metrica-icon">
-                            <i class="fas fa-calendar-day"></i>
-                        </div>
-                        <div class="metrica-valor" id="riegosProgramados">0</div>
-                        <div class="metrica-label">Riegos Hoy</div>
-                        <div class="metrica-cambio">Completados: <span id="riegosCompletados">0</span></div>
-                    </div>
-                </div>
-            </div>
-        </section>
-        
-        <!-- Control Manual Rápido usando grid responsive -->
-        <section class="card mb-4">
-            <div class="card-header">
-                <h5 class="card-title mb-0">
-                    <i class="fas fa-hand-paper me-2"></i>Control Manual Rápido
-                </h5>
-            </div>
-            <div class="card-body">
-                <div id="controlesRapidos" class="row g-2">
-                    <!-- Los controles se generan dinámicamente con JS responsive -->
-                </div>
-            </div>
-        </section>
-        
-        <!-- Layout principal responsive -->
-        <div class="contenido-principal grid-responsive grid-auto-fit">
-            <!-- Sectores de Riego -->
-            <section class="sectores-main">
-                <div class="card h-100">
-                    <div class="card-header d-flex justify-content-between align-items-center flex-wrap gap-2">
-                        <h5 class="card-title mb-0">
-                            <i class="fas fa-map me-2"></i>Sectores de Riego
-                        </h5>
-                        <button class="btn btn-sm btn-outline-primary" onclick="actualizarEstadoSectores()">
-                            <i class="fas fa-sync"></i> 
-                            <span class="d-none d-sm-inline">Actualizar</span>
-                        </button>
-                    </div>
-                    <div class="card-body">
-                        <div id="listaSectores">
-                            <!-- Los sectores se cargan dinámicamente -->
-                            <div class="text-center text-muted p-4">
-                                <i class="fas fa-spinner fa-spin fa-2x mb-3"></i>
-                                <p>Cargando sectores...</p>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </section>
-            
-            <!-- Panel lateral responsive -->
-            <aside class="sidebar-riegos">
-                <!-- Cronómetro de Riego Activo -->
-                <div class="card cronometro-riego mb-3" id="cronometroRiego" style="display: none;">
-                    <div class="card-header">
-                        <h6 class="card-title mb-0">
-                            <i class="fas fa-stopwatch me-2"></i>Riego en Curso
-                        </h6>
-                    </div>
-                    <div class="card-body text-center">
-                        <h3 class="display-6 text-primary mb-2" id="tiempoTranscurrido">00:00:00</h3>
-                        <p class="text-muted mb-3" id="sectorEnRiego">Sector: -</p>
-                        <button class="btn btn-danger btn-sm" onclick="detenerRiegoActivo()">
-                            <i class="fas fa-stop"></i> Detener
-                        </button>
-                    </div>
-                </div>
-                
-                <!-- Próximos Riegos Programados -->
-                <div class="card proximos-riegos mb-3">
-                    <div class="card-header">
-                        <h6 class="card-title mb-0">
-                            <i class="fas fa-clock me-2"></i>Próximos Riegos
-                        </h6>
-                    </div>
-                    <div class="card-body p-0">
-                        <div id="proximosRiegos">
-                            <div class="text-center text-muted p-3">
-                                <i class="fas fa-spinner fa-spin"></i>
-                                <span class="ms-2">Cargando...</span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                
-                <!-- Historial Reciente -->
-                <div class="card historial-reciente">
-                    <div class="card-header">
-                        <h6 class="card-title mb-0">
-                            <i class="fas fa-history me-2"></i>Historial Reciente
-                        </h6>
-                    </div>
-                    <div class="card-body p-0">
-                        <div id="historialReciente">
-                            <div class="text-center text-muted p-3">
-                                <i class="fas fa-spinner fa-spin"></i>
-                                <span class="ms-2">Cargando...</span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </aside>
-        </div>
-    </div>
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
-    <!-- Modal Programar Nuevo Riego - Responsive optimizado -->
-    <div class="modal fade" id="modalNuevoRiego" tabindex="-1" aria-labelledby="modalNuevoRiegoLabel" aria-hidden="true">
-        <div class="modal-dialog modal-lg modal-dialog-scrollable">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title" id="modalNuevoRiegoLabel">
-                        <i class="fas fa-plus me-2"></i>Programar Nuevo Riego
-                    </h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
-                </div>
-                <div class="modal-body">
-                    <form id="formNuevoRiego">
-                        <div class="row g-3">
-                            <div class="col-md-6">
-                                <h6 class="text-primary border-bottom pb-2 mb-3">
-                                    <i class="fas fa-cog me-1"></i>Configuración Básica
-                                </h6>
-                                
-                                <div class="form-group">
-                                    <label class="form-label" for="nombrePrograma">Nombre del Programa</label>
-                                    <input type="text" class="form-control" id="nombrePrograma" name="nombre" required 
-                                           placeholder="Ej: Riego matutino sector norte">
-                                </div>
-                                
-                                <div class="form-group">
-                                    <label class="form-label" for="sectorSelect">Sector</label>
-                                    <select class="form-select" id="sectorSelect" name="sector" required>
-                                        <option value="">Seleccionar sector</option>
-                                        <!-- Se llena dinámicamente -->
-                                    </select>
-                                </div>
-                                
-                                <div class="row g-2">
-                                    <div class="col-6">
-                                        <label class="form-label" for="duracionRiego">Duración (min)</label>
-                                        <input type="number" class="form-control" id="duracionRiego" name="duracion" 
-                                               min="1" max="180" value="30" required>
-                                    </div>
-                                    <div class="col-6">
-                                        <label class="form-label" for="caudalRiego">Caudal (L/min)</label>
-                                        <input type="number" class="form-control" id="caudalRiego" name="caudal" 
-                                               step="0.1" value="45" required>
-                                    </div>
-                                </div>
-                            </div>
-                            
-                            <div class="col-md-6">
-                                <h6 class="text-primary border-bottom pb-2 mb-3">
-                                    <i class="fas fa-clock me-1"></i>Programación Temporal
-                                </h6>
-                                
-                                <div class="form-group">
-                                    <label class="form-label" for="tipoProgramacion">Tipo de Programación</label>
-                                    <select class="form-select" id="tipoProgramacion" name="tipoProgramacion" 
-                                            onchange="cambiarTipoProgramacion()">
-                                        <option value="inmediato">Riego Inmediato</option>
-                                        <option value="programado">Programado</option>
-                                        <option value="automatico">Automático por Sensores</option>
-                                    </select>
-                                </div>
-                                
-                                <div id="opcionesProgramado" style="display: none;">
-                                    <div class="row g-2">
-                                        <div class="col-6">
-                                            <label class="form-label" for="fechaRiego">Fecha</label>
-                                            <input type="date" class="form-control" id="fechaRiego" name="fecha">
-                                        </div>
-                                        <div class="col-6">
-                                            <label class="form-label" for="horaRiego">Hora</label>
-                                            <input type="time" class="form-control" id="horaRiego" name="hora" value="06:00">
-                                        </div>
-                                    </div>
-                                    
-                                    <div class="form-check mt-3">
-                                        <input type="checkbox" class="form-check-input" id="repetirRiego" name="repetir">
-                                        <label class="form-check-label" for="repetirRiego">
-                                            Repetir automáticamente
-                                        </label>
-                                    </div>
-                                    
-                                    <div id="opcionesRepeticion" style="display: none;" class="mt-2">
-                                        <select class="form-select" name="frecuencia">
-                                            <option value="diario">Diario</option>
-                                            <option value="semanal">Semanal</option>
-                                            <option value="personalizado">Días específicos</option>
-                                        </select>
-                                    </div>
-                                </div>
-                                
-                                <div id="opcionesAutomatico" style="display: none;">
-                                    <label class="form-label">Condiciones de Activación</label>
-                                    <div class="form-check">
-                                        <input class="form-check-input" type="checkbox" id="humedadSuelo" name="humedadSuelo">
-                                        <label class="form-check-label" for="humedadSuelo">
-                                            Humedad del suelo &lt; 30%
-                                        </label>
-                                    </div>
-                                    <div class="form-check">
-                                        <input class="form-check-input" type="checkbox" id="temperatura" name="temperatura">
-                                        <label class="form-check-label" for="temperatura">
-                                            Temperatura &gt; 28°C
-                                        </label>
-                                    </div>
-                                    <div class="form-check">
-                                        <input class="form-check-input" type="checkbox" id="sinLluvia" name="sinLluvia">
-                                        <label class="form-check-label" for="sinLluvia">
-                                            Sin lluvia por 24h
-                                        </label>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        
-                        <div class="form-group mt-3">
-                            <label class="form-label" for="observacionesRiego">Observaciones</label>
-                            <textarea class="form-control" id="observacionesRiego" name="observaciones" rows="2" 
-                                      placeholder="Notas adicionales sobre este riego..."></textarea>
-                        </div>
-                    </form>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-                    <button type="button" class="btn btn-primary" onclick="guardarNuevoRiego()">
-                        <i class="fas fa-save"></i> Guardar Programación
-                    </button>
-                </div>
-            </div>
-        </div>
-    </div>
+    <!-- Chart.js para gráficos -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
     
-    <!-- Modal Control Manual Sector - Responsive optimizado -->
-    <div class="modal fade" id="modalControlManual" tabindex="-1" aria-labelledby="modalControlManualLabel" aria-hidden="true">
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title" id="modalControlManualLabel">
-                        <i class="fas fa-hand-paper me-2"></i>Control Manual
-                    </h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
-                </div>
-                <div class="modal-body">
-                    <div class="text-center mb-4">
-                        <div class="bg-primary text-white rounded-circle d-inline-flex align-items-center justify-content-center mb-3" 
-                             style="width: 60px; height: 60px;">
-                            <i class="fas fa-tint fa-2x"></i>
-                        </div>
-                        <h6 id="sectorControlManual" class="mb-1">Sector: -</h6>
-                        <span id="estadoControlManual" class="badge bg-secondary">-</span>
-                    </div>
-                    
-                    <div class="form-group mb-4">
-                        <label class="form-label" for="duracionManual">Duración del riego (minutos)</label>
-                        <div class="input-group">
-                            <input type="number" class="form-control form-control-lg text-center" 
-                                   id="duracionManual" value="30" min="1" max="180">
-                            <span class="input-group-text">min</span>
-                        </div>
-                        <div class="form-text">Tiempo recomendado: 15-45 minutos</div>
-                    </div>
-                    
-                    <div class="d-grid gap-2">
-                        <button class="btn btn-success btn-lg" onclick="iniciarRiegoManual()">
-                            <i class="fas fa-play"></i> Iniciar Riego
-                        </button>
-                        <button class="btn btn-outline-danger" onclick="detenerRiegoManual()">
-                            <i class="fas fa-stop"></i> Detener Riego
-                        </button>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
+    <!-- Firebase SDK v8 (MISMO QUE TUS ARCHIVOS BASE) -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-storage.js"></script>
     
-    <!-- Scripts en el orden correcto -->
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-    
-    <!-- Scripts del sistema en orden de dependencia -->
-    <script src="js/firebase-config.js"></script>
-    <script src="js/tree-manager.js"></script>
-    <script src="js/riegos.js"></script>
-    <script src="js/finca-navigation.js"></script>
-    
-    <!-- CSS adicional inline mínimo para elementos específicos de riego -->
     <style>
-        /* Estilos específicos de riego que no están en main.css o style.css */
-        .gradient-bg {
-            background: linear-gradient(135deg, #06b6d4 0%, #0891b2 100%) !important;
+        /* ========================================
+           ESTILOS ESPECÍFICOS PARA NEGOCIOS
+           Complementan tus archivos base CSS
+           ======================================== */
+
+        /* Variables específicas para negocios */
+        :root {
+            --negocios-primary: #667eea;
+            --negocios-secondary: #764ba2;
+            --negocios-success: #22c55e;
+            --negocios-warning: #f59e0b;
+            --negocios-danger: #ef4444;
+            --negocios-info: #3b82f6;
         }
-        
-        .sistema-estado {
-            backdrop-filter: blur(10px);
+
+        /* Layout principal compatible con finca-navigation.js */
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: var(--font-primary, 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif);
+            background: var(--light-gray, #f8f9fa);
+            color: var(--dark-gray, #343a40);
+            line-height: 1.6;
+        }
+
+        .main-content-wrapper {
+            margin-left: var(--sidebar-width, 280px);
+            margin-top: var(--header-height, 80px);
+            padding: 2rem;
+            max-width: none;
+            transition: margin-left var(--transition-normal, 0.3s ease);
+            min-height: calc(100vh - var(--header-height, 80px));
+            background: var(--light-gray, #f8f9fa);
+        }
+
+        /* SISTEMA DE LOADER UNIFICADO - IGUAL QUE GASTOS */
+        #sistemaLoader {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 10000;
+            color: white;
+            font-size: 1.1rem;
+            transition: all 0.5s ease;
+        }
+
+        #sistemaLoader.oculto {
+            opacity: 0;
+            transform: translateY(-20px);
+        }
+
+        .loader-container {
+            text-align: center;
+            max-width: 500px;
+            padding: 3rem;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 24px;
+            backdrop-filter: blur(20px);
             border: 1px solid rgba(255, 255, 255, 0.2);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
         }
-        
-        .sector-card.border-success {
-            border-color: #198754 !important;
-            box-shadow: 0 0 0 0.125rem rgba(25, 135, 84, 0.25) !important;
+
+        .loader-icon {
+            font-size: 4rem;
+            margin-bottom: 2rem;
+            animation: pulse 2s ease-in-out infinite;
+            color: #ffffff;
         }
-        
-        .cronometro-riego .display-6 {
-            font-family: 'Courier New', monospace;
+
+        .loader-title {
+            font-size: 2rem;
+            font-weight: 800;
+            margin-bottom: 1rem;
+            color: white;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .loader-subtitle {
+            font-size: 1.1rem;
+            margin-bottom: 2rem;
+            opacity: 0.9;
+        }
+
+        .loader-progress {
+            margin-bottom: 2rem;
+        }
+
+        .progress-bar-container {
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 15px;
+            height: 12px;
+            overflow: hidden;
+            margin-bottom: 1rem;
+            position: relative;
+        }
+
+        .progress-bar {
+            height: 100%;
+            background: linear-gradient(90deg, rgba(255, 255, 255, 0.8), rgba(255, 255, 255, 0.6));
+            border-radius: 15px;
+            width: 0%;
+            transition: width 0.5s ease;
+            position: relative;
+        }
+
+        .progress-bar::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.5), transparent);
+            animation: shimmer 2s infinite;
+        }
+
+        .progress-info {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 0.5rem;
+        }
+
+        .progress-text {
+            font-size: 0.9rem;
+            opacity: 0.8;
+        }
+
+        .progress-percentage {
+            font-size: 0.9rem;
             font-weight: 600;
+            color: rgba(255, 255, 255, 0.9);
         }
-        
-        /* Mejoras responsive adicionales */
-        @media (max-width: 768px) {
+
+        /* Pasos de carga específicos para negocios */
+        .loading-steps {
+            margin-top: 2rem;
+            display: grid;
+            gap: 0.75rem;
+        }
+
+        .paso-item {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            padding: 0.75rem 1rem;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            transition: all 0.3s ease;
+        }
+
+        .paso-item.activo {
+            background: rgba(255, 255, 255, 0.2);
+            border-left: 4px solid rgba(255, 255, 255, 0.8);
+        }
+
+        .paso-item.completado {
+            background: rgba(255, 255, 255, 0.15);
+            opacity: 0.8;
+        }
+
+        .paso-icon {
+            width: 24px;
+            height: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.2);
+            flex-shrink: 0;
+        }
+
+        .paso-item.activo .paso-icon {
+            background: rgba(255, 255, 255, 0.3);
+        }
+
+        .paso-item.completado .paso-icon {
+            background: rgba(255, 255, 255, 0.3);
+        }
+
+        .paso-texto {
+            font-size: 0.9rem;
+            font-weight: 500;
+        }
+
+        /* Header mejorado específico para negocios */
+        .negocios-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-radius: 24px;
+            padding: 2.5rem;
+            margin-bottom: 2rem;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .negocios-header::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            right: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(255, 255, 255, 0.1) 0%, transparent 70%);
+            animation: float 8s ease-in-out infinite;
+        }
+
+        .header-content {
+            position: relative;
+            z-index: 1;
+            display: grid;
+            grid-template-columns: 1fr auto;
+            gap: 2rem;
+            align-items: center;
+        }
+
+        .page-title {
+            display: flex;
+            align-items: center;
+            gap: 1.5rem;
+        }
+
+        .title-icon {
+            width: 80px;
+            height: 80px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 2rem;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            flex-shrink: 0;
+        }
+
+        .title-text h1 {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin: 0 0 0.5rem 0;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .title-text p {
+            font-size: 1.1rem;
+            opacity: 0.9;
+            margin: 0;
+        }
+
+        .header-actions {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .header-actions .btn {
+            backdrop-filter: blur(10px);
+            background: rgba(255, 255, 255, 0.2);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            color: white;
+            padding: 0.75rem 1.5rem;
+            border-radius: 12px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            min-width: 180px;
+            cursor: pointer;
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+        }
+
+        .header-actions .btn:hover {
+            background: rgba(255, 255, 255, 0.3);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+        }
+
+        /* Métricas grid responsive */
+        .metricas-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .metrica-card {
+            background: #ffffff;
+            border-radius: 20px;
+            padding: 2rem;
+            position: relative;
+            overflow: hidden;
+            transition: all 0.3s ease;
+            border: 1px solid #e5e7eb;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+            cursor: pointer;
+        }
+
+        .metrica-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+        }
+
+        .metrica-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, #667eea, #764ba2);
+        }
+
+        .metrica-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 1.5rem;
+        }
+
+        .metrica-icon {
+            width: 60px;
+            height: 60px;
+            border-radius: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 1.5rem;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+        }
+
+        .metrica-tendencia {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.875rem;
+            font-weight: 600;
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+        }
+
+        .metrica-tendencia.positiva {
+            color: #16a34a;
+            background: rgba(34, 197, 94, 0.1);
+        }
+
+        .metrica-tendencia.negativa {
+            color: #dc2626;
+            background: rgba(239, 68, 68, 0.1);
+        }
+
+        .metrica-valor {
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: #1f2937;
+            margin-bottom: 0.5rem;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .metrica-label {
+            color: #6b7280;
+            font-size: 1rem;
+            font-weight: 500;
+        }
+
+        /* Pipeline visual */
+        .pipeline-section {
+            background: #ffffff;
+            border-radius: 20px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+            border: 1px solid #e5e7eb;
+        }
+
+        .pipeline-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+        }
+
+        .pipeline-header h3 {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #1f2937;
+            margin: 0;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .pipeline-visual {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+        }
+
+        .pipeline-etapa {
+            background: #f8fafc;
+            border-radius: 16px;
+            padding: 1.5rem;
+            text-align: center;
+            transition: all 0.3s ease;
+            border: 2px solid transparent;
+            cursor: pointer;
+        }
+
+        .pipeline-etapa:hover {
+            transform: translateY(-3px);
+            border-color: #667eea;
+            box-shadow: 0 8px 30px rgba(102, 126, 234, 0.15);
+        }
+
+        .etapa-icon {
+            width: 50px;
+            height: 50px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 1.25rem;
+            margin: 0 auto 1rem auto;
+        }
+
+        .etapa-cantidad {
+            font-size: 2rem;
+            font-weight: 700;
+            color: #1f2937;
+            margin-bottom: 0.5rem;
+        }
+
+        .etapa-nombre {
+            font-weight: 600;
+            color: #374151;
+            margin-bottom: 0.5rem;
+        }
+
+        .etapa-valor {
+            font-size: 0.875rem;
+            color: #6b7280;
+        }
+
+        /* Contenido principal */
+        .contenido-principal {
+            display: grid;
+            grid-template-columns: 1fr 350px;
+            gap: 2rem;
+            margin-bottom: 2rem;
+        }
+
+        .negocios-lista {
+            background: #ffffff;
+            border-radius: 20px;
+            padding: 2rem;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+            border: 1px solid #e5e7eb;
+        }
+
+        .lista-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+
+        .lista-header h3 {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #1f2937;
+            margin: 0;
+        }
+
+        .filtros-rapidos {
+            display: flex;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+        }
+
+        .filtro-btn {
+            padding: 0.5rem 1rem;
+            border: 1px solid #d1d5db;
+            background: white;
+            color: #6b7280;
+            border-radius: 20px;
+            font-size: 0.875rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .filtro-btn:hover,
+        .filtro-btn.active {
+            background: #667eea;
+            color: white;
+            border-color: #667eea;
+        }
+
+        /* Cards de negocio */
+        .negocio-card {
+            background: #f8fafc;
+            border-radius: 16px;
+            padding: 1.5rem;
+            margin-bottom: 1rem;
+            border-left: 4px solid transparent;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .negocio-card:hover {
+            transform: translateX(4px);
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+        }
+
+        .negocio-card.prospecto { border-left-color: #3b82f6; }
+        .negocio-card.calificado { border-left-color: #8b5cf6; }
+        .negocio-card.propuesta { border-left-color: #f59e0b; }
+        .negocio-card.negociacion { border-left-color: #ef4444; }
+        .negocio-card.cerrado { border-left-color: #22c55e; }
+
+        .negocio-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 1rem;
+        }
+
+        .negocio-titulo {
+            font-size: 1.125rem;
+            font-weight: 600;
+            color: #1f2937;
+            margin: 0 0 0.5rem 0;
+        }
+
+        .negocio-cliente {
+            color: #6b7280;
+            font-size: 0.875rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .negocio-estado {
+            padding: 0.25rem 0.75rem;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .estado-prospecto { background: rgba(59, 130, 246, 0.2); color: #3b82f6; }
+        .estado-calificado { background: rgba(139, 92, 246, 0.2); color: #8b5cf6; }
+        .estado-propuesta { background: rgba(245, 158, 11, 0.2); color: #f59e0b; }
+        .estado-negociacion { background: rgba(239, 68, 68, 0.2); color: #ef4444; }
+        .estado-cerrado { background: rgba(34, 197, 94, 0.2); color: #22c55e; }
+
+        .negocio-valor {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #667eea;
+            margin-bottom: 1rem;
+        }
+
+        .negocio-detalles {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .detalle-item {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.875rem;
+            color: #6b7280;
+        }
+
+        .detalle-item i {
+            width: 16px;
+            text-align: center;
+        }
+
+        .negocio-progreso {
+            margin-bottom: 1rem;
+        }
+
+        .progreso-label {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.875rem;
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+            color: #374151;
+        }
+
+        .progreso-bar {
+            width: 100%;
+            height: 8px;
+            background: #e5e7eb;
+            border-radius: 4px;
+            overflow: hidden;
+        }
+
+        .progreso-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #667eea, #764ba2);
+            transition: width 0.3s ease;
+            border-radius: 4px;
+        }
+
+        .negocio-acciones {
+            display: flex;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+        }
+
+        .btn-accion {
+            padding: 0.5rem 1rem;
+            border: none;
+            border-radius: 8px;
+            font-size: 0.875rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .btn-accion.primary {
+            background: #667eea;
+            color: white;
+        }
+
+        .btn-accion.primary:hover {
+            background: #5a67d8;
+            transform: translateY(-1px);
+        }
+
+        .btn-accion.success {
+            background: #22c55e;
+            color: white;
+        }
+
+        .btn-accion.success:hover {
+            background: #16a34a;
+            transform: translateY(-1px);
+        }
+
+        .btn-accion.secondary {
+            background: #f3f4f6;
+            color: #374151;
+        }
+
+        .btn-accion.secondary:hover {
+            background: #e5e7eb;
+            transform: translateY(-1px);
+        }
+
+        /* Sidebar */
+        .sidebar-negocios {
+            display: grid;
+            gap: 1.5rem;
+        }
+
+        .sidebar-card {
+            background: #ffffff;
+            border-radius: 20px;
+            padding: 1.5rem;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+            border: 1px solid #e5e7eb;
+        }
+
+        .sidebar-header {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .sidebar-header h4 {
+            font-size: 1.125rem;
+            font-weight: 600;
+            color: #1f2937;
+            margin: 0;
+        }
+
+        .sidebar-header i {
+            color: #667eea;
+        }
+
+        .cliente-item,
+        .actividad-item {
+            padding: 1rem;
+            background: #f8fafc;
+            border-radius: 12px;
+            margin-bottom: 1rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .cliente-item:hover,
+        .actividad-item:hover {
+            background: #e0e7ff;
+            transform: translateX(4px);
+        }
+
+        .cliente-item:last-child,
+        .actividad-item:last-child {
+            margin-bottom: 0;
+        }
+
+        /* Estados vacíos */
+        .empty-state {
+            text-align: center;
+            padding: 3rem 1rem;
+            color: #6b7280;
+        }
+
+        .empty-state i {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+            opacity: 0.5;
+        }
+
+        .empty-state h4 {
+            font-size: 1.125rem;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            color: #374151;
+        }
+
+        .empty-state p {
+            margin-bottom: 1.5rem;
+        }
+
+        /* Modales */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.7);
+            z-index: 1000;
+            padding: 2rem;
+            backdrop-filter: blur(4px);
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal-overlay.show {
+            display: flex;
+        }
+
+        .modal-content {
+            background: #ffffff;
+            border-radius: 20px;
+            max-width: 900px;
+            width: 100%;
+            max-height: 90vh;
+            overflow-y: auto;
+            position: relative;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            animation: modalSlideIn 0.3s ease-out;
+        }
+
+        .modal-header {
+            padding: 2rem 2rem 1rem 2rem;
+            border-bottom: 1px solid #e5e7eb;
+            position: relative;
+        }
+
+        .modal-header h3 {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #1f2937;
+            margin: 0;
+        }
+
+        .modal-close {
+            position: absolute;
+            top: 1rem;
+            right: 1rem;
+            background: #f3f4f6;
+            border: none;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .modal-close:hover {
+            background: #e5e7eb;
+            transform: rotate(90deg);
+        }
+
+        .modal-body {
+            padding: 2rem;
+        }
+
+        /* Formularios */
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        .form-label {
+            display: block;
+            font-weight: 600;
+            color: #374151;
+            margin-bottom: 0.5rem;
+            font-size: 0.875rem;
+        }
+
+        .form-input,
+        .form-select,
+        .form-textarea {
+            width: 100%;
+            padding: 0.75rem 1rem;
+            border: 2px solid #e5e7eb;
+            border-radius: 12px;
+            font-size: 0.875rem;
+            transition: all 0.3s ease;
+            background: white;
+        }
+
+        .form-input:focus,
+        .form-select:focus,
+        .form-textarea:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .form-textarea {
+            resize: vertical;
+            min-height: 80px;
+        }
+
+        .probabilidad-selector {
+            display: flex;
+            gap: 0.5rem;
+            margin-top: 0.5rem;
+        }
+
+        .prob-btn {
+            flex: 1;
+            padding: 0.75rem;
+            border: 2px solid #e5e7eb;
+            border-radius: 8px;
+            background: white;
+            cursor: pointer;
+            text-align: center;
+            font-size: 0.875rem;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .prob-btn:hover {
+            border-color: #667eea;
+            background: #f0f4ff;
+        }
+
+        .prob-btn.active {
+            border-color: #667eea;
+            background: #667eea;
+            color: white;
+        }
+
+        .form-actions {
+            display: flex;
+            gap: 1rem;
+            justify-content: flex-end;
+            padding-top: 2rem;
+            border-top: 1px solid #e5e7eb;
+        }
+
+        /* RESPONSIVE BREAKPOINTS */
+        @media (max-width: 1024px) {
+            .main-content-wrapper {
+                margin-left: 0;
+            }
+            
             .contenido-principal {
-                display: block !important;
+                grid-template-columns: 1fr;
             }
             
-            .sidebar-riegos {
+            .sidebar-negocios {
                 order: -1;
-                margin-bottom: 1rem;
-            }
-            
-            .sectores-main {
-                order: 1;
-            }
-            
-            .header-actions .btn {
-                min-width: auto;
-                padding: 0.5rem 0.75rem;
-            }
-            
-            .metrica-item {
-                min-height: 120px;
-                display: flex;
-                flex-direction: column;
-                justify-content: center;
             }
         }
-        
-        @media (max-width: 576px) {
-            .modal-lg {
-                max-width: 95%;
+
+        @media (max-width: 768px) {
+            .main-content-wrapper {
+                padding: 1rem;
+                margin-top: var(--header-height, 80px);
             }
             
-            .card-body {
+            .header-content {
+                grid-template-columns: 1fr;
+                text-align: center;
+            }
+            
+            .negocios-header {
+                padding: 2rem 1rem;
+            }
+            
+            .title-icon {
+                width: 60px;
+                height: 60px;
+                font-size: 1.5rem;
+            }
+            
+            .title-text h1 {
+                font-size: 1.75rem;
+            }
+            
+            .pipeline-visual {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            
+            .metricas-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .modal-content {
+                margin: 1rem;
+                max-height: 95vh;
+            }
+            
+            .modal-header,
+            .modal-body {
                 padding: 1rem;
             }
             
-            .btn-group .btn {
-                padding: 0.25rem 0.5rem;
-                font-size: 0.875rem;
+            .form-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .filtros-rapidos {
+                width: 100%;
+                justify-content: center;
+            }
+            
+            .lista-header {
+                flex-direction: column;
+                align-items: stretch;
+                text-align: center;
             }
         }
-        
-        /* Estados de sensores con colores */
-        .sensor-reading {
-            transition: all 0.3s ease;
+
+        @media (max-width: 640px) {
+            .pipeline-visual {
+                grid-template-columns: 1fr;
+            }
+            
+            .probabilidad-selector {
+                flex-direction: column;
+                gap: 0.75rem;
+            }
+            
+            .negocio-detalles {
+                grid-template-columns: 1fr;
+            }
+            
+            .negocio-acciones {
+                justify-content: center;
+            }
+            
+            .form-actions {
+                flex-direction: column;
+            }
         }
-        
-        .sensor-reading:hover {
-            transform: translateY(-1px);
-            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+
+        @media (max-width: 480px) {
+            .main-content-wrapper {
+                padding: 0.75rem;
+            }
+            
+            .metrica-card,
+            .pipeline-section,
+            .negocios-lista,
+            .sidebar-card {
+                padding: 1.25rem;
+                border-radius: 12px;
+            }
+            
+            .title-icon {
+                width: 50px;
+                height: 50px;
+                font-size: 1.25rem;
+            }
+            
+            .title-text h1 {
+                font-size: 1.5rem;
+            }
+            
+            .metrica-valor {
+                font-size: 2rem;
+            }
         }
-        
-        /* Indicadores de progreso mejorados */
-        .progress {
-            background-color: rgba(0,0,0,0.1);
-            border-radius: 10px;
-            overflow: hidden;
+
+        /* Animaciones */
+        @keyframes modalSlideIn {
+            from {
+                opacity: 0;
+                transform: scale(0.9) translateY(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: scale(1) translateY(0);
+            }
         }
-        
-        .progress-bar {
-            border-radius: 10px;
-            transition: width 0.3s ease;
+
+        @keyframes float {
+            0%, 100% { transform: translate(-20px, -20px) rotate(0deg); }
+            50% { transform: translate(20px, 20px) rotate(180deg); }
         }
-        
-        /* Loading states */
-        @keyframes pulse-subtle {
-            0%, 100% { opacity: 0.6; }
-            50% { opacity: 1; }
+
+        @keyframes pulse {
+            0%, 100% { 
+                transform: scale(1); 
+                opacity: 1; 
+            }
+            50% { 
+                transform: scale(1.05); 
+                opacity: 0.8; 
+            }
         }
-        
-        .loading-placeholder {
-            animation: pulse-subtle 1.5s ease-in-out infinite;
+
+        @keyframes shimmer {
+            0% { transform: translateX(-100%); }
+            100% { transform: translateX(100%); }
+        }
+
+        /* Desactivar animaciones en móviles para mejor performance */
+        @media (max-width: 768px) {
+            * {
+                animation-duration: 0.01ms !important;
+                animation-delay: 0.01ms !important;
+                transition-duration: 0.01ms !important;
+            }
+        }
+
+        /* Touch targets mejorados para móviles */
+        @media (max-width: 768px) {
+            .btn,
+            .filtro-btn,
+            .btn-accion {
+                min-height: 44px;
+                min-width: 44px;
+                touch-action: manipulation;
+            }
         }
     </style>
+</head>
+<body>
+    <!-- Sistema de carga unificado - IGUAL QUE GASTOS -->
+    <div id="sistemaLoader">
+        <div class="loader-container">
+            <div class="loader-icon">
+                <i class="fas fa-handshake"></i>
+            </div>
+            
+            <div class="loader-title">Gestión de Negocios</div>
+            <div class="loader-subtitle" id="loaderTexto">Iniciando sistema...</div>
+            
+            <div class="loader-progress">
+                <div class="progress-bar-container">
+                    <div class="progress-bar" id="loaderBarra"></div>
+                </div>
+                <div class="progress-info">
+                    <span class="progress-text" id="loaderSubtexto">Conectando con Firebase...</span>
+                    <span class="progress-percentage" id="loaderPorcentaje">0%</span>
+                </div>
+            </div>
+            
+            <div class="loading-steps">
+                <div class="paso-item" id="paso-firebase">
+                    <div class="paso-icon">
+                        <i class="fas fa-database"></i>
+                    </div>
+                    <div class="paso-texto">Conectando Firebase</div>
+                </div>
+                
+                <div class="paso-item" id="paso-auth">
+                    <div class="paso-icon">
+                        <i class="fas fa-user-check"></i>
+                    </div>
+                    <div class="paso-texto">Verificando Acceso</div>
+                </div>
+                
+                <div class="paso-item" id="paso-managers">
+                    <div class="paso-icon">
+                        <i class="fas fa-cogs"></i>
+                    </div>
+                    <div class="paso-texto">Cargando Sistemas Base</div>
+                </div>
+                
+                <div class="paso-item" id="paso-datos">
+                    <div class="paso-icon">
+                        <i class="fas fa-handshake"></i>
+                    </div>
+                    <div class="paso-texto">Sincronizando Negocios REALES</div>
+                </div>
+                
+                <div class="paso-item" id="paso-integracion">
+                    <div class="paso-icon">
+                        <i class="fas fa-link"></i>
+                    </div>
+                    <div class="paso-texto">Configurando Integración</div>
+                </div>
+                
+                <div class="paso-item" id="paso-interfaz">
+                    <div class="paso-icon">
+                        <i class="fas fa-desktop"></i>
+                    </div>
+                    <div class="paso-texto">Finalizando Sistema</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Contenido principal -->
+    <main class="main-content-wrapper">
+        <!-- Header mejorado -->
+        <header class="negocios-header">
+            <div class="header-content">
+                <div class="page-title">
+                    <div class="title-icon">
+                        <i class="fas fa-handshake"></i>
+                    </div>
+                    <div class="title-text">
+                        <h1>Gestión de Negocios</h1>
+                        <p>Control inteligente de oportunidades y clientes</p>
+                    </div>
+                </div>
+                
+                <div class="header-actions">
+                    <button class="btn" id="btnNuevoNegocio">
+                        <i class="fas fa-plus"></i> Nuevo Negocio
+                    </button>
+                    
+                    <button class="btn" id="btnNuevoCliente">
+                        <i class="fas fa-user-plus"></i> Nuevo Cliente
+                    </button>
+                    
+                    <button class="btn" id="btnReporteVentas">
+                        <i class="fas fa-chart-bar"></i> Reportes
+                    </button>
+
+                    <a href="ventas.html" class="btn">
+                        <i class="fas fa-shopping-cart"></i> Ir a Ventas
+                    </a>
+                </div>
+            </div>
+        </header>
+
+        <!-- Métricas mejoradas -->
+        <section class="metricas-grid">
+            <div class="metrica-card">
+                <div class="metrica-header">
+                    <div class="metrica-icon">
+                        <i class="fas fa-dollar-sign"></i>
+                    </div>
+                    <div class="metrica-tendencia positiva" id="cambioVentas">
+                        <i class="fas fa-arrow-up"></i>
+                        <span>+15%</span>
+                    </div>
+                </div>
+                <div class="metrica-valor" id="ventasTotales">Q 0</div>
+                <div class="metrica-label">Ventas Totales</div>
+            </div>
+            
+            <div class="metrica-card">
+                <div class="metrica-header">
+                    <div class="metrica-icon">
+                        <i class="fas fa-bullseye"></i>
+                    </div>
+                    <div class="metrica-tendencia positiva" id="cambioNegocios">
+                        <i class="fas fa-arrow-up"></i>
+                        <span>+3</span>
+                    </div>
+                </div>
+                <div class="metrica-valor" id="negociosActivos">0</div>
+                <div class="metrica-label">Negocios Activos</div>
+            </div>
+            
+            <div class="metrica-card">
+                <div class="metrica-header">
+                    <div class="metrica-icon">
+                        <i class="fas fa-users"></i>
+                    </div>
+                    <div class="metrica-tendencia positiva" id="cambioClientes">
+                        <i class="fas fa-arrow-up"></i>
+                        <span>+2</span>
+                    </div>
+                </div>
+                <div class="metrica-valor" id="clientesActivos">0</div>
+                <div class="metrica-label">Clientes Activos</div>
+            </div>
+            
+            <div class="metrica-card">
+                <div class="metrica-header">
+                    <div class="metrica-icon">
+                        <i class="fas fa-percentage"></i>
+                    </div>
+                    <div class="metrica-tendencia positiva" id="cambioConversion">
+                        <i class="fas fa-arrow-up"></i>
+                        <span>+5%</span>
+                    </div>
+                </div>
+                <div class="metrica-valor" id="tasaConversion">0%</div>
+                <div class="metrica-label">Tasa de Conversión</div>
+            </div>
+        </section>
+
+        <!-- Pipeline visual mejorado -->
+        <section class="pipeline-section">
+            <div class="pipeline-header">
+                <h3>
+                    <i class="fas fa-funnel-dollar"></i>
+                    Pipeline de Ventas
+                </h3>
+            </div>
+            
+            <div class="pipeline-visual" id="pipelineVisual">
+                <!-- Se cargará dinámicamente desde JavaScript -->
+                <div class="pipeline-etapa prospectos">
+                    <div class="etapa-icon" style="background: #3b82f6;">
+                        <i class="fas fa-eye"></i>
+                    </div>
+                    <div class="etapa-cantidad">0</div>
+                    <div class="etapa-nombre">Prospectos</div>
+                    <div class="etapa-valor">Q 0</div>
+                </div>
+                
+                <div class="pipeline-etapa calificados">
+                    <div class="etapa-icon" style="background: #8b5cf6;">
+                        <i class="fas fa-star"></i>
+                    </div>
+                    <div class="etapa-cantidad">0</div>
+                    <div class="etapa-nombre">Calificados</div>
+                    <div class="etapa-valor">Q 0</div>
+                </div>
+                
+                <div class="pipeline-etapa propuestas">
+                    <div class="etapa-icon" style="background: #f59e0b;">
+                        <i class="fas fa-file-alt"></i>
+                    </div>
+                    <div class="etapa-cantidad">0</div>
+                    <div class="etapa-nombre">Propuestas</div>
+                    <div class="etapa-valor">Q 0</div>
+                </div>
+                
+                <div class="pipeline-etapa negociacion">
+                    <div class="etapa-icon" style="background: #ef4444;">
+                        <i class="fas fa-handshake"></i>
+                    </div>
+                    <div class="etapa-cantidad">0</div>
+                    <div class="etapa-nombre">Negociación</div>
+                    <div class="etapa-valor">Q 0</div>
+                </div>
+                
+                <div class="pipeline-etapa cerrados">
+                    <div class="etapa-icon" style="background: #22c55e;">
+                        <i class="fas fa-check-circle"></i>
+                    </div>
+                    <div class="etapa-cantidad">0</div>
+                    <div class="etapa-nombre">Cerrados</div>
+                    <div class="etapa-valor">Q 0</div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Contenido principal -->
+        <div class="contenido-principal">
+            <!-- Lista de negocios -->
+            <div class="negocios-lista">
+                <div class="lista-header">
+                    <h3>Negocios Activos</h3>
+                    <div class="filtros-rapidos">
+                        <button class="filtro-btn active" data-estado="">Todos</button>
+                        <button class="filtro-btn" data-estado="prospecto">Prospectos</button>
+                        <button class="filtro-btn" data-estado="negociacion">Negociación</button>
+                        <button class="filtro-btn" data-estado="cerrado">Cerrados</button>
+                    </div>
+                </div>
+                
+                <div id="listaNegociosPipeline">
+                    <!-- Los negocios se cargarán dinámicamente desde JavaScript -->
+                    <div class="empty-state">
+                        <i class="fas fa-handshake"></i>
+                        <h4>Cargando negocios...</h4>
+                        <p>Por favor espera mientras se cargan los datos</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Sidebar mejorado -->
+            <div class="sidebar-negocios">
+                <!-- Clientes recientes -->
+                <div class="sidebar-card">
+                    <div class="sidebar-header">
+                        <i class="fas fa-users"></i>
+                        <h4>Clientes Activos</h4>
+                    </div>
+                    <div id="clientesRecientes">
+                        <div class="empty-state">
+                            <i class="fas fa-users"></i>
+                            <h4>Cargando clientes...</h4>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Actividades recientes -->
+                <div class="sidebar-card">
+                    <div class="sidebar-header">
+                        <i class="fas fa-clock"></i>
+                        <h4>Actividades Recientes</h4>
+                    </div>
+                    <div id="actividadesRecientes">
+                        <div class="empty-state">
+                            <i class="fas fa-clock"></i>
+                            <h4>Cargando actividades...</h4>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Modal mejorado para nuevo/editar negocio -->
+    <div class="modal-overlay" id="modalNegocio">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="modalTitulo">Nuevo Negocio</h3>
+                <button class="modal-close" id="cerrarModal">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            
+            <div class="modal-body">
+                <form id="formNegocio">
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label class="form-label">Nombre del Negocio *</label>
+                            <input type="text" class="form-input" id="nombreNegocio" required placeholder="Ej: Suministro Aguacates Premium">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label class="form-label">Cliente *</label>
+                            <select class="form-select" id="clienteNegocio" required>
+                                <option value="">Seleccionar cliente...</option>
+                            </select>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label class="form-label">Valor Estimado (Q) *</label>
+                            <input type="number" class="form-input" id="valorNegocio" step="0.01" required placeholder="0.00">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label class="form-label">Estado *</label>
+                            <select class="form-select" id="estadoNegocio" required>
+                                <option value="prospecto">Prospecto</option>
+                                <option value="calificado">Calificado</option>
+                                <option value="propuesta">Propuesta</option>
+                                <option value="negociacion">Negociación</option>
+                                <option value="cerrado">Cerrado</option>
+                            </select>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label class="form-label">Fecha de Cierre Estimada</label>
+                            <input type="date" class="form-input" id="fechaCierreNegocio">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label class="form-label">Cantidad Estimada (kg)</label>
+                            <input type="number" class="form-input" id="cantidadNegocio" step="0.1" placeholder="0.0">
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label">Descripción</label>
+                        <textarea class="form-textarea" id="descripcionNegocio" rows="3" placeholder="Describe los detalles del negocio..."></textarea>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label">Probabilidad de Cierre (%)</label>
+                        <div class="probabilidad-selector">
+                            <div class="prob-btn" data-prob="25">25%</div>
+                            <div class="prob-btn" data-prob="50">50%</div>
+                            <div class="prob-btn active" data-prob="75">75%</div>
+                            <div class="prob-btn" data-prob="90">90%</div>
+                            <div class="prob-btn" data-prob="100">100%</div>
+                        </div>
+                        <input type="hidden" id="probabilidadNegocio" value="75">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label">Productos/Servicios</label>
+                        <textarea class="form-textarea" id="productosNegocio" rows="2" placeholder="Detalle de productos o servicios incluidos"></textarea>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label">Notas Adicionales</label>
+                        <textarea class="form-textarea" id="notasNegocio" rows="2" placeholder="Observaciones, condiciones especiales, etc."></textarea>
+                    </div>
+                    
+                    <div class="form-actions">
+                        <button type="button" class="btn btn-secondary" id="cancelarNegocio">
+                            <i class="fas fa-times"></i> Cancelar
+                        </button>
+                        <button type="submit" class="btn btn-success">
+                            <i class="fas fa-save"></i> Guardar Negocio
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal para nuevo cliente -->
+    <div class="modal-overlay" id="modalCliente">
+        <div class="modal-content" style="max-width: 600px;">
+            <div class="modal-header">
+                <h3>Agregar Nuevo Cliente</h3>
+                <button class="modal-close" id="cerrarModalCliente">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            
+            <div class="modal-body">
+                <form id="formCliente">
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label class="form-label">Nombre Completo *</label>
+                            <input type="text" class="form-input" id="nombreCliente" required placeholder="Nombre del cliente">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label class="form-label">Empresa</label>
+                            <input type="text" class="form-input" id="empresaCliente" placeholder="Nombre de la empresa">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label class="form-label">Teléfono *</label>
+                            <input type="tel" class="form-input" id="telefonoCliente" required placeholder="+502 0000-0000">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label class="form-label">Email</label>
+                            <input type="email" class="form-input" id="emailCliente" placeholder="cliente@empresa.com">
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label">Dirección</label>
+                        <textarea class="form-textarea" id="direccionCliente" placeholder="Dirección completa del cliente"></textarea>
+                    </div>
+                    
+                    <div class="form-actions">
+                        <button type="button" class="btn btn-secondary" id="cancelarCliente">
+                            <i class="fas fa-times"></i> Cancelar
+                        </button>
+                        <button type="submit" class="btn btn-success">
+                            <i class="fas fa-save"></i> Guardar Cliente
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts - TUS ARCHIVOS BASE PRIMERO -->
+    <script src="js/firebase-config.js"></script>
+    <script src="js/auth.js"></script>
+    <script src="js/offline.js"></script>
+    <script src="js/finca-navigation.js"></script>
+    <script src="js/data-sync.js"></script>
+    <script src="js/clientes-manager.js"></script>
     
-    <!-- Script de inicialización final -->
+    <!-- Sistema de Negocios - AL FINAL -->
+    <script src="js/negocios.js"></script>
+    
     <script>
-        // Configurar fecha mínima para el formulario (hoy)
-        document.addEventListener('DOMContentLoaded', function() {
-            const fechaInput = document.getElementById('fechaRiego');
-            if (fechaInput) {
-                const hoy = new Date().toISOString().split('T')[0];
-                fechaInput.min = hoy;
-                fechaInput.value = hoy;
+        // ==========================================
+        // SISTEMA DE NOTIFICACIONES INTEGRADO
+        // ==========================================
+        
+        function crearSistemaNotificaciones() {
+            // Crear contenedor si no existe
+            if (!document.getElementById('notification-container')) {
+                const container = document.createElement('div');
+                container.id = 'notification-container';
+                container.style.cssText = `
+                    position: fixed;
+                    top: 1rem;
+                    right: 1rem;
+                    z-index: 10000;
+                    pointer-events: none;
+                `;
+                document.body.appendChild(container);
             }
             
-            // Configurar evento para mostrar/ocultar opciones de repetición
-            const repetirCheck = document.getElementById('repetirRiego');
-            const opcionesRepeticion = document.getElementById('opcionesRepeticion');
+            return {
+                show: function(mensaje, tipo = 'info', duracion = 5000) {
+                    const container = document.getElementById('notification-container');
+                    
+                    const notification = document.createElement('div');
+                    notification.style.cssText = `
+                        background: ${tipo === 'success' ? '#22c55e' : tipo === 'error' ? '#ef4444' : tipo === 'warning' ? '#f59e0b' : '#3b82f6'};
+                        color: white;
+                        padding: 1rem 1.5rem;
+                        border-radius: 12px;
+                        margin-bottom: 0.5rem;
+                        box-shadow: 0 8px 32px rgba(0,0,0,0.2);
+                        opacity: 0;
+                        transform: translateX(100%);
+                        transition: all 0.3s ease;
+                        pointer-events: auto;
+                        cursor: pointer;
+                        font-weight: 500;
+                        font-size: 0.9rem;
+                        max-width: 350px;
+                    `;
+                    
+                    const iconos = {
+                        success: 'fa-check-circle',
+                        error: 'fa-times-circle',
+                        warning: 'fa-exclamation-triangle',
+                        info: 'fa-info-circle'
+                    };
+                    
+                    notification.innerHTML = `
+                        <div style="display: flex; align-items: center; gap: 0.75rem;">
+                            <i class="fas ${iconos[tipo]}"></i>
+                            <span>${mensaje}</span>
+                        </div>
+                    `;
+                    
+                    container.appendChild(notification);
+                    
+                    // Mostrar notificación
+                    setTimeout(() => {
+                        notification.style.opacity = '1';
+                        notification.style.transform = 'translateX(0)';
+                    }, 100);
+                    
+                    // Ocultar automáticamente
+                    setTimeout(() => {
+                        if (notification.parentNode) {
+                            notification.style.opacity = '0';
+                            notification.style.transform = 'translateX(100%)';
+                            setTimeout(() => {
+                                if (notification.parentNode) {
+                                    notification.parentNode.removeChild(notification);
+                                }
+                            }, 300);
+                        }
+                    }, duracion);
+                    
+                    // Click para cerrar
+                    notification.addEventListener('click', () => {
+                        if (notification.parentNode) {
+                            notification.style.opacity = '0';
+                            notification.style.transform = 'translateX(100%)';
+                            setTimeout(() => {
+                                if (notification.parentNode) {
+                                    notification.parentNode.removeChild(notification);
+                                }
+                            }, 300);
+                        }
+                    });
+                },
+                
+                success: function(mensaje, duracion = 5000) {
+                    this.show(mensaje, 'success', duracion);
+                },
+                
+                error: function(mensaje, duracion = 8000) {
+                    this.show(mensaje, 'error', duracion);
+                },
+                
+                warning: function(mensaje, duracion = 6000) {
+                    this.show(mensaje, 'warning', duracion);
+                },
+                
+                info: function(mensaje, duracion = 5000) {
+                    this.show(mensaje, 'info', duracion);
+                }
+            };
+        }
+
+        // Crear instancia global de notificaciones
+        const notificationManager = crearSistemaNotificaciones();
+        window.notificationManager = notificationManager;
+
+        // ==========================================
+        // INICIALIZACIÓN PRINCIPAL DEL HTML
+        // ==========================================
+
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('🎯 Iniciando interfaz de negocios...');
             
-            if (repetirCheck && opcionesRepeticion) {
-                repetirCheck.addEventListener('change', function() {
-                    opcionesRepeticion.style.display = this.checked ? 'block' : 'none';
+            // Configurar eventos de interfaz
+            configurarEventListenersNegocios();
+            
+            // Esperar a que el sistema JavaScript esté listo
+            let intentosEspera = 0;
+            const esperarSistema = setInterval(() => {
+                if (window.sistemaNegociosState && window.sistemaNegociosState.inicializado) {
+                    clearInterval(esperarSistema);
+                    inicializarInterfazNegocios();
+                } else if (intentosEspera > 100) { // 20 segundos máximo
+                    clearInterval(esperarSistema);
+                    console.warn('⚠️ Timeout esperando sistema de negocios');
+                    mostrarEstadoError();
+                }
+                intentosEspera++;
+            }, 200);
+        });
+
+        function configurarEventListenersNegocios() {
+            // Botones principales
+            const btnNuevoNegocio = document.getElementById('btnNuevoNegocio');
+            if (btnNuevoNegocio) {
+                btnNuevoNegocio.addEventListener('click', function() {
+                    if (window.negociosManager) {
+                        mostrarModalNegocio();
+                    } else {
+                        notificationManager.warning('Sistema cargando, intente en un momento...');
+                    }
                 });
             }
             
-            console.log('✅ Página de riegos inicializada correctamente');
+            const btnNuevoCliente = document.getElementById('btnNuevoCliente');
+            if (btnNuevoCliente) {
+                btnNuevoCliente.addEventListener('click', function() {
+                    mostrarModalCliente();
+                });
+            }
+            
+            const btnReporteVentas = document.getElementById('btnReporteVentas');
+            if (btnReporteVentas) {
+                btnReporteVentas.addEventListener('click', function() {
+                    if (window.negociosManager) {
+                        window.negociosManager.generarReporte();
+                    } else {
+                        notificationManager.info('Sistema cargando...');
+                    }
+                });
+            }
+            
+            // Modal negocios
+            const cerrarModal = document.getElementById('cerrarModal');
+            if (cerrarModal) {
+                cerrarModal.addEventListener('click', function() {
+                    cerrarModalNegocio();
+                });
+            }
+            
+            const cancelarNegocio = document.getElementById('cancelarNegocio');
+            if (cancelarNegocio) {
+                cancelarNegocio.addEventListener('click', function() {
+                    cerrarModalNegocio();
+                });
+            }
+            
+            const formNegocio = document.getElementById('formNegocio');
+            if (formNegocio) {
+                formNegocio.addEventListener('submit', function(e) {
+                    guardarNegocio(e);
+                });
+            }
+
+            // Modal clientes
+            const cerrarModalCliente = document.getElementById('cerrarModalCliente');
+            if (cerrarModalCliente) {
+                cerrarModalCliente.addEventListener('click', function() {
+                    cerrarModalClienteNegocio();
+                });
+            }
+            
+            const cancelarCliente = document.getElementById('cancelarCliente');
+            if (cancelarCliente) {
+                cancelarCliente.addEventListener('click', function() {
+                    cerrarModalClienteNegocio();
+                });
+            }
+            
+            const formCliente = document.getElementById('formCliente');
+            if (formCliente) {
+                formCliente.addEventListener('submit', function(e) {
+                    guardarCliente(e);
+                });
+            }
+            
+            // Filtros rápidos
+            document.querySelectorAll('.filtro-btn').forEach(function(btn) {
+                btn.addEventListener('click', function() {
+                    aplicarFiltroRapido(this.dataset.estado);
+                });
+            });
+            
+            // Selector de probabilidad
+            document.querySelectorAll('.prob-btn').forEach(function(btn) {
+                btn.addEventListener('click', function() {
+                    seleccionarProbabilidad(this.dataset.prob);
+                });
+            });
+            
+            // Pipeline etapas clickeable
+            document.addEventListener('click', function(e) {
+                const etapa = e.target.closest('.pipeline-etapa');
+                if (etapa) {
+                    const clases = Array.from(etapa.classList);
+                    const estadoClase = clases.find(c => ['prospectos', 'calificados', 'propuestas', 'negociacion', 'cerrados'].includes(c));
+                    if (estadoClase) {
+                        const estado = estadoClase.replace('s', '').replace('negociacion', 'negociacion');
+                        aplicarFiltroRapido(estado);
+                    }
+                }
+            });
+            
+            // Cerrar modales al hacer click fuera
+            document.querySelectorAll('.modal-overlay').forEach(function(modal) {
+                modal.addEventListener('click', function(e) {
+                    if (e.target === modal) {
+                        cerrarModalNegocio();
+                        cerrarModalClienteNegocio();
+                    }
+                });
+            });
+
+            console.log('✅ Event listeners de interfaz configurados');
+        }
+
+        // ==========================================
+        // FUNCIONES DE INTERFAZ
+        // ==========================================
+
+        async function inicializarInterfazNegocios() {
+            try {
+                console.log('🖥️ Inicializando interfaz de negocios...');
+                
+                if (window.negociosManager) {
+                    // Cargar datos iniciales
+                    await cargarDatosIniciales();
+                    notificationManager.success('Sistema de negocios listo');
+                } else {
+                    mostrarEstadoError();
+                }
+                
+            } catch (error) {
+                console.error('Error inicializando interfaz:', error);
+                notificationManager.error('Error iniciando interfaz');
+            }
+        }
+
+        async function cargarDatosIniciales() {
+            try {
+                // Actualizar métricas
+                await actualizarMetricas();
+                
+                // Cargar pipeline
+                await cargarPipeline();
+                
+                // Cargar lista de negocios
+                await cargarNegociosList();
+                
+                // Cargar clientes recientes
+                await cargarClientesRecientes();
+                
+                // Cargar actividades recientes
+                await cargarActividadesRecientes();
+                
+                // Cargar opciones de clientes para el select
+                await cargarOpcionesClientes();
+                
+            } catch (error) {
+                console.error('Error cargando datos iniciales:', error);
+            }
+        }
+
+        async function actualizarMetricas() {
+            if (!window.negociosManager || !window.obtenerMetricasNegocios) return;
+            
+            try {
+                const metricas = window.obtenerMetricasNegocios();
+                
+                // Actualizar valores
+                document.getElementById('ventasTotales').textContent = `Q ${metricas.ventasTotales.toLocaleString()}`;
+                document.getElementById('negociosActivos').textContent = metricas.negociosActivos;
+                document.getElementById('clientesActivos').textContent = metricas.clientesActivos;
+                document.getElementById('tasaConversion').textContent = `${metricas.tasaConversion}%`;
+                
+                // Actualizar tendencias
+                actualizarTendencia('cambioVentas', metricas.cambioVentas);
+                actualizarTendencia('cambioNegocios', metricas.cambioNegocios);
+                actualizarTendencia('cambioClientes', metricas.cambioClientes);
+                actualizarTendencia('cambioConversion', metricas.cambioConversion);
+                
+            } catch (error) {
+                console.error('Error actualizando métricas:', error);
+            }
+        }
+
+        function actualizarTendencia(elementId, valor) {
+            const elemento = document.getElementById(elementId);
+            if (!elemento) return;
+            
+            const isPositive = valor >= 0;
+            elemento.className = `metrica-tendencia ${isPositive ? 'positiva' : 'negativa'}`;
+            elemento.innerHTML = `
+                <i class="fas fa-arrow-${isPositive ? 'up' : 'down'}"></i>
+                <span>${isPositive ? '+' : ''}${valor}${elementId.includes('Conversion') ? '%' : ''}</span>
+            `;
+        }
+
+        async function cargarPipeline() {
+            const container = document.getElementById('pipelineVisual');
+            if (!container || !window.obtenerPipelineVisual) return;
+            
+            try {
+                const pipeline = window.obtenerPipelineVisual();
+                
+                container.innerHTML = pipeline.map(function(etapa) {
+                    return `
+                        <div class="pipeline-etapa ${etapa.clase}" data-estado="${etapa.clase.replace('s', '')}">
+                            <div class="etapa-icon" style="background: ${etapa.color};">
+                                <i class="fas ${etapa.icono}"></i>
+                            </div>
+                            <div class="etapa-cantidad">${etapa.cantidad}</div>
+                            <div class="etapa-nombre">${etapa.nombre}</div>
+                            <div class="etapa-valor">Q ${etapa.valor.toLocaleString()}</div>
+                        </div>
+                    `;
+                }).join('');
+                
+            } catch (error) {
+                console.error('Error cargando pipeline:', error);
+            }
+        }
+
+        async function cargarNegociosList() {
+            const container = document.getElementById('listaNegociosPipeline');
+            if (!container || !window.obtenerNegociosFiltrados) return;
+            
+            try {
+                const filtros = window.datosNegocios ? window.datosNegocios.filtrosActivos : {};
+                const negocios = window.obtenerNegociosFiltrados(filtros);
+                
+                if (negocios.length === 0) {
+                    container.innerHTML = `
+                        <div class="empty-state">
+                            <i class="fas fa-handshake"></i>
+                            <h4>No hay negocios</h4>
+                            <p>No se encontraron negocios con los filtros actuales</p>
+                            <button class="btn btn-primary" onclick="mostrarModalNegocio()">
+                                <i class="fas fa-plus"></i> Crear Primer Negocio
+                            </button>
+                        </div>
+                    `;
+                    return;
+                }
+                
+                container.innerHTML = negocios.map(function(negocio) {
+                    return `
+                        <div class="negocio-card ${negocio.estado}" onclick="verDetalleNegocio('${negocio.id}')">
+                            <div class="negocio-header">
+                                <div>
+                                    <h3 class="negocio-titulo">${negocio.nombre}</h3>
+                                    <div class="negocio-cliente">
+                                        <i class="fas fa-building"></i>
+                                        <span>${negocio.cliente}</span>
+                                    </div>
+                                </div>
+                                <div class="negocio-estado estado-${negocio.estado}">
+                                    ${negocio.estado}
+                                </div>
+                            </div>
+                            
+                            <div class="negocio-valor">Q ${negocio.valor.toLocaleString()}</div>
+                            
+                            <div class="negocio-detalles">
+                                <div class="detalle-item">
+                                    <i class="fas fa-calendar"></i>
+                                    <span>${formatearFecha(negocio.fechaCierre) || 'Sin fecha'}</span>
+                                </div>
+                                <div class="detalle-item">
+                                    <i class="fas fa-percentage"></i>
+                                    <span>${negocio.probabilidad}%</span>
+                                </div>
+                                <div class="detalle-item">
+                                    <i class="fas fa-clock"></i>
+                                    <span>${negocio.diasDesdeCreacion || 0} días</span>
+                                </div>
+                            </div>
+                            
+                            <div class="negocio-progreso">
+                                <div class="progreso-label">
+                                    <span>Progreso</span>
+                                    <span>${negocio.progreso || 0}%</span>
+                                </div>
+                                <div class="progreso-bar">
+                                    <div class="progreso-fill" style="width: ${negocio.progreso || 0}%"></div>
+                                </div>
+                            </div>
+                            
+                            <div class="negocio-acciones">
+                                <button class="btn-accion primary" onclick="event.stopPropagation(); editarNegocio('${negocio.id}')">
+                                    <i class="fas fa-edit"></i> Editar
+                                </button>
+                                <button class="btn-accion success" onclick="event.stopPropagation(); avanzarEtapa('${negocio.id}')">
+                                    <i class="fas fa-arrow-right"></i> Avanzar
+                                </button>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+                
+            } catch (error) {
+                console.error('Error cargando lista de negocios:', error);
+            }
+        }
+
+        async function cargarClientesRecientes() {
+            const container = document.getElementById('clientesRecientes');
+            if (!container || !window.obtenerClientesRecientesNegocios) return;
+            
+            try {
+                const clientes = window.obtenerClientesRecientesNegocios();
+                
+                if (clientes.length === 0) {
+                    container.innerHTML = `
+                        <div class="empty-state">
+                            <i class="fas fa-users"></i>
+                            <h4>Sin clientes</h4>
+                            <p>No hay clientes registrados</p>
+                        </div>
+                    `;
+                    return;
+                }
+                
+                container.innerHTML = clientes.map(function(cliente) {
+                    return `
+                        <div class="cliente-item" onclick="verDetalleCliente('${cliente.id}')">
+                            <div style="display: flex; align-items: center; gap: 1rem;">
+                                <div style="width: 40px; height: 40px; background: #667eea; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-weight: 600; flex-shrink: 0;">
+                                    ${cliente.nombre.charAt(0).toUpperCase()}
+                                </div>
+                                <div style="flex: 1; min-width: 0;">
+                                    <div style="font-weight: 600; color: #1f2937; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${cliente.nombre}</div>
+                                    <div style="font-size: 0.875rem; color: #6b7280; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${cliente.empresa}</div>
+                                </div>
+                            </div>
+                            <div style="text-align: right; flex-shrink: 0;">
+                                <div style="font-weight: 600; color: #667eea;">Q ${cliente.valorTotal.toLocaleString()}</div>
+                                <div style="font-size: 0.75rem; color: #6b7280;">Total ventas</div>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+                
+            } catch (error) {
+                console.error('Error cargando clientes recientes:', error);
+            }
+        }
+
+        async function cargarActividadesRecientes() {
+            const container = document.getElementById('actividadesRecientes');
+            if (!container || !window.obtenerActividadesRecientesNegocios) return;
+            
+            try {
+                const actividades = window.obtenerActividadesRecientesNegocios();
+                
+                if (actividades.length === 0) {
+                    container.innerHTML = `
+                        <div class="empty-state">
+                            <i class="fas fa-clock"></i>
+                            <h4>Sin actividades</h4>
+                            <p>No hay actividades recientes</p>
+                        </div>
+                    `;
+                    return;
+                }
+                
+                const iconos = {
+                    llamada: 'fa-phone',
+                    email: 'fa-envelope',
+                    reunion: 'fa-handshake',
+                    propuesta: 'fa-file-alt',
+                    nota: 'fa-sticky-note',
+                    sistema: 'fa-cog',
+                    venta: 'fa-shopping-cart'
+                };
+                
+                const colores = {
+                    llamada: '#3b82f6',
+                    email: '#8b5cf6',
+                    reunion: '#f59e0b',
+                    propuesta: '#22c55e',
+                    nota: '#6b7280',
+                    sistema: '#667eea',
+                    venta: '#22c55e'
+                };
+                
+                container.innerHTML = actividades.map(function(actividad) {
+                    return `
+                        <div class="actividad-item">
+                            <div style="display: flex; align-items: flex-start; gap: 1rem;">
+                                <div style="width: 32px; height: 32px; background: ${colores[actividad.tipo] || '#6b7280'}; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-size: 0.875rem; flex-shrink: 0;">
+                                    <i class="fas ${iconos[actividad.tipo] || 'fa-comment'}"></i>
+                                </div>
+                                <div style="flex: 1; min-width: 0;">
+                                    <div style="font-size: 0.875rem; color: #1f2937; margin-bottom: 0.25rem; overflow-wrap: break-word;">${actividad.descripcion}</div>
+                                    <div style="font-size: 0.75rem; color: #6b7280;">${actividad.tiempoRelativo}</div>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+                
+            } catch (error) {
+                console.error('Error cargando actividades recientes:', error);
+            }
+        }
+
+        async function cargarOpcionesClientes() {
+            const select = document.getElementById('clienteNegocio');
+            if (!select) return;
+            
+            try {
+                let clientes = [];
+                
+                if (window.obtenerListaClientesNegocios) {
+                    clientes = window.obtenerListaClientesNegocios();
+                }
+                
+                select.innerHTML = '<option value="">Seleccionar cliente...</option>' +
+                    clientes.map(function(cliente) {
+                        return `<option value="${cliente.id}">${cliente.displayName || cliente.nombre}</option>`;
+                    }).join('');
+                    
+            } catch (error) {
+                console.error('Error cargando opciones de clientes:', error);
+            }
+        }
+
+        // ==========================================
+        // FUNCIONES DE FILTROS Y ACCIONES
+        // ==========================================
+
+        function aplicarFiltroRapido(estado) {
+            // Actualizar filtros activos
+            document.querySelectorAll('.filtro-btn').forEach(function(btn) {
+                btn.classList.remove('active');
+            });
+            
+            const botonFiltro = document.querySelector(`[data-estado="${estado}"]`);
+            if (botonFiltro) {
+                botonFiltro.classList.add('active');
+            }
+            
+            // Aplicar filtro usando el sistema JavaScript
+            if (window.aplicarFiltrosNegocios) {
+                window.aplicarFiltrosNegocios({ estado });
+            }
+            
+            // Recargar lista
+            cargarNegociosList();
+            
+            console.log('🔍 Filtro aplicado:', estado || 'todos');
+        }
+
+        function editarNegocio(id) {
+            mostrarModalNegocio(id);
+        }
+
+        async function avanzarEtapa(id) {
+            try {
+                if (window.avanzarEtapaNegocio) {
+                    await window.avanzarEtapaNegocio(id);
+                    notificationManager.success('Etapa avanzada correctamente');
+                    await cargarDatosIniciales();
+                } else {
+                    notificationManager.warning('Sistema no disponible');
+                }
+            } catch (error) {
+                console.error('Error avanzando etapa:', error);
+                notificationManager.error('Error al avanzar etapa: ' + error.message);
+            }
+        }
+
+        function verDetalleNegocio(id) {
+            if (window.negociosManager && window.negociosManager.mostrarDetalle) {
+                window.negociosManager.mostrarDetalle(id);
+            } else {
+                notificationManager.info('Detalle próximamente disponible');
+            }
+        }
+
+        function verDetalleCliente(id) {
+            if (window.negociosManager && window.negociosManager.mostrarDetalleCliente) {
+                window.negociosManager.mostrarDetalleCliente(id);
+            } else {
+                notificationManager.info('Detalle de cliente próximamente disponible');
+            }
+        }
+
+        // ==========================================
+        // FUNCIONES DE MODAL
+        // ==========================================
+
+        function mostrarModalNegocio(negocioId) {
+            const modal = document.getElementById('modalNegocio');
+            const form = document.getElementById('formNegocio');
+            const titulo = document.getElementById('modalTitulo');
+            
+            // Limpiar formulario
+            form.reset();
+            
+            if (negocioId && window.obtenerNegocio) {
+                titulo.textContent = 'Editar Negocio';
+                const negocio = window.obtenerNegocio(negocioId);
+                if (negocio) {
+                    cargarDatosFormularioNegocio(negocio);
+                }
+            } else {
+                titulo.textContent = 'Nuevo Negocio';
+                seleccionarProbabilidad('75');
+            }
+            
+            modal.classList.add('show');
+        }
+
+        function cerrarModalNegocio() {
+            const modal = document.getElementById('modalNegocio');
+            modal.classList.remove('show');
+        }
+
+        function mostrarModalCliente() {
+            const modal = document.getElementById('modalCliente');
+            const form = document.getElementById('formCliente');
+            
+            form.reset();
+            modal.classList.add('show');
+        }
+
+        function cerrarModalClienteNegocio() {
+            const modal = document.getElementById('modalCliente');
+            modal.classList.remove('show');
+        }
+
+        function seleccionarProbabilidad(probabilidad) {
+            document.querySelectorAll('.prob-btn').forEach(function(btn) {
+                btn.classList.remove('active');
+            });
+            
+            const botonProb = document.querySelector(`[data-prob="${probabilidad}"]`);
+            if (botonProb) {
+                botonProb.classList.add('active');
+            }
+            
+            document.getElementById('probabilidadNegocio').value = probabilidad;
+        }
+
+        function cargarDatosFormularioNegocio(negocio) {
+            document.getElementById('nombreNegocio').value = negocio.nombre || '';
+            document.getElementById('clienteNegocio').value = negocio.clienteId || '';
+            document.getElementById('valorNegocio').value = negocio.valor || '';
+            document.getElementById('estadoNegocio').value = negocio.estado || 'prospecto';
+            document.getElementById('fechaCierreNegocio').value = negocio.fechaCierre || '';
+            document.getElementById('cantidadNegocio').value = negocio.cantidadEstimada || '';
+            document.getElementById('descripcionNegocio').value = negocio.descripcion || '';
+            document.getElementById('productosNegocio').value = negocio.productos || '';
+            document.getElementById('notasNegocio').value = negocio.notas || '';
+            
+            seleccionarProbabilidad((negocio.probabilidad || 75).toString());
+        }
+
+        // ==========================================
+        // FUNCIONES DE GUARDADO
+        // ==========================================
+
+        async function guardarNegocio(e) {
+            e.preventDefault();
+            
+            const submitBtn = e.target.querySelector('button[type="submit"]');
+            const originalText = submitBtn.innerHTML;
+            
+            try {
+                submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Guardando...';
+                submitBtn.disabled = true;
+                
+                const datos = obtenerDatosFormularioNegocio();
+                
+                if (window.guardarNegocioConFirebase) {
+                    await window.guardarNegocioConFirebase(datos);
+                    notificationManager.success('Negocio guardado correctamente');
+                    cerrarModalNegocio();
+                    await cargarDatosIniciales();
+                } else {
+                    throw new Error('Sistema no disponible');
+                }
+            } catch (error) {
+                console.error('Error guardando negocio:', error);
+                notificationManager.error('Error al guardar el negocio: ' + error.message);
+            } finally {
+                submitBtn.innerHTML = originalText;
+                submitBtn.disabled = false;
+            }
+        }
+
+        async function guardarCliente(e) {
+            e.preventDefault();
+            
+            const submitBtn = e.target.querySelector('button[type="submit"]');
+            const originalText = submitBtn.innerHTML;
+            
+            try {
+                submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Guardando...';
+                submitBtn.disabled = true;
+                
+                const datos = {
+                    nombre: document.getElementById('nombreCliente').value,
+                    empresa: document.getElementById('empresaCliente').value,
+                    telefono: document.getElementById('telefonoCliente').value,
+                    email: document.getElementById('emailCliente').value,
+                    direccion: document.getElementById('direccionCliente').value
+                };
+                
+                if (window.clientesManager && window.clientesManager.crearCliente) {
+                    await window.clientesManager.crearCliente(datos);
+                    notificationManager.success('Cliente creado correctamente');
+                    cerrarModalClienteNegocio();
+                    await cargarOpcionesClientes();
+                    await cargarClientesRecientes();
+                } else {
+                    notificationManager.warning('Sistema de clientes no disponible');
+                }
+            } catch (error) {
+                console.error('Error guardando cliente:', error);
+                notificationManager.error('Error al guardar el cliente: ' + error.message);
+            } finally {
+                submitBtn.innerHTML = originalText;
+                submitBtn.disabled = false;
+            }
+        }
+
+        function obtenerDatosFormularioNegocio() {
+            return {
+                nombre: document.getElementById('nombreNegocio').value,
+                clienteId: document.getElementById('clienteNegocio').value,
+                valor: parseFloat(document.getElementById('valorNegocio').value),
+                estado: document.getElementById('estadoNegocio').value,
+                fechaCierre: document.getElementById('fechaCierreNegocio').value,
+                descripcion: document.getElementById('descripcionNegocio').value,
+                probabilidad: parseInt(document.getElementById('probabilidadNegocio').value),
+                cantidadEstimada: parseFloat(document.getElementById('cantidadNegocio').value) || 0,
+                productos: document.getElementById('productosNegocio').value,
+                notas: document.getElementById('notasNegocio').value
+            };
+        }
+
+        // ==========================================
+        // FUNCIONES DE UTILIDAD
+        // ==========================================
+
+        function formatearFecha(fecha) {
+            if (!fecha) return 'Sin fecha';
+            try {
+                return new Date(fecha).toLocaleDateString('es-GT', {
+                    year: 'numeric',
+                    month: 'short',
+                    day: 'numeric'
+                });
+            } catch (error) {
+                return fecha;
+            }
+        }
+
+        function mostrarEstadoError() {
+            const containers = ['listaNegociosPipeline', 'clientesRecientes', 'actividadesRecientes'];
+            
+            containers.forEach(function(containerId) {
+                const container = document.getElementById(containerId);
+                if (container) {
+                    container.innerHTML = `
+                        <div class="empty-state">
+                            <i class="fas fa-exclamation-triangle"></i>
+                            <h4>Error del Sistema</h4>
+                            <p>No se pudo cargar el sistema de negocios</p>
+                            <button class="btn btn-primary" onclick="window.location.reload()">
+                                <i class="fas fa-refresh"></i> Recargar Página
+                            </button>
+                        </div>
+                    `;
+                }
+            });
+        }
+
+        // Hacer funciones globales para compatibilidad
+        window.editarNegocio = editarNegocio;
+        window.avanzarEtapa = avanzarEtapa;
+        window.verDetalleNegocio = verDetalleNegocio;
+        window.verDetalleCliente = verDetalleCliente;
+        window.mostrarModalNegocio = mostrarModalNegocio;
+        window.aplicarFiltroRapido = aplicarFiltroRapido;
+
+        // Manejo de errores globales
+        window.addEventListener('error', function(event) {
+            console.error('⚠️ Error global en interfaz negocios:', event.error);
+        });
+
+        window.addEventListener('unhandledrejection', function(event) {
+            console.error('⚠️ Promesa rechazada en interfaz negocios:', event.reason);
         });
     </script>
 </body>
