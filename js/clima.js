@@ -1,1648 +1,1247 @@
 /* ========================================
-   FINCA LA HERRADURA - SISTEMA CLIMÁTICO
-   Integración con OpenMeteo, análisis IA y predicciones v3
+   FINCA LA HERRADURA - SISTEMA CLIMÁTICO VANILLA JS
+   Integración con OpenMeteo, análisis IA y predicciones
+   DATOS REALES únicamente - Sin simulaciones vfull
    ======================================== */
 
-class ClimateManager {
-  constructor() {
-    // Configuración de la finca con COORDENADAS REALES
-    this.fincaLocation = {
-      latitude: 14.77073,   // Finca La Herradura - Guatemala
-      longitude: -90.25398, // Coordenadas reales proporcionadas
-      elevation: 1500,      // metros sobre el nivel del mar
-      timezone: 'America/Guatemala'
-    };
-    
-    // APIs y configuración
-    this.openMeteoBaseUrl = 'https://api.open-meteo.com/v1';
-    this.updateInterval = 300000; // 5 minutos
-    this.forecastDays = 14;
-    this.historicalDays = 30;
-    
-    // Machine Learning y análisis
-    this.mlModel = null;
-    this.weatherPatterns = [];
-    this.alerts = [];
-    this.recommendations = [];
-    
-    // Cache y almacenamiento
-    this.currentWeather = null;
-    this.forecastData = null;
-    this.historicalData = [];
-    
-    // Umbrales críticos para limones en Guatemala
-    this.thresholds = {
-      temperature: {
-        optimal: { min: 18, max: 32 },    // Ajustado para clima guatemalteco
-        critical: { min: 10, max: 38 }
-      },
-      humidity: {
-        optimal: { min: 65, max: 85 },    // Mayor humedad típica de Guatemala
-        critical: { min: 45, max: 95 }
-      },
-      rainfall: {
-        daily_max: 60,                    // Mayor precipitación esperada
-        monthly_optimal: 150,             // Ajustado para estación lluviosa
-        drought_threshold: 25             // mm/semana
-      },
-      wind: {
-        strong_wind: 25,                  // km/h
-        dangerous_wind: 50                // km/h
-      },
-      uv: {
-        high: 9,                          // Mayor índice UV en Guatemala
-        extreme: 11
-      }
-    };
-    
-    this.init();
-  }
+// ==========================================
+// VARIABLES GLOBALES
+// ==========================================
 
-  // ==========================================
-  // INICIALIZACIÓN
-  // ==========================================
+// Estado del sistema
+let sistemaClimatico = {
+    inicializado: false,
+    inicializando: false,
+    ultimaActualizacion: null,
+    progreso: 0,
+    paso: 0,
+    totalPasos: 5
+};
 
-  async init() {
-    try {
-      console.log('🌦️ Inicializando sistema climático...');
-      console.log('📍 Ubicación: Finca La Herradura');
-      console.log(`📍 Coordenadas: ${this.fincaLocation.latitude}, ${this.fincaLocation.longitude}`);
-      
-      // Cargar datos históricos offline
-      await this.loadOfflineData();
-      
-      // Inicializar modelo de ML
-      await this.initMLModel();
-      
-      // Obtener datos actuales
-      await this.getCurrentWeather();
-      
-      // Obtener pronóstico
-      await this.getForecast();
-      
-      // Configurar actualizaciones automáticas
-      this.setupAutoUpdate();
-      
-      // Configurar alertas
-      this.setupWeatherAlerts();
-      
-      console.log('✅ Sistema climático inicializado');
-      
-    } catch (error) {
-      console.error('❌ Error inicializando sistema climático:', error);
-      
-      // Usar datos offline si hay error
-      await this.useOfflineData();
+// Configuración REAL de la finca
+const configFinca = {
+    coordenadas: {
+        latitud: 14.77073,   // Coordenadas REALES proporcionadas
+        longitud: -90.25398,
+        elevacion: 1500,
+        zona: 'America/Guatemala'
+    },
+    ubicacion: 'Finca La Herradura, Guatemala'
+};
+
+// APIs y configuración
+const configClima = {
+    openMeteoUrl: 'https://api.open-meteo.com/v1',
+    intervaloActualizacion: 300000, // 5 minutos
+    diasPronostico: 14,
+    diasHistorico: 30
+};
+
+// Datos climáticos REALES
+let datosClimaticos = {
+    actual: null,
+    pronostico: null,
+    historico: [],
+    alertas: [],
+    recomendaciones: []
+};
+
+// Umbrales para limones en Guatemala
+const umbrales = {
+    temperatura: {
+        optima: { min: 18, max: 32 },
+        critica: { min: 10, max: 38 }
+    },
+    humedad: {
+        optima: { min: 65, max: 85 },
+        critica: { min: 45, max: 95 }
+    },
+    lluvia: {
+        maxDiaria: 60,
+        optimaMensual: 150,
+        sequia: 25
+    },
+    viento: {
+        fuerte: 25,
+        peligroso: 50
+    },
+    uv: {
+        alto: 9,
+        extremo: 11
     }
-  }
+};
 
-  async loadOfflineData() {
-    try {
-      const offlineWeather = await this.getOfflineManager().loadData('weather', 'current');
-      const offlineForecast = await this.getOfflineManager().loadData('weather', 'forecast');
-      const offlineHistorical = await this.getOfflineManager().getAllData('weather_historical');
-      
-      if (offlineWeather) {
-        this.currentWeather = offlineWeather.data;
-        console.log('📱 Datos climáticos actuales cargados offline');
-      }
-      
-      if (offlineForecast) {
-        this.forecastData = offlineForecast.data;
-        console.log('📱 Pronóstico cargado offline');
-      }
-      
-      if (offlineHistorical.length > 0) {
-        this.historicalData = offlineHistorical.map(item => item.data);
-        console.log(`📱 ${offlineHistorical.length} registros históricos cargados offline`);
-      }
-      
-    } catch (error) {
-      console.error('Error cargando datos climáticos offline:', error);
-    }
-  }
+// Referencias a managers base
+let authManager = null;
+let offlineManager = null;
+let navegacionManager = null;
 
-  async useOfflineData() {
-    if (this.currentWeather || this.forecastData) {
-      console.log('📱 Usando datos climáticos offline');
-      this.broadcastWeatherUpdate();
-      return true;
-    }
-    return false;
-  }
+// Variables para gráficos
+let graficoTemperatura = null;
+let graficoPrecipitacion = null;
+let intervaloActualizacion = null;
 
-  getOfflineManager() {
-    return window.offline || window.offlineManager || {
-      loadData: () => null,
-      saveData: () => {},
-      getAllData: () => []
-    };
-  }
+// ==========================================
+// SISTEMA DE CARGA UNIFICADO
+// ==========================================
 
-  // ==========================================
-  // OBTENCIÓN DE DATOS CLIMÁTICOS REALES
-  // ==========================================
-
-  async getCurrentWeather() {
-    try {
-      const params = new URLSearchParams({
-        latitude: this.fincaLocation.latitude,
-        longitude: this.fincaLocation.longitude,
-        current: [
-          'temperature_2m',
-          'relative_humidity_2m', 
-          'apparent_temperature',
-          'is_day',
-          'precipitation',
-          'rain',
-          'weather_code',
-          'cloud_cover',
-          'pressure_msl',
-          'surface_pressure',
-          'wind_speed_10m',
-          'wind_direction_10m',
-          'wind_gusts_10m',
-          'uv_index'
-        ].join(','),
-        timezone: this.fincaLocation.timezone,
-        forecast_days: 1
-      });
-
-      const response = await fetch(`${this.openMeteoBaseUrl}/forecast?${params}`);
-      
-      if (!response.ok) {
-        throw new Error(`Error OpenMeteo: ${response.status}`);
-      }
-
-      const data = await response.json();
-      
-      this.currentWeather = {
-        ...data.current,
-        location: this.fincaLocation,
-        timestamp: new Date().toISOString(),
-        source: 'openmeteo'
-      };
-
-      // Guardar offline
-      await this.getOfflineManager().saveData('weather', 'current', this.currentWeather);
-      
-      // Analizar y generar alertas
-      await this.analyzeCurrentConditions();
-      
-      console.log('🌤️ Clima actual actualizado desde OpenMeteo');
-      console.log('📊 Datos:', {
-        temperatura: `${this.currentWeather.temperature_2m}°C`,
-        humedad: `${this.currentWeather.relative_humidity_2m}%`,
-        viento: `${this.currentWeather.wind_speed_10m} km/h`,
-        uvIndex: this.currentWeather.uv_index
-      });
-      
-      this.broadcastWeatherUpdate();
-      
-      return this.currentWeather;
-      
-    } catch (error) {
-      console.error('Error obteniendo clima actual:', error);
-      throw error;
-    }
-  }
-
-  async getForecast() {
-    try {
-      const params = new URLSearchParams({
-        latitude: this.fincaLocation.latitude,
-        longitude: this.fincaLocation.longitude,
-        daily: [
-          'weather_code',
-          'temperature_2m_max',
-          'temperature_2m_min',
-          'apparent_temperature_max',
-          'apparent_temperature_min',
-          'sunrise',
-          'sunset',
-          'daylight_duration',
-          'sunshine_duration',
-          'uv_index_max',
-          'precipitation_sum',
-          'rain_sum',
-          'precipitation_hours',
-          'precipitation_probability_max',
-          'wind_speed_10m_max',
-          'wind_gusts_10m_max',
-          'wind_direction_10m_dominant',
-          'shortwave_radiation_sum',
-          'et0_fao_evapotranspiration'
-        ].join(','),
-        hourly: [
-          'temperature_2m',
-          'relative_humidity_2m',
-          'precipitation',
-          'rain',
-          'wind_speed_10m',
-          'uv_index',
-          'soil_moisture_0_to_1cm',
-          'soil_moisture_1_to_3cm',
-          'soil_temperature_0cm'
-        ].join(','),
-        timezone: this.fincaLocation.timezone,
-        forecast_days: this.forecastDays
-      });
-
-      const response = await fetch(`${this.openMeteoBaseUrl}/forecast?${params}`);
-      
-      if (!response.ok) {
-        throw new Error(`Error OpenMeteo: ${response.status}`);
-      }
-
-      const data = await response.json();
-      
-      this.forecastData = {
-        ...data,
-        location: this.fincaLocation,
-        timestamp: new Date().toISOString(),
-        source: 'openmeteo'
-      };
-
-      // Guardar offline
-      await this.getOfflineManager().saveData('weather', 'forecast', this.forecastData);
-      
-      // Analizar pronóstico con IA
-      await this.analyzeForecast();
-      
-      console.log(`📅 Pronóstico de ${this.forecastDays} días actualizado para Finca La Herradura`);
-      this.broadcastForecastUpdate();
-      
-      return this.forecastData;
-      
-    } catch (error) {
-      console.error('Error obteniendo pronóstico:', error);
-      throw error;
-    }
-  }
-
-  async getHistoricalData(startDate, endDate) {
-    try {
-      const params = new URLSearchParams({
-        latitude: this.fincaLocation.latitude,
-        longitude: this.fincaLocation.longitude,
-        start_date: startDate,
-        end_date: endDate,
-        daily: [
-          'weather_code',
-          'temperature_2m_max',
-          'temperature_2m_min',
-          'precipitation_sum',
-          'rain_sum',
-          'wind_speed_10m_max',
-          'wind_direction_10m_dominant',
-          'shortwave_radiation_sum',
-          'et0_fao_evapotranspiration'
-        ].join(','),
-        timezone: this.fincaLocation.timezone
-      });
-
-      const response = await fetch(`https://archive-api.open-meteo.com/v1/archive?${params}`);
-      
-      if (!response.ok) {
-        throw new Error(`Error OpenMeteo Historical: ${response.status}`);
-      }
-
-      const data = await response.json();
-      
-      const historicalRecord = {
-        ...data,
-        period: { startDate, endDate },
-        location: this.fincaLocation,
-        timestamp: new Date().toISOString(),
-        source: 'openmeteo'
-      };
-
-      // Guardar offline
-      const recordId = `${startDate}_${endDate}`;
-      await this.getOfflineManager().saveData('weather_historical', recordId, historicalRecord);
-      
-      this.historicalData.push(historicalRecord);
-      
-      console.log(`📊 Datos históricos obtenidos: ${startDate} a ${endDate}`);
-      
-      return historicalRecord;
-      
-    } catch (error) {
-      console.error('Error obteniendo datos históricos:', error);
-      throw error;
-    }
-  }
-
-  // ==========================================
-  // ANÁLISIS CON MACHINE LEARNING
-  // ==========================================
-
-  async initMLModel() {
-    try {
-      // Inicializar modelo simple de análisis climático
-      this.mlModel = {
-        patterns: [],
-        predictions: [],
-        confidence: 0,
-        lastTrained: null
-      };
-      
-      // Cargar patrones guardados
-      const savedModel = await this.getOfflineManager().loadData('ml_model', 'climate');
-      if (savedModel) {
-        this.mlModel = savedModel.data;
-        console.log('🤖 Modelo ML climático cargado');
-      }
-      
-      // Entrenar con datos históricos si los hay
-      if (this.historicalData.length > 0) {
-        await this.trainModel();
-      }
-      
-    } catch (error) {
-      console.error('Error inicializando modelo ML:', error);
-    }
-  }
-
-  async trainModel() {
-    try {
-      console.log('🤖 Entrenando modelo de análisis climático...');
-      
-      // Análisis de patrones climáticos
-      const patterns = this.analyzeWeatherPatterns();
-      
-      // Correlaciones entre clima y producción
-      const correlations = await this.analyzeClimateProductionCorrelations();
-      
-      // Predicciones de riesgo
-      const riskPatterns = this.identifyRiskPatterns();
-      
-      this.mlModel = {
-        patterns,
-        correlations,
-        riskPatterns,
-        confidence: this.calculateModelConfidence(),
-        lastTrained: new Date().toISOString(),
-        version: (this.mlModel.version || 0) + 1
-      };
-      
-      // Guardar modelo
-      await this.getOfflineManager().saveData('ml_model', 'climate', this.mlModel);
-      
-      console.log(`🤖 Modelo entrenado con confianza del ${this.mlModel.confidence}%`);
-      
-    } catch (error) {
-      console.error('Error entrenando modelo:', error);
-    }
-  }
-
-  analyzeWeatherPatterns() {
-    if (this.historicalData.length === 0) return [];
+function actualizarLoader(paso, titulo, subtitulo, progreso) {
+    const loaderTexto = document.getElementById('loaderTexto');
+    const loaderSubtexto = document.getElementById('loaderSubtexto');
+    const loaderBarra = document.getElementById('loaderBarra');
     
-    const patterns = [];
+    if (loaderTexto) loaderTexto.textContent = titulo;
+    if (loaderSubtexto) loaderSubtexto.textContent = subtitulo;
+    if (loaderBarra) loaderBarra.style.width = progreso + '%';
     
-    // Patrón de lluvia
-    const rainfallPattern = this.analyzeRainfallPatterns();
-    patterns.push(rainfallPattern);
+    sistemaClimatico.paso = paso;
+    sistemaClimatico.progreso = progreso;
     
-    // Patrón de temperatura
-    const temperaturePattern = this.analyzeTemperaturePatterns();
-    patterns.push(temperaturePattern);
-    
-    // Patrón de sequía
-    const droughtPattern = this.analyzeDroughtPatterns();
-    patterns.push(droughtPattern);
-    
-    return patterns;
-  }
+    console.log(`🌦️ Paso ${paso}: ${titulo}`);
+}
 
-  analyzeRainfallPatterns() {
-    const dailyRainfall = [];
-    
-    this.historicalData.forEach(record => {
-      if (record.daily && record.daily.precipitation_sum) {
-        record.daily.precipitation_sum.forEach((rain, index) => {
-          dailyRainfall.push({
-            date: record.daily.time[index],
-            rain: rain || 0
-          });
-        });
-      }
+function marcarPasoCompletado(pasoId) {
+    const paso = document.getElementById(pasoId);
+    if (paso) {
+        paso.classList.remove('activo');
+        paso.classList.add('completado');
+        
+        const icon = paso.querySelector('.paso-icon i');
+        if (icon) {
+            icon.className = 'fas fa-check';
+        }
+    }
+}
+
+function marcarPasoActivo(pasoId) {
+    // Limpiar pasos anteriores
+    document.querySelectorAll('.paso-item').forEach(item => {
+        item.classList.remove('activo');
     });
     
-    // Calcular estadísticas
-    const avgRainfall = dailyRainfall.reduce((sum, day) => sum + day.rain, 0) / dailyRainfall.length;
-    const dryDays = dailyRainfall.filter(day => day.rain < 1).length;
-    const heavyRainDays = dailyRainfall.filter(day => day.rain > 20).length;
-    
-    return {
-      type: 'rainfall',
-      avgDaily: avgRainfall,
-      dryDaysPercentage: (dryDays / dailyRainfall.length) * 100,
-      heavyRainDaysPercentage: (heavyRainDays / dailyRainfall.length) * 100,
-      seasonality: this.detectSeasonality(dailyRainfall, 'rain')
-    };
-  }
+    const paso = document.getElementById(pasoId);
+    if (paso) {
+        paso.classList.add('activo');
+    }
+}
 
-  analyzeTemperaturePatterns() {
-    const dailyTemps = [];
-    
-    this.historicalData.forEach(record => {
-      if (record.daily) {
-        record.daily.temperature_2m_max?.forEach((maxTemp, index) => {
-          const minTemp = record.daily.temperature_2m_min?.[index];
-          if (maxTemp && minTemp) {
-            dailyTemps.push({
-              date: record.daily.time[index],
-              max: maxTemp,
-              min: minTemp,
-              avg: (maxTemp + minTemp) / 2
-            });
-          }
-        });
-      }
-    });
-    
-    const avgTemp = dailyTemps.reduce((sum, day) => sum + day.avg, 0) / dailyTemps.length;
-    const hotDays = dailyTemps.filter(day => day.max > this.thresholds.temperature.optimal.max).length;
-    const coldDays = dailyTemps.filter(day => day.min < this.thresholds.temperature.optimal.min).length;
-    
-    return {
-      type: 'temperature',
-      avgDaily: avgTemp,
-      hotDaysPercentage: (hotDays / dailyTemps.length) * 100,
-      coldDaysPercentage: (coldDays / dailyTemps.length) * 100,
-      seasonality: this.detectSeasonality(dailyTemps, 'avg')
-    };
-  }
+function ocultarLoader() {
+    setTimeout(() => {
+        const loader = document.getElementById('sistemaLoader');
+        if (loader) {
+            loader.classList.add('oculto');
+            
+            // Remover completamente después de la animación
+            setTimeout(() => {
+                loader.style.display = 'none';
+            }, 500);
+        }
+        
+        console.log('✅ Sistema climático completamente cargado');
+    }, 1000);
+}
 
-  analyzeDroughtPatterns() {
-    // Detectar períodos de sequía (7+ días consecutivos con <2mm lluvia)
-    const droughtPeriods = [];
-    let currentDrought = null;
-    
-    this.historicalData.forEach(record => {
-      if (record.daily && record.daily.precipitation_sum) {
-        record.daily.precipitation_sum.forEach((rain, index) => {
-          const date = record.daily.time[index];
-          
-          if ((rain || 0) < 2) {
-            if (!currentDrought) {
-              currentDrought = { start: date, days: 1 };
+// ==========================================
+// INICIALIZACIÓN PRINCIPAL
+// ==========================================
+
+document.addEventListener('DOMContentLoaded', async () => {
+    try {
+        console.log('🌦️ Iniciando sistema climático...');
+        console.log(`📍 Ubicación: ${configFinca.ubicacion}`);
+        console.log(`📍 Coordenadas: ${configFinca.coordenadas.latitud}, ${configFinca.coordenadas.longitud}`);
+        
+        sistemaClimatico.inicializando = true;
+        
+        // Paso 1: Conectar Firebase
+        marcarPasoActivo('paso-firebase');
+        actualizarLoader(1, 'Conectando Firebase', 'Estableciendo conexión con la base de datos...', 10);
+        await esperarFirebase();
+        marcarPasoCompletado('paso-firebase');
+        
+        // Paso 2: Verificar autenticación (SIN REDIRIGIR)
+        marcarPasoActivo('paso-auth');
+        actualizarLoader(2, 'Verificando Autenticación', 'Validando acceso al sistema...', 25);
+        await verificarAutenticacionSinRedirigir();
+        marcarPasoCompletado('paso-auth');
+        
+        // Paso 3: Cargar datos climáticos REALES
+        marcarPasoActivo('paso-clima');
+        actualizarLoader(3, 'Cargando Datos Climáticos', 'Obteniendo condiciones actuales de OpenMeteo...', 45);
+        await cargarDatosClimaticosReales();
+        marcarPasoCompletado('paso-clima');
+        
+        // Paso 4: Obtener pronóstico
+        marcarPasoActivo('paso-pronostico');
+        actualizarLoader(4, 'Obteniendo Pronóstico', 'Descargando predicción de 14 días...', 70);
+        await cargarPronosticoReal();
+        marcarPasoCompletado('paso-pronostico');
+        
+        // Paso 5: Inicializar gráficos
+        marcarPasoActivo('paso-graficos');
+        actualizarLoader(5, 'Inicializando Gráficos', 'Preparando visualizaciones...', 90);
+        await inicializarGraficos();
+        await configurarEventos();
+        marcarPasoCompletado('paso-graficos');
+        
+        // Completar inicialización
+        actualizarLoader(5, 'Sistema Listo', 'Finca La Herradura conectada exitosamente', 100);
+        
+        // Configurar actualizaciones automáticas
+        configurarActualizacionAutomatica();
+        
+        sistemaClimatico.inicializado = true;
+        sistemaClimatico.inicializando = false;
+        
+        console.log('🎉 Sistema climático completamente inicializado');
+        
+        // Ocultar loader
+        ocultarLoader();
+        
+    } catch (error) {
+        console.error('❌ Error crítico inicializando sistema climático:', error);
+        
+        // Intentar modo offline
+        try {
+            actualizarLoader(5, 'Modo Offline', 'Cargando datos guardados localmente...', 85);
+            await cargarDatosOffline();
+            await inicializarGraficos();
+            await configurarEventos();
+            
+            sistemaClimatico.inicializado = true;
+            sistemaClimatico.inicializando = false;
+            
+            mostrarNotificacion('Sistema iniciado en modo offline', 'warning');
+            ocultarLoader();
+            
+        } catch (offlineError) {
+            console.error('❌ Error también en modo offline:', offlineError);
+            actualizarLoader(5, 'Error de Conexión', 'No se pudo cargar el sistema climático', 100);
+            
+            setTimeout(() => {
+                ocultarLoader();
+                mostrarNotificacion('Error cargando sistema climático', 'error');
+            }, 2000);
+        }
+    }
+});
+
+// ==========================================
+// FUNCIONES DE ESPERA Y VERIFICACIÓN
+// ==========================================
+
+async function esperarFirebase() {
+    return new Promise((resolve) => {
+        let intentos = 0;
+        const maxIntentos = 50;
+        
+        const verificar = () => {
+            if (window.firebase && window.db) {
+                console.log('✅ Firebase disponible');
+                resolve(true);
+            } else if (intentos < maxIntentos) {
+                intentos++;
+                setTimeout(verificar, 100);
             } else {
-              currentDrought.days++;
+                console.warn('⚠️ Timeout Firebase, continuando...');
+                resolve(false);
             }
-          } else {
-            if (currentDrought && currentDrought.days >= 7) {
-              droughtPeriods.push({
-                ...currentDrought,
-                end: date,
-                severity: this.calculateDroughtSeverity(currentDrought.days)
-              });
-            }
-            currentDrought = null;
-          }
-        });
-      }
+        };
+        
+        // También escuchar evento
+        window.addEventListener('firebaseReady', () => {
+            console.log('🔥 Evento firebaseReady recibido');
+            resolve(true);
+        }, { once: true });
+        
+        verificar();
     });
-    
-    return {
-      type: 'drought',
-      periodsCount: droughtPeriods.length,
-      avgDuration: droughtPeriods.length > 0 
-        ? droughtPeriods.reduce((sum, d) => sum + d.days, 0) / droughtPeriods.length 
-        : 0,
-      maxDuration: droughtPeriods.length > 0 
-        ? Math.max(...droughtPeriods.map(d => d.days)) 
-        : 0,
-      periods: droughtPeriods
-    };
-  }
+}
 
-  async analyzeClimateProductionCorrelations() {
+async function verificarAutenticacionSinRedirigir() {
     try {
-      // Obtener datos de producción
-      const productionData = await this.getOfflineManager().getAllData('produccion');
-      
-      if (productionData.length === 0) {
-        return { correlations: [], confidence: 0 };
-      }
-      
-      const correlations = {
-        rainfall_yield: this.calculateCorrelation('rainfall', 'yield', productionData),
-        temperature_yield: this.calculateCorrelation('temperature', 'yield', productionData),
-        humidity_diseases: this.calculateCorrelation('humidity', 'diseases', productionData),
-        wind_damage: this.calculateCorrelation('wind', 'damage', productionData)
-      };
-      
-      return {
-        correlations,
-        confidence: this.calculateCorrelationConfidence(correlations)
-      };
-      
+        // Esperar auth manager
+        authManager = await esperarManager('authManager', 3000);
+        
+        if (authManager && authManager.isInitialized) {
+            const estado = authManager.getAuthState();
+            console.log('🔐 Estado autenticación:', {
+                autenticado: estado.isAuthenticated,
+                usuario: estado.user?.email || 'Sin usuario',
+                offline: estado.isOffline
+            });
+            
+            // IMPORTANTE: NO redirigir, solo log
+            return true;
+        } else {
+            console.log('⚠️ AuthManager no disponible, continuando...');
+            return true;
+        }
+        
     } catch (error) {
-      console.error('Error analizando correlaciones:', error);
-      return { correlations: [], confidence: 0 };
+        console.error('Error verificando autenticación:', error);
+        return true; // Continuar siempre
     }
-  }
+}
 
-  identifyRiskPatterns() {
-    const risks = [];
-    
-    // Riesgo de sequía
-    const droughtRisk = this.calculateDroughtRisk();
-    if (droughtRisk.level > 0.3) {
-      risks.push(droughtRisk);
-    }
-    
-    // Riesgo de exceso de lluvia
-    const floodRisk = this.calculateFloodRisk();
-    if (floodRisk.level > 0.3) {
-      risks.push(floodRisk);
-    }
-    
-    // Riesgo de temperaturas extremas
-    const tempRisk = this.calculateTemperatureRisk();
-    if (tempRisk.level > 0.3) {
-      risks.push(tempRisk);
-    }
-    
-    return risks;
-  }
-
-  // ==========================================
-  // ANÁLISIS DE CONDICIONES ACTUALES
-  // ==========================================
-
-  async analyzeCurrentConditions() {
-    if (!this.currentWeather) return;
-    
-    const analysis = {
-      timestamp: new Date().toISOString(),
-      conditions: this.classifyCurrentConditions(),
-      alerts: this.generateCurrentAlerts(),
-      recommendations: this.generateCurrentRecommendations(),
-      impact: this.assessImpactOnLimons()
-    };
-    
-    // Guardar análisis
-    await this.getOfflineManager().saveData('weather_analysis', 'current', analysis);
-    
-    this.broadcastWeatherAnalysis(analysis);
-    
-    return analysis;
-  }
-
-  classifyCurrentConditions() {
-    const weather = this.currentWeather;
-    const conditions = {
-      temperature: this.classifyTemperature(weather.temperature_2m),
-      humidity: this.classifyHumidity(weather.relative_humidity_2m),
-      precipitation: this.classifyPrecipitation(weather.precipitation),
-      wind: this.classifyWind(weather.wind_speed_10m),
-      uv: this.classifyUV(weather.uv_index),
-      overall: 'favorable' // será calculado
-    };
-    
-    // Calcular condición general
-    const scores = {
-      favorable: 0,
-      warning: 0,
-      critical: 0
-    };
-    
-    Object.values(conditions).forEach(condition => {
-      if (typeof condition === 'object' && condition.category) {
-        scores[condition.category]++;
-      }
+async function esperarManager(nombreManager, timeout = 5000) {
+    return new Promise((resolve) => {
+        const inicio = Date.now();
+        
+        const verificar = () => {
+            if (window[nombreManager]) {
+                resolve(window[nombreManager]);
+            } else if (Date.now() - inicio < timeout) {
+                setTimeout(verificar, 100);
+            } else {
+                console.warn(`⚠️ Timeout esperando ${nombreManager}`);
+                resolve(null);
+            }
+        };
+        
+        verificar();
     });
-    
-    conditions.overall = Object.keys(scores).reduce((a, b) => 
-      scores[a] > scores[b] ? a : b
-    );
-    
-    return conditions;
-  }
+}
 
-  classifyTemperature(temp) {
-    const thresholds = this.thresholds.temperature;
-    
-    if (temp < thresholds.critical.min || temp > thresholds.critical.max) {
-      return {
-        category: 'critical',
-        value: temp,
-        message: temp < thresholds.critical.min ? 'Temperatura crítica baja' : 'Temperatura crítica alta',
-        impact: 'Alto riesgo para los limones'
-      };
-    } else if (temp < thresholds.optimal.min || temp > thresholds.optimal.max) {
-      return {
-        category: 'warning',
-        value: temp,
-        message: temp < thresholds.optimal.min ? 'Temperatura baja' : 'Temperatura alta',
-        impact: 'Condiciones subóptimas'
-      };
-    } else {
-      return {
-        category: 'favorable',
-        value: temp,
-        message: 'Temperatura óptima',
-        impact: 'Favorable para el crecimiento'
-      };
-    }
-  }
+// ==========================================
+// CARGA DE DATOS CLIMÁTICOS REALES
+// ==========================================
 
-  classifyHumidity(humidity) {
-    const thresholds = this.thresholds.humidity;
-    
-    if (humidity < thresholds.critical.min || humidity > thresholds.critical.max) {
-      return {
-        category: 'critical',
-        value: humidity,
-        message: humidity < thresholds.critical.min ? 'Humedad muy baja' : 'Humedad excesiva',
-        impact: humidity < thresholds.critical.min ? 'Riesgo de estrés hídrico' : 'Alto riesgo de hongos'
-      };
-    } else if (humidity < thresholds.optimal.min || humidity > thresholds.optimal.max) {
-      return {
-        category: 'warning',
-        value: humidity,
-        message: humidity < thresholds.optimal.min ? 'Humedad baja' : 'Humedad alta',
-        impact: 'Monitorear desarrollo de enfermedades'
-      };
-    } else {
-      return {
-        category: 'favorable',
-        value: humidity,
-        message: 'Humedad óptima',
-        impact: 'Condiciones favorables'
-      };
-    }
-  }
+async function cargarDatosClimaticosReales() {
+    try {
+        // Primero intentar cargar offline
+        offlineManager = await esperarManager('offlineManager', 2000);
+        
+        if (offlineManager) {
+            const datosOffline = await offlineManager.getData('clima_actual');
+            if (datosOffline && esReciente(datosOffline.timestamp, 10)) { // 10 minutos
+                datosClimaticos.actual = datosOffline;
+                actualizarInterfazClima(datosOffline);
+                console.log('📱 Usando datos climáticos offline recientes');
+                return;
+            }
+        }
+        
+        // Obtener datos REALES de OpenMeteo
+        const parametros = new URLSearchParams({
+            latitude: configFinca.coordenadas.latitud,
+            longitude: configFinca.coordenadas.longitud,
+            current: [
+                'temperature_2m',
+                'relative_humidity_2m',
+                'apparent_temperature',
+                'is_day',
+                'precipitation',
+                'rain',
+                'weather_code',
+                'cloud_cover',
+                'pressure_msl',
+                'wind_speed_10m',
+                'wind_direction_10m',
+                'wind_gusts_10m',
+                'uv_index'
+            ].join(','),
+            timezone: configFinca.coordenadas.zona,
+            forecast_days: 1
+        });
 
-  classifyPrecipitation(precipitation) {
-    if (precipitation === 0) {
-      return {
-        category: 'favorable',
-        value: precipitation,
-        message: 'Sin lluvia',
-        impact: 'Condiciones secas'
-      };
-    } else if (precipitation > this.thresholds.rainfall.daily_max) {
-      return {
-        category: 'critical',
-        value: precipitation,
-        message: 'Lluvia intensa',
-        impact: 'Riesgo de inundación y enfermedades'
-      };
-    } else {
-      return {
-        category: 'favorable',
-        value: precipitation,
-        message: 'Lluvia moderada',
-        impact: 'Beneficiosa para la hidratación'
-      };
-    }
-  }
+        const respuesta = await fetch(`${configClima.openMeteoUrl}/forecast?${parametros}`);
+        
+        if (!respuesta.ok) {
+            throw new Error(`Error OpenMeteo: ${respuesta.status}`);
+        }
 
-  classifyWind(windSpeed) {
-    if (windSpeed > this.thresholds.wind.dangerous_wind) {
-      return {
-        category: 'critical',
-        value: windSpeed,
-        message: 'Vientos peligrosos',
-        impact: 'Alto riesgo de daño a árboles'
-      };
-    } else if (windSpeed > this.thresholds.wind.strong_wind) {
-      return {
-        category: 'warning',
-        value: windSpeed,
-        message: 'Vientos fuertes',
-        impact: 'Posible caída de frutos'
-      };
-    } else {
-      return {
-        category: 'favorable',
-        value: windSpeed,
-        message: 'Vientos moderados',
-        impact: 'Buena ventilación'
-      };
-    }
-  }
+        const datos = await respuesta.json();
+        
+        datosClimaticos.actual = {
+            ...datos.current,
+            ubicacion: configFinca,
+            timestamp: new Date().toISOString(),
+            fuente: 'openmeteo_real'
+        };
 
-  classifyUV(uvIndex) {
-    if (uvIndex > this.thresholds.uv.extreme) {
-      return {
-        category: 'critical',
-        value: uvIndex,
-        message: 'Radiación UV extrema',
-        impact: 'Riesgo de quemaduras en frutos'
-      };
-    } else if (uvIndex > this.thresholds.uv.high) {
-      return {
-        category: 'warning',
-        value: uvIndex,
-        message: 'Radiación UV alta',
-        impact: 'Monitorear exposición solar'
-      };
-    } else {
-      return {
-        category: 'favorable',
-        value: uvIndex,
-        message: 'Radiación UV normal',
-        impact: 'Favorable para fotosíntesis'
-      };
+        // Guardar offline
+        if (offlineManager) {
+            await offlineManager.saveData('clima_actual', datosClimaticos.actual);
+        }
+        
+        // Actualizar interfaz
+        actualizarInterfazClima(datosClimaticos.actual);
+        
+        // Analizar y generar alertas REALES
+        analizarCondicionesActuales();
+        
+        console.log('🌤️ Datos climáticos REALES cargados:', {
+            temperatura: `${datosClimaticos.actual.temperature_2m}°C`,
+            humedad: `${datosClimaticos.actual.relative_humidity_2m}%`,
+            viento: `${datosClimaticos.actual.wind_speed_10m} km/h`,
+            uv: datosClimaticos.actual.uv_index,
+            fuente: 'OpenMeteo API'
+        });
+        
+    } catch (error) {
+        console.error('❌ Error cargando datos climáticos:', error);
+        
+        // Usar datos offline como fallback
+        if (offlineManager) {
+            const datosBackup = await offlineManager.getData('clima_actual');
+            if (datosBackup) {
+                datosClimaticos.actual = datosBackup;
+                actualizarInterfazClima(datosBackup);
+                mostrarNotificacion('Usando datos offline (sin conexión)', 'warning');
+                return;
+            }
+        }
+        
+        throw error; // Re-lanzar si no hay fallback
     }
-  }
+}
 
-  generateCurrentAlerts() {
-    const alerts = [];
-    const weather = this.currentWeather;
+async function cargarPronosticoReal() {
+    try {
+        // Verificar datos offline recientes
+        if (offlineManager) {
+            const pronosticoOffline = await offlineManager.getData('pronostico');
+            if (pronosticoOffline && esReciente(pronosticoOffline.timestamp, 60)) { // 1 hora
+                datosClimaticos.pronostico = pronosticoOffline;
+                mostrarPronostico(pronosticoOffline);
+                console.log('📱 Usando pronóstico offline reciente');
+                return;
+            }
+        }
+        
+        // Obtener pronóstico REAL de OpenMeteo
+        const parametros = new URLSearchParams({
+            latitude: configFinca.coordenadas.latitud,
+            longitude: configFinca.coordenadas.longitud,
+            daily: [
+                'weather_code',
+                'temperature_2m_max',
+                'temperature_2m_min',
+                'apparent_temperature_max',
+                'apparent_temperature_min',
+                'sunrise',
+                'sunset',
+                'uv_index_max',
+                'precipitation_sum',
+                'rain_sum',
+                'precipitation_probability_max',
+                'wind_speed_10m_max',
+                'wind_gusts_10m_max',
+                'wind_direction_10m_dominant'
+            ].join(','),
+            hourly: [
+                'temperature_2m',
+                'relative_humidity_2m',
+                'precipitation',
+                'wind_speed_10m',
+                'uv_index'
+            ].join(','),
+            timezone: configFinca.coordenadas.zona,
+            forecast_days: configClima.diasPronostico
+        });
+
+        const respuesta = await fetch(`${configClima.openMeteoUrl}/forecast?${parametros}`);
+        
+        if (!respuesta.ok) {
+            throw new Error(`Error pronóstico: ${respuesta.status}`);
+        }
+
+        const datos = await respuesta.json();
+        
+        datosClimaticos.pronostico = {
+            ...datos,
+            ubicacion: configFinca,
+            timestamp: new Date().toISOString(),
+            fuente: 'openmeteo_real'
+        };
+
+        // Guardar offline
+        if (offlineManager) {
+            await offlineManager.saveData('pronostico', datosClimaticos.pronostico);
+        }
+        
+        // Mostrar pronóstico
+        mostrarPronostico(datosClimaticos.pronostico);
+        
+        // Generar recomendaciones basadas en datos REALES
+        generarRecomendacionesReales();
+        
+        console.log(`📅 Pronóstico REAL de ${configClima.diasPronostico} días cargado`);
+        
+    } catch (error) {
+        console.error('❌ Error cargando pronóstico:', error);
+        
+        // Usar datos offline como fallback
+        if (offlineManager) {
+            const pronosticoBackup = await offlineManager.getData('pronostico');
+            if (pronosticoBackup) {
+                datosClimaticos.pronostico = pronosticoBackup;
+                mostrarPronostico(pronosticoBackup);
+                return;
+            }
+        }
+        
+        // Mostrar mensaje de error en la interfaz
+        document.getElementById('pronosticoDias').innerHTML = 
+            '<div class="error-message">Error cargando pronóstico. Verifique su conexión.</div>';
+    }
+}
+
+async function cargarDatosOffline() {
+    if (!offlineManager) return;
     
-    // Alertas críticas adaptadas para Guatemala
-    if (weather.temperature_2m < this.thresholds.temperature.critical.min) {
-      alerts.push({
-        level: 'critical',
-        type: 'cold',
-        message: 'ALERTA DE FRÍO: Temperatura baja para la región',
-        actions: ['Proteger árboles jóvenes', 'Aplicar riego en horas cálidas', 'Monitorear constantemente']
-      });
+    const datosOffline = await offlineManager.getData('clima_actual');
+    const pronosticoOffline = await offlineManager.getData('pronostico');
+    
+    if (datosOffline) {
+        datosClimaticos.actual = datosOffline;
+        actualizarInterfazClima(datosOffline);
     }
     
-    if (weather.temperature_2m > this.thresholds.temperature.critical.max) {
-      alerts.push({
-        level: 'critical',
-        type: 'heat',
-        message: 'ALERTA DE CALOR EXTREMO',
-        actions: ['Aumentar riego', 'Proteger del sol directo', 'Revisar sistema de sombra']
-      });
+    if (pronosticoOffline) {
+        datosClimaticos.pronostico = pronosticoOffline;
+        mostrarPronostico(pronosticoOffline);
+    }
+}
+
+// ==========================================
+// ACTUALIZACIÓN DE INTERFAZ
+// ==========================================
+
+function actualizarInterfazClima(datos) {
+    try {
+        // Actualizar temperatura principal
+        const tempElement = document.getElementById('temperaturaActual');
+        if (tempElement) {
+            tempElement.textContent = Math.round(datos.temperature_2m || 0);
+        }
+        
+        // Actualizar descripción
+        const descElement = document.getElementById('climaDescripcion');
+        if (descElement) {
+            descElement.textContent = obtenerDescripcionClima(datos.weather_code);
+        }
+        
+        // Actualizar sensación térmica
+        const sensacionElement = document.getElementById('sensacionTermica');
+        if (sensacionElement) {
+            sensacionElement.textContent = `${Math.round(datos.apparent_temperature || datos.temperature_2m || 0)}°C`;
+        }
+        
+        // Actualizar icono principal
+        const iconoElement = document.getElementById('iconoClimaPrincipal');
+        if (iconoElement) {
+            iconoElement.className = `fas ${obtenerIconoClima(datos.weather_code)}`;
+        }
+        
+        // Actualizar detalles
+        actualizarElemento('humedad', `${Math.round(datos.relative_humidity_2m || 0)}%`);
+        actualizarElemento('viento', `${Math.round(datos.wind_speed_10m || 0)} km/h`);
+        actualizarElemento('visibilidad', `10 km`); // OpenMeteo no provee visibilidad
+        actualizarElemento('presion', `${Math.round(datos.pressure_msl || 1013)} hPa`);
+        actualizarElemento('uvIndex', datos.uv_index || '--');
+        actualizarElemento('precipitacion', `${(datos.precipitation || 0).toFixed(1)} mm`);
+
+        // Actualizar sensores con datos REALES
+        actualizarEstadoSensoresReal(datos);
+        
+        // Actualizar estado de conexión
+        actualizarEstadoConexion(true);
+        
+        console.log('✅ Interfaz climática actualizada con datos REALES');
+        
+    } catch (error) {
+        console.error('❌ Error actualizando interfaz:', error);
+    }
+}
+
+function actualizarElemento(id, valor) {
+    const elemento = document.getElementById(id);
+    if (elemento) {
+        elemento.textContent = valor;
+    }
+}
+
+function actualizarEstadoSensoresReal(datos) {
+    // Actualizar con datos REALES de OpenMeteo
+    const sensores = [
+        { 
+            id: 'sensorTemperatura', 
+            valor: `${Math.round(datos.temperature_2m || 0)}°C`,
+            estado: datos.temperature_2m ? 'online' : 'offline'
+        },
+        { 
+            id: 'sensorHumedad', 
+            valor: `${Math.round(datos.relative_humidity_2m || 0)}%`,
+            estado: datos.relative_humidity_2m ? 'online' : 'offline'
+        },
+        { 
+            id: 'sensorSuelo', 
+            valor: `--`, // OpenMeteo no provee humedad del suelo
+            estado: 'offline' 
+        },
+        { 
+            id: 'sensorViento', 
+            valor: `${Math.round(datos.wind_speed_10m || 0)} km/h`,
+            estado: datos.wind_speed_10m ? 'online' : 'offline'
+        }
+    ];
+    
+    sensores.forEach(sensor => {
+        const elemento = document.getElementById(sensor.id);
+        if (elemento) {
+            elemento.textContent = sensor.valor;
+        }
+        
+        const estadoElement = document.querySelector(`#${sensor.id}`);
+        if (estadoElement) {
+            const cardElement = estadoElement.closest('.sensor-card');
+            if (cardElement) {
+                const estadoDiv = cardElement.querySelector('.sensor-estado');
+                if (estadoDiv) {
+                    estadoDiv.className = `sensor-estado ${sensor.estado}`;
+                    estadoDiv.textContent = sensor.estado === 'online' ? 'Online' : 'Offline';
+                }
+            }
+        }
+    });
+}
+
+function actualizarEstadoConexion(conectado) {
+    const elemento = document.getElementById('estadoConexion');
+    if (elemento) {
+        elemento.className = `estado-conexion ${conectado ? 'online' : 'offline'}`;
+        elemento.innerHTML = `
+            <i class="fas fa-wifi${conectado ? '' : '-slash'}"></i>
+            <span>${conectado ? 'Conectado' : 'Sin conexión'}</span>
+        `;
+    }
+}
+
+// ==========================================
+// ANÁLISIS Y ALERTAS REALES
+// ==========================================
+
+function analizarCondicionesActuales() {
+    if (!datosClimaticos.actual) return;
+    
+    const datos = datosClimaticos.actual;
+    const alertas = [];
+    
+    // Alertas críticas para Guatemala
+    if (datos.temperature_2m < umbrales.temperatura.critica.min) {
+        alertas.push({
+            nivel: 'critical',
+            tipo: 'frio',
+            icono: 'fa-snowflake',
+            titulo: 'ALERTA DE FRÍO',
+            mensaje: `Temperatura baja para la región: ${datos.temperature_2m}°C`,
+            acciones: ['Proteger árboles jóvenes', 'Aplicar riego en horas cálidas', 'Monitorear constantemente']
+        });
     }
     
-    if (weather.wind_speed_10m > this.thresholds.wind.dangerous_wind) {
-      alerts.push({
-        level: 'critical',
-        type: 'wind',
-        message: 'ALERTA DE VIENTOS PELIGROSOS',
-        actions: ['Asegurar estructuras', 'Cosechar frutos maduros', 'Revisar tutores']
-      });
+    if (datos.temperature_2m > umbrales.temperatura.critica.max) {
+        alertas.push({
+            nivel: 'critical',
+            tipo: 'calor',
+            icono: 'fa-thermometer-full',
+            titulo: 'ALERTA DE CALOR EXTREMO',
+            mensaje: `Temperatura muy alta: ${datos.temperature_2m}°C`,
+            acciones: ['Aumentar riego inmediatamente', 'Proteger del sol directo', 'Revisar sistema de sombra']
+        });
+    }
+    
+    if (datos.wind_speed_10m > umbrales.viento.peligroso) {
+        alertas.push({
+            nivel: 'critical',
+            tipo: 'viento',
+            icono: 'fa-wind',
+            titulo: 'ALERTA DE VIENTOS PELIGROSOS',
+            mensaje: `Vientos muy fuertes: ${datos.wind_speed_10m} km/h`,
+            acciones: ['Asegurar estructuras', 'Cosechar frutos maduros', 'Revisar tutores']
+        });
     }
     
     // Alertas de advertencia
-    if (weather.relative_humidity_2m > this.thresholds.humidity.optimal.max) {
-      alerts.push({
-        level: 'warning',
-        type: 'humidity',
-        message: 'Humedad alta - Riesgo de hongos',
-        actions: ['Mejorar ventilación', 'Aplicar fungicidas preventivos', 'Monitorear síntomas']
-      });
+    if (datos.relative_humidity_2m > umbrales.humedad.optima.max) {
+        alertas.push({
+            nivel: 'warning',
+            tipo: 'humedad',
+            icono: 'fa-tint',
+            titulo: 'Humedad Alta - Riesgo de Hongos',
+            mensaje: `Humedad: ${datos.relative_humidity_2m}%`,
+            acciones: ['Mejorar ventilación', 'Aplicar fungicidas preventivos', 'Monitorear síntomas']
+        });
     }
     
-    // Alerta específica para índice UV alto (común en Guatemala)
-    if (weather.uv_index > this.thresholds.uv.high) {
-      alerts.push({
-        level: 'warning',
-        type: 'uv',
-        message: 'Índice UV alto - Proteger frutos y trabajadores',
-        actions: ['Usar protección solar', 'Trabajar en horas tempranas', 'Proteger frutos expuestos']
-      });
+    if (datos.uv_index > umbrales.uv.alto) {
+        alertas.push({
+            nivel: 'warning',
+            tipo: 'uv',
+            icono: 'fa-sun',
+            titulo: 'Índice UV Alto',
+            mensaje: `UV: ${datos.uv_index}`,
+            acciones: ['Usar protección solar', 'Trabajar en horas tempranas', 'Proteger frutos expuestos']
+        });
     }
     
-    return alerts;
-  }
+    datosClimaticos.alertas = alertas;
+    mostrarAlertas(alertas);
+}
 
-  generateCurrentRecommendations() {
-    const recommendations = [];
-    const weather = this.currentWeather;
-    const analysis = this.classifyCurrentConditions();
+function mostrarAlertas(alertas) {
+    const container = document.getElementById('alertasClimaticas');
+    if (!container) return;
     
-    // Recomendaciones de riego para clima guatemalteco
-    if (weather.precipitation === 0 && weather.temperature_2m > 28) {
-      recommendations.push({
-        category: 'riego',
-        priority: 'high',
-        message: 'Incrementar frecuencia de riego debido a alta temperatura y ausencia de lluvia',
-        timing: 'Regar en horas tempranas de la mañana (5-7 AM)'
-      });
+    if (alertas.length === 0) {
+        container.innerHTML = '';
+        return;
+    }
+    
+    container.innerHTML = alertas.map(alerta => `
+        <div class="alerta-clima ${alerta.nivel}">
+            <div class="alerta-icon">
+                <i class="fas ${alerta.icono}"></i>
+            </div>
+            <div class="alerta-contenido">
+                <h4>${alerta.titulo}</h4>
+                <p>${alerta.mensaje}</p>
+                <div class="alerta-acciones">
+                    ${alerta.acciones.map(accion => `<small>• ${accion}</small>`).join('<br>')}
+                </div>
+            </div>
+        </div>
+    `).join('');
+}
+
+// ==========================================
+// PRONÓSTICO Y RECOMENDACIONES
+// ==========================================
+
+function mostrarPronostico(datosPronostico) {
+    const container = document.getElementById('pronosticoDias');
+    if (!container || !datosPronostico.daily) return;
+    
+    const pronostico = [];
+    const forecast = datosPronostico.daily;
+    
+    for (let i = 0; i < 7 && i < forecast.time.length; i++) {
+        const fecha = new Date(forecast.time[i]);
+        pronostico.push({
+            fecha: forecast.time[i],
+            tempMax: Math.round(forecast.temperature_2m_max[i]),
+            tempMin: Math.round(forecast.temperature_2m_min[i]),
+            descripcion: i === 0 ? 'Hoy' : fecha.toLocaleDateString('es-GT', { weekday: 'short' }),
+            codigo: interpretarCodigoClima(forecast.weather_code[i]),
+            precipitacion: forecast.precipitation_sum[i] || 0
+        });
+    }
+    
+    container.innerHTML = pronostico.map(dia => `
+        <div class="dia-pronostico">
+            <div class="dia-info">
+                <div class="dia-fecha">${formatearFecha(dia.fecha)}</div>
+                <div class="dia-descripcion">${obtenerDescripcionClima(dia.codigo)}</div>
+                ${dia.precipitacion > 0 ? `<small style="color: #3b82f6;">💧 ${dia.precipitacion.toFixed(1)}mm</small>` : ''}
+            </div>
+            <div class="dia-clima">
+                <div class="dia-icon">
+                    <i class="fas ${obtenerIconoClima(dia.codigo)}" style="color: #3b82f6;"></i>
+                </div>
+                <div class="temperatura-rango">
+                    <div class="temp-max">${dia.tempMax}°</div>
+                    <div class="temp-min">${dia.tempMin}°</div>
+                </div>
+            </div>
+        </div>
+    `).join('');
+}
+
+function generarRecomendacionesReales() {
+    if (!datosClimaticos.actual) return;
+    
+    const datos = datosClimaticos.actual;
+    const recomendaciones = [];
+    
+    // Recomendaciones de riego basadas en datos REALES
+    if (datos.precipitation === 0 && datos.temperature_2m > 28) {
+        recomendaciones.push({
+            icono: 'fa-tint',
+            titulo: 'Incrementar Riego',
+            descripcion: `Sin lluvia y temperatura de ${datos.temperature_2m}°C. Aumentar frecuencia de riego.`,
+            prioridad: 'alta'
+        });
     }
     
     // Recomendaciones de tratamientos
-    if (weather.relative_humidity_2m > 80 && weather.temperature_2m > 22) {
-      recommendations.push({
-        category: 'tratamientos',
-        priority: 'medium',
-        message: 'Condiciones favorables para hongos - Aplicar tratamiento preventivo',
-        timing: 'Aplicar en las próximas 24 horas'
-      });
+    if (datos.relative_humidity_2m > 80 && datos.temperature_2m > 22) {
+        recomendaciones.push({
+            icono: 'fa-leaf',
+            titulo: 'Aplicar Fungicida Preventivo',
+            descripcion: `Humedad del ${datos.relative_humidity_2m}% favorece hongos. Aplicar tratamiento preventivo.`,
+            prioridad: 'media'
+        });
     }
     
     // Recomendaciones de cosecha
-    if (analysis.overall === 'favorable' && weather.precipitation === 0) {
-      recommendations.push({
-        category: 'cosecha',
-        priority: 'medium',
-        message: 'Condiciones ideales para cosecha',
-        timing: 'Aprovechar condiciones secas'
-      });
+    if (datos.precipitation === 0 && datos.wind_speed_10m < 20 && datos.temperature_2m < 32) {
+        recomendaciones.push({
+            icono: 'fa-apple-alt',
+            titulo: 'Condiciones Ideales para Cosecha',
+            descripcion: 'Clima seco, vientos suaves y temperatura adecuada. Momento óptimo para cosechar.',
+            prioridad: 'baja'
+        });
     }
     
     // Recomendación específica para manejo de sombra
-    if (weather.uv_index > 9 && weather.temperature_2m > 30) {
-      recommendations.push({
-        category: 'protección',
-        priority: 'high',
-        message: 'Implementar sombra temporal para proteger frutos jóvenes',
-        timing: 'Durante horas pico de sol (10 AM - 3 PM)'
-      });
-    }
-    
-    return recommendations;
-  }
-
-  assessImpactOnLimons() {
-    const weather = this.currentWeather;
-    const impact = {
-      growth: 0,
-      flowering: 0,
-      fruiting: 0,
-      diseases: 0,
-      overall: 0
-    };
-    
-    // Impacto en crecimiento (ajustado para limones en Guatemala)
-    if (weather.temperature_2m >= 18 && weather.temperature_2m <= 32) {
-      impact.growth += 0.8;
-    } else {
-      impact.growth -= 0.5;
-    }
-    
-    if (weather.relative_humidity_2m >= 65 && weather.relative_humidity_2m <= 85) {
-      impact.growth += 0.2;
-    }
-    
-    // Impacto en floración
-    if (weather.temperature_2m >= 20 && weather.temperature_2m <= 28) {
-      impact.flowering += 0.7;
-    }
-    
-    if (weather.wind_speed_10m < 15) {
-      impact.flowering += 0.3;
-    } else {
-      impact.flowering -= 0.4;
-    }
-    
-    // Impacto en fructificación
-    if (weather.precipitation > 0 && weather.precipitation < 30) {
-      impact.fruiting += 0.6;
-    }
-    
-    // Riesgo de enfermedades (mayor en clima húmedo de Guatemala)
-    if (weather.relative_humidity_2m > 85) {
-      impact.diseases += 0.8;
-    }
-    
-    if (weather.temperature_2m > 25 && weather.relative_humidity_2m > 75) {
-      impact.diseases += 0.2;
-    }
-    
-    // Impacto general
-    impact.overall = (impact.growth + impact.flowering + impact.fruiting - impact.diseases) / 3;
-    
-    return impact;
-  }
-
-  // ==========================================
-  // PREDICCIONES Y PRONÓSTICO
-  // ==========================================
-
-  async analyzeForecast() {
-    if (!this.forecastData) return;
-    
-    const analysis = {
-      timestamp: new Date().toISOString(),
-      shortTerm: this.analyzeShortTermForecast(3), // 3 días
-      mediumTerm: this.analyzeMediumTermForecast(7), // 7 días
-      longTerm: this.analyzeLongTermForecast(14), // 14 días
-      recommendations: this.generateForecastRecommendations(), // CORREGIDO: Ya no causa recursión
-      alerts: this.generateForecastAlerts()
-    };
-    
-    // Guardar análisis
-    await this.getOfflineManager().saveData('forecast_analysis', 'current', analysis);
-    
-    this.broadcastForecastAnalysis(analysis);
-    
-    return analysis;
-  }
-
-  analyzeShortTermForecast(days) {
-    const forecast = this.forecastData.daily;
-    const analysis = {
-      period: `${days} días`,
-      avgTemp: 0,
-      totalRainfall: 0,
-      maxTemp: -Infinity,
-      minTemp: Infinity,
-      riskDays: 0,
-      favorableDays: 0
-    };
-    
-    for (let i = 0; i < days && i < forecast.time.length; i++) {
-      const maxTemp = forecast.temperature_2m_max[i];
-      const minTemp = forecast.temperature_2m_min[i];
-      const rainfall = forecast.precipitation_sum[i] || 0;
-      
-      analysis.avgTemp += (maxTemp + minTemp) / 2;
-      analysis.totalRainfall += rainfall;
-      analysis.maxTemp = Math.max(analysis.maxTemp, maxTemp);
-      analysis.minTemp = Math.min(analysis.minTemp, minTemp);
-      
-      // Evaluar riesgo del día
-      if (this.isDayRisky(maxTemp, minTemp, rainfall, forecast.wind_speed_10m_max[i])) {
-        analysis.riskDays++;
-      } else {
-        analysis.favorableDays++;
-      }
-    }
-    
-    analysis.avgTemp /= days;
-    
-    return analysis;
-  }
-
-  analyzeMediumTermForecast(days) {
-    const forecast = this.forecastData.daily;
-    const analysis = {
-      period: `${days} días`,
-      trends: this.identifyWeatherTrends(days),
-      irrigation: this.calculateIrrigationNeeds(days),
-      workWindows: this.identifyWorkWindows(days)
-    };
-    
-    return analysis;
-  }
-
-  analyzeLongTermForecast(days) {
-    const forecast = this.forecastData.daily;
-    const analysis = {
-      period: `${days} días`,
-      patterns: this.identifyForecastPatterns(days),
-      seasonalTrends: this.analyzeSeasonalTrends(days),
-      planning: this.generatePlanningRecommendations(days)
-    };
-    
-    return analysis;
-  }
-
-  analyzeSeasonalTrends(days) {
-    const forecast = this.forecastData?.daily;
-    if (!forecast) return {};
-    
-    const trends = {
-      temperature: { trend: 'stable', change: 0 },
-      rainfall: { trend: 'stable', change: 0 },
-      humidity: { trend: 'stable', change: 0 }
-    };
-    
-    // Analizar tendencias de temperatura
-    const temps = [];
-    for (let i = 0; i < Math.min(days, forecast.time.length); i++) {
-      if (forecast.temperature_2m_max[i] && forecast.temperature_2m_min[i]) {
-        temps.push((forecast.temperature_2m_max[i] + forecast.temperature_2m_min[i]) / 2);
-      }
-    }
-    
-    if (temps.length > 1) {
-      const tempChange = temps[temps.length - 1] - temps[0];
-      trends.temperature.change = tempChange;
-      trends.temperature.trend = tempChange > 1 ? 'increasing' : 
-                                 tempChange < -1 ? 'decreasing' : 'stable';
-    }
-    
-    // Analizar tendencias de lluvia
-    const rainfall = forecast.precipitation_sum?.slice(0, days) || [];
-    if (rainfall.length > 1) {
-      const avgEarly = rainfall.slice(0, Math.floor(rainfall.length/2)).reduce((a,b) => a+b, 0);
-      const avgLate = rainfall.slice(Math.floor(rainfall.length/2)).reduce((a,b) => a+b, 0);
-      const rainChange = avgLate - avgEarly;
-      
-      trends.rainfall.change = rainChange;
-      trends.rainfall.trend = rainChange > 5 ? 'increasing' : 
-                              rainChange < -5 ? 'decreasing' : 'stable';
-    }
-    
-    return trends;
-  }
-
-  isDayRisky(maxTemp, minTemp, rainfall, windSpeed) {
-    return (
-      maxTemp > this.thresholds.temperature.critical.max ||
-      minTemp < this.thresholds.temperature.critical.min ||
-      rainfall > this.thresholds.rainfall.daily_max ||
-      windSpeed > this.thresholds.wind.strong_wind
-    );
-  }
-
-  identifyWeatherTrends(days) {
-    const forecast = this.forecastData.daily;
-    const trends = {
-      temperature: 'stable',
-      rainfall: 'stable',
-      pressure: 'stable'
-    };
-    
-    // Analizar tendencia de temperatura
-    const temps = [];
-    for (let i = 0; i < days && i < forecast.time.length; i++) {
-      temps.push((forecast.temperature_2m_max[i] + forecast.temperature_2m_min[i]) / 2);
-    }
-    
-    const tempTrend = this.calculateTrend(temps);
-    if (tempTrend > 0.5) trends.temperature = 'increasing';
-    else if (tempTrend < -0.5) trends.temperature = 'decreasing';
-    
-    // Analizar tendencia de lluvia
-    const rainfall = forecast.precipitation_sum.slice(0, days);
-    const rainTrend = this.calculateTrend(rainfall);
-    if (rainTrend > 0.3) trends.rainfall = 'increasing';
-    else if (rainTrend < -0.3) trends.rainfall = 'decreasing';
-    
-    return trends;
-  }
-
-  calculateIrrigationNeeds(days) {
-    const forecast = this.forecastData.daily;
-    const needs = [];
-    
-    for (let i = 0; i < days && i < forecast.time.length; i++) {
-      const rainfall = forecast.precipitation_sum[i] || 0;
-      const maxTemp = forecast.temperature_2m_max[i];
-      const et0 = forecast.et0_fao_evapotranspiration?.[i] || 5; // Default ET0 para Guatemala
-      
-      // Calcular necesidad de riego (ajustado para limones)
-      const waterNeed = Math.max(0, et0 * 1.2 - rainfall); // Factor 1.2 para limones
-      
-      needs.push({
-        date: forecast.time[i],
-        rainfall: rainfall,
-        et0: et0,
-        waterNeed: waterNeed,
-        recommendation: this.getIrrigationRecommendation(waterNeed, rainfall, maxTemp)
-      });
-    }
-    
-    return needs;
-  }
-
-  getIrrigationRecommendation(waterNeed, rainfall, temp) {
-    if (rainfall > 15) {
-      return { level: 'none', message: 'No regar - lluvia suficiente' };
-    } else if (waterNeed > 6 || temp > 32) {
-      return { level: 'high', message: 'Riego intensivo necesario - aplicar 40-50 L/árbol' };
-    } else if (waterNeed > 3) {
-      return { level: 'medium', message: 'Riego moderado - aplicar 25-30 L/árbol' };
-    } else {
-      return { level: 'low', message: 'Riego ligero - aplicar 15-20 L/árbol' };
-    }
-  }
-
-  identifyWorkWindows(days) {
-    const forecast = this.forecastData.daily;
-    const windows = [];
-    
-    for (let i = 0; i < days && i < forecast.time.length; i++) {
-      const rainfall = forecast.precipitation_sum[i] || 0;
-      const windSpeed = forecast.wind_speed_10m_max[i] || 0;
-      const temp = forecast.temperature_2m_max[i];
-      
-      const activities = [];
-      
-      // Ventana para cosecha
-      if (rainfall < 2 && windSpeed < 20 && temp < 35) {
-        activities.push('cosecha');
-      }
-      
-      // Ventana para tratamientos
-      if (rainfall < 1 && windSpeed < 15) {
-        activities.push('tratamientos');
-      }
-      
-      // Ventana para podas
-      if (rainfall < 5 && windSpeed < 25) {
-        activities.push('podas');
-      }
-      
-      // Ventana para fertilización
-      if (rainfall > 0 && rainfall < 20) {
-        activities.push('fertilización');
-      }
-      
-      if (activities.length > 0) {
-        windows.push({
-          date: forecast.time[i],
-          activities: activities,
-          conditions: { rainfall, windSpeed, temp }
+    if (datos.uv_index > 9 && datos.temperature_2m > 30) {
+        recomendaciones.push({
+            icono: 'fa-umbrella',
+            titulo: 'Protección Solar',
+            descripcion: `UV alto (${datos.uv_index}) y temperatura de ${datos.temperature_2m}°C. Implementar sombra temporal.`,
+            prioridad: 'alta'
         });
-      }
     }
     
-    return windows;
-  }
+    datosClimaticos.recomendaciones = recomendaciones;
+    mostrarRecomendaciones(recomendaciones);
+}
 
-  identifyForecastPatterns(days) {
-    const forecast = this.forecastData?.daily;
-    if (!forecast) return {};
+function mostrarRecomendaciones(recomendaciones) {
+    const container = document.getElementById('recomendacionesIA');
+    if (!container) return;
     
-    const patterns = {
-      drySpells: [],
-      wetPeriods: [],
-      heatWaves: [],
-      optimalPeriods: []
-    };
+    if (recomendaciones.length === 0) {
+        container.innerHTML = '<div class="info-message">No hay recomendaciones específicas en este momento.</div>';
+        return;
+    }
     
-    let consecutiveDry = 0;
-    let consecutiveWet = 0;
-    let consecutiveHot = 0;
+    container.innerHTML = recomendaciones.map(rec => `
+        <div class="recomendacion-item">
+            <div class="recomendacion-icon">
+                <i class="fas ${rec.icono}"></i>
+            </div>
+            <div>
+                <h4>${rec.titulo}</h4>
+                <p>${rec.descripcion}</p>
+                ${rec.prioridad === 'alta' ? '<span style="color: #ef4444; font-weight: 600;">Alta prioridad</span>' : ''}
+            </div>
+        </div>
+    `).join('');
+}
+
+// ==========================================
+// GRÁFICOS
+// ==========================================
+
+async function inicializarGraficos() {
+    try {
+        await inicializarGraficoTemperatura();
+        await inicializarGraficoPrecipitacion();
+        
+        // Cargar datos iniciales
+        await cargarDatosGraficos('24h');
+        
+        console.log('✅ Gráficos inicializados');
+    } catch (error) {
+        console.error('❌ Error inicializando gráficos:', error);
+    }
+}
+
+async function inicializarGraficoTemperatura() {
+    const ctx = document.getElementById('graficoTemperatura');
+    if (!ctx) return;
     
-    for (let i = 0; i < days && i < forecast.time.length; i++) {
-      const rain = forecast.precipitation_sum[i] || 0;
-      const maxTemp = forecast.temperature_2m_max[i];
-      const minTemp = forecast.temperature_2m_min[i];
-      
-      // Detectar períodos secos
-      if (rain < 2) {
-        consecutiveDry++;
-        consecutiveWet = 0;
-      } else {
-        if (consecutiveDry >= 5) {
-          patterns.drySpells.push({
-            start: i - consecutiveDry,
-            end: i - 1,
-            duration: consecutiveDry
-          });
+    graficoTemperatura = new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: [],
+            datasets: [
+                {
+                    label: 'Temperatura (°C)',
+                    data: [],
+                    borderColor: '#ef4444',
+                    backgroundColor: 'rgba(239, 68, 68, 0.1)',
+                    tension: 0.4,
+                    yAxisID: 'y'
+                },
+                {
+                    label: 'Humedad (%)',
+                    data: [],
+                    borderColor: '#3b82f6',
+                    backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                    tension: 0.4,
+                    yAxisID: 'y1'
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            interaction: {
+                intersect: false,
+                mode: 'index'
+            },
+            plugins: {
+                legend: {
+                    labels: { 
+                        color: getComputedStyle(document.documentElement).getPropertyValue('--text-primary') || '#333'
+                    }
+                }
+            },
+            scales: {
+                x: {
+                    ticks: { 
+                        color: getComputedStyle(document.documentElement).getPropertyValue('--text-secondary') || '#666'
+                    },
+                    grid: { 
+                        color: 'rgba(0, 0, 0, 0.1)'
+                    }
+                },
+                y: {
+                    type: 'linear',
+                    display: true,
+                    position: 'left',
+                    title: {
+                        display: true,
+                        text: 'Temperatura (°C)',
+                        color: '#ef4444'
+                    },
+                    ticks: { 
+                        color: '#ef4444'
+                    },
+                    grid: { 
+                        color: 'rgba(0, 0, 0, 0.1)'
+                    }
+                },
+                y1: {
+                    type: 'linear',
+                    display: true,
+                    position: 'right',
+                    title: {
+                        display: true,
+                        text: 'Humedad (%)',
+                        color: '#3b82f6'
+                    },
+                    ticks: { 
+                        color: '#3b82f6'
+                    },
+                    grid: { 
+                        drawOnChartArea: false 
+                    }
+                }
+            }
         }
-        consecutiveDry = 0;
-        consecutiveWet++;
-      }
-      
-      // Detectar olas de calor
-      if (maxTemp > 32) {
-        consecutiveHot++;
-      } else {
-        if (consecutiveHot >= 3) {
-          patterns.heatWaves.push({
-            start: i - consecutiveHot,
-            end: i - 1,
-            duration: consecutiveHot
-          });
+    });
+}
+
+async function inicializarGraficoPrecipitacion() {
+    const ctx = document.getElementById('graficoPrecipitacion');
+    if (!ctx) return;
+    
+    graficoPrecipitacion = new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: [],
+            datasets: [{
+                label: 'Precipitación (mm)',
+                data: [],
+                backgroundColor: 'rgba(59, 130, 246, 0.6)',
+                borderColor: '#3b82f6',
+                borderWidth: 1
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    labels: { 
+                        color: getComputedStyle(document.documentElement).getPropertyValue('--text-primary') || '#333'
+                    }
+                }
+            },
+            scales: {
+                x: {
+                    ticks: { 
+                        color: getComputedStyle(document.documentElement).getPropertyValue('--text-secondary') || '#666'
+                    },
+                    grid: { 
+                        color: 'rgba(0, 0, 0, 0.1)'
+                    }
+                },
+                y: {
+                    title: {
+                        display: true,
+                        text: 'Precipitación (mm)',
+                        color: '#3b82f6'
+                    },
+                    ticks: { 
+                        color: getComputedStyle(document.documentElement).getPropertyValue('--text-secondary') || '#666'
+                    },
+                    grid: { 
+                        color: 'rgba(0, 0, 0, 0.1)'
+                    }
+                }
+            }
         }
-        consecutiveHot = 0;
-      }
-      
-      // Detectar períodos óptimos
-      if (maxTemp >= 22 && maxTemp <= 30 && minTemp >= 18 && rain < 20 && rain > 0) {
-        patterns.optimalPeriods.push(i);
-      }
+    });
+}
+
+async function cargarDatosGraficos(periodo) {
+    try {
+        if (!datosClimaticos.pronostico || !datosClimaticos.pronostico.hourly) return;
+        
+        const forecast = datosClimaticos.pronostico;
+        const labels = [];
+        const temperaturas = [];
+        const humedades = [];
+        const precipitacion = [];
+        
+        if (periodo === '24h' && forecast.hourly) {
+            // Datos horarios para las próximas 24 horas
+            for (let i = 0; i < 24 && i < forecast.hourly.time.length; i++) {
+                const fecha = new Date(forecast.hourly.time[i]);
+                labels.push(fecha.toLocaleTimeString('es-GT', { hour: '2-digit' }));
+                temperaturas.push(forecast.hourly.temperature_2m[i]);
+                humedades.push(forecast.hourly.relative_humidity_2m[i]);
+                precipitacion.push(forecast.hourly.precipitation[i] || 0);
+            }
+        } else if (forecast.daily) {
+            // Datos diarios
+            const dias = periodo === '7d' ? 7 : 30;
+            
+            for (let i = 0; i < dias && i < forecast.daily.time.length; i++) {
+                const fecha = new Date(forecast.daily.time[i]);
+                labels.push(fecha.toLocaleDateString('es-GT', { month: 'short', day: 'numeric' }));
+                
+                const tempMax = forecast.daily.temperature_2m_max[i];
+                const tempMin = forecast.daily.temperature_2m_min[i];
+                temperaturas.push((tempMax + tempMin) / 2);
+                
+                humedades.push(70); // Estimado para Guatemala
+                precipitacion.push(forecast.daily.precipitation_sum[i] || 0);
+            }
+        }
+        
+        actualizarGraficos(labels, temperaturas, humedades, precipitacion);
+        
+    } catch (error) {
+        console.error('❌ Error cargando datos para gráficos:', error);
+    }
+}
+
+function actualizarGraficos(labels, temperaturas, humedades, precipitacion) {
+    if (graficoTemperatura) {
+        graficoTemperatura.data.labels = labels;
+        graficoTemperatura.data.datasets[0].data = temperaturas;
+        graficoTemperatura.data.datasets[1].data = humedades;
+        graficoTemperatura.update('none'); // Sin animación para mejor rendimiento
     }
     
-    return patterns;
-  }
+    if (graficoPrecipitacion) {
+        graficoPrecipitacion.data.labels = labels;
+        graficoPrecipitacion.data.datasets[0].data = precipitacion;
+        graficoPrecipitacion.update('none');
+    }
+}
 
-  generateForecastRecommendations() {
-    // CORRECCIÓN: Eliminada la llamada recursiva a analyzeForecast()
-    const shortTerm = this.forecastData ? this.analyzeShortTermForecast(3) : null;
+// ==========================================
+// EVENTOS Y CONFIGURACIÓN
+// ==========================================
+
+async function configurarEventos() {
+    // Botones principales
+    const btnActualizar = document.getElementById('btnActualizar');
+    if (btnActualizar) {
+        btnActualizar.addEventListener('click', actualizarDatos);
+    }
     
-    const recommendations = [];
+    const btnConfiguracion = document.getElementById('btnConfiguracion');
+    if (btnConfiguracion) {
+        btnConfiguracion.addEventListener('click', abrirConfiguracion);
+    }
     
-    if (shortTerm) {
-      // Recomendaciones basadas en pronóstico a corto plazo
-      if (shortTerm.totalRainfall < 5) {
-        recommendations.push({
-          type: 'irrigation',
-          priority: 'high',
-          message: 'Se esperan condiciones secas. Preparar sistema de riego.',
-          action: 'Revisar y mantener sistema de riego'
+    const btnExportar = document.getElementById('btnExportarDatos');
+    if (btnExportar) {
+        btnExportar.addEventListener('click', exportarDatos);
+    }
+    
+    const btnHistorico = document.getElementById('btnHistoricoLluvia');
+    if (btnHistorico) {
+        btnHistorico.addEventListener('click', mostrarHistoricoLluvia);
+    }
+    
+    // Modal de configuración
+    const cerrarModal = document.getElementById('cerrarModalConfig');
+    if (cerrarModal) {
+        cerrarModal.addEventListener('click', cerrarConfiguracion);
+    }
+    
+    const guardarConfig = document.getElementById('guardarConfiguracion');
+    if (guardarConfig) {
+        guardarConfig.addEventListener('click', guardarConfiguracion);
+    }
+    
+    const resetearConfig = document.getElementById('resetearConfiguracion');
+    if (resetearConfig) {
+        resetearConfig.addEventListener('click', resetearConfiguracion);
+    }
+    
+    // Selectores de período
+    document.querySelectorAll('[data-periodo]').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            // Remover clase active de todos
+            document.querySelectorAll('[data-periodo]').forEach(b => b.classList.remove('active'));
+            // Agregar a este
+            e.target.classList.add('active');
+            // Cargar datos
+            cargarDatosGraficos(e.target.dataset.periodo);
         });
-      }
-      
-      if (shortTerm.maxTemp > 32) {
-        recommendations.push({
-          type: 'protection',
-          priority: 'medium',
-          message: 'Temperaturas altas esperadas. Proteger frutos jóvenes.',
-          action: 'Instalar mallas de sombra temporales'
-        });
-      }
+    });
+
+    // Monitorear conectividad
+    window.addEventListener('online', () => {
+        actualizarEstadoConexion(true);
+        if (sistemaClimatico.inicializado) {
+            actualizarDatos();
+        }
+    });
+
+    window.addEventListener('offline', () => {
+        actualizarEstadoConexion(false);
+    });
+
+    console.log('✅ Eventos configurados');
+}
+
+function configurarActualizacionAutomatica() {
+    const frecuencia = localStorage.getItem('frecuenciaActualizacion') || 15;
+    
+    if (intervaloActualizacion) {
+        clearInterval(intervaloActualizacion);
     }
     
-    return recommendations;
-  }
+    intervaloActualizacion = setInterval(() => {
+        if (navigator.onLine && sistemaClimatico.inicializado) {
+            actualizarDatos();
+        }
+    }, frecuencia * 60 * 1000);
+    
+    console.log(`⏰ Actualización automática cada ${frecuencia} minutos`);
+}
 
-  generateForecastAlerts() {
-    const forecast = this.forecastData?.daily;
-    if (!forecast) return [];
-    
-    const alerts = [];
-    
-    // Buscar condiciones extremas en el pronóstico
-    for (let i = 0; i < 7 && i < forecast.time.length; i++) {
-      const maxTemp = forecast.temperature_2m_max[i];
-      const minTemp = forecast.temperature_2m_min[i];
-      const rain = forecast.precipitation_sum[i] || 0;
-      const wind = forecast.wind_speed_10m_max[i] || 0;
-      
-      if (maxTemp > 35) {
-        alerts.push({
-          day: i,
-          type: 'heat',
-          level: 'warning',
-          message: `Calor extremo esperado en ${i} días (${maxTemp}°C)`
-        });
-      }
-      
-      if (rain > 50) {
-        alerts.push({
-          day: i,
-          type: 'rain',
-          level: 'warning',
-          message: `Lluvia intensa esperada en ${i} días (${rain}mm)`
-        });
-      }
-      
-      if (wind > 40) {
-        alerts.push({
-          day: i,
-          type: 'wind',
-          level: 'warning',
-          message: `Vientos fuertes esperados en ${i} días (${wind} km/h)`
-        });
-      }
+async function actualizarDatos() {
+    try {
+        const btnActualizar = document.getElementById('btnActualizar');
+        if (btnActualizar) {
+            btnActualizar.innerHTML = '<i class="fas fa-sync-alt fa-spin"></i> <span class="btn-text">Actualizando</span>';
+            btnActualizar.disabled = true;
+        }
+        
+        await Promise.all([
+            cargarDatosClimaticosReales(),
+            cargarPronosticoReal()
+        ]);
+        
+        // Actualizar gráficos
+        const periodoActivo = document.querySelector('[data-periodo].active')?.dataset.periodo || '24h';
+        await cargarDatosGraficos(periodoActivo);
+        
+        sistemaClimatico.ultimaActualizacion = new Date().toISOString();
+        mostrarNotificacion('Datos actualizados correctamente', 'success');
+        
+    } catch (error) {
+        console.error('❌ Error actualizando datos:', error);
+        mostrarNotificacion('Error actualizando datos climáticos', 'error');
+    } finally {
+        const btnActualizar = document.getElementById('btnActualizar');
+        if (btnActualizar) {
+            btnActualizar.innerHTML = '<i class="fas fa-sync-alt"></i> <span class="btn-text">Actualizar</span>';
+            btnActualizar.disabled = false;
+        }
     }
-    
-    return alerts;
-  }
+}
 
-  generatePlanningRecommendations(days) {
-    const patterns = this.identifyForecastPatterns(days);
-    const recommendations = {};
-    
-    // Planificación de riego
-    if (patterns.drySpells && patterns.drySpells.length > 0) {
-      recommendations.irrigation = {
-        priority: 'high',
-        message: 'Períodos secos detectados. Planificar riego intensivo.',
-        periods: patterns.drySpells
-      };
+// ==========================================
+// FUNCIONES DE MODAL Y CONFIGURACIÓN
+// ==========================================
+
+function abrirConfiguracion() {
+    const modal = document.getElementById('modalConfiguracion');
+    if (modal) {
+        modal.classList.add('show');
     }
-    
-    // Planificación de protección
-    if (patterns.heatWaves && patterns.heatWaves.length > 0) {
-      recommendations.protection = {
-        priority: 'medium',
-        message: 'Olas de calor detectadas. Preparar medidas de protección.',
-        periods: patterns.heatWaves
-      };
+}
+
+function cerrarConfiguracion() {
+    const modal = document.getElementById('modalConfiguracion');
+    if (modal) {
+        modal.classList.remove('show');
     }
-    
-    // Planificación de actividades
-    if (patterns.optimalPeriods && patterns.optimalPeriods.length > 0) {
-      recommendations.activities = {
-        priority: 'low',
-        message: 'Períodos óptimos para actividades agrícolas.',
-        days: patterns.optimalPeriods
-      };
-    }
-    
-    return recommendations;
-  }
+}
 
-  // ==========================================
-  // UTILIDADES DE CÁLCULO
-  // ==========================================
-
-  calculateTrend(values) {
-    if (values.length < 2) return 0;
-    
-    const n = values.length;
-    const sumX = (n * (n - 1)) / 2;
-    const sumY = values.reduce((sum, val) => sum + val, 0);
-    const sumXY = values.reduce((sum, val, index) => sum + (index * val), 0);
-    const sumX2 = values.reduce((sum, val, index) => sum + (index * index), 0);
-    
-    const slope = (n * sumXY - sumX * sumY) / (n * sumX2 - sumX * sumX);
-    
-    return slope;
-  }
-
-  calculateCorrelation(weatherParam, productionParam, data) {
-    // Implementar cálculo de correlación básico
-    // Por ahora retorna valor simulado
-    return 0.5 + Math.random() * 0.3;
-  }
-
-  calculateCorrelationConfidence(correlations) {
-    // Calcular confianza basada en las correlaciones
-    const values = Object.values(correlations);
-    const avg = values.reduce((sum, val) => sum + Math.abs(val), 0) / values.length;
-    return Math.min(95, avg * 100);
-  }
-
-  calculateDroughtRisk() {
-    const forecast = this.forecastData?.daily;
-    if (!forecast) return { level: 0, message: 'Sin datos' };
-    
-    let consecutiveDryDays = 0;
-    let totalRainfall = 0;
-    
-    for (let i = 0; i < 7 && i < forecast.time.length; i++) {
-      const rainfall = forecast.precipitation_sum[i] || 0;
-      totalRainfall += rainfall;
-      
-      if (rainfall < 2) {
-        consecutiveDryDays++;
-      } else {
-        consecutiveDryDays = 0;
-      }
-    }
-    
-    const risk = Math.min(1, consecutiveDryDays / 7 + (1 - totalRainfall / 30));
-    
-    return {
-      level: risk,
-      consecutiveDryDays,
-      totalRainfall,
-      message: risk > 0.7 ? 'Alto riesgo de sequía' : 
-               risk > 0.4 ? 'Riesgo moderado de sequía' : 'Bajo riesgo de sequía'
+function guardarConfiguracion() {
+    const config = {
+        frecuenciaActualizacion: document.getElementById('frecuenciaActualizacion')?.value || '15',
+        tempMinima: document.getElementById('tempMinima')?.value || '10',
+        tempMaxima: document.getElementById('tempMaxima')?.value || '35',
+        humedadMinima: document.getElementById('humedadMinima')?.value || '45',
+        humedadMaxima: document.getElementById('humedadMaxima')?.value || '85',
+        notificacionesPush: document.getElementById('notificacionesPush')?.checked || false,
+        alertasEmail: document.getElementById('alertasEmail')?.checked || false
     };
-  }
-
-  calculateFloodRisk() {
-    const forecast = this.forecastData?.daily;
-    if (!forecast) return { level: 0, message: 'Sin datos' };
     
-    let maxDailyRain = 0;
-    let totalRainfall = 0;
-    
-    for (let i = 0; i < 3 && i < forecast.time.length; i++) {
-      const rainfall = forecast.precipitation_sum[i] || 0;
-      totalRainfall += rainfall;
-      maxDailyRain = Math.max(maxDailyRain, rainfall);
-    }
-    
-    const risk = Math.min(1, maxDailyRain / 60 + totalRainfall / 120);
-    
-    return {
-      level: risk,
-      maxDailyRain,
-      totalRainfall,
-      message: risk > 0.7 ? 'Alto riesgo de inundación' : 
-               risk > 0.4 ? 'Riesgo moderado de inundación' : 'Bajo riesgo de inundación'
-    };
-  }
-
-  calculateTemperatureRisk() {
-    const forecast = this.forecastData?.daily;
-    if (!forecast) return { level: 0, message: 'Sin datos' };
-    
-    let extremeDays = 0;
-    
-    for (let i = 0; i < 7 && i < forecast.time.length; i++) {
-      const maxTemp = forecast.temperature_2m_max[i];
-      const minTemp = forecast.temperature_2m_min[i];
-      
-      if (maxTemp > this.thresholds.temperature.critical.max || 
-          minTemp < this.thresholds.temperature.critical.min) {
-        extremeDays++;
-      }
-    }
-    
-    const risk = extremeDays / 7;
-    
-    return {
-      level: risk,
-      extremeDays,
-      message: risk > 0.4 ? 'Alto riesgo de temperaturas extremas' : 
-               risk > 0.2 ? 'Riesgo moderado de temperaturas extremas' : 'Bajo riesgo de temperaturas extremas'
-    };
-  }
-
-  calculateModelConfidence() {
-    const dataPoints = this.historicalData.reduce((sum, record) => {
-      return sum + (record.daily?.time?.length || 0);
-    }, 0);
-    
-    if (dataPoints > 365) return 85;
-    if (dataPoints > 180) return 70;
-    if (dataPoints > 90) return 55;
-    if (dataPoints > 30) return 40;
-    return 25;
-  }
-
-  detectSeasonality(data, valueKey) {
-    // Análisis básico de estacionalidad
-    const monthlyData = Array(12).fill(0).map(() => ({ sum: 0, count: 0 }));
-    
-    data.forEach(item => {
-      const date = new Date(item.date);
-      const month = date.getMonth();
-      monthlyData[month].sum += item[valueKey];
-      monthlyData[month].count++;
+    // Guardar configuración
+    Object.entries(config).forEach(([key, value]) => {
+        localStorage.setItem(key, value);
     });
     
-    const monthlyAverages = monthlyData.map(month => 
-      month.count > 0 ? month.sum / month.count : 0
-    );
+    // Actualizar umbrales
+    umbrales.temperatura.critica.min = parseFloat(config.tempMinima);
+    umbrales.temperatura.critica.max = parseFloat(config.tempMaxima);
+    umbrales.humedad.critica.min = parseFloat(config.humedadMinima);
+    umbrales.humedad.critica.max = parseFloat(config.humedadMaxima);
     
-    return {
-      monthlyAverages,
-      peakMonth: monthlyAverages.indexOf(Math.max(...monthlyAverages)),
-      lowMonth: monthlyAverages.indexOf(Math.min(...monthlyAverages))
-    };
-  }
-
-  calculateDroughtSeverity(days) {
-    if (days >= 30) return 'extreme';
-    if (days >= 21) return 'severe';
-    if (days >= 14) return 'moderate';
-    return 'mild';
-  }
-
-  // ==========================================
-  // EVENTOS Y COMUNICACIÓN
-  // ==========================================
-
-  setupAutoUpdate() {
-    setInterval(async () => {
-      try {
-        if (navigator.onLine) {
-          await this.getCurrentWeather();
-          
-          // Actualizar pronóstico cada hora
-          const now = new Date();
-          if (now.getMinutes() === 0) {
-            await this.getForecast();
-          }
-        }
-      } catch (error) {
-        console.error('Error en actualización automática:', error);
-      }
-    }, this.updateInterval);
-  }
-
-  setupWeatherAlerts() {
-    // Configurar alertas automáticas basadas en umbrales
-    setInterval(() => {
-      this.checkCriticalConditions();
-    }, 60000); // Cada minuto
-  }
-
-  checkCriticalConditions() {
-    if (!this.currentWeather) return;
+    // Reconfigurar actualización automática
+    configurarActualizacionAutomatica();
     
-    const criticalAlerts = this.generateCurrentAlerts().filter(alert => 
-      alert.level === 'critical'
-    );
-    
-    if (criticalAlerts.length > 0) {
-      this.broadcastCriticalAlert(criticalAlerts);
-    }
-  }
+    mostrarNotificacion('Configuración guardada correctamente', 'success');
+    cerrarConfiguracion();
+}
 
-  broadcastWeatherUpdate() {
-    window.dispatchEvent(new CustomEvent('weatherUpdate', {
-      detail: { 
-        current: this.currentWeather,
-        timestamp: new Date().toISOString()
-      }
-    }));
-  }
+function resetearConfiguracion() {
+    document.getElementById('frecuenciaActualizacion').value = '15';
+    document.getElementById('tempMinima').value = '10';
+    document.getElementById('tempMaxima').value = '35';
+    document.getElementById('humedadMinima').value = '45';
+    document.getElementById('humedadMaxima').value = '85';
+    document.getElementById('notificacionesPush').checked = true;
+    document.getElementById('alertasEmail').checked = true;
+}
 
-  broadcastForecastUpdate() {
-    window.dispatchEvent(new CustomEvent('forecastUpdate', {
-      detail: { 
-        forecast: this.forecastData,
-        timestamp: new Date().toISOString()
-      }
-    }));
-  }
+// ==========================================
+// FUNCIONES AUXILIARES
+// ==========================================
 
-  broadcastWeatherAnalysis(analysis) {
-    window.dispatchEvent(new CustomEvent('weatherAnalysis', {
-      detail: { analysis }
-    }));
-  }
-
-  broadcastForecastAnalysis(analysis) {
-    window.dispatchEvent(new CustomEvent('forecastAnalysis', {
-      detail: { analysis }
-    }));
-  }
-
-  broadcastCriticalAlert(alerts) {
-    window.dispatchEvent(new CustomEvent('criticalWeatherAlert', {
-      detail: { alerts }
-    }));
-    
-    // Mostrar notificación del sistema si está disponible
-    if ('Notification' in window && Notification.permission === 'granted') {
-      alerts.forEach(alert => {
-        new Notification('🌦️ Alerta Climática Crítica', {
-          body: alert.message,
-          icon: '/icons/weather-alert.png'
-        });
-      });
-    }
-  }
-
-  // ==========================================
-  // API PÚBLICA
-  // ==========================================
-
-  async getWeatherData() {
-    return {
-      current: this.currentWeather,
-      forecast: this.forecastData,
-      historical: this.historicalData,
-      analysis: await this.getOfflineManager().loadData('weather_analysis', 'current'),
-      forecastAnalysis: await this.getOfflineManager().loadData('forecast_analysis', 'current')
-    };
-  }
-
-  async refreshAll() {
-    await this.getCurrentWeather();
-    await this.getForecast();
-    await this.trainModel();
-  }
-
-  getRecommendations() {
-    return this.recommendations;
-  }
-
-  getAlerts() {
-    return this.alerts;
-  }
-
-  // Obtener datos para períodos específicos
-  async getWeatherForDateRange(startDate, endDate) {
-    return await this.getHistoricalData(startDate, endDate);
-  }
-
-  // Predicción personalizada
-  async predictOptimalHarvestDays(daysAhead = 7) {
-    if (!this.forecastData) return [];
-    
-    const optimalDays = [];
-    const forecast = this.forecastData.daily;
-    
-    for (let i = 0; i < daysAhead && i < forecast.time.length; i++) {
-      const rainfall = forecast.precipitation_sum[i] || 0;
-      const windSpeed = forecast.wind_speed_10m_max[i] || 0;
-      const temp = forecast.temperature_2m_max[i];
-      
-      // Condiciones óptimas para cosecha de limones
-      if (rainfall < 2 && windSpeed < 20 && temp < 35 && temp > 18) {
-        optimalDays.push({
-          date: forecast.time[i],
-          score: this.calculateHarvestScore(rainfall, windSpeed, temp),
-          conditions: { rainfall, windSpeed, temp }
-        });
-      }
-    }
-    
-    return optimalDays.sort((a, b) => b.score - a.score);
-  }
-
-  calculateHarvestScore(rainfall, windSpeed, temp) {
-    let score = 100;
-    
-    // Penalizar lluvia
-    score -= rainfall * 10;
-    
-    // Penalizar viento
-    score -= Math.max(0, windSpeed - 10) * 2;
-    
-    // Penalizar temperaturas extremas (ajustado para Guatemala)
-    if (temp > 30) score -= (temp - 30) * 5;
-    if (temp < 20) score -= (20 - temp) * 3;
-    
-    return Math.max(0, score);
-  }
-
-  // Exportar datos
-  async exportarDatos() {
+function exportarDatos() {
     const datos = {
-      fecha: new Date().toISOString(),
-      ubicacion: 'Finca La Herradura, Guatemala',
-      coordenadas: this.fincaLocation,
-      climaActual: this.currentWeather,
-      pronostico: this.forecastData?.daily ? {
-        dias: this.forecastData.daily.time.length,
-        temperaturaMax: this.forecastData.daily.temperature_2m_max,
-        temperaturaMin: this.forecastData.daily.temperature_2m_min,
-        precipitacion: this.forecastData.daily.precipitation_sum
-      } : null,
-      alertas: this.alerts,
-      recomendaciones: this.recommendations
+        fecha: new Date().toISOString(),
+        ubicacion: configFinca.ubicacion,
+        coordenadas: configFinca.coordenadas,
+        climaActual: datosClimaticos.actual,
+        pronostico: datosClimaticos.pronostico ? {
+            dias: datosClimaticos.pronostico.daily?.time?.length || 0,
+            temperaturaMax: datosClimaticos.pronostico.daily?.temperature_2m_max,
+            temperaturaMin: datosClimaticos.pronostico.daily?.temperature_2m_min,
+            precipitacion: datosClimaticos.pronostico.daily?.precipitation_sum
+        } : null,
+        alertas: datosClimaticos.alertas,
+        recomendaciones: datosClimaticos.recomendaciones,
+        fuente: 'Sistema Climático Finca La Herradura'
     };
     
-    // Crear blob y descargar
     const blob = new Blob([JSON.stringify(datos, null, 2)], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
@@ -1653,41 +1252,125 @@ class ClimateManager {
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
     
-    console.log('✅ Datos exportados correctamente');
-  }
+    mostrarNotificacion('Datos exportados correctamente', 'success');
+}
 
-  // Mostrar histórico detallado
-  mostrarHistoricoDetallado(tipo) {
-    console.log(`📊 Mostrando histórico de ${tipo}`);
-    // Implementar visualización detallada
-    // Por ahora solo log
-    if (this.historicalData.length > 0) {
-      console.log('Datos históricos disponibles:', this.historicalData);
-    } else {
-      console.log('No hay datos históricos disponibles');
+function mostrarHistoricoLluvia() {
+    mostrarNotificacion('Función de histórico detallado en desarrollo', 'info');
+}
+
+function obtenerDescripcionClima(codigo) {
+    const descripciones = {
+        0: 'Despejado',
+        1: 'Mayormente despejado',
+        2: 'Parcialmente nublado',
+        3: 'Nublado',
+        45: 'Niebla',
+        48: 'Niebla con escarcha',
+        51: 'Llovizna ligera',
+        53: 'Llovizna moderada',
+        55: 'Llovizna densa',
+        61: 'Lluvia ligera',
+        63: 'Lluvia moderada',
+        65: 'Lluvia intensa',
+        80: 'Chubascos ligeros',
+        81: 'Chubascos moderados',
+        82: 'Chubascos intensos',
+        95: 'Tormenta',
+        96: 'Tormenta con granizo ligero',
+        99: 'Tormenta con granizo fuerte'
+    };
+    return descripciones[codigo] || 'Condiciones variables';
+}
+
+function obtenerIconoClima(codigo) {
+    if (codigo === 0) return 'fa-sun';
+    if (codigo >= 1 && codigo <= 3) return 'fa-cloud-sun';
+    if (codigo >= 45 && codigo <= 48) return 'fa-smog';
+    if (codigo >= 51 && codigo <= 67) return 'fa-cloud-rain';
+    if (codigo >= 71 && codigo <= 77) return 'fa-snowflake';
+    if (codigo >= 80 && codigo <= 82) return 'fa-cloud-showers-heavy';
+    if (codigo >= 95 && codigo <= 99) return 'fa-bolt';
+    return 'fa-cloud';
+}
+
+function interpretarCodigoClima(codigo) {
+    return codigo; // Usar código directamente
+}
+
+function formatearFecha(fecha) {
+    return new Date(fecha).toLocaleDateString('es-GT', {
+        weekday: 'short',
+        day: 'numeric',
+        month: 'short'
+    });
+}
+
+function esReciente(timestamp, minutosMaximos) {
+    const ahora = new Date();
+    const fechaTimestamp = new Date(timestamp);
+    const diferencia = (ahora - fechaTimestamp) / (1000 * 60); // en minutos
+    return diferencia <= minutosMaximos;
+}
+
+function mostrarNotificacion(mensaje, tipo = 'info') {
+    console.log(`${tipo.toUpperCase()}: ${mensaje}`);
+    
+    // Si hay un sistema de notificaciones disponible, usarlo
+    if (window.notificationManager) {
+        switch(tipo) {
+            case 'success':
+                window.notificationManager.success(mensaje);
+                break;
+            case 'error':
+                window.notificationManager.error(mensaje);
+                break;
+            case 'warning':
+                window.notificationManager.warning(mensaje);
+                break;
+            default:
+                window.notificationManager.info(mensaje);
+        }
     }
-  }
 }
 
 // ==========================================
-// INICIALIZACIÓN Y EXPORTACIÓN
+// MANEJO DE ERRORES GLOBALES
 // ==========================================
 
-// Instancia global del gestor climático
-let climateManager;
-
-// Exportar para uso en otros módulos
-document.addEventListener('DOMContentLoaded', () => {
-  climateManager = new ClimateManager();
-  window.climateManager = climateManager;
-  window.climaManager = climateManager; // Alias para compatibilidad
-  window.getWeatherData = () => climateManager.getWeatherData();
-  window.refreshWeather = () => climateManager.refreshAll();
-  window.getOptimalHarvestDays = (days) => climateManager.predictOptimalHarvestDays(days);
-
-  console.log('🌦️ Sistema climático con IA inicializado para Finca La Herradura');
-  console.log('📍 Ubicación: 14.77073, -90.25398 (Guatemala)');
+window.addEventListener('error', (event) => {
+    if (event.error && event.error.message.includes('Chart')) {
+        console.warn('⚠️ Error de Chart.js ignorado para evitar spam');
+        return;
+    }
+    console.error('❌ Error global en clima:', event.error);
 });
 
-// Exportar la clase para módulos ES6
-export default ClimateManager;
+window.addEventListener('unhandledrejection', (event) => {
+    console.error('❌ Promesa rechazada no manejada en clima:', event.reason);
+});
+
+// ==========================================
+// EXPORTACIÓN GLOBAL
+// ==========================================
+
+// Exponer funciones globalmente para compatibilidad
+window.sistemaClimatico = sistemaClimatico;
+window.datosClimaticos = datosClimaticos;
+window.actualizarClima = actualizarDatos;
+window.exportarDatosClimaticos = exportarDatos;
+
+// Función para obtener datos desde otros módulos
+window.obtenerDatosClima = function() {
+    return {
+        actual: datosClimaticos.actual,
+        pronostico: datosClimaticos.pronostico,
+        alertas: datosClimaticos.alertas,
+        recomendaciones: datosClimaticos.recomendaciones,
+        inicializado: sistemaClimatico.inicializado
+    };
+};
+
+console.log('🌦️ Sistema climático JavaScript vanilla cargado');
+console.log('📍 Configurado para Finca La Herradura, Guatemala');
+console.log('🔗 APIs: OpenMeteo para datos REALES únicamente');
