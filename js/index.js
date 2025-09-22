@@ -27,7 +27,7 @@ const configDashboard = {
 };
 
 // Referencias a managers base
-let authManager = null;
+let authManager = window.authManager || null;
 let offlineManager = null;
 let firebaseManager = null;
 let treeManager = null;
@@ -400,7 +400,8 @@ async function esperarFirebaseDashboard() {
 
 async function verificarAutenticacionDashboard() {
     try {
-        authManager = await esperarManager('authManager', 3000);
+        // Usar el authManager global en lugar de declarar uno nuevo
+        authManager = window.authManager;
         
         if (authManager && authManager.isInitialized) {
             const estado = authManager.getAuthState();
@@ -1392,3 +1393,4 @@ window.actualizarDashboard = function() {
 console.log('📊 Dashboard Inteligente JavaScript vanilla cargado');
 console.log('📍 Configurado para Finca La Herradura, Mixco, Guatemala');
 console.log('🔗 100% integrado con archivos base y datos REALES únicamente');
+
