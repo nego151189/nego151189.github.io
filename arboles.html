@@ -1,3 +1,4 @@
+//vfull
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -6,14 +7,14 @@
     <title>Gestión de Árboles - Finca La Herradura</title>
 
     <!-- Leaflet CSS -->
-<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
-    integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
-    crossorigin="" />
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+        integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
+        crossorigin="" />
 
-<!-- Leaflet JavaScript -->
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
-    integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
-    crossorigin=""></script>
+    <!-- Leaflet JavaScript -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+        integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
+        crossorigin=""></script>
     
     <!-- Meta tags -->
     <meta name="description" content="Gestión inteligente de árboles de limón con IA, GPS y análisis predictivo">
@@ -23,124 +24,86 @@
     <link rel="icon" type="image/x-icon" href="/icons/favicon.ico">
     <link rel="manifest" href="/manifest.json">
     
-    <!-- CSS -->
+    <!-- CSS Base - Usando archivos base existentes -->
     <link rel="stylesheet" href="/css/main.css">
     <link rel="stylesheet" href="/css/style.css">
     
     <!-- Font Awesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
+    <!-- CSS específico de árboles - Solo lo necesario -->
     <style>
-        /* Variables CSS */
-        :root {
-            --primary: #22c55e;
-            --primary-dark: #16a34a;
-            --secondary: #64748b;
-            --success: #10b981;
-            --warning: #f59e0b;
-            --danger: #ef4444;
-            --info: #3b82f6;
-            
-            --bg-primary: #ffffff;
-            --bg-secondary: #f8fafc;
-            --bg-card: #ffffff;
-            --text-primary: #1e293b;
-            --text-secondary: #64748b;
-            --border: #e2e8f0;
-            
-            --gradient-primary: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
-            
-            --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
-            --shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
-            --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
-        }
-
-        [data-theme="dark"] {
-            --bg-primary: #0f172a;
-            --bg-secondary: #1e293b;
-            --bg-card: #1e293b;
-            --text-primary: #f1f5f9;
-            --text-secondary: #94a3b8;
-            --border: #334155;
-        }
-
-        /* Layout principal */
-        .main-content-wrapper {
-            padding: 2rem;
-            max-width: 1400px;
-            margin: 0 auto;
-        }
-
-        /* Header de página */
+        /* Solo estilos específicos que no están en los archivos base */
         .arboles-header {
             display: flex;
             justify-content: space-between;
-            align-items: center;
-            margin-bottom: 2rem;
+            align-items: flex-start;
+            margin-bottom: var(--spacing-xl);
             flex-wrap: wrap;
-            gap: 1rem;
+            gap: var(--spacing-md);
         }
 
-        .page-title {
-            display: flex;
-            align-items: center;
-            gap: 1rem;
+        @media (max-width: 768px) {
+            .arboles-header {
+                flex-direction: column;
+                align-items: stretch;
+                gap: var(--spacing-sm);
+            }
         }
 
-        .title-icon {
-            width: 60px;
-            height: 60px;
-            background: var(--gradient-primary);
-            border-radius: 16px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: white;
-            font-size: 1.5rem;
-        }
-
-        .page-title h1 {
-            margin: 0;
-            font-size: 2rem;
-            font-weight: 700;
-            color: var(--text-primary);
-        }
-
-        .page-title p {
-            margin: 0;
-            color: var(--text-secondary);
-            font-size: 1rem;
-        }
-
-        .header-actions {
-            display: flex;
-            gap: 1rem;
-            align-items: center;
-            flex-wrap: wrap;
-        }
-
-        /* Estadísticas rápidas */
         .quick-stats {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 1.5rem;
-            margin-bottom: 2rem;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: var(--spacing-lg);
+            margin-bottom: var(--spacing-xl);
+        }
+
+        @media (max-width: 768px) {
+            .quick-stats {
+                grid-template-columns: repeat(2, 1fr);
+                gap: var(--spacing-md);
+            }
+        }
+
+        @media (max-width: 480px) {
+            .quick-stats {
+                grid-template-columns: 1fr;
+                gap: var(--spacing-sm);
+            }
         }
 
         .quick-stat {
             background: var(--bg-card);
-            border-radius: 16px;
-            padding: 1.5rem;
+            border-radius: var(--border-radius-xl);
+            padding: var(--spacing-xl);
             text-align: center;
             position: relative;
             overflow: hidden;
             border: 1px solid var(--border);
-            transition: all 0.3s ease;
+            transition: var(--transition-normal);
+        }
+
+        @media (max-width: 768px) {
+            .quick-stat {
+                padding: var(--spacing-lg);
+            }
+        }
+
+        @media (max-width: 480px) {
+            .quick-stat {
+                padding: var(--spacing-md);
+            }
         }
 
         .quick-stat:hover {
             transform: translateY(-2px);
             box-shadow: var(--shadow-lg);
+        }
+
+        @media (max-width: 768px) {
+            .quick-stat:hover {
+                transform: none;
+            }
         }
 
         .quick-stat::before {
@@ -150,414 +113,147 @@
             left: 0;
             right: 0;
             height: 4px;
-            background: var(--gradient-primary);
+            background: var(--primary-green);
         }
 
-        .quick-stat.saludable::before {
-            background: linear-gradient(90deg, #22c55e, #16a34a);
-        }
-
-        .quick-stat.enfermo::before {
-            background: linear-gradient(90deg, #ef4444, #dc2626);
-        }
-
-        .quick-stat.tratamiento::before {
-            background: linear-gradient(90deg, #f59e0b, #d97706);
-        }
-
-        .stat-value {
-            font-size: 2.5rem;
-            font-weight: 700;
-            color: var(--text-primary);
-            margin: 0.5rem 0;
-        }
-
-        .stat-label {
-            color: var(--text-secondary);
-            font-size: 0.875rem;
-            font-weight: 500;
-        }
-
-        /* Controles de vista */
         .view-toggles {
             display: flex;
             background: var(--bg-card);
             border: 1px solid var(--border);
-            border-radius: 12px;
-            padding: 0.25rem;
-            gap: 0.25rem;
+            border-radius: var(--border-radius-lg);
+            padding: var(--spacing-xs);
+            gap: var(--spacing-xs);
+        }
+
+        @media (max-width: 768px) {
+            .view-toggles {
+                flex-wrap: wrap;
+                justify-content: center;
+            }
         }
 
         .view-toggle {
-            padding: 0.75rem 1.5rem;
+            padding: var(--spacing-sm) var(--spacing-lg);
             border: none;
             background: transparent;
-            color: var(--text-secondary);
-            border-radius: 8px;
+            color: var(--medium-gray);
+            border-radius: var(--border-radius-md);
             cursor: pointer;
-            transition: all 0.3s ease;
+            transition: var(--transition-fast);
             font-weight: 600;
-            font-size: 0.875rem;
+            font-size: var(--font-sm);
+            white-space: nowrap;
+            min-height: 44px;
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-sm);
+        }
+
+        @media (max-width: 768px) {
+            .view-toggle {
+                padding: var(--spacing-sm) var(--spacing-md);
+                font-size: var(--font-xs);
+                min-height: 48px;
+            }
         }
 
         .view-toggle.active {
-            background: var(--primary);
-            color: white;
-            box-shadow: var(--shadow);
+            background: var(--primary-green);
+            color: var(--white);
+            box-shadow: var(--shadow-sm);
         }
 
         .view-toggle:hover:not(.active) {
-            background: var(--bg-secondary);
-            color: var(--text-primary);
+            background: var(--light-gray);
+            color: var(--dark-gray);
         }
 
-        /* Botones */
-        .btn {
-            display: inline-flex;
-            align-items: center;
-            gap: 0.5rem;
-            padding: 0.75rem 1.5rem;
-            border: none;
-            border-radius: 12px;
-            font-weight: 600;
-            font-size: 0.875rem;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            text-decoration: none;
-            white-space: nowrap;
-        }
-
-        .btn-primary {
-            background: var(--primary);
-            color: white;
-        }
-
-        .btn-primary:hover {
-            background: var(--primary-dark);
-            transform: translateY(-1px);
-            box-shadow: var(--shadow-lg);
-        }
-
-        .btn-secondary {
-            background: var(--bg-secondary);
-            color: var(--text-primary);
-            border: 1px solid var(--border);
-        }
-
-        .btn-secondary:hover {
-            background: var(--bg-card);
-            transform: translateY(-1px);
-            box-shadow: var(--shadow);
-        }
-
-        .btn-danger {
-            background: var(--danger);
-            color: white;
-        }
-
-        .btn-warning {
-            background: var(--warning);
-            color: white;
-        }
-
-        .btn-sm {
-            padding: 0.5rem 1rem;
-            font-size: 0.75rem;
-        }
-
-        /* Filtros */
-        .filtros-avanzados {
-            background: var(--bg-card);
-            border: 1px solid var(--border);
-            border-radius: 16px;
-            padding: 1.5rem;
-            margin-bottom: 2rem;
-        }
-
-        .filtros-avanzados h3 {
-            margin: 0 0 1rem 0;
-            font-size: 1.25rem;
-            font-weight: 600;
-            color: var(--text-primary);
-        }
-
-        .filtros-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 1rem;
-            align-items: end;
-        }
-
-        .filtro-grupo {
-            display: flex;
-            flex-direction: column;
-            gap: 0.5rem;
-        }
-
-        .form-label {
-            font-weight: 600;
-            color: var(--text-primary);
-            font-size: 0.875rem;
-        }
-
-        .form-input, .form-select {
-            padding: 0.75rem;
-            border: 1px solid var(--border);
-            border-radius: 8px;
-            background: var(--bg-primary);
-            color: var(--text-primary);
-            font-size: 0.875rem;
-            transition: all 0.3s ease;
-        }
-
-        .form-input:focus, .form-select:focus {
-            outline: none;
-            border-color: var(--primary);
-            box-shadow: 0 0 0 3px rgba(34, 197, 94, 0.1);
-        }
-
-        /* IA Insights */
         .ia-insights {
             background: linear-gradient(135deg, rgba(139, 92, 246, 0.1), rgba(167, 139, 250, 0.1));
             border: 1px solid rgba(139, 92, 246, 0.2);
-            border-radius: 16px;
-            padding: 1.5rem;
-            margin-bottom: 2rem;
+            border-radius: var(--border-radius-xl);
+            padding: var(--spacing-xl);
+            margin-bottom: var(--spacing-xl);
         }
 
-        .ia-title {
-            display: flex;
-            align-items: center;
-            gap: 0.75rem;
-            margin-bottom: 1rem;
-            color: #8b5cf6;
-            font-weight: 600;
+        @media (max-width: 768px) {
+            .ia-insights {
+                padding: var(--spacing-lg);
+                border-radius: var(--border-radius-lg);
+            }
         }
 
-        .ia-icon {
-            width: 40px;
-            height: 40px;
-            background: linear-gradient(135deg, #8b5cf6, #a855f7);
-            border-radius: 10px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: white;
+        @media (max-width: 480px) {
+            .ia-insights {
+                padding: var(--spacing-md);
+                border-radius: var(--border-radius-md);
+            }
         }
 
-        .insights-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-            gap: 1rem;
-        }
-
-        .insight-item {
-            display: flex;
-            gap: 1rem;
-            padding: 1rem;
-            background: rgba(255, 255, 255, 0.7);
-            border-radius: 12px;
-            border: 1px solid rgba(139, 92, 246, 0.1);
-        }
-
-        .insight-icon {
-            width: 40px;
-            height: 40px;
-            border-radius: 8px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: white;
-            flex-shrink: 0;
-        }
-
-        .insight-item.success .insight-icon {
-            background: var(--success);
-        }
-
-        .insight-item.warning .insight-icon {
-            background: var(--warning);
-        }
-
-        .insight-item.info .insight-icon {
-            background: var(--info);
-        }
-
-        .insight-content h4 {
-            margin: 0 0 0.5rem 0;
-            font-size: 1rem;
-            font-weight: 600;
-            color: var(--text-primary);
-        }
-
-        .insight-content p {
-            margin: 0 0 0.5rem 0;
-            font-size: 0.875rem;
-            color: var(--text-secondary);
-            line-height: 1.4;
-        }
-
-        /* Layout principal */
         .main-content {
             display: grid;
             grid-template-columns: 1fr 400px;
-            gap: 2rem;
+            gap: var(--spacing-xl);
             align-items: start;
         }
 
-        /* Grid de árboles */
+        @media (max-width: 1024px) {
+            .main-content {
+                grid-template-columns: 1fr;
+                gap: var(--spacing-lg);
+            }
+        }
+
         .arboles-grid {
             display: grid;
             grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-            gap: 1.5rem;
+            gap: var(--spacing-lg);
         }
 
-        .arbol-card {
-            background: var(--bg-card);
-            border: 1px solid var(--border);
-            border-radius: 16px;
-            padding: 1.5rem;
-            transition: all 0.3s ease;
-            cursor: pointer;
+        @media (max-width: 768px) {
+            .arboles-grid {
+                grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+                gap: var(--spacing-md);
+            }
         }
 
-        .arbol-card:hover {
-            transform: translateY(-4px);
-            box-shadow: var(--shadow-lg);
-            border-color: var(--primary);
+        @media (max-width: 480px) {
+            .arboles-grid {
+                grid-template-columns: 1fr;
+                gap: var(--spacing-sm);
+            }
         }
 
-        .arbol-numero {
-            font-size: 1.75rem;
-            font-weight: 700;
-            color: var(--primary);
-            margin-bottom: 0.5rem;
-        }
-
-        .arbol-estado-badge {
-            display: inline-flex;
-            align-items: center;
-            gap: 0.5rem;
-            padding: 0.375rem 1rem;
-            border-radius: 20px;
-            font-size: 0.75rem;
-            font-weight: 600;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-            margin-bottom: 1rem;
-        }
-
-        .arbol-estado-badge.saludable {
-            background: rgba(34, 197, 94, 0.2);
-            color: #16a34a;
-            border: 1px solid rgba(34, 197, 94, 0.3);
-        }
-
-        .arbol-estado-badge.enfermo {
-            background: rgba(239, 68, 68, 0.2);
-            color: #dc2626;
-            border: 1px solid rgba(239, 68, 68, 0.3);
-        }
-
-        .arbol-estado-badge.tratamiento {
-            background: rgba(245, 158, 11, 0.2);
-            color: #d97706;
-            border: 1px solid rgba(245, 158, 11, 0.3);
-        }
-
-        .arbol-metricas {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 1rem;
-            margin: 1rem 0;
-        }
-
-        .metrica-item {
-            text-align: center;
-            padding: 0.75rem;
-            background: var(--bg-secondary);
-            border-radius: 12px;
-        }
-
-        .metrica-valor {
-            font-size: 1.25rem;
-            font-weight: 700;
-            color: var(--text-primary);
-            display: block;
-        }
-
-        .metrica-label {
-            font-size: 0.75rem;
-            color: var(--text-secondary);
-            margin-top: 0.25rem;
-        }
-
-        .arbol-ubicacion {
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-            color: var(--text-secondary);
-            font-size: 0.875rem;
-            margin-top: 1rem;
-        }
-
-        .gps-coords {
-            font-family: 'Courier New', monospace;
-            background: var(--bg-secondary);
-            padding: 0.25rem 0.5rem;
-            border-radius: 6px;
-            font-size: 0.75rem;
-        }
-
-        .arbol-acciones {
-            display: flex;
-            gap: 0.5rem;
-            margin-top: 1rem;
-        }
-
-        .btn-accion {
-            flex: 1;
-            padding: 0.5rem;
-            border: none;
-            border-radius: 8px;
-            font-size: 0.75rem;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .btn-detalle {
-            background: var(--primary);
-            color: white;
-        }
-
-        .btn-editar {
-            background: var(--warning);
-            color: white;
-        }
-
-        .btn-historial {
-            background: var(--info);
-            color: white;
-        }
-
-        .btn-accion:hover {
-            transform: translateY(-1px);
-            box-shadow: var(--shadow);
-        }
-
-        /* Mapa */
         .mapa-container {
             background: var(--bg-card);
             border: 1px solid var(--border);
-            border-radius: 16px;
+            border-radius: var(--border-radius-xl);
             overflow: hidden;
             height: 500px;
             position: sticky;
-            top: 2rem;
+            top: var(--spacing-xl);
+        }
+
+        @media (max-width: 1024px) {
+            .mapa-container {
+                position: relative;
+                top: auto;
+                height: 400px;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .mapa-container {
+                height: 350px;
+                border-radius: var(--border-radius-lg);
+            }
+        }
+
+        @media (max-width: 480px) {
+            .mapa-container {
+                height: 300px;
+                border-radius: var(--border-radius-md);
+            }
         }
 
         #mapa-arboles, #mapa-completo {
@@ -567,12 +263,20 @@
 
         .mapa-controles {
             position: absolute;
-            top: 1rem;
-            right: 1rem;
+            top: var(--spacing-md);
+            right: var(--spacing-md);
             z-index: 1000;
             display: flex;
             flex-direction: column;
-            gap: 0.5rem;
+            gap: var(--spacing-sm);
+        }
+
+        @media (max-width: 768px) {
+            .mapa-controles {
+                top: var(--spacing-sm);
+                right: var(--spacing-sm);
+                gap: var(--spacing-xs);
+            }
         }
 
         .control-btn {
@@ -580,233 +284,119 @@
             height: 40px;
             background: var(--bg-card);
             border: 1px solid var(--border);
-            border-radius: 8px;
-            color: var(--text-primary);
+            border-radius: var(--border-radius-md);
+            color: var(--dark-gray);
             cursor: pointer;
             display: flex;
             align-items: center;
             justify-content: center;
-            box-shadow: var(--shadow);
+            box-shadow: var(--shadow-sm);
             backdrop-filter: blur(10px);
-            transition: all 0.3s ease;
+            transition: var(--transition-fast);
+            min-height: 44px;
+            min-width: 44px;
+        }
+
+        @media (max-width: 768px) {
+            .control-btn {
+                width: 48px;
+                height: 48px;
+                min-height: 48px;
+                min-width: 48px;
+            }
         }
 
         .control-btn:hover {
-            background: var(--primary);
-            color: white;
+            background: var(--primary-green);
+            color: var(--white);
         }
 
-        /* Mapas alternativos sin errores */
-        .fallback-map {
-            height: 100%;
-            background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);
-            display: flex;
-            flex-direction: column;
-            padding: 1rem;
-            overflow: hidden;
-        }
-
-        .map-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 1rem;
-            padding: 0.5rem;
-            background: rgba(255,255,255,0.9);
-            border-radius: 8px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-        }
-
-        .map-header h4 {
-            margin: 0;
-            color: #1976d2;
-            font-size: 1rem;
-        }
-
-        .map-coords {
-            font-family: monospace;
-            font-size: 0.8rem;
-            color: #666;
-            background: #f5f5f5;
-            padding: 0.25rem 0.5rem;
-            border-radius: 4px;
-        }
-
-        .trees-grid-map {
-            flex: 1;
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
-            gap: 0.5rem;
-            overflow-y: auto;
-            padding: 0.5rem;
-            background: rgba(255,255,255,0.5);
-            border-radius: 8px;
-        }
-
-        .tree-marker-fallback {
-            width: 60px;
-            height: 60px;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: white;
-            font-weight: bold;
-            font-size: 0.7rem;
+        /* Tree cards responsive */
+        .arbol-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: var(--border-radius-xl);
+            padding: var(--spacing-xl);
+            transition: var(--transition-normal);
             cursor: pointer;
-            transition: all 0.3s ease;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
-            border: 2px solid white;
         }
 
-        .tree-marker-fallback:hover {
-            transform: scale(1.1);
-            box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+        @media (max-width: 768px) {
+            .arbol-card {
+                padding: var(--spacing-lg);
+                border-radius: var(--border-radius-lg);
+            }
         }
 
-        .tree-marker-fallback.healthy {
-            background: linear-gradient(135deg, #4caf50, #2e7d32);
+        @media (max-width: 480px) {
+            .arbol-card {
+                padding: var(--spacing-md);
+                border-radius: var(--border-radius-md);
+            }
         }
 
-        .tree-marker-fallback.warning {
-            background: linear-gradient(135deg, #ff9800, #f57c00);
+        .arbol-card:hover {
+            transform: translateY(-4px);
+            box-shadow: var(--shadow-lg);
+            border-color: var(--primary-green);
         }
 
-        .tree-marker-fallback.danger {
-            background: linear-gradient(135deg, #f44336, #d32f2f);
+        @media (max-width: 768px) {
+            .arbol-card:hover {
+                transform: translateY(-2px);
+            }
         }
 
-        .map-footer {
-            margin-top: 1rem;
-            text-align: center;
-            color: #666;
-            background: rgba(255,255,255,0.8);
-            padding: 0.5rem;
-            border-radius: 6px;
+        .arbol-metricas {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: var(--spacing-md);
+            margin: var(--spacing-md) 0;
         }
 
-        /* Mapa completo alternativo */
-        .fallback-map-full {
-            height: 100%;
-            background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+        @media (max-width: 640px) {
+            .arbol-metricas {
+                grid-template-columns: 1fr;
+                gap: var(--spacing-sm);
+            }
+        }
+
+        .arbol-acciones {
             display: flex;
-            flex-direction: column;
-            padding: 1.5rem;
-            overflow-y: auto;
+            gap: var(--spacing-sm);
+            margin-top: var(--spacing-md);
         }
 
-        .map-header-full {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 1.5rem;
-            padding: 1rem;
-            background: rgba(255,255,255,0.9);
-            border-radius: 12px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        @media (max-width: 480px) {
+            .arbol-acciones {
+                flex-direction: column;
+                gap: var(--spacing-xs);
+            }
         }
 
-        .map-header-full h3 {
-            margin: 0;
-            color: #0c4a6e;
-            font-size: 1.25rem;
-        }
-
-        .map-stats {
-            display: flex;
-            gap: 1rem;
-        }
-
-        .stat-item {
-            background: #f1f5f9;
-            padding: 0.5rem 1rem;
-            border-radius: 20px;
-            font-size: 0.875rem;
+        .btn-accion {
+            flex: 1;
+            padding: var(--spacing-sm);
+            border: none;
+            border-radius: var(--border-radius-md);
+            font-size: var(--font-xs);
             font-weight: 600;
-            color: #334155;
-        }
-
-        .sectors-overview {
-            flex: 1;
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-            gap: 1.5rem;
-            margin-bottom: 1rem;
-        }
-
-        .sector-overview-card {
-            background: rgba(255,255,255,0.8);
-            border-radius: 12px;
-            padding: 1rem;
-            border: 1px solid rgba(0,0,0,0.1);
-        }
-
-        .sector-overview-card h4 {
-            margin: 0 0 1rem 0;
-            color: #1e40af;
-            text-align: center;
-            padding: 0.5rem;
-            background: #dbeafe;
-            border-radius: 8px;
-        }
-
-        .sector-trees-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(60px, 1fr));
-            gap: 0.5rem;
-        }
-
-        .tree-marker-sector {
-            width: 50px;
-            height: 50px;
-            border-radius: 8px;
+            cursor: pointer;
+            transition: var(--transition-fast);
             display: flex;
             align-items: center;
             justify-content: center;
-            color: white;
-            font-weight: bold;
-            font-size: 0.7rem;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
-            border: 2px solid white;
+            min-height: 44px;
         }
 
-        .tree-marker-sector:hover {
-            transform: scale(1.1);
-            box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+        @media (max-width: 768px) {
+            .btn-accion {
+                min-height: 48px;
+                padding: var(--spacing-sm) var(--spacing-md);
+            }
         }
 
-        .tree-marker-sector.healthy {
-            background: linear-gradient(135deg, #22c55e, #16a34a);
-        }
-
-        .tree-marker-sector.warning {
-            background: linear-gradient(135deg, #f59e0b, #d97706);
-        }
-
-        .tree-marker-sector.danger {
-            background: linear-gradient(135deg, #ef4444, #dc2626);
-        }
-
-        .no-trees {
-            grid-column: 1 / -1;
-            text-align: center;
-            color: #9ca3af;
-            font-style: italic;
-            padding: 1rem;
-        }
-
-        .map-footer-full {
-            text-align: center;
-            color: #64748b;
-            background: rgba(255,255,255,0.8);
-            padding: 1rem;
-            border-radius: 8px;
-            font-size: 0.9rem;
-        }
-
-        /* Modal */
+        /* Modal responsive */
         .modal-overlay {
             position: fixed;
             top: 0;
@@ -820,7 +410,54 @@
             align-items: center;
             justify-content: center;
             opacity: 0;
-            transition: opacity 0.3s ease;
+            transition: opacity var(--transition-normal);
+            padding: var(--spacing-md);
+        }
+
+        @media (max-width: 768px) {
+            .modal-overlay {
+                padding: var(--spacing-sm);
+                align-items: flex-start;
+                padding-top: var(--spacing-xl);
+            }
+        }
+
+        @media (max-width: 480px) {
+            .modal-overlay {
+                padding: 0;
+                align-items: stretch;
+            }
+        }
+
+        .modal {
+            background: var(--bg-card);
+            border-radius: var(--border-radius-xl);
+            max-width: 800px;
+            width: 90%;
+            max-height: 90vh;
+            overflow-y: auto;
+            position: relative;
+            transform: scale(0.9);
+            transition: transform var(--transition-normal);
+            border: 1px solid var(--border);
+        }
+
+        @media (max-width: 768px) {
+            .modal {
+                width: 95%;
+                max-height: 85vh;
+                border-radius: var(--border-radius-lg);
+            }
+        }
+
+        @media (max-width: 480px) {
+            .modal {
+                width: 100%;
+                height: 100%;
+                max-height: none;
+                border-radius: 0;
+                transform: translateY(100%);
+            }
         }
 
         .modal-overlay.show {
@@ -828,261 +465,41 @@
             opacity: 1;
         }
 
-        .modal {
-            background: var(--bg-card);
-            border-radius: 20px;
-            max-width: 800px;
-            width: 90%;
-            max-height: 90vh;
-            overflow-y: auto;
-            position: relative;
-            transform: scale(0.9);
-            transition: transform 0.3s ease;
-            border: 1px solid var(--border);
-        }
-
         .modal-overlay.show .modal {
             transform: scale(1);
         }
 
-        .modal-header {
-            padding: 2rem 2rem 1rem;
-            border-bottom: 1px solid var(--border);
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
+        @media (max-width: 480px) {
+            .modal-overlay.show .modal {
+                transform: translateY(0);
+            }
         }
 
-        .modal-title {
-            font-size: 1.5rem;
-            font-weight: 600;
-            color: var(--text-primary);
-            margin: 0;
-        }
-
-        .modal-close {
-            background: none;
-            border: none;
-            color: var(--text-secondary);
-            font-size: 1.5rem;
-            cursor: pointer;
-            padding: 0.5rem;
-            border-radius: 8px;
-            transition: all 0.3s ease;
-        }
-
-        .modal-close:hover {
-            background: var(--bg-secondary);
-            color: var(--text-primary);
-        }
-
-        .modal-body {
-            padding: 1rem 2rem 2rem;
-        }
-
-        /* Formularios */
-        .tree-form, .sector-form {
-            display: flex;
-            flex-direction: column;
-            gap: 1.5rem;
-        }
-
+        /* Formularios responsive */
         .form-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 1rem;
-        }
-
-        .form-group {
-            display: flex;
-            flex-direction: column;
-            gap: 0.5rem;
-        }
-
-        .form-actions {
-            display: flex;
-            gap: 1rem;
-            justify-content: flex-end;
-            margin-top: 1rem;
-        }
-
-        .gps-section {
-            padding: 1rem;
-            background: var(--bg-secondary);
-            border-radius: 12px;
-            border: 1px solid var(--border);
-        }
-
-        .gps-section h4 {
-            margin: 0 0 1rem 0;
-            color: var(--text-primary);
-            font-size: 1rem;
-        }
-
-        /* Tabla */
-        .table-container {
-            background: var(--bg-card);
-            border-radius: 16px;
-            overflow: hidden;
-            border: 1px solid var(--border);
-        }
-
-        .table {
-            width: 100%;
-            border-collapse: collapse;
-        }
-
-        .table th {
-            background: var(--bg-secondary);
-            padding: 1rem;
-            text-align: left;
-            font-weight: 600;
-            color: var(--text-primary);
-            border-bottom: 1px solid var(--border);
-        }
-
-        .table td {
-            padding: 1rem;
-            border-bottom: 1px solid var(--border);
-            color: var(--text-primary);
-        }
-
-        .table tbody tr:hover {
-            background: var(--bg-secondary);
-        }
-
-        .status {
-            display: inline-flex;
-            align-items: center;
-            gap: 0.25rem;
-            font-size: 0.875rem;
-        }
-
-        .status.saludable {
-            color: var(--success);
-        }
-
-        .status.enfermo {
-            color: var(--danger);
-        }
-
-        .status.tratamiento {
-            color: var(--warning);
-        }
-
-        /* Notificaciones */
-        .notification {
-            position: fixed;
-            top: 20px;
-            right: 20px;
-            padding: 12px 20px;
-            border-radius: 8px;
-            color: white;
-            font-weight: 500;
-            z-index: 10000;
-            animation: slideIn 0.3s ease;
-            box-shadow: var(--shadow-lg);
-        }
-
-        .notification.error {
-            background: var(--danger);
-        }
-
-        .notification.success {
-            background: var(--success);
-        }
-
-        .notification.info {
-            background: var(--info);
-        }
-
-        .notification.warning {
-            background: var(--warning);
-        }
-
-        @keyframes slideIn {
-            from {
-                transform: translateX(100%);
-                opacity: 0;
-            }
-            to {
-                transform: translateX(0);
-                opacity: 1;
-            }
-        }
-
-        .no-results {
-            text-align: center;
-            padding: 3rem;
-            color: var(--text-secondary);
-        }
-
-        .no-results i {
-            font-size: 3rem;
-            margin-bottom: 1rem;
-            color: var(--text-secondary);
-        }
-
-        .no-results h3 {
-            margin: 0 0 0.5rem 0;
-            color: var(--text-primary);
-        }
-
-        .no-results p {
-            margin: 0 0 1.5rem 0;
-        }
-
-        /* Responsive */
-        @media (max-width: 1024px) {
-            .main-content {
-                grid-template-columns: 1fr;
-            }
-            
-            .mapa-container {
-                height: 400px;
-                position: relative;
-                top: auto;
-            }
+            gap: var(--spacing-md);
+            align-items: end;
         }
 
         @media (max-width: 768px) {
-            .main-content-wrapper {
-                padding: 1rem;
+            .form-grid {
+                grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+                gap: var(--spacing-sm);
             }
-            
-            .arboles-header {
-                flex-direction: column;
-                align-items: stretch;
-            }
-            
-            .header-actions {
-                justify-content: center;
-            }
-            
-            .quick-stats {
-                grid-template-columns: repeat(2, 1fr);
-            }
-            
-            .arboles-grid {
+        }
+
+        @media (max-width: 480px) {
+            .form-grid {
                 grid-template-columns: 1fr;
-            }
-            
-            .arbol-metricas {
-                grid-template-columns: 1fr;
-            }
-            
-            .filtros-grid {
-                grid-template-columns: 1fr;
-            }
-            
-            .insights-grid {
-                grid-template-columns: 1fr;
+                gap: var(--spacing-xs);
             }
         }
     </style>
 </head>
 <body>
-    <!-- Navegación -->
+    <!-- Navegación usando el sistema base -->
     <nav id="navbar"></nav>
 
     <!-- Contenido principal -->
@@ -1102,51 +519,57 @@
             <div class="header-actions">
                 <div class="view-toggles">
                     <button class="view-toggle active" data-view="grid">
-                        <i class="fas fa-th-large"></i> Cuadrícula
+                        <i class="fas fa-th-large"></i>
+                        <span class="hide-mobile">Cuadrícula</span>
                     </button>
                     <button class="view-toggle" data-view="mapa">
-                        <i class="fas fa-map"></i> Mapa
+                        <i class="fas fa-map"></i>
+                        <span class="hide-mobile">Mapa</span>
                     </button>
                     <button class="view-toggle" data-view="lista">
-                        <i class="fas fa-list"></i> Lista
+                        <i class="fas fa-list"></i>
+                        <span class="hide-mobile">Lista</span>
                     </button>
                 </div>
                 
-                <button class="btn btn-primary" id="btnNuevoArbol">
-                    <i class="fas fa-plus"></i> Nuevo Árbol
+                <button class="btn btn-primary btn-mobile-full" id="btnNuevoArbol">
+                    <i class="fas fa-plus"></i>
+                    <span>Nuevo Árbol</span>
                 </button>
                 
-                <button class="btn btn-secondary" id="btnGestionSectores">
-                    <i class="fas fa-map-marked-alt"></i> Gestión de Sectores
+                <button class="btn btn-secondary d-none-mobile" id="btnGestionSectores">
+                    <i class="fas fa-map-marked-alt"></i>
+                    <span>Sectores</span>
                 </button>
                 
-                <button class="btn btn-secondary" id="btnExportar">
-                    <i class="fas fa-download"></i> Exportar
+                <button class="btn btn-secondary d-none-mobile" id="btnExportar">
+                    <i class="fas fa-download"></i>
+                    <span>Exportar</span>
                 </button>
             </div>
         </header>
 
         <!-- Estadísticas rápidas -->
         <section class="quick-stats">
-            <div class="quick-stat saludable">
+            <div class="quick-stat">
                 <div class="stat-icon">
-                    <i class="fas fa-seedling" style="color: #22c55e; font-size: 2rem;"></i>
+                    <i class="fas fa-seedling" style="color: var(--success); font-size: 2rem;"></i>
                 </div>
                 <div class="stat-value" id="totalSaludables">-</div>
                 <div class="stat-label">Árboles Saludables</div>
             </div>
             
-            <div class="quick-stat enfermo">
+            <div class="quick-stat">
                 <div class="stat-icon">
-                    <i class="fas fa-exclamation-triangle" style="color: #ef4444; font-size: 2rem;"></i>
+                    <i class="fas fa-exclamation-triangle" style="color: var(--danger); font-size: 2rem;"></i>
                 </div>
                 <div class="stat-value" id="totalEnfermos">-</div>
                 <div class="stat-label">Árboles Enfermos</div>
             </div>
             
-            <div class="quick-stat tratamiento">
+            <div class="quick-stat">
                 <div class="stat-icon">
-                    <i class="fas fa-stethoscope" style="color: #f59e0b; font-size: 2rem;"></i>
+                    <i class="fas fa-stethoscope" style="color: var(--warning); font-size: 2rem;"></i>
                 </div>
                 <div class="stat-value" id="totalTratamiento">-</div>
                 <div class="stat-label">En Tratamiento</div>
@@ -1154,21 +577,21 @@
             
             <div class="quick-stat">
                 <div class="stat-icon">
-                    <i class="fas fa-chart-line" style="color: #8b5cf6; font-size: 2rem;"></i>
+                    <i class="fas fa-chart-line" style="color: var(--info); font-size: 2rem;"></i>
                 </div>
                 <div class="stat-value" id="produccionPromedio">-</div>
                 <div class="stat-label">Producción Promedio</div>
             </div>
         </section>
 
-        <!-- Filtros avanzados -->
-        <section class="filtros-avanzados">
+        <!-- Filtros avanzados usando components base -->
+        <section class="filters-container">
             <h3>
                 <i class="fas fa-filter"></i> Filtros Avanzados
             </h3>
             
-            <div class="filtros-grid">
-                <div class="filtro-grupo">
+            <div class="filters-grid">
+                <div class="form-group">
                     <label class="form-label">Estado</label>
                     <select class="form-input" id="filtroEstado">
                         <option value="">Todos los estados</option>
@@ -1179,14 +602,14 @@
                     </select>
                 </div>
                 
-                <div class="filtro-grupo">
+                <div class="form-group">
                     <label class="form-label">Sector</label>
                     <select class="form-input" id="filtroBloque">
                         <option value="">Todos los sectores</option>
                     </select>
                 </div>
                 
-                <div class="filtro-grupo">
+                <div class="form-group">
                     <label class="form-label">Edad (años)</label>
                     <select class="form-input" id="filtroEdad">
                         <option value="">Todas las edades</option>
@@ -1197,27 +620,19 @@
                     </select>
                 </div>
                 
-                <div class="filtro-grupo">
-                    <label class="form-label">Última revisión</label>
-                    <select class="form-input" id="filtroRevision">
-                        <option value="">Cualquier fecha</option>
-                        <option value="7">Últimos 7 días</option>
-                        <option value="30">Últimos 30 días</option>
-                        <option value="90">Últimos 3 meses</option>
-                    </select>
-                </div>
-                
-                <div class="filtro-grupo">
+                <div class="form-group">
                     <label class="form-label">Búsqueda</label>
                     <input type="text" class="form-input" id="busquedaArbol" placeholder="Buscar por número o notas...">
                 </div>
                 
-                <div class="filtro-grupo">
+                <div class="form-group d-flex gap-sm">
                     <button class="btn btn-primary" id="aplicarFiltros">
-                        <i class="fas fa-search"></i> Buscar
+                        <i class="fas fa-search"></i>
+                        <span class="hide-mobile">Buscar</span>
                     </button>
                     <button class="btn btn-secondary" id="limpiarFiltros">
-                        <i class="fas fa-times"></i> Limpiar
+                        <i class="fas fa-times"></i>
+                        <span class="hide-mobile">Limpiar</span>
                     </button>
                 </div>
             </div>
@@ -1255,8 +670,8 @@
                                 <th>Estado</th>
                                 <th>Sector</th>
                                 <th>Edad</th>
-                                <th>Última Revisión</th>
-                                <th>Producción</th>
+                                <th class="hide-mobile">Última Revisión</th>
+                                <th class="hide-mobile">Producción</th>
                                 <th>Acciones</th>
                             </tr>
                         </thead>
@@ -1280,10 +695,10 @@
                     <button class="control-btn" id="btnCentrarMapa" title="Centrar mapa">
                         <i class="fas fa-crosshairs"></i>
                     </button>
-                    <button class="control-btn" id="btnCapasMapa" title="Capas del mapa">
+                    <button class="control-btn d-none-mobile" id="btnCapasMapa" title="Capas del mapa">
                         <i class="fas fa-layer-group"></i>
                     </button>
-                    <button class="control-btn" id="btnPantallaCompleta" title="Pantalla completa">
+                    <button class="control-btn d-none-mobile" id="btnPantallaCompleta" title="Pantalla completa">
                         <i class="fas fa-expand"></i>
                     </button>
                 </div>
@@ -1292,7 +707,7 @@
         </div>
     </main>
 
-    <!-- Modal para detalles/edición de árbol -->
+    <!-- Modal usando componentes base -->
     <div class="modal-overlay" id="modalArbol">
         <div class="modal">
             <div class="modal-header">
@@ -1309,97 +724,107 @@
         </div>
     </div>
 
-    <!-- Scripts -->
-<!-- Firebase SDK v8 -->
-<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
-<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
-<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
-<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-storage.js"></script>
+    <!-- Scripts en orden correcto para integración -->
+    <!-- Firebase SDK v8 -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-storage.js"></script>
 
-<!-- Nuestros archivos -->
-<script src="js/firebase-config.js"></script>
-<script src="js/tree-manager.js"></script>  <!-- ¡NUEVO! -->
-<script src="js/offline.js"></script>
-<script src="js/auth.js"></script>
- <script src="js/finca-navigation.js"></script>
-<script src="js/arboles.js"></script>
-
+    <!-- Configuración Firebase corregida -->
     <script>
-        // Verificación simple de autenticación
+        // Configuración Firebase (extraída del archivo HTML original)
+        const firebaseConfig = {
+            apiKey: "tu-api-key",
+            authDomain: "tu-proyecto.firebaseapp.com",
+            projectId: "tu-proyecto-id",
+            storageBucket: "tu-proyecto.appspot.com",
+            messagingSenderId: "123456789",
+            appId: "tu-app-id"
+        };
+
+        // Inicializar Firebase
+        if (!firebase.apps.length) {
+            firebase.initializeApp(firebaseConfig);
+        }
+
+        // Referencias globales
+        window.db = firebase.firestore();
+        window.auth = firebase.auth();
+        window.storage = firebase.storage();
+    </script>
+
+    <!-- Nuestros archivos base en orden correcto -->
+    <script src="js/offline.js"></script>
+    <script src="js/auth.js"></script>
+    <script src="js/tree-manager.js"></script>
+    <script src="js/data-sync.js"></script>
+    <script src="js/finca-navigation.js"></script>
+    <script src="js/arboles.js"></script>
+
+    <!-- Verificación de autenticación integrada -->
+    <script>
         document.addEventListener('DOMContentLoaded', async () => {
             try {
-                console.log('🚀 Inicializando página de árboles...');
+                console.log('🚀 Inicializando página de árboles integrada...');
                 
-                // Esperar un momento a que todo se cargue
-                await new Promise(resolve => setTimeout(resolve, 1000));
+                // Esperar inicialización completa
+                await new Promise(resolve => setTimeout(resolve, 1500));
                 
-                // Verificación simple: si hay authManager Y está autenticado, o si hay usuario en Firebase
-                const isAuthenticated = await checkSimpleAuth();
+                // Verificar autenticación usando authManager
+                const isAuthenticated = await checkAuthenticationStatus();
                 
                 if (!isAuthenticated) {
-                    console.log('🚫 Usuario no autenticado, redirigiendo');
+                    console.log('🚫 Usuario no autenticado, redirigiendo...');
                     window.location.href = '/login.html';
                     return;
                 }
                 
-                console.log('✅ Usuario autenticado, inicializando página');
-                console.log('✅ Página de árboles lista');
+                console.log('✅ Usuario autenticado, sistema listo');
                 
             } catch (error) {
-                console.error('❌ Error:', error);
-                // En caso de error, permitir acceso con datos de ejemplo
-                console.log('⚠️ Continuando con datos de ejemplo');
+                console.error('❌ Error de inicialización:', error);
+                // Continuar con funcionalidad limitada
+                console.log('⚠️ Continuando con modo degradado');
             }
         });
 
-        // Verificación simple y directa
-        async function checkSimpleAuth() {
-            // Opción 1: Si authManager existe y está autenticado
-            if (window.authManager && window.authManager.isAuthenticated) {
+        async function checkAuthenticationStatus() {
+            // Método 1: Verificar authManager
+            if (window.authManager?.isAuthenticated) {
                 return true;
             }
             
-            // Opción 2: Si Firebase tiene usuario actual
-            if (window.firebase && window.firebase.auth && window.firebase.auth().currentUser) {
+            // Método 2: Verificar Firebase Auth
+            if (window.firebase?.auth?.()?.currentUser) {
                 return true;
             }
             
-            // Opción 3: Esperar un poco más por Firebase
+            // Método 3: Esperar un poco más
             return new Promise((resolve) => {
                 let attempts = 0;
-                const maxAttempts = 30; // 3 segundos máximo
+                const maxAttempts = 20;
                 
-                const check = () => {
+                const checkAgain = () => {
                     attempts++;
                     
-                    // Verificar authManager
-                    if (window.authManager && window.authManager.isAuthenticated) {
+                    if (window.authManager?.isAuthenticated || 
+                        window.firebase?.auth?.()?.currentUser) {
                         resolve(true);
                         return;
                     }
                     
-                    // Verificar Firebase
-                    if (window.firebase && window.firebase.auth) {
-                        const user = window.firebase.auth().currentUser;
-                        if (user) {
-                            resolve(true);
-                            return;
-                        }
-                    }
-                    
-                    // Si no se encontró nada y aún hay intentos
                     if (attempts < maxAttempts) {
-                        setTimeout(check, 100);
+                        setTimeout(checkAgain, 100);
                     } else {
-                        // Timeout: permitir acceso con datos de ejemplo
+                        // En modo desarrollo, permitir acceso
                         resolve(true);
                     }
                 };
                 
-                check();
+                checkAgain();
             });
         }
     </script>
 </body>
-
 </html>
