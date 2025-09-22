@@ -27,7 +27,7 @@ const configDashboard = {
 };
 
 // Referencias a managers base
-let authManager = window.authManager || null;
+let authManager = null;
 let offlineManager = null;
 let firebaseManager = null;
 let treeManager = null;
@@ -1393,4 +1393,5 @@ window.actualizarDashboard = function() {
 console.log('📊 Dashboard Inteligente JavaScript vanilla cargado');
 console.log('📍 Configurado para Finca La Herradura, Mixco, Guatemala');
 console.log('🔗 100% integrado con archivos base y datos REALES únicamente');
+
 
