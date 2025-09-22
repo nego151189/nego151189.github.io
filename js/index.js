@@ -1,4 +1,4 @@
-/* ========================================
+//* ========================================
    INDEX.JS - DASHBOARD INTELIGENTE VANILLA JS
    Sistema unificado basado en archivos base
    DATOS REALES únicamente - Sin simulaciones vfull
@@ -1393,5 +1393,6 @@ window.actualizarDashboard = function() {
 console.log('📊 Dashboard Inteligente JavaScript vanilla cargado');
 console.log('📍 Configurado para Finca La Herradura, Mixco, Guatemala');
 console.log('🔗 100% integrado con archivos base y datos REALES únicamente');
+
 
 
